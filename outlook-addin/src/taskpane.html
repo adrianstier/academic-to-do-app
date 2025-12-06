@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create To-Do</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      padding: 16px;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #323130;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      color: #605e5c;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    input[type="text"],
+    input[type="datetime-local"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #c8c6c4;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+      background: white;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #0078d4;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .required::after {
+      content: ' *';
+      color: #d13438;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button.primary {
+      background: #0078d4;
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #106ebe;
+    }
+
+    button.primary:disabled {
+      background: #c8c6c4;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #f3f2f1;
+      color: #323130;
+      border: 1px solid #c8c6c4;
+    }
+
+    button.secondary:hover {
+      background: #edebe9;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .message.success {
+      background: #dff6dd;
+      color: #107c10;
+      border: 1px solid #107c10;
+    }
+
+    .message.error {
+      background: #fde7e9;
+      color: #d13438;
+      border: 1px solid #d13438;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #605e5c;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #c8c6c4;
+      border-top-color: #0078d4;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .email-info {
+      background: #f3f2f1;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #605e5c;
+    }
+
+    .email-info strong {
+      color: #323130;
+    }
+
+    #form-container {
+      display: none;
+    }
+
+    #form-container.show {
+      display: block;
+    }
+
+    #init-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: #605e5c;
+    }
+  </style>
+</head>
+<body>
+  <div id="init-message">
+    <div class="spinner"></div>
+    <span>Loading email...</span>
+  </div>
+
+  <div id="form-container">
+    <h1>Create To-Do from Email</h1>
+
+    <div id="message-container"></div>
+
+    <div class="email-info" id="email-info"></div>
+
+    <form id="task-form">
+      <div class="form-group">
+        <label for="title" class="required">Title</label>
+        <input type="text" id="title" name="title" required>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="assignee">Assignee</label>
+        <select id="assignee" name="assignee">
+          <option value="">Unassigned</option>
+          <option value="Derrick">Derrick</option>
+          <option value="Sefra" selected>Sefra</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="dueDate">Due Date</label>
+        <input type="datetime-local" id="dueDate" name="dueDate">
+      </div>
+
+      <div class="form-group">
+        <label for="reminderTime">Reminder Time</label>
+        <input type="datetime-local" id="reminderTime" name="reminderTime">
+      </div>
+
+      <div class="loading" id="loading">
+        <span class="spinner"></span>
+        <span>Creating task...</span>
+      </div>
+
+      <div class="button-group" id="buttons">
+        <button type="submit" class="primary" id="submit-btn">Create Task</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

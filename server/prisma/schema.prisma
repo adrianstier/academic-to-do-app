@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Task {
+  id                  String    @id @default(uuid())
+  title               String
+  description         String?
+  status              String    @default("todo") // todo | in_progress | done
+  priority            String    @default("medium") // high | medium | low
+  category            String?
+  assignee            String?
+  dueDate             DateTime?
+  reminderTime        DateTime?
+  reminderSent        Boolean   @default(false)
+  sourceEmailId       String?
+  sourceEmailFrom     String?
+  sourceEmailReceived DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  notes               Note[]
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  content   String
+  author    String
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
