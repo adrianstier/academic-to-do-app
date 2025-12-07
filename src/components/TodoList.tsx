@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { Todo } from '@/types/todo';
+import { Todo, TodoStatus, ViewMode } from '@/types/todo';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
+import KanbanBoard from './KanbanBoard';
 import { v4 as uuidv4 } from 'uuid';
 
 interface TodoListProps {
@@ -16,6 +17,7 @@ export default function TodoList({ userName }: TodoListProps) {
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   const fetchTodos = useCallback(async () => {
     if (!isSupabaseConfigured()) {
@@ -90,6 +92,7 @@ export default function TodoList({ userName }: TodoListProps) {
       id: uuidv4(),
       text,
       completed: false,
+      status: 'todo',
       created_at: new Date().toISOString(),
       created_by: userName,
     };
@@ -97,12 +100,45 @@ export default function TodoList({ userName }: TodoListProps) {
     // Optimistic update
     setTodos((prev) => [newTodo, ...prev]);
 
-    const { error: insertError } = await supabase.from('todos').insert([newTodo]);
+    // Insert without status field for backwards compatibility
+    const { error: insertError } = await supabase.from('todos').insert([{
+      id: newTodo.id,
+      text: newTodo.text,
+      completed: newTodo.completed,
+      status: newTodo.status,
+      created_at: newTodo.created_at,
+      created_by: newTodo.created_by,
+    }]);
 
     if (insertError) {
       console.error('Error adding todo:', insertError);
       // Rollback optimistic update
       setTodos((prev) => prev.filter((t) => t.id !== newTodo.id));
+    }
+  };
+
+  const updateStatus = async (id: string, status: TodoStatus) => {
+    const oldTodo = todos.find((t) => t.id === id);
+    const completed = status === 'done';
+
+    // Optimistic update
+    setTodos((prev) =>
+      prev.map((todo) => (todo.id === id ? { ...todo, status, completed } : todo))
+    );
+
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({ status, completed })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error updating status:', updateError);
+      // Rollback
+      if (oldTodo) {
+        setTodos((prev) =>
+          prev.map((todo) => (todo.id === id ? oldTodo : todo))
+        );
+      }
     }
   };
 
@@ -172,7 +208,7 @@ export default function TodoList({ userName }: TodoListProps) {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className={viewMode === 'kanban' ? 'max-w-6xl mx-auto' : 'max-w-2xl mx-auto'}>
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-100">
@@ -182,15 +218,41 @@ export default function TodoList({ userName }: TodoListProps) {
               Logged in as <span className="font-medium">{userName}</span>
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                connected ? 'bg-green-500' : 'bg-red-500'
-              }`}
-            />
-            <span className="text-sm text-zinc-500 dark:text-zinc-400">
-              {connected ? 'Live' : 'Connecting...'}
-            </span>
+          <div className="flex items-center gap-4">
+            {/* View Switcher */}
+            <div className="flex bg-white dark:bg-zinc-800 rounded-lg p-1 shadow-sm">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                }`}
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  viewMode === 'kanban'
+                    ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                }`}
+              >
+                Kanban
+              </button>
+            </div>
+            {/* Connection Status */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  connected ? 'bg-green-500' : 'bg-red-500'
+                }`}
+              />
+              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                {connected ? 'Live' : 'Connecting...'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -198,22 +260,30 @@ export default function TodoList({ userName }: TodoListProps) {
           <AddTodo onAdd={addTodo} />
         </div>
 
-        <div className="space-y-3">
-          {todos.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 dark:text-zinc-500">
-              No todos yet. Add one above!
-            </div>
-          ) : (
-            todos.map((todo) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                onToggle={toggleTodo}
-                onDelete={deleteTodo}
-              />
-            ))
-          )}
-        </div>
+        {viewMode === 'list' ? (
+          <div className="space-y-3">
+            {todos.length === 0 ? (
+              <div className="text-center py-12 text-zinc-400 dark:text-zinc-500">
+                No todos yet. Add one above!
+              </div>
+            ) : (
+              todos.map((todo) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  onToggle={toggleTodo}
+                  onDelete={deleteTodo}
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          <KanbanBoard
+            todos={todos}
+            onStatusChange={updateStatus}
+            onDelete={deleteTodo}
+          />
+        )}
 
         <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
           {todos.length} todo{todos.length !== 1 ? 's' : ''} •{' '}

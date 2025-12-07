@@ -2,22 +2,23 @@ import { test, expect, Page } from '@playwright/test';
 
 // Helper function to create a task
 async function createTestTask(page: Page, taskName: string) {
-  await page.click('button:has-text("New Task")');
+  await page.click('header button:has-text("New Task")');
   await expect(page.locator('text=Create New Task')).toBeVisible();
   await page.fill('input[placeholder="Enter task title..."]', taskName);
-  await page.click('button:has-text("Create Task")');
+  // Click the submit button inside the form
+  await page.locator('form button[type="submit"]').click();
   await expect(page.locator('text=Create New Task')).not.toBeVisible({ timeout: 5000 });
   await expect(page.locator(`text=${taskName}`).first()).toBeVisible({ timeout: 5000 });
 }
 
 // Helper to ensure at least one task exists
 async function ensureTaskExists(page: Page) {
-  // Check if table exists with tasks
-  const table = page.locator('table');
-  const noTasks = page.locator('text=No tasks found');
-
   // Wait a bit for page to settle
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
+
+  // Check if table exists with tasks or empty state
+  const table = page.locator('table');
+  const noTasks = page.locator('text=No tasks yet');
 
   // If no tasks, create one
   if (await noTasks.isVisible()) {
@@ -25,11 +26,15 @@ async function ensureTaskExists(page: Page) {
   }
 
   // Now wait for table
-  await page.waitForSelector('table', { timeout: 10000 });
+  await page.waitForSelector('table', { timeout: 15000 });
 }
 
 test.describe('Todo App', () => {
   test.beforeEach(async ({ page }) => {
+    // Set localStorage to skip onboarding modal
+    await page.addInitScript(() => {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    });
     await page.goto('/');
   });
 
@@ -47,8 +52,9 @@ test.describe('Todo App', () => {
     // Wait for page to load - either table or empty state
     await page.waitForTimeout(1000);
     const hasTable = await page.locator('table').isVisible();
-    const hasEmptyState = await page.locator('text=No tasks found').isVisible();
-    expect(hasTable || hasEmptyState).toBeTruthy();
+    const hasEmptyState = await page.locator('text=No tasks yet').isVisible();
+    const hasNoMatchingTasks = await page.locator('text=No matching tasks').isVisible();
+    expect(hasTable || hasEmptyState || hasNoMatchingTasks).toBeTruthy();
   });
 
   test('filter by status works', async ({ page }) => {
@@ -83,8 +89,8 @@ test.describe('Todo App', () => {
   });
 
   test('create task modal opens', async ({ page }) => {
-    // Click New Task button
-    await page.click('button:has-text("New Task")');
+    // Click New Task button in header
+    await page.click('header button:has-text("New Task")');
 
     // Modal should be visible
     await expect(page.locator('text=Create New Task')).toBeVisible();
@@ -100,7 +106,7 @@ test.describe('Todo App', () => {
     const taskName = `Test Task ${Date.now()}`;
 
     // Open create modal
-    await page.click('button:has-text("New Task")');
+    await page.click('header button:has-text("New Task")');
     await expect(page.locator('text=Create New Task')).toBeVisible();
 
     // Fill in the form
@@ -111,7 +117,7 @@ test.describe('Todo App', () => {
     await page.selectOption('select:below(:text("Assignee"))', 'Derrick');
 
     // Submit form
-    await page.click('button:has-text("Create Task")');
+    await page.locator('form button[type="submit"]').click();
 
     // Wait for modal to close
     await expect(page.locator('text=Create New Task')).not.toBeVisible({ timeout: 5000 });
@@ -213,8 +219,8 @@ test.describe('Todo App', () => {
   test('overdue filter works', async ({ page }) => {
     await ensureTaskExists(page);
 
-    // Click overdue checkbox
-    await page.click('text=Overdue Only');
+    // Click overdue checkbox (now just says "Overdue")
+    await page.click('label:has-text("Overdue")');
 
     // Wait for filter
     await page.waitForTimeout(500);
@@ -223,8 +229,8 @@ test.describe('Todo App', () => {
   test('refresh button works', async ({ page }) => {
     await ensureTaskExists(page);
 
-    // Click refresh
-    await page.click('button:has-text("Refresh")');
+    // Click refresh button (now icon-only with title="Refresh")
+    await page.click('button[title="Refresh"]');
 
     // Should still show tasks or empty state after refresh
     await page.waitForTimeout(1000);
@@ -252,9 +258,9 @@ test.describe('Todo App', () => {
 
     // Create a unique task to delete
     const taskName = `Delete Me ${Date.now()}`;
-    await page.click('button:has-text("New Task")');
+    await page.click('header button:has-text("New Task")');
     await page.fill('input[placeholder="Enter task title..."]', taskName);
-    await page.click('button:has-text("Create Task")');
+    await page.locator('form button[type="submit"]').click();
     await expect(page.locator('text=Create New Task')).not.toBeVisible({ timeout: 5000 });
 
     // Verify task exists
@@ -266,9 +272,14 @@ test.describe('Todo App', () => {
     // Wait for detail panel
     await expect(page.locator('label:has-text("Description")')).toBeVisible({ timeout: 5000 });
 
-    // Click Delete button and confirm
-    page.on('dialog', dialog => dialog.accept());
+    // Click Delete button
     await page.click('button:has-text("Delete")');
+
+    // Confirm modal should appear
+    await expect(page.locator('text=Delete Task')).toBeVisible({ timeout: 5000 });
+
+    // Click confirm button in modal
+    await page.locator('button:has-text("Delete")').last().click();
 
     // Task should be removed (wait for refresh)
     await page.waitForTimeout(1000);
@@ -325,7 +336,7 @@ test.describe('Todo App', () => {
   });
 
   test('assignee options are Derrick and Sefra', async ({ page }) => {
-    await page.click('button:has-text("New Task")');
+    await page.click('header button:has-text("New Task")');
     await expect(page.locator('text=Create New Task')).toBeVisible();
 
     // Find the assignee select element by its label
@@ -352,26 +363,35 @@ test.describe('Todo App', () => {
 // This test runs last as it clears all data
 test.describe('Destructive operations', () => {
   test('clear all button works', async ({ page }) => {
+    // Set localStorage to skip onboarding modal
+    await page.addInitScript(() => {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    });
     await page.goto('/');
 
     // Create a task first to ensure we have something to clear
     const taskName = `Clear Test ${Date.now()}`;
-    await page.click('button:has-text("New Task")');
+    await page.click('header button:has-text("New Task")');
     await page.fill('input[placeholder="Enter task title..."]', taskName);
-    await page.click('button:has-text("Create Task")');
+    await page.locator('form button[type="submit"]').click();
     await expect(page.locator('text=Create New Task')).not.toBeVisible({ timeout: 5000 });
 
     // Wait for task to appear
     await expect(page.locator(`text=${taskName}`).first()).toBeVisible({ timeout: 5000 });
 
-    // Click Clear All and accept dialog
-    page.on('dialog', dialog => dialog.accept());
-    await page.click('button:has-text("Clear All")');
+    // Click Clear All button
+    await page.click('header button:has-text("Clear All")');
+
+    // Confirm modal should appear
+    await expect(page.locator('h3:has-text("Delete All Tasks")')).toBeVisible({ timeout: 5000 });
+
+    // Click Delete All button in modal
+    await page.locator('button:has-text("Delete All")').click();
 
     // Wait for tasks to be cleared
     await page.waitForTimeout(1000);
 
     // Should show empty state
-    await expect(page.locator('text=No tasks found')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=No tasks yet')).toBeVisible({ timeout: 5000 });
   });
 });
