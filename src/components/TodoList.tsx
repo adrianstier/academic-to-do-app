@@ -282,7 +282,7 @@ export default function TodoList({ userName }: TodoListProps) {
 
   const handleLogout = () => {
     localStorage.removeItem('userName');
-    window.location.reload();
+    window.location.href = window.location.origin;
   };
 
   const filteredTodos = todos.filter((todo) => {
