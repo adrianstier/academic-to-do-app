@@ -151,16 +151,32 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
 
     setTodos((prev) => [newTodo, ...prev]);
 
-    const { error: insertError } = await supabase.from('todos').insert([{
+    // Build insert object with core fields only
+    // Optional fields (status, priority, due_date, assigned_to) are only included if they have values
+    // This ensures compatibility with databases that may not have these columns
+    const insertData: Record<string, unknown> = {
       id: newTodo.id,
       text: newTodo.text,
       completed: newTodo.completed,
-      status: newTodo.status,
-      priority: newTodo.priority,
       created_at: newTodo.created_at,
       created_by: newTodo.created_by,
-      due_date: newTodo.due_date,
-    }]);
+    };
+
+    // Only add optional fields if they have meaningful values
+    if (newTodo.status && newTodo.status !== 'todo') {
+      insertData.status = newTodo.status;
+    }
+    if (newTodo.priority && newTodo.priority !== 'medium') {
+      insertData.priority = newTodo.priority;
+    }
+    if (newTodo.due_date) {
+      insertData.due_date = newTodo.due_date;
+    }
+    if (newTodo.assigned_to) {
+      insertData.assigned_to = newTodo.assigned_to;
+    }
+
+    const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
     if (insertError) {
       console.error('Error adding todo:', insertError);

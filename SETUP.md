@@ -107,4 +107,12 @@ If you already have the database set up, run this migration to add the new colum
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_count INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_date DATE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS welcome_shown_at TIMESTAMP WITH TIME ZONE;
+
+-- Add due_date column to todos table (if missing)
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS due_date TIMESTAMP WITH TIME ZONE;
+
+-- Add priority and status columns to todos table (if missing)
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'todo';
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium';
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS assigned_to TEXT;
 ```
