@@ -107,24 +107,25 @@ test.describe('Micro-Rewards (Celebration Effect)', () => {
       return;
     }
 
-    // Create a task
+    // Create a task with unique name
+    const taskName = `Celebration_${Date.now()}`;
     const input = page.locator('input[placeholder="What needs to be done?"]');
-    await input.fill('Celebration test task');
+    await input.click();
+    await input.fill(taskName);
     await page.keyboard.press('Enter');
 
-    // Wait for task to appear and stabilize
-    await page.waitForTimeout(1000);
-    await expect(page.locator('text=Celebration test task')).toBeVisible({ timeout: 10000 });
+    // Wait for task to appear
+    await expect(page.locator(`text=${taskName}`)).toBeVisible({ timeout: 10000 });
 
     // Wait for any animations to complete
     await page.waitForTimeout(500);
 
-    // Complete the task by clicking the checkbox - use more specific locator
-    const checkbox = page.locator('text=Celebration test task').locator('xpath=ancestor::div[contains(@class, "rounded-xl")]//button[1]');
+    // Complete the task by clicking the checkbox
+    const checkbox = page.locator(`text=${taskName}`).locator('xpath=ancestor::div[contains(@class, "rounded-")]//button[1]');
     await checkbox.click();
 
     // Should see celebration effect
-    await expect(page.locator('text=Task Complete!')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=You've got it covered!")).toBeVisible({ timeout: 5000 });
   });
 
   test('should auto-dismiss celebration after animation', async ({ page }) => {
@@ -136,25 +137,26 @@ test.describe('Micro-Rewards (Celebration Effect)', () => {
       return;
     }
 
-    // Create and complete a task
+    // Create a task with unique name
+    const taskName = `AutoDismiss_${Date.now()}`;
     const input = page.locator('input[placeholder="What needs to be done?"]');
-    await input.fill('Auto dismiss test');
+    await input.click();
+    await input.fill(taskName);
     await page.keyboard.press('Enter');
 
     // Wait for task to appear
-    await page.waitForTimeout(1000);
-    await expect(page.locator('text=Auto dismiss test')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text=${taskName}`)).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(500);
 
     // Complete the task
-    const checkbox = page.locator('text=Auto dismiss test').locator('xpath=ancestor::div[contains(@class, "rounded-xl")]//button[1]');
+    const checkbox = page.locator(`text=${taskName}`).locator('xpath=ancestor::div[contains(@class, "rounded-")]//button[1]');
     await checkbox.click();
 
     // Celebration should appear
-    await expect(page.locator('text=Task Complete!')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=You've got it covered!")).toBeVisible({ timeout: 5000 });
 
-    // Wait for auto-dismiss (2 seconds + buffer)
-    await expect(page.locator('text=Task Complete!')).not.toBeVisible({ timeout: 5000 });
+    // Wait for auto-dismiss (2.5 seconds + buffer)
+    await expect(page.locator("text=You've got it covered!")).not.toBeVisible({ timeout: 6000 });
   });
 });
 

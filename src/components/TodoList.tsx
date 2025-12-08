@@ -410,7 +410,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#0033A0] rounded-full border-2 border-white dark:border-slate-900" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-warm-brown dark:text-slate-100 squiggle-underline">
+                  <h1 className="text-xl font-bold text-warm-brown dark:text-slate-100">
                     Bealer Agency
                   </h1>
                   <p className="text-xs text-warm-brown/60 dark:text-slate-400 mt-1">
