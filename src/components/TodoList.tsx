@@ -1,12 +1,24 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { Todo, TodoStatus, ViewMode } from '@/types/todo';
+import { Todo, TodoStatus, TodoPriority, ViewMode } from '@/types/todo';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
 import KanbanBoard from './KanbanBoard';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  LayoutList,
+  LayoutGrid,
+  Wifi,
+  WifiOff,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  LogOut,
+  Filter
+} from 'lucide-react';
 
 interface TodoListProps {
   userName: string;
@@ -18,6 +30,8 @@ export default function TodoList({ userName }: TodoListProps) {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [users, setUsers] = useState<string[]>([]);
+  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   const fetchTodos = useCallback(async () => {
     if (!isSupabaseConfigured()) {
@@ -36,6 +50,8 @@ export default function TodoList({ userName }: TodoListProps) {
       setError('Failed to connect to database. Please check your Supabase configuration.');
     } else {
       setTodos(data || []);
+      const uniqueUsers = [...new Set((data || []).map((t: Todo) => t.created_by).filter(Boolean))];
+      setUsers((prev) => [...new Set([...prev, ...uniqueUsers])]);
       setError(null);
     }
     setLoading(false);
@@ -48,9 +64,17 @@ export default function TodoList({ userName }: TodoListProps) {
       return;
     }
 
-    fetchTodos();
+    let isMounted = true;
 
-    // Subscribe to real-time changes
+    const init = async () => {
+      await fetchTodos();
+      if (isMounted) {
+        setUsers((prev) => [...new Set([...prev, userName])]);
+      }
+    };
+
+    init();
+
     const channel = supabase
       .channel('todos-channel')
       .on(
@@ -61,10 +85,15 @@ export default function TodoList({ userName }: TodoListProps) {
           table: 'todos',
         },
         (payload) => {
+          if (!isMounted) return;
           console.log('Real-time update:', payload);
 
           if (payload.eventType === 'INSERT') {
-            setTodos((prev) => [payload.new as Todo, ...prev]);
+            setTodos((prev) => {
+              const exists = prev.some((t) => t.id === (payload.new as Todo).id);
+              if (exists) return prev;
+              return [payload.new as Todo, ...prev];
+            });
           } else if (payload.eventType === 'UPDATE') {
             setTodos((prev) =>
               prev.map((todo) =>
@@ -79,40 +108,44 @@ export default function TodoList({ userName }: TodoListProps) {
         }
       )
       .subscribe((status) => {
-        setConnected(status === 'SUBSCRIBED');
+        if (isMounted) {
+          setConnected(status === 'SUBSCRIBED');
+        }
       });
 
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, [fetchTodos]);
+  }, [fetchTodos, userName]);
 
-  const addTodo = async (text: string) => {
+  const addTodo = async (text: string, priority: TodoPriority, dueDate?: string) => {
     const newTodo: Todo = {
       id: uuidv4(),
       text,
       completed: false,
       status: 'todo',
+      priority,
       created_at: new Date().toISOString(),
       created_by: userName,
+      due_date: dueDate,
     };
 
-    // Optimistic update
     setTodos((prev) => [newTodo, ...prev]);
 
-    // Insert without status field for backwards compatibility
     const { error: insertError } = await supabase.from('todos').insert([{
       id: newTodo.id,
       text: newTodo.text,
       completed: newTodo.completed,
       status: newTodo.status,
+      priority: newTodo.priority,
       created_at: newTodo.created_at,
       created_by: newTodo.created_by,
+      due_date: newTodo.due_date,
     }]);
 
     if (insertError) {
       console.error('Error adding todo:', insertError);
-      // Rollback optimistic update
       setTodos((prev) => prev.filter((t) => t.id !== newTodo.id));
     }
   };
@@ -121,7 +154,6 @@ export default function TodoList({ userName }: TodoListProps) {
     const oldTodo = todos.find((t) => t.id === id);
     const completed = status === 'done';
 
-    // Optimistic update
     setTodos((prev) =>
       prev.map((todo) => (todo.id === id ? { ...todo, status, completed } : todo))
     );
@@ -133,7 +165,6 @@ export default function TodoList({ userName }: TodoListProps) {
 
     if (updateError) {
       console.error('Error updating status:', updateError);
-      // Rollback
       if (oldTodo) {
         setTodos((prev) =>
           prev.map((todo) => (todo.id === id ? oldTodo : todo))
@@ -143,7 +174,6 @@ export default function TodoList({ userName }: TodoListProps) {
   };
 
   const toggleTodo = async (id: string, completed: boolean) => {
-    // Optimistic update
     setTodos((prev) =>
       prev.map((todo) => (todo.id === id ? { ...todo, completed } : todo))
     );
@@ -155,7 +185,6 @@ export default function TodoList({ userName }: TodoListProps) {
 
     if (updateError) {
       console.error('Error updating todo:', updateError);
-      // Rollback optimistic update
       setTodos((prev) =>
         prev.map((todo) =>
           todo.id === id ? { ...todo, completed: !completed } : todo
@@ -167,33 +196,146 @@ export default function TodoList({ userName }: TodoListProps) {
   const deleteTodo = async (id: string) => {
     const todoToDelete = todos.find((t) => t.id === id);
 
-    // Optimistic update
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
 
     const { error: deleteError } = await supabase.from('todos').delete().eq('id', id);
 
     if (deleteError) {
       console.error('Error deleting todo:', deleteError);
-      // Rollback optimistic update
       if (todoToDelete) {
         setTodos((prev) => [...prev, todoToDelete]);
       }
     }
   };
 
+  const assignTodo = async (id: string, assignedTo: string | null) => {
+    const oldTodo = todos.find((t) => t.id === id);
+
+    setTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, assigned_to: assignedTo || undefined } : todo
+      )
+    );
+
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({ assigned_to: assignedTo })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error assigning todo:', updateError);
+      if (oldTodo) {
+        setTodos((prev) =>
+          prev.map((todo) => (todo.id === id ? oldTodo : todo))
+        );
+      }
+    }
+  };
+
+  const setDueDate = async (id: string, dueDate: string | null) => {
+    const oldTodo = todos.find((t) => t.id === id);
+
+    setTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, due_date: dueDate || undefined } : todo
+      )
+    );
+
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({ due_date: dueDate })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error setting due date:', updateError);
+      if (oldTodo) {
+        setTodos((prev) =>
+          prev.map((todo) => (todo.id === id ? oldTodo : todo))
+        );
+      }
+    }
+  };
+
+  const setPriority = async (id: string, priority: TodoPriority) => {
+    const oldTodo = todos.find((t) => t.id === id);
+
+    setTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, priority } : todo
+      )
+    );
+
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({ priority })
+      .eq('id', id);
+
+    if (updateError) {
+      console.error('Error setting priority:', updateError);
+      if (oldTodo) {
+        setTodos((prev) =>
+          prev.map((todo) => (todo.id === id ? oldTodo : todo))
+        );
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userName');
+    window.location.reload();
+  };
+
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === 'active') return !todo.completed;
+    if (filter === 'completed') return todo.completed;
+    return true;
+  });
+
+  const stats = {
+    total: todos.length,
+    completed: todos.filter((t) => t.completed).length,
+    overdue: todos.filter((t) => {
+      if (!t.due_date || t.completed) return false;
+      const d = new Date(t.due_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      d.setHours(0, 0, 0, 0);
+      return d < today;
+    }).length,
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900">
-        <div className="text-zinc-500 dark:text-zinc-400">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              className="w-8 h-8 border-3 border-white border-t-transparent rounded-full"
+            />
+          </div>
+          <p className="text-zinc-500 dark:text-zinc-400">Loading your tasks...</p>
+        </motion.div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 px-4">
-        <div className="bg-white dark:bg-zinc-800 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-          <div className="text-red-500 text-5xl mb-4">!</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-zinc-100 dark:border-zinc-800"
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
           <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-2">
             Configuration Required
           </h2>
@@ -201,95 +343,250 @@ export default function TodoList({ userName }: TodoListProps) {
           <p className="text-sm text-zinc-400 dark:text-zinc-500">
             See SETUP.md for instructions
           </p>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8 px-4">
-      <div className={viewMode === 'kanban' ? 'max-w-6xl mx-auto' : 'max-w-2xl mx-auto'}>
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-800 dark:text-zinc-100">
-              Shared Todo List
-            </h1>
-            <p className="text-zinc-500 dark:text-zinc-400 mt-1">
-              Logged in as <span className="font-medium">{userName}</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* View Switcher */}
-            <div className="flex bg-white dark:bg-zinc-800 rounded-lg p-1 shadow-sm">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  viewMode === 'list'
-                    ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('kanban')}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  viewMode === 'kanban'
-                    ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                Kanban
-              </button>
-            </div>
-            {/* Connection Status */}
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  connected ? 'bg-green-500' : 'bg-red-500'
-                }`}
-              />
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                {connected ? 'Live' : 'Connecting...'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <AddTodo onAdd={addTodo} />
-        </div>
-
-        {viewMode === 'list' ? (
-          <div className="space-y-3">
-            {todos.length === 0 ? (
-              <div className="text-center py-12 text-zinc-400 dark:text-zinc-500">
-                No todos yet. Add one above!
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950">
+      {/* Header */}
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-b border-zinc-200/50 dark:border-zinc-800/50">
+        <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-7xl' : 'max-w-3xl'}`}>
+          <div className="flex items-center justify-between">
+            {/* Logo & User */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <span className="text-white font-bold text-lg">T</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">
+                    TaskFlow
+                  </h1>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Welcome, <span className="font-medium text-indigo-600 dark:text-indigo-400">{userName}</span>
+                  </p>
+                </div>
               </div>
-            ) : (
-              todos.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  onToggle={toggleTodo}
-                  onDelete={deleteTodo}
-                />
-              ))
-            )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              {/* View Switcher */}
+              <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
+                <motion.button
+                  onClick={() => setViewMode('list')}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`p-2 rounded-lg transition-all ${
+                    viewMode === 'list'
+                      ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  }`}
+                >
+                  <LayoutList className="w-5 h-5" />
+                </motion.button>
+                <motion.button
+                  onClick={() => setViewMode('kanban')}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`p-2 rounded-lg transition-all ${
+                    viewMode === 'kanban'
+                      ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  }`}
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </motion.button>
+              </div>
+
+              {/* Connection Status */}
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${
+                connected
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                  : 'bg-red-50 dark:bg-red-900/20'
+              }`}>
+                <div className="relative">
+                  {connected ? (
+                    <Wifi className="w-4 h-4 text-emerald-500" />
+                  ) : (
+                    <WifiOff className="w-4 h-4 text-red-500" />
+                  )}
+                  {connected && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  )}
+                </div>
+                <span className={`text-sm font-medium ${
+                  connected ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {connected ? 'Live' : 'Offline'}
+                </span>
+              </div>
+
+              {/* Logout */}
+              <motion.button
+                onClick={handleLogout}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
-        ) : (
-          <KanbanBoard
-            todos={todos}
-            onStatusChange={updateStatus}
-            onDelete={deleteTodo}
-          />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className={`mx-auto px-4 sm:px-6 py-8 ${viewMode === 'kanban' ? 'max-w-7xl' : 'max-w-3xl'}`}>
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-3 gap-4 mb-8"
+        >
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Tasks</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.completed}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Completed</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.overdue}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Overdue</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Add Todo */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <AddTodo onAdd={addTodo} />
+        </motion.div>
+
+        {/* Filter (for list view) */}
+        {viewMode === 'list' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 mb-6"
+          >
+            <Filter className="w-4 h-4 text-zinc-400" />
+            <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+              {(['all', 'active', 'completed'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    filter === f
+                      ? 'bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 shadow-sm'
+                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  }`}
+                >
+                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
+          </motion.div>
         )}
 
-        <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
-          {todos.length} todo{todos.length !== 1 ? 's' : ''} •{' '}
-          {todos.filter((t) => t.completed).length} completed
-        </div>
-      </div>
+        {/* Todo List or Kanban */}
+        <AnimatePresence mode="wait">
+          {viewMode === 'list' ? (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-4"
+            >
+              {filteredTodos.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-16"
+                >
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                    <CheckCircle2 className="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
+                  </div>
+                  <p className="text-zinc-500 dark:text-zinc-400 mb-2">
+                    {filter === 'all' ? 'No tasks yet' : `No ${filter} tasks`}
+                  </p>
+                  <p className="text-sm text-zinc-400 dark:text-zinc-500">
+                    {filter === 'all' ? 'Add your first task above!' : 'Try changing the filter'}
+                  </p>
+                </motion.div>
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {filteredTodos.map((todo, index) => (
+                    <motion.div
+                      key={todo.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: 100 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <TodoItem
+                        todo={todo}
+                        users={users}
+                        onToggle={toggleTodo}
+                        onDelete={deleteTodo}
+                        onAssign={assignTodo}
+                        onSetDueDate={setDueDate}
+                        onSetPriority={setPriority}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="kanban"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <KanbanBoard
+                todos={todos}
+                users={users}
+                onStatusChange={updateStatus}
+                onDelete={deleteTodo}
+                onAssign={assignTodo}
+                onSetDueDate={setDueDate}
+                onSetPriority={setPriority}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
     </div>
   );
 }
