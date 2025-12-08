@@ -20,6 +20,17 @@ export interface User {
   id: string;
   name: string;
   color: string;
+  pin_hash?: string;
+  created_at?: string;
+  last_login?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  last_login?: string;
 }
 
 export const PRIORITY_CONFIG: Record<TodoPriority, { label: string; color: string; bgColor: string; icon: string }> = {

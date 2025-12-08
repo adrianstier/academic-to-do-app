@@ -16,15 +16,18 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  LogOut,
   Filter
 } from 'lucide-react';
+import { AuthUser } from '@/types/todo';
+import UserSwitcher from './UserSwitcher';
 
 interface TodoListProps {
-  userName: string;
+  currentUser: AuthUser;
+  onUserChange: (user: AuthUser | null) => void;
 }
 
-export default function TodoList({ userName }: TodoListProps) {
+export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
+  const userName = currentUser.name;
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -280,10 +283,6 @@ export default function TodoList({ userName }: TodoListProps) {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('userName');
-    window.location.href = window.location.origin;
-  };
 
   const filteredTodos = todos.filter((todo) => {
     if (filter === 'active') return !todo.completed;
@@ -426,15 +425,8 @@ export default function TodoList({ userName }: TodoListProps) {
                 </span>
               </div>
 
-              {/* Logout */}
-              <motion.button
-                onClick={handleLogout}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </motion.button>
+              {/* User Switcher */}
+              <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
             </div>
           </div>
         </div>
