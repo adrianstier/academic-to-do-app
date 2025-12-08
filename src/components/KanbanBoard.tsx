@@ -309,14 +309,20 @@ export default function KanbanBoard({
     useSensor(KeyboardSensor)
   );
 
-  // Custom collision detection that prioritizes columns
+  // Custom collision detection that prioritizes columns over cards
   const collisionDetection: CollisionDetection = (args) => {
-    // First check if we're over any droppable columns
+    // Get all collisions using pointer within
     const pointerCollisions = pointerWithin(args);
 
-    // If pointer is within a column, use that
+    // Also get rect intersections as fallback
+    const rectCollisions = rectIntersection(args);
+
+    // Combine and prioritize column droppables
+    const allCollisions = [...pointerCollisions, ...rectCollisions];
     const columnIds = columns.map(c => c.id);
-    const columnCollision = pointerCollisions.find(
+
+    // First try to find a column collision
+    const columnCollision = allCollisions.find(
       collision => columnIds.includes(collision.id as TodoStatus)
     );
 
@@ -324,8 +330,8 @@ export default function KanbanBoard({
       return [columnCollision];
     }
 
-    // Fall back to rect intersection for cards
-    return rectIntersection(args);
+    // If no column found, return all collisions (for card-to-card)
+    return allCollisions.length > 0 ? allCollisions : [];
   };
 
   const getTodosByStatus = (status: TodoStatus) => {
@@ -345,23 +351,34 @@ export default function KanbanBoard({
     setActiveId(null);
     setOverId(null);
 
-    if (!over) return;
+    console.log('Drag ended:', { activeId: active.id, overId: over?.id });
+
+    if (!over) {
+      console.log('No drop target');
+      return;
+    }
 
     const todoId = active.id as string;
     const targetId = over.id as string;
     const draggedTodo = todos.find((t) => t.id === todoId);
     const previousStatus = draggedTodo?.status || 'todo';
 
+    console.log('Dragged todo:', { todoId, targetId, previousStatus, draggedTodo });
+
     // Check if dropped on a column
     const column = columns.find((c) => c.id === targetId);
     if (column) {
+      console.log('Dropped on column:', column.id, 'Previous status:', previousStatus);
       // Only change if different column
       if (previousStatus !== column.id) {
+        console.log('Calling onStatusChange:', todoId, column.id);
         // Celebrate if moving to done column
         if (column.id === 'done') {
           setCelebrating(true);
         }
         onStatusChange(todoId, column.id);
+      } else {
+        console.log('Same column, no change needed');
       }
       return;
     }
@@ -370,14 +387,18 @@ export default function KanbanBoard({
     const overTodo = todos.find((t) => t.id === targetId);
     if (overTodo) {
       const targetStatus = overTodo.status || 'todo';
+      console.log('Dropped on card:', { targetId, targetStatus });
       // Only change if different column
       if (previousStatus !== targetStatus) {
+        console.log('Calling onStatusChange:', todoId, targetStatus);
         // Celebrate if moving to done column
         if (targetStatus === 'done') {
           setCelebrating(true);
         }
         onStatusChange(todoId, targetStatus);
       }
+    } else {
+      console.log('No matching column or card found for targetId:', targetId);
     }
   };
 
