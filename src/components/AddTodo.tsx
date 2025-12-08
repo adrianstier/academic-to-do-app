@@ -26,12 +26,12 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="What needs to be done?"
-        className="flex-1 px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
+        className="flex-1 px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#0033A0]"
       />
       <button
         type="submit"
         disabled={!text.trim()}
-        className="px-4 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-3 bg-[#D4A853] text-white rounded-lg hover:bg-[#c49943] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <Plus className="w-5 h-5" />
       </button>

@@ -322,27 +322,27 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+      <header className="sticky top-0 z-40 bg-[#0033A0] text-white">
         <div className={`mx-auto px-4 sm:px-6 py-3 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-2xl'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              <h1 className="text-lg font-semibold">
                 Tasks
               </h1>
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-blue-200">
                 {userName}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               {/* View toggle */}
-              <div className="flex bg-neutral-100 dark:bg-neutral-800 rounded-md p-0.5">
+              <div className="flex bg-blue-800 rounded-md p-0.5">
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-1.5 rounded ${
                     viewMode === 'list'
-                      ? 'bg-white dark:bg-neutral-700 shadow-sm'
-                      : 'text-neutral-500 hover:text-neutral-700'
+                      ? 'bg-white text-[#0033A0]'
+                      : 'text-blue-200 hover:text-white'
                   }`}
                 >
                   <LayoutList className="w-4 h-4" />
@@ -351,8 +351,8 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                   onClick={() => setViewMode('kanban')}
                   className={`p-1.5 rounded ${
                     viewMode === 'kanban'
-                      ? 'bg-white dark:bg-neutral-700 shadow-sm'
-                      : 'text-neutral-500 hover:text-neutral-700'
+                      ? 'bg-white text-[#0033A0]'
+                      : 'text-blue-200 hover:text-white'
                   }`}
                 >
                   <LayoutGrid className="w-4 h-4" />
@@ -362,8 +362,8 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               {/* Connection status */}
               <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs ${
                 connected
-                  ? 'text-green-600 bg-green-50 dark:bg-green-900/20'
-                  : 'text-red-600 bg-red-50 dark:bg-red-900/20'
+                  ? 'text-green-300 bg-green-900/30'
+                  : 'text-red-300 bg-red-900/30'
               }`}>
                 {connected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
                 {connected ? 'Live' : 'Offline'}
@@ -397,7 +397,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                 onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 text-sm rounded ${
                   filter === f
-                    ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+                    ? 'bg-[#0033A0] text-white'
                     : 'text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800'
                 }`}
               >

@@ -221,11 +221,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       <div className="w-full max-w-sm">
         {screen === 'users' && (
           <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-            <div className="p-6 border-b border-neutral-100 dark:border-neutral-800">
-              <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+            <div className="p-6 bg-[#0033A0] text-white">
+              <h1 className="text-xl font-semibold">
                 Sign In
               </h1>
-              <p className="text-sm text-neutral-500 mt-1">
+              <p className="text-sm text-blue-200 mt-1">
                 Select your account
               </p>
             </div>
@@ -266,7 +266,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   setConfirmPin(['', '', '', '']);
                   setError('');
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 text-[#D4A853] hover:bg-[#D4A853]/10 rounded-lg transition-colors font-medium"
               >
                 <UserPlus className="w-4 h-4" />
                 Add New User
@@ -310,7 +310,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   onChange={(e) => handlePinChange(index, e.target.value, pinRefs, pin, setPin)}
                   onKeyDown={(e) => handlePinKeyDown(e, index, pinRefs, pin)}
                   disabled={lockoutSeconds > 0 || isSubmitting}
-                  className="w-14 h-16 text-center text-2xl font-bold rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-blue-500"
+                  className="w-14 h-16 text-center text-2xl font-bold rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-[#0033A0]"
                 />
               ))}
             </div>
@@ -368,7 +368,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       value={digit}
                       onChange={(e) => handlePinChange(index, e.target.value, newPinRefs, newUserPin, setNewUserPin)}
                       onKeyDown={(e) => handlePinKeyDown(e, index, newPinRefs, newUserPin)}
-                      className="w-12 h-14 text-center text-xl font-bold rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-blue-500"
+                      className="w-12 h-14 text-center text-xl font-bold rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-[#0033A0]"
                     />
                   ))}
                 </div>
@@ -389,7 +389,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       value={digit}
                       onChange={(e) => handlePinChange(index, e.target.value, confirmPinRefs, confirmPin, setConfirmPin)}
                       onKeyDown={(e) => handlePinKeyDown(e, index, confirmPinRefs, confirmPin)}
-                      className="w-12 h-14 text-center text-xl font-bold rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-blue-500"
+                      className="w-12 h-14 text-center text-xl font-bold rounded-lg border-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-[#0033A0]"
                     />
                   ))}
                 </div>
@@ -405,7 +405,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               <button
                 onClick={handleRegister}
                 disabled={isSubmitting}
-                className="w-full py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors"
+                className="w-full py-3 bg-[#0033A0] text-white rounded-lg font-medium hover:bg-[#002878] disabled:opacity-50 transition-colors"
               >
                 {isSubmitting ? 'Creating...' : 'Create Account'}
               </button>
