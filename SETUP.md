@@ -18,7 +18,10 @@ CREATE TABLE users (
   pin_hash TEXT NOT NULL,
   color TEXT DEFAULT '#0033A0',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  last_login TIMESTAMP WITH TIME ZONE
+  last_login TIMESTAMP WITH TIME ZONE,
+  streak_count INTEGER DEFAULT 0,
+  streak_last_date DATE,
+  welcome_shown_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Enable Row Level Security for users
@@ -94,3 +97,14 @@ Open [http://localhost:3000](http://localhost:3000) in multiple browser windows 
 - **Multi-user**: Each user has their own account with color-coded avatar
 - **Optimistic updates**: UI updates immediately while syncing in background
 - **Rate limiting**: 3 failed PIN attempts triggers 30-second lockout
+
+## Migrating Existing Database
+
+If you already have the database set up, run this migration to add the new columns:
+
+```sql
+-- Add streak and notification tracking columns
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_count INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_date DATE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS welcome_shown_at TIMESTAMP WITH TIME ZONE;
+```

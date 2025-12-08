@@ -31,6 +31,9 @@ export interface AuthUser {
   color: string;
   created_at: string;
   last_login?: string;
+  streak_count?: number;
+  streak_last_date?: string;
+  welcome_shown_at?: string;
 }
 
 export const PRIORITY_CONFIG: Record<TodoPriority, { label: string; color: string; bgColor: string; icon: string }> = {

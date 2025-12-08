@@ -20,7 +20,7 @@ export default function Home() {
         // Verify user still exists
         const { data } = await supabase
           .from('users')
-          .select('id, name, color, created_at, last_login')
+          .select('id, name, color, created_at, last_login, streak_count, streak_last_date, welcome_shown_at')
           .eq('id', session.userId)
           .single();
 

@@ -7,6 +7,9 @@ import { Todo, TodoStatus, TodoPriority, ViewMode } from '@/types/todo';
 import TodoItem from './TodoItem';
 import AddTodo from './AddTodo';
 import KanbanBoard from './KanbanBoard';
+import CelebrationEffect from './CelebrationEffect';
+import ProgressSummary from './ProgressSummary';
+import WelcomeBackNotification, { shouldShowWelcomeNotification } from './WelcomeBackNotification';
 import { v4 as uuidv4 } from 'uuid';
 import {
   LayoutList,
@@ -16,7 +19,8 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  Filter
+  Filter,
+  Trophy
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import UserSwitcher from './UserSwitcher';
@@ -35,6 +39,12 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [users, setUsers] = useState<string[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
+
+  // Feature states: celebration, progress summary, welcome back
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationText, setCelebrationText] = useState('');
+  const [showProgressSummary, setShowProgressSummary] = useState(false);
+  const [showWelcomeBack, setShowWelcomeBack] = useState(false);
 
   const fetchTodos = useCallback(async () => {
     if (!isSupabaseConfigured()) {
@@ -73,6 +83,11 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       await fetchTodos();
       if (isMounted) {
         setUsers((prev) => [...new Set([...prev, userName])]);
+
+        // Check if we should show welcome back notification
+        if (shouldShowWelcomeNotification(currentUser)) {
+          setShowWelcomeBack(true);
+        }
       }
     };
 
@@ -161,6 +176,12 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       prev.map((todo) => (todo.id === id ? { ...todo, status, completed } : todo))
     );
 
+    // Trigger celebration when moving to done
+    if (status === 'done' && oldTodo && !oldTodo.completed) {
+      setCelebrationText(oldTodo.text);
+      setShowCelebration(true);
+    }
+
     const { error: updateError } = await supabase
       .from('todos')
       .update({ status, completed })
@@ -177,9 +198,17 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   };
 
   const toggleTodo = async (id: string, completed: boolean) => {
+    const todoItem = todos.find(t => t.id === id);
+
     setTodos((prev) =>
       prev.map((todo) => (todo.id === id ? { ...todo, completed } : todo))
     );
+
+    // Trigger celebration when marking as complete
+    if (completed && todoItem) {
+      setCelebrationText(todoItem.text);
+      setShowCelebration(true);
+    }
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -305,20 +334,20 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-warm-cream via-white to-warm-gold/10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[#0033A0] flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-[20px] bg-gradient-to-br from-warm-gold to-warm-amber flex items-center justify-center shadow-lg shadow-warm-gold/30">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              className="w-8 h-8 border-3 border-white border-t-transparent rounded-full"
+              className="w-10 h-10 border-4 border-white border-t-transparent rounded-full"
             />
           </div>
-          <p className="text-slate-500 dark:text-slate-400">Loading your tasks...</p>
+          <p className="text-warm-brown/70 dark:text-slate-400 font-medium">Loading your tasks...</p>
         </motion.div>
       </div>
     );
@@ -326,20 +355,20 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-warm-cream via-white to-warm-gold/10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-200 dark:border-slate-800"
+          className="bg-white dark:bg-slate-900 p-8 rounded-[24px] shadow-xl max-w-md w-full text-center border border-warm-gold/20 dark:border-slate-800"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-[16px] bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+          <h2 className="text-xl font-bold text-warm-brown dark:text-slate-100 mb-2">
             Configuration Required
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-4">{error}</p>
-          <p className="text-sm text-slate-400 dark:text-slate-500">
+          <p className="text-warm-brown/60 dark:text-slate-400 mb-4">{error}</p>
+          <p className="text-sm text-warm-brown/40 dark:text-slate-500">
             See SETUP.md for instructions
           </p>
         </motion.div>
@@ -348,25 +377,25 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-warm-cream via-white to-warm-gold/10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
-        {/* Allstate Blue Top Bar */}
-        <div className="h-1 bg-[#0033A0]" />
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/95 dark:bg-slate-900/90 border-b border-warm-gold/20 dark:border-slate-800/50 shadow-sm">
+        {/* Warm Gold Top Bar */}
+        <div className="h-1.5 bg-gradient-to-r from-warm-gold via-warm-amber to-warm-gold" />
         <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-7xl' : 'max-w-3xl'}`}>
           <div className="flex items-center justify-between">
             {/* Logo & User */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#0033A0] flex items-center justify-center shadow-lg shadow-[#0033A0]/20">
-                  <span className="text-white font-bold text-lg">B</span>
+                <div className="w-12 h-12 rounded-[16px] bg-gradient-to-br from-warm-gold to-warm-amber flex items-center justify-center shadow-lg shadow-warm-gold/30">
+                  <span className="text-white font-bold text-xl">B</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                  <h1 className="text-xl font-bold text-warm-brown dark:text-slate-100">
                     Bealer Agency
                   </h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Welcome, <span className="font-medium text-[#0033A0] dark:text-blue-400">{userName}</span>
+                  <p className="text-xs text-warm-brown/60 dark:text-slate-400">
+                    Welcome, <span className="font-semibold text-warm-gold dark:text-amber-400">{userName}</span>
                   </p>
                 </div>
               </div>
@@ -374,16 +403,27 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
+              {/* Progress Summary Button */}
+              <motion.button
+                onClick={() => setShowProgressSummary(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-warm-gold to-warm-amber text-white rounded-[12px] shadow-md shadow-warm-gold/30 hover:shadow-lg hover:shadow-warm-gold/40 transition-all font-medium"
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="text-sm hidden sm:inline">Progress</span>
+              </motion.button>
+
               {/* View Switcher */}
-              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+              <div className="flex bg-warm-cream dark:bg-slate-800 rounded-[12px] p-1">
                 <motion.button
                   onClick={() => setViewMode('list')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`p-2 rounded-md transition-all ${
+                  className={`p-2 rounded-[8px] transition-all ${
                     viewMode === 'list'
-                      ? 'bg-white dark:bg-slate-700 shadow-sm text-[#0033A0] dark:text-blue-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-warm-gold dark:text-amber-400'
+                      : 'text-warm-brown/50 dark:text-slate-400 hover:text-warm-brown dark:hover:text-slate-300'
                   }`}
                 >
                   <LayoutList className="w-5 h-5" />
@@ -392,10 +432,10 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                   onClick={() => setViewMode('kanban')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`p-2 rounded-md transition-all ${
+                  className={`p-2 rounded-[8px] transition-all ${
                     viewMode === 'kanban'
-                      ? 'bg-white dark:bg-slate-700 shadow-sm text-[#0033A0] dark:text-blue-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-warm-gold dark:text-amber-400'
+                      : 'text-warm-brown/50 dark:text-slate-400 hover:text-warm-brown dark:hover:text-slate-300'
                   }`}
                 >
                   <LayoutGrid className="w-5 h-5" />
@@ -403,7 +443,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               </div>
 
               {/* Connection Status */}
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-[12px] ${
                 connected
                   ? 'bg-emerald-50 dark:bg-emerald-900/20'
                   : 'bg-red-50 dark:bg-red-900/20'
@@ -440,36 +480,36 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-3 gap-4 mb-8"
         >
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-[20px] p-5 border border-warm-gold/20 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-warm-gold/40 transition-all">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#0033A0]/10 dark:bg-[#0033A0]/20 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-[#0033A0] dark:text-blue-400" />
+              <div className="w-12 h-12 rounded-[12px] bg-gradient-to-br from-warm-gold/20 to-warm-amber/20 flex items-center justify-center">
+                <Clock className="w-6 h-6 text-warm-gold" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.total}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Total Tasks</p>
+                <p className="text-2xl font-bold text-warm-brown dark:text-slate-100">{stats.total}</p>
+                <p className="text-xs text-warm-brown/60 dark:text-slate-400 font-medium">Total Tasks</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-[20px] p-5 border border-emerald-200/50 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-12 h-12 rounded-[12px] bg-gradient-to-br from-emerald-100 to-emerald-200/50 dark:from-emerald-900/50 dark:to-emerald-900/30 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.completed}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Completed</p>
+                <p className="text-2xl font-bold text-warm-brown dark:text-slate-100">{stats.completed}</p>
+                <p className="text-xs text-warm-brown/60 dark:text-slate-400 font-medium">Completed</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-[20px] p-5 border border-red-200/50 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-red-300 transition-all">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              <div className="w-12 h-12 rounded-[12px] bg-gradient-to-br from-red-100 to-red-200/50 dark:from-red-900/50 dark:to-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.overdue}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Overdue</p>
+                <p className="text-2xl font-bold text-warm-brown dark:text-slate-100">{stats.overdue}</p>
+                <p className="text-xs text-warm-brown/60 dark:text-slate-400 font-medium">Overdue</p>
               </div>
             </div>
           </div>
@@ -492,16 +532,16 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
             animate={{ opacity: 1 }}
             className="flex items-center gap-2 mb-6"
           >
-            <Filter className="w-4 h-4 text-slate-400" />
-            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+            <Filter className="w-4 h-4 text-warm-brown/40" />
+            <div className="flex bg-warm-cream dark:bg-slate-800 rounded-[12px] p-1">
               {(['all', 'active', 'completed'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  className={`px-4 py-2 text-sm font-medium rounded-[8px] transition-all ${
                     filter === f
-                      ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                      ? 'bg-white dark:bg-slate-700 text-warm-brown dark:text-slate-100 shadow-sm'
+                      : 'text-warm-brown/50 dark:text-slate-400 hover:text-warm-brown dark:hover:text-slate-300'
                   }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -523,18 +563,39 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
             >
               {filteredTodos.length === 0 ? (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center py-16"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-20"
                 >
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                    <CheckCircle2 className="w-10 h-10 text-slate-300 dark:text-slate-600" />
+                  {/* Illustrated empty state with protective hand motif */}
+                  <div className="relative w-32 h-32 mx-auto mb-6">
+                    {/* Background glow */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-warm-gold/20 to-warm-amber/10 rounded-full blur-2xl" />
+                    {/* Main circle with hand icon suggestion */}
+                    <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-warm-cream to-warm-gold/20 border-2 border-warm-gold/30 flex items-center justify-center">
+                      <motion.div
+                        animate={{
+                          y: [0, -5, 0],
+                          rotate: [0, 5, 0, -5, 0]
+                        }}
+                        transition={{
+                          duration: 4,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                        className="w-16 h-16 rounded-[16px] bg-gradient-to-br from-warm-gold to-warm-amber flex items-center justify-center shadow-lg shadow-warm-gold/30"
+                      >
+                        <CheckCircle2 className="w-8 h-8 text-white" />
+                      </motion.div>
+                    </div>
                   </div>
-                  <p className="text-slate-500 dark:text-slate-400 mb-2">
-                    {filter === 'all' ? 'No tasks yet' : `No ${filter} tasks`}
-                  </p>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
-                    {filter === 'all' ? 'Add your first task above!' : 'Try changing the filter'}
+                  <h3 className="text-xl font-semibold text-warm-brown dark:text-slate-200 mb-2">
+                    {filter === 'all' ? "You're all set!" : `No ${filter} tasks`}
+                  </h3>
+                  <p className="text-warm-brown/60 dark:text-slate-400 max-w-xs mx-auto">
+                    {filter === 'all'
+                      ? "Add your first task above and we'll help you stay on track."
+                      : 'Try changing the filter to see more tasks'}
                   </p>
                 </motion.div>
               ) : (
@@ -581,6 +642,32 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Celebration Effect */}
+      <CelebrationEffect
+        show={showCelebration}
+        onComplete={() => setShowCelebration(false)}
+        taskText={celebrationText}
+      />
+
+      {/* Progress Summary Modal */}
+      <ProgressSummary
+        show={showProgressSummary}
+        onClose={() => setShowProgressSummary(false)}
+        todos={todos}
+        currentUser={currentUser}
+        onUserUpdate={onUserChange}
+      />
+
+      {/* Welcome Back Notification */}
+      <WelcomeBackNotification
+        show={showWelcomeBack}
+        onClose={() => setShowWelcomeBack(false)}
+        onViewProgress={() => setShowProgressSummary(true)}
+        todos={todos}
+        currentUser={currentUser}
+        onUserUpdate={onUserChange}
+      />
     </div>
   );
 }
