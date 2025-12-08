@@ -116,3 +116,55 @@ ALTER TABLE todos ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'todo';
 ALTER TABLE todos ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'medium';
 ALTER TABLE todos ADD COLUMN IF NOT EXISTS assigned_to TEXT;
 ```
+
+## Outlook Add-in Setup
+
+The app includes a Microsoft Outlook add-in that uses AI to convert emails into tasks.
+
+### Environment Variables for Outlook Add-in
+
+Add these to your `.env.local` (and Railway environment):
+
+```
+# Anthropic API (for AI email parsing)
+ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Outlook Add-in API Key (shared secret for add-in authentication)
+OUTLOOK_ADDON_API_KEY=your-secure-random-key
+```
+
+### Installing the Add-in in Outlook
+
+1. **Get the manifest file**: Download from `https://your-deployed-url/outlook/manifest.xml`
+
+2. **For Microsoft 365 (web/desktop)**:
+   - Go to Outlook > Settings (gear icon) > View all Outlook settings
+   - Select "Mail" > "Customize actions" > "Add-ins"
+   - Click "Get add-ins" > "My add-ins" > "Add a custom add-in" > "Add from URL"
+   - Enter: `https://your-deployed-url/outlook/manifest.xml`
+
+3. **For Outlook Desktop (Windows)**:
+   - File > Manage Add-ins (or "Get Add-ins")
+   - Click "My add-ins" > "Add a custom add-in" > "Add from file"
+   - Select the downloaded manifest.xml file
+
+4. **For Outlook Mac**:
+   - Go to Home > Get Add-ins
+   - Click "My add-ins" > "Add a custom add-in" > "Add from file"
+   - Select the downloaded manifest.xml file
+
+### Using the Add-in
+
+1. Open an email in Outlook
+2. Click the "Add to Todo" button in the ribbon (or find "Bealer Todo" in the add-ins panel)
+3. Click "Analyze Email with AI" to extract task details
+4. Review and edit the suggested task, assignee, priority, and due date
+5. Click "Add Task" to create the task in your todo list
+
+### API Endpoints
+
+- `GET /api/outlook/users` - List all registered users
+- `POST /api/outlook/parse-email` - AI-powered email parsing
+- `POST /api/outlook/create-task` - Create a new task
+
+All endpoints require the `X-API-Key` header matching `OUTLOOK_ADDON_API_KEY`.
