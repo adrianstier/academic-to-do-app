@@ -42,7 +42,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
       <motion.form
         onSubmit={handleSubmit}
         layout
-        className="bg-white dark:bg-zinc-900 rounded-2xl shadow-lg border border-zinc-100 dark:border-zinc-800 overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden"
       >
         {/* Main input area */}
         <div className="relative">
@@ -53,17 +53,17 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
             onChange={(e) => setText(e.target.value)}
             onFocus={handleFocus}
             placeholder="What needs to be done?"
-            className="w-full px-5 py-4 pr-14 text-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none"
+            className="w-full px-5 py-4 pr-14 text-lg bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
           />
           <motion.button
             type="submit"
             disabled={!text.trim()}
             whileHover={{ scale: text.trim() ? 1.05 : 1 }}
             whileTap={{ scale: text.trim() ? 0.95 : 1 }}
-            className={`absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+            className={`absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
               text.trim()
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
+                ? 'bg-[#0033A0] hover:bg-[#002878] text-white shadow-lg shadow-[#0033A0]/20'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
             }`}
           >
             <Plus className="w-5 h-5" />
@@ -78,7 +78,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="border-t border-zinc-100 dark:border-zinc-800"
+              className="border-t border-slate-100 dark:border-slate-800"
             >
               <div className="px-5 py-3 flex items-center gap-3 flex-wrap">
                 {/* Priority selector */}
@@ -88,7 +88,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
                     onClick={() => setShowPriorityMenu(!showPriorityMenu)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                     style={{ color: PRIORITY_CONFIG[priority].color }}
                   >
                     <Flag className="w-4 h-4" />
@@ -102,7 +102,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 top-full mt-2 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-700 overflow-hidden z-50 min-w-[140px]"
+                        className="absolute left-0 top-full mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 min-w-[140px]"
                       >
                         {priorityOptions.map((p) => (
                           <motion.button
@@ -112,9 +112,9 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
                               setPriority(p);
                               setShowPriorityMenu(false);
                             }}
-                            whileHover={{ backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
+                            whileHover={{ backgroundColor: 'rgba(0, 51, 160, 0.1)' }}
                             className={`w-full px-4 py-2.5 flex items-center gap-2 text-left transition-colors ${
-                              priority === p ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
+                              priority === p ? 'bg-[#0033A0]/10 dark:bg-[#0033A0]/20' : ''
                             }`}
                             style={{ color: PRIORITY_CONFIG[p].color }}
                           >
@@ -128,13 +128,13 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
                 </div>
 
                 {/* Due date */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-800">
-                  <Calendar className="w-4 h-4 text-zinc-400" />
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800">
+                  <Calendar className="w-4 h-4 text-slate-400" />
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="text-sm bg-transparent text-zinc-600 dark:text-zinc-300 focus:outline-none"
+                    className="text-sm bg-transparent text-slate-600 dark:text-slate-300 focus:outline-none"
                   />
                 </div>
 
@@ -143,7 +143,7 @@ export default function AddTodo({ onAdd }: AddTodoProps) {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex items-center gap-1.5 text-xs text-zinc-400"
+                  className="flex items-center gap-1.5 text-xs text-slate-400"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Press Enter to add</span>

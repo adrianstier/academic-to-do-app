@@ -306,20 +306,20 @@ export default function TodoList({ userName }: TodoListProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-[#0033A0] flex items-center justify-center shadow-lg">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               className="w-8 h-8 border-3 border-white border-t-transparent rounded-full"
             />
           </div>
-          <p className="text-zinc-500 dark:text-zinc-400">Loading your tasks...</p>
+          <p className="text-slate-500 dark:text-slate-400">Loading your tasks...</p>
         </motion.div>
       </div>
     );
@@ -327,20 +327,20 @@ export default function TodoList({ userName }: TodoListProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-zinc-100 dark:border-zinc-800"
+          className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-200 dark:border-slate-800"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
-          <h2 className="text-xl font-bold text-zinc-800 dark:text-zinc-100 mb-2">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             Configuration Required
           </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mb-4">{error}</p>
-          <p className="text-sm text-zinc-400 dark:text-zinc-500">
+          <p className="text-slate-500 dark:text-slate-400 mb-4">{error}</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">
             See SETUP.md for instructions
           </p>
         </motion.div>
@@ -349,23 +349,25 @@ export default function TodoList({ userName }: TodoListProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-indigo-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-zinc-900/80 border-b border-zinc-200/50 dark:border-zinc-800/50">
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm">
+        {/* Allstate Blue Top Bar */}
+        <div className="h-1 bg-[#0033A0]" />
         <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-7xl' : 'max-w-3xl'}`}>
           <div className="flex items-center justify-between">
             {/* Logo & User */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                  <span className="text-white font-bold text-lg">T</span>
+                <div className="w-10 h-10 rounded-lg bg-[#0033A0] flex items-center justify-center shadow-lg shadow-[#0033A0]/20">
+                  <span className="text-white font-bold text-lg">B</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">
-                    TaskFlow
+                  <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                    Bealer Agency
                   </h1>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Welcome, <span className="font-medium text-indigo-600 dark:text-indigo-400">{userName}</span>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Welcome, <span className="font-medium text-[#0033A0] dark:text-blue-400">{userName}</span>
                   </p>
                 </div>
               </div>
@@ -374,15 +376,15 @@ export default function TodoList({ userName }: TodoListProps) {
             {/* Actions */}
             <div className="flex items-center gap-3">
               {/* View Switcher */}
-              <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
+              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                 <motion.button
                   onClick={() => setViewMode('list')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`p-2 rounded-lg transition-all ${
+                  className={`p-2 rounded-md transition-all ${
                     viewMode === 'list'
-                      ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-[#0033A0] dark:text-blue-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   <LayoutList className="w-5 h-5" />
@@ -391,10 +393,10 @@ export default function TodoList({ userName }: TodoListProps) {
                   onClick={() => setViewMode('kanban')}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`p-2 rounded-lg transition-all ${
+                  className={`p-2 rounded-md transition-all ${
                     viewMode === 'kanban'
-                      ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600 dark:text-indigo-400'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      ? 'bg-white dark:bg-slate-700 shadow-sm text-[#0033A0] dark:text-blue-400'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   <LayoutGrid className="w-5 h-5" />
@@ -402,7 +404,7 @@ export default function TodoList({ userName }: TodoListProps) {
               </div>
 
               {/* Connection Status */}
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
                 connected
                   ? 'bg-emerald-50 dark:bg-emerald-900/20'
                   : 'bg-red-50 dark:bg-red-900/20'
@@ -429,7 +431,7 @@ export default function TodoList({ userName }: TodoListProps) {
                 onClick={handleLogout}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
               >
                 <LogOut className="w-5 h-5" />
               </motion.button>
@@ -446,36 +448,36 @@ export default function TodoList({ userName }: TodoListProps) {
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-3 gap-4 mb-8"
         >
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <div className="w-10 h-10 rounded-lg bg-[#0033A0]/10 dark:bg-[#0033A0]/20 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-[#0033A0] dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.total}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Tasks</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.total}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Total Tasks</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.completed}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Completed</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.completed}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Completed</p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.overdue}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Overdue</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{stats.overdue}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Overdue</p>
               </div>
             </div>
           </div>
@@ -498,16 +500,16 @@ export default function TodoList({ userName }: TodoListProps) {
             animate={{ opacity: 1 }}
             className="flex items-center gap-2 mb-6"
           >
-            <Filter className="w-4 h-4 text-zinc-400" />
-            <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
               {(['all', 'active', 'completed'] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
                     filter === f
-                      ? 'bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 shadow-sm'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                      ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                   }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -533,13 +535,13 @@ export default function TodoList({ userName }: TodoListProps) {
                   animate={{ opacity: 1 }}
                   className="text-center py-16"
                 >
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                    <CheckCircle2 className="w-10 h-10 text-zinc-300 dark:text-zinc-600" />
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <CheckCircle2 className="w-10 h-10 text-slate-300 dark:text-slate-600" />
                   </div>
-                  <p className="text-zinc-500 dark:text-zinc-400 mb-2">
+                  <p className="text-slate-500 dark:text-slate-400 mb-2">
                     {filter === 'all' ? 'No tasks yet' : `No ${filter} tasks`}
                   </p>
-                  <p className="text-sm text-zinc-400 dark:text-zinc-500">
+                  <p className="text-sm text-slate-400 dark:text-slate-500">
                     {filter === 'all' ? 'Add your first task above!' : 'Try changing the filter'}
                   </p>
                 </motion.div>
