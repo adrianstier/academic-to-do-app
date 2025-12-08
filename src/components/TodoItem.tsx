@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Check, Trash2, Calendar, User, Flag } from 'lucide-react';
 import { Todo, TodoPriority, PRIORITY_CONFIG } from '@/types/todo';
+import Celebration from './Celebration';
 
 interface TodoItemProps {
   todo: Todo;
@@ -47,13 +48,22 @@ export default function TodoItem({
   onSetPriority,
 }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const priority = todo.priority || 'medium';
   const priorityConfig = PRIORITY_CONFIG[priority];
   const overdue = todo.due_date && isOverdue(todo.due_date, todo.completed);
 
+  const handleToggle = () => {
+    if (!todo.completed) {
+      // Triggering completion - celebrate!
+      setCelebrating(true);
+    }
+    onToggle(todo.id, !todo.completed);
+  };
+
   return (
     <div
-      className={`group bg-white rounded-xl border-2 transition-all ${
+      className={`group relative bg-white rounded-xl border-2 transition-all ${
         todo.completed
           ? 'border-slate-100 opacity-60'
           : overdue
@@ -61,10 +71,11 @@ export default function TodoItem({
             : 'border-slate-100 hover:border-[#0033A0]/30 hover:shadow-md'
       }`}
     >
+      <Celebration trigger={celebrating} onComplete={() => setCelebrating(false)} />
       <div className="flex items-center gap-3 p-4">
         {/* Checkbox */}
         <button
-          onClick={() => onToggle(todo.id, !todo.completed)}
+          onClick={handleToggle}
           className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${
             todo.completed
               ? 'bg-emerald-500 border-emerald-500'

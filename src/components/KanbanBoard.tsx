@@ -28,6 +28,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG } from '@/types/todo';
+import Celebration from './Celebration';
 
 interface KanbanBoardProps {
   todos: Todo[];
@@ -290,6 +291,7 @@ export default function KanbanBoard({
   onSetPriority
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -316,10 +318,16 @@ export default function KanbanBoard({
 
     const todoId = active.id as string;
     const overId = over.id as string;
+    const draggedTodo = todos.find((t) => t.id === todoId);
+    const previousStatus = draggedTodo?.status || 'todo';
 
     // Check if dropped on a column
     const column = columns.find((c) => c.id === overId);
     if (column) {
+      // Celebrate if moving to done column and wasn't already done
+      if (column.id === 'done' && previousStatus !== 'done') {
+        setCelebrating(true);
+      }
       onStatusChange(todoId, column.id);
       return;
     }
@@ -327,20 +335,27 @@ export default function KanbanBoard({
     // Check if dropped on another card
     const overTodo = todos.find((t) => t.id === overId);
     if (overTodo) {
-      onStatusChange(todoId, overTodo.status || 'todo');
+      const targetStatus = overTodo.status || 'todo';
+      // Celebrate if moving to done column and wasn't already done
+      if (targetStatus === 'done' && previousStatus !== 'done') {
+        setCelebrating(true);
+      }
+      onStatusChange(todoId, targetStatus);
     }
   };
 
   const activeTodo = activeId ? todos.find((t) => t.id === activeId) : null;
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="relative">
+      <Celebration trigger={celebrating} onComplete={() => setCelebrating(false)} />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {columns.map((column) => {
           const columnTodos = getTodosByStatus(column.id);
 
@@ -409,12 +424,13 @@ export default function KanbanBoard({
             </motion.div>
           );
         })}
-      </div>
+        </div>
 
-      {/* Drag overlay */}
-      <DragOverlay>
-        {activeTodo && <KanbanCard todo={activeTodo} />}
-      </DragOverlay>
-    </DndContext>
+        {/* Drag overlay */}
+        <DragOverlay>
+          {activeTodo && <KanbanCard todo={activeTodo} />}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }
