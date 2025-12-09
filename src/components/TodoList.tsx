@@ -350,10 +350,10 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               <Link
                 href="/outlook-setup"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-all"
-                title="Install Outlook Add-in"
+                title="Add to Outlook"
               >
                 <Mail className="w-4 h-4" />
-                <span className="hidden sm:inline">Outlook</span>
+                <span className="hidden sm:inline">Add to Outlook</span>
               </Link>
 
               {/* View toggle */}
