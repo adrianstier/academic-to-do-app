@@ -1,302 +1,156 @@
-# To-Do App with Outlook Add-in
+# Bealer Agency Todo List
 
-A complete task management system with:
-1. **Web App** - Next.js frontend for managing tasks
-2. **API Server** - Express + Prisma + SQLite backend
-3. **Outlook Add-in** - Create tasks directly from emails
+A real-time collaborative task management app built for small teams, with an AI-powered Outlook add-in to convert emails into tasks.
 
-## Repository Structure
+## Features
 
-```
-root/
-├── server/           # Express API server
-│   ├── src/
-│   │   ├── index.ts
-│   │   ├── routes/tasks.ts
-│   │   ├── middleware/
-│   │   └── scheduler/reminder.ts
-│   └── prisma/schema.prisma
-├── web/              # Next.js frontend
-│   └── src/
-│       ├── app/
-│       ├── components/
-│       ├── lib/api.ts
-│       └── types/task.ts
-├── outlook-addin/    # Outlook add-in
-│   ├── src/
-│   │   ├── taskpane.ts
-│   │   ├── taskpane.html
-│   │   └── config.ts
-│   └── manifest.xml
-└── README.md
-```
+- **Real-time sync** - Changes appear instantly across all connected clients via Supabase
+- **PIN-based authentication** - Secure 4-digit PIN login per user
+- **User switching** - Quickly switch between team members on shared devices
+- **Kanban board** - Drag-and-drop task management with Todo/In Progress/Done columns
+- **List view** - Traditional list view with filtering and sorting
+- **Task priorities** - Low, Medium, High, and Urgent priority levels
+- **Due dates** - Set and track task deadlines
+- **Assignees** - Assign tasks to team members
+- **Streak tracking** - Daily login streaks with welcome notifications
+- **Outlook Add-in** - Convert emails to tasks using AI (Claude)
 
-## Requirements
+## Tech Stack
 
-- Node.js 18+ (LTS recommended)
-- npm 9+
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL with real-time subscriptions)
+- **AI**: Anthropic Claude API (for email parsing)
+- **Deployment**: Railway
 
-## Setup
+## Quick Start
 
-### 1. Server Setup
+### 1. Clone and Install
 
 ```bash
-cd server
-npm install
-npx prisma generate
-npx prisma db push
-```
-
-Configure environment (optional - defaults work out of the box):
-```bash
-cp .env.example .env
-# Edit .env to set API_KEY if desired
-```
-
-### 2. Web App Setup
-
-```bash
-cd web
+git clone https://github.com/adrianstier/shared-todo-list.git
+cd shared-todo-list
 npm install
 ```
 
-Configure API URL (optional):
+### 2. Configure Environment
+
 ```bash
-cp .env.example .env.local
-# Edit .env.local if API is not on localhost:3001
+cp .env.local.example .env.local
 ```
 
-### 3. Outlook Add-in Setup
-
-```bash
-cd outlook-addin
-npm install
+Edit `.env.local` with your credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+OUTLOOK_ADDON_API_KEY=your-secure-random-key
 ```
 
-Configure API endpoint:
-```bash
-# Edit src/config.ts to set your API URL and API key
-```
+### 3. Set Up Database
 
-#### Add-in Icons
+Run the SQL in `SETUP.md` in your Supabase SQL Editor to create the required tables.
 
-Create icon files in `outlook-addin/assets/`:
-- icon-16.png (16x16)
-- icon-32.png (32x32)
-- icon-64.png (64x64)
-- icon-80.png (80x80)
-- icon-128.png (128x128)
-
-## Running Locally
-
-### Start the Server (Terminal 1)
+### 4. Run Locally
 
 ```bash
-cd server
 npm run dev
 ```
 
-Server runs at: http://localhost:3001
+Open http://localhost:3000
 
-### Start the Web App (Terminal 2)
+## Project Structure
 
-```bash
-cd web
-npm run dev
+```
+shared-todo-list/
+├── public/
+│   └── outlook/              # Outlook add-in static files
+│       ├── manifest.xml      # Web/New Outlook manifest
+│       ├── manifest-desktop.xml  # Classic desktop manifest
+│       ├── taskpane.html     # Add-in UI
+│       └── icon-*.png        # Add-in icons
+├── src/
+│   ├── app/
+│   │   ├── page.tsx          # Main app page
+│   │   ├── outlook-setup/    # Outlook installation instructions
+│   │   └── api/
+│   │       └── outlook/      # Outlook add-in API endpoints
+│   ├── components/
+│   │   ├── TodoList.tsx      # Main todo list component
+│   │   ├── TodoItem.tsx      # Individual task item
+│   │   ├── KanbanBoard.tsx   # Kanban board view
+│   │   ├── AddTodo.tsx       # Add task form
+│   │   ├── LoginScreen.tsx   # PIN authentication
+│   │   └── UserSwitcher.tsx  # User switching dropdown
+│   ├── lib/
+│   │   ├── supabase.ts       # Supabase client
+│   │   └── auth.ts           # PIN hashing utilities
+│   └── types/
+│       └── todo.ts           # TypeScript types
+├── tests/                    # Playwright E2E tests
+├── SETUP.md                  # Detailed setup instructions
+└── package.json
 ```
 
-Web app runs at: http://localhost:3000
+## Outlook Add-in
 
-### Start the Outlook Add-in Dev Server (Terminal 3)
+The Outlook add-in allows you to convert emails into tasks with one click. The AI automatically extracts:
 
-```bash
-cd outlook-addin
-npm run dev
-```
+- **Task description** - Clear, actionable task from email content
+- **Assignee** - Detects who should handle the task
+- **Priority** - Identifies urgency from email content
+- **Due date** - Parses deadlines like "by Friday" or "end of week"
 
-Add-in dev server runs at: https://localhost:3002
+### Installing the Add-in
+
+1. Go to your deployed app's `/outlook-setup` page
+2. Download the appropriate manifest (Web/New Outlook or Classic Desktop)
+3. Go to https://aka.ms/olksideload
+4. Upload the manifest file under "Custom Add-ins"
+
+See `SETUP.md` for detailed instructions.
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/tasks` | Create a new task |
-| GET | `/tasks` | List tasks (supports filters) |
-| GET | `/tasks/:id` | Get a single task |
-| PUT | `/tasks/:id` | Update a task |
-| DELETE | `/tasks/:id` | Delete a task |
+All Outlook API endpoints require the `X-API-Key` header.
 
-### Query Parameters for GET /tasks
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/outlook/users` | GET | List registered users |
+| `/api/outlook/parse-email` | POST | AI-powered email parsing |
+| `/api/outlook/create-task` | POST | Create a new task |
 
-- `status` - Filter by status (todo, in_progress, done)
-- `assignee` - Filter by assignee name
-- `search` - Search in title and description
-
-### API Authentication
-
-Set `API_KEY` in server's `.env` to enable authentication. Include `X-API-KEY` header in requests.
-
-## Sideloading the Outlook Add-in
-
-### Option 1: Outlook on the Web
-
-1. Go to https://outlook.office.com
-2. Open any email
-3. Click the "..." (More actions) button
-4. Select "Get Add-ins"
-5. Click "My add-ins" in the left sidebar
-6. Scroll down to "Custom add-ins"
-7. Click "Add a custom add-in" → "Add from file..."
-8. Select `outlook-addin/dist/manifest.xml` (after running `npm run build`)
-
-### Option 2: Outlook Desktop (Windows)
-
-1. Open Outlook
-2. Go to File → Manage Add-ins
-3. Click "+" and select "Add from file"
-4. Select the manifest.xml file
-
-### Option 3: Using Office Add-in Dev Tools
+## Running Tests
 
 ```bash
-# Install the Office Add-in CLI
-npm install -g office-addin-dev-certs office-addin-debugging
+# Run all tests
+npx playwright test
 
-# Trust the dev certificate (one-time)
-npx office-addin-dev-certs install
+# Run with UI
+npx playwright test --ui
 
-# Sideload to Outlook
-npx office-addin-debugging start outlook-addin/manifest.xml desktop
+# Run specific test file
+npx playwright test tests/core-flow.spec.ts
 ```
 
-## Example Flow
+## Deployment
 
-1. **Start all services** (server, web, outlook-addin)
+The app is configured for Railway deployment:
 
-2. **Create a task from Outlook:**
-   - Open Outlook (web or desktop)
-   - Open any email
-   - Click the "Create To-Do" button in the ribbon
-   - Fill in the task details (title is pre-filled from subject)
-   - Set due date and reminder
-   - Select assignee (Adrian or Assistant)
-   - Click "Create Task"
+1. Push to GitHub
+2. Connect Railway to the repository
+3. Add environment variables in Railway dashboard
+4. Deploy
 
-3. **View the task in the web app:**
-   - Go to http://localhost:3000
-   - See your new task in the list
-   - Click to view/edit details
-   - See the email source information
+## Environment Variables
 
-4. **Manage tasks:**
-   - Change status using the dropdown
-   - Filter by status, assignee, or search
-   - Click a task to edit details
-   - Delete tasks when done
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `ANTHROPIC_API_KEY` | Anthropic API key for Claude |
+| `OUTLOOK_ADDON_API_KEY` | Shared secret for Outlook add-in |
 
-## Task Data Model
+## License
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | Unique identifier (UUID) |
-| title | string | Task title (required) |
-| description | string | Task description |
-| status | enum | todo, in_progress, done |
-| assignee | string | Person assigned (Adrian, Assistant) |
-| dueDate | datetime | When the task is due |
-| reminderTime | datetime | When to send reminder |
-| reminderSent | boolean | Whether reminder was sent |
-| sourceEmailId | string | Outlook email ID (if from email) |
-| sourceEmailFrom | string | Email sender |
-| sourceEmailReceived | datetime | When email was received |
-| createdAt | datetime | Task creation time |
-| updatedAt | datetime | Last update time |
-
-## Reminder System
-
-The server runs a scheduler that checks every minute for tasks with:
-- `reminderTime` <= now
-- `status` != "done"
-- `reminderSent` = false
-
-When found, it logs:
-```
-[REMINDER] Task #<id> (<title>) is due soon for <assignee>
-```
-
-To integrate with email/Slack, modify `server/src/scheduler/reminder.ts`:
-
-```typescript
-import { setReminderHandler } from './scheduler/reminder';
-
-setReminderHandler({
-  async sendReminder(taskId, title, assignee) {
-    // Send to Slack, email, etc.
-  }
-});
-```
-
-## Development
-
-### Server Scripts
-
-```bash
-npm run dev      # Run with hot reload
-npm run build    # Build for production
-npm run start    # Run production build
-npm run db:migrate  # Run Prisma migrations
-npm run db:push     # Push schema to database
-```
-
-### Web Scripts
-
-```bash
-npm run dev      # Start dev server
-npm run build    # Build for production
-npm run start    # Run production build
-```
-
-### Outlook Add-in Scripts
-
-```bash
-npm run dev      # Start dev server (https://localhost:3002)
-npm run build    # Build for production
-```
-
-## Troubleshooting
-
-### Server won't start
-- Check if port 3001 is in use
-- Run `npx prisma db push` to ensure database is created
-
-### Web app can't connect to API
-- Ensure server is running on port 3001
-- Check CORS settings in server/src/index.ts
-
-### Outlook add-in not appearing
-- Ensure dev server is running on https://localhost:3002
-- Accept the self-signed certificate in your browser
-- Clear Outlook add-in cache and reload
-
-### Add-in shows "Loading email..." forever
-- Check browser console for errors
-- Ensure you're viewing an email (not inbox list)
-- Try refreshing the add-in panel
-
-## Production Deployment
-
-### Server
-1. Set `DATABASE_URL` to your production database
-2. Set a secure `API_KEY`
-3. Run `npm run build && npm start`
-
-### Web
-1. Set `NEXT_PUBLIC_API_URL` to your production API
-2. Run `npm run build && npm start`
-
-### Outlook Add-in
-1. Update URLs in `manifest.xml` to production URLs
-2. Update `src/config.ts` with production API URL
-3. Run `npm run build`
-4. Deploy to static hosting (Azure, AWS S3, etc.)
-5. Submit manifest to Microsoft AppSource or deploy to organization
+Private - Bealer Agency

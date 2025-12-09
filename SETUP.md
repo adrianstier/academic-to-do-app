@@ -135,23 +135,31 @@ OUTLOOK_ADDON_API_KEY=your-secure-random-key
 
 ### Installing the Add-in in Outlook
 
-1. **Get the manifest file**: Download from `https://your-deployed-url/outlook/manifest.xml`
+The easiest way to install is via the in-app setup page at `/outlook-setup`.
 
-2. **For Microsoft 365 (web/desktop)**:
-   - Go to Outlook > Settings (gear icon) > View all Outlook settings
-   - Select "Mail" > "Customize actions" > "Add-ins"
-   - Click "Get add-ins" > "My add-ins" > "Add a custom add-in" > "Add from URL"
-   - Enter: `https://your-deployed-url/outlook/manifest.xml`
+#### Quick Method (All Platforms)
 
-3. **For Outlook Desktop (Windows)**:
-   - File > Manage Add-ins (or "Get Add-ins")
-   - Click "My add-ins" > "Add a custom add-in" > "Add from file"
-   - Select the downloaded manifest.xml file
+1. Go to your deployed app's `/outlook-setup` page
+2. Download the manifest file:
+   - **Web / New Outlook**: Use "Download for Web / New Outlook"
+   - **Classic Desktop**: Use "Download for Classic Desktop"
+3. Visit [aka.ms/olksideload](https://aka.ms/olksideload) in your browser
+4. Click **"My add-ins"**
+5. Scroll to **"Custom Addins"** and click **"Add a custom add-in"** → **"Add from File..."**
+6. Select the downloaded manifest file
+7. Click **"Install"**
 
-4. **For Outlook Mac**:
-   - Go to Home > Get Add-ins
-   - Click "My add-ins" > "Add a custom add-in" > "Add from file"
-   - Select the downloaded manifest.xml file
+#### Alternative: Outlook Desktop
+
+1. In Outlook, go to **File** → **Info** → **Manage Add-ins**
+2. This opens the Add-ins dialog in your browser
+3. Follow steps 4-7 from the Quick Method above
+
+#### Note
+
+- The add-in syncs across all your Outlook clients (web, Windows, Mac)
+- On classic Outlook for Windows, it may take up to 24 hours to appear due to caching
+- Personal Microsoft accounts may have restrictions on custom add-ins
 
 ### Using the Add-in
 
