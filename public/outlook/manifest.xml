@@ -21,6 +21,11 @@
   <!-- Support URL -->
   <SupportUrl DefaultValue="https://shared-todo-list-production.up.railway.app"/>
 
+  <!-- App Domains - whitelist our domain -->
+  <AppDomains>
+    <AppDomain>https://shared-todo-list-production.up.railway.app</AppDomain>
+  </AppDomains>
+
   <!-- Outlook Host -->
   <Hosts>
     <Host Name="Mailbox"/>
