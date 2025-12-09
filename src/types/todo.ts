@@ -2,6 +2,8 @@ export type TodoStatus = 'todo' | 'in_progress' | 'done';
 
 export type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 
+export type RecurrencePattern = 'daily' | 'weekly' | 'monthly' | null;
+
 export interface Todo {
   id: string;
   text: string;
@@ -12,7 +14,14 @@ export interface Todo {
   created_by: string;
   assigned_to?: string;
   due_date?: string;
+  notes?: string;
+  recurrence?: RecurrencePattern;
+  updated_at?: string;
+  updated_by?: string;
 }
+
+export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical';
+export type QuickFilter = 'all' | 'my_tasks' | 'due_today' | 'overdue' | 'urgent';
 
 export type ViewMode = 'list' | 'kanban';
 

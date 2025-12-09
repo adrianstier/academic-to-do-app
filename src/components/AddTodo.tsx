@@ -23,7 +23,6 @@ export default function AddTodo({ onAdd, users }: AddTodoProps) {
   const [dueDate, setDueDate] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [showOptions, setShowOptions] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState(true);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [showEnhanced, setShowEnhanced] = useState(false);
   const [enhancedTask, setEnhancedTask] = useState<EnhancedTask | null>(null);
@@ -52,31 +51,31 @@ export default function AddTodo({ onAdd, users }: AddTodoProps) {
     }
   }, [users]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Quick add without AI
+  const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-
-    // If AI is enabled and we have text, enhance it first
-    if (aiEnabled && !showEnhanced) {
-      setIsEnhancing(true);
-      const enhanced = await enhanceTask(text.trim());
-      setIsEnhancing(false);
-
-      if (enhanced) {
-        setEnhancedTask(enhanced);
-        setText(enhanced.text);
-        setPriority(enhanced.priority);
-        if (enhanced.dueDate) setDueDate(enhanced.dueDate);
-        if (enhanced.assignedTo) setAssignedTo(enhanced.assignedTo);
-        setShowEnhanced(true);
-        setShowOptions(true);
-        return; // Show enhanced version for user review
-      }
-    }
-
-    // Submit the task (either enhanced or original)
     onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined);
     resetForm();
+  };
+
+  // AI enhance then add
+  const handleAiEnhance = async () => {
+    if (!text.trim()) return;
+
+    setIsEnhancing(true);
+    const enhanced = await enhanceTask(text.trim());
+    setIsEnhancing(false);
+
+    if (enhanced) {
+      setEnhancedTask(enhanced);
+      setText(enhanced.text);
+      setPriority(enhanced.priority);
+      if (enhanced.dueDate) setDueDate(enhanced.dueDate);
+      if (enhanced.assignedTo) setAssignedTo(enhanced.assignedTo);
+      setShowEnhanced(true);
+      setShowOptions(true);
+    }
   };
 
   const resetForm = () => {
@@ -101,7 +100,7 @@ export default function AddTodo({ onAdd, users }: AddTodoProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl border-2 border-slate-100 overflow-hidden shadow-sm">
+    <form onSubmit={handleQuickAdd} className="bg-white rounded-xl border-2 border-slate-100 overflow-hidden shadow-sm">
       <div className="flex items-center gap-3 p-3">
         <div className="w-6 h-6 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center flex-shrink-0">
           {isEnhancing ? (
@@ -118,24 +117,10 @@ export default function AddTodo({ onAdd, users }: AddTodoProps) {
             if (showEnhanced) setShowEnhanced(false);
           }}
           onFocus={() => setShowOptions(true)}
-          placeholder={aiEnabled ? "Add a task... AI will enhance it" : "Add a new task..."}
+          placeholder="What needs to be done?"
           className="flex-1 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none text-base"
           disabled={isEnhancing}
         />
-
-        {/* AI Toggle */}
-        <button
-          type="button"
-          onClick={() => setAiEnabled(!aiEnabled)}
-          className={`p-2 rounded-lg transition-all ${
-            aiEnabled
-              ? 'bg-[#D4A853]/10 text-[#D4A853] hover:bg-[#D4A853]/20'
-              : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-          }`}
-          title={aiEnabled ? 'AI enhancement enabled' : 'AI enhancement disabled'}
-        >
-          <Sparkles className="w-4 h-4" />
-        </button>
 
         {showEnhanced ? (
           <div className="flex gap-2">
@@ -155,28 +140,41 @@ export default function AddTodo({ onAdd, users }: AddTodoProps) {
             </button>
           </div>
         ) : (
-          <button
-            type="submit"
-            disabled={!text.trim() || isEnhancing}
-            className="px-4 py-2 bg-[#D4A853] hover:bg-[#c49943] disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {isEnhancing ? (
-              <>
+          <div className="flex gap-2">
+            {/* AI Enhance Button */}
+            <button
+              type="button"
+              onClick={handleAiEnhance}
+              disabled={!text.trim() || isEnhancing}
+              className="px-3 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+              title="Use AI to enhance task - add dates, priority, assignee"
+            >
+              {isEnhancing ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="hidden sm:inline">Enhancing...</span>
-              </>
-            ) : (
-              'Add'
-            )}
-          </button>
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">{isEnhancing ? 'Enhancing...' : 'AI'}</span>
+            </button>
+
+            {/* Quick Add Button */}
+            <button
+              type="submit"
+              disabled={!text.trim() || isEnhancing}
+              className="px-4 py-2 bg-[#D4A853] hover:bg-[#c49943] disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+              title="Add task as-is"
+            >
+              Add
+            </button>
+          </div>
         )}
       </div>
 
       {/* Enhanced task indicator */}
       {showEnhanced && enhancedTask?.wasEnhanced && (
-        <div className="mx-3 mb-2 px-3 py-2 bg-[#D4A853]/10 rounded-lg text-sm text-[#D4A853] flex items-center gap-2">
+        <div className="mx-3 mb-2 px-3 py-2 bg-purple-100 rounded-lg text-sm text-purple-700 flex items-center gap-2">
           <Sparkles className="w-4 h-4" />
-          <span>AI enhanced your task. Review and confirm or edit below.</span>
+          <span>AI enhanced your task. Review and confirm, or edit below.</span>
         </div>
       )}
 
