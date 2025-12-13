@@ -27,6 +27,21 @@ export default function WelcomeBackNotification({
   const [pendingCount, setPendingCount] = useState(0);
   const [overdueCount, setOverdueCount] = useState(0);
 
+  const markWelcomeShown = async () => {
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('users')
+      .update({ welcome_shown_at: now })
+      .eq('id', currentUser.id);
+
+    if (!error) {
+      onUserUpdate({
+        ...currentUser,
+        welcome_shown_at: now,
+      });
+    }
+  };
+
   useEffect(() => {
     if (show) {
       // Calculate stats
@@ -50,22 +65,8 @@ export default function WelcomeBackNotification({
       // Mark welcome as shown in database
       markWelcomeShown();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show, todos, currentUser]);
-
-  const markWelcomeShown = async () => {
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from('users')
-      .update({ welcome_shown_at: now })
-      .eq('id', currentUser.id);
-
-    if (!error) {
-      onUserUpdate({
-        ...currentUser,
-        welcome_shown_at: now,
-      });
-    }
-  };
 
   return (
     <AnimatePresence>

@@ -17,6 +17,7 @@ interface Particle {
   rotation: number;
   velocityX: number;
   velocityY: number;
+  isCircle: boolean;
 }
 
 const COLORS = ['#0033A0', '#D4A853', '#059669', '#f59e0b', '#ec4899', '#8b5cf6'];
@@ -41,6 +42,7 @@ export default function Celebration({ trigger, onComplete }: CelebrationProps) {
           rotation: Math.random() * 360,
           velocityX: (Math.random() - 0.5) * 150,
           velocityY: -80 - Math.random() * 60,
+          isCircle: Math.random() > 0.5,
         });
       }
       setParticles(newParticles);
@@ -90,7 +92,7 @@ export default function Celebration({ trigger, onComplete }: CelebrationProps) {
               width: particle.size,
               height: particle.size,
               backgroundColor: particle.color,
-              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+              borderRadius: particle.isCircle ? '50%' : '2px',
             }}
           />
         ))}

@@ -37,12 +37,6 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
     productivity: 0,
   });
 
-  useEffect(() => {
-    if (show) {
-      calculateAndUpdateStreak();
-    }
-  }, [show]);
-
   const calculateAndUpdateStreak = async () => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
@@ -112,6 +106,13 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
       });
     }
   };
+
+  useEffect(() => {
+    if (show) {
+      calculateAndUpdateStreak();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
 
   const getMessage = () => {
     if (stats.completedToday === 0) {
