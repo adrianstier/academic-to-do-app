@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Loader2, Plus } from 'lucide-react';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Loader2, Plus, Mail } from 'lucide-react';
 import { Todo, TodoPriority, PRIORITY_CONFIG, RecurrencePattern, Subtask } from '@/types/todo';
 import Celebration from './Celebration';
+import ContentToSubtasksImporter from './ContentToSubtasksImporter';
 
 interface TodoItemProps {
   todo: Todo;
@@ -81,6 +82,7 @@ export default function TodoItem({
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [isBreakingDown, setIsBreakingDown] = useState(false);
   const [newSubtaskText, setNewSubtaskText] = useState('');
+  const [showContentImporter, setShowContentImporter] = useState(false);
   const priority = todo.priority || 'medium';
   const priorityConfig = PRIORITY_CONFIG[priority];
   const dueDateStatus = todo.due_date ? getDueDateStatus(todo.due_date, todo.completed) : null;
@@ -158,6 +160,14 @@ export default function TodoItem({
     };
     onUpdateSubtasks(todo.id, [...subtasks, newSubtask]);
     setNewSubtaskText('');
+  };
+
+  const handleAddImportedSubtasks = (importedSubtasks: Subtask[]) => {
+    if (!onUpdateSubtasks) return;
+    // Merge imported subtasks with existing ones
+    onUpdateSubtasks(todo.id, [...subtasks, ...importedSubtasks]);
+    setShowSubtasks(true);
+    setShowContentImporter(false);
   };
 
   return (
@@ -441,26 +451,41 @@ export default function TodoItem({
             )}
           </div>
 
-          {/* Break down into subtasks button - full width on mobile */}
-          {onUpdateSubtasks && subtasks.length === 0 && (
-            <button
-              onClick={handleBreakdownTask}
-              disabled={isBreakingDown}
-              className="w-full sm:w-auto text-base sm:text-sm px-4 py-3 sm:py-2 rounded-lg bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300 text-indigo-700 font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-            >
-              {isBreakingDown ? (
-                <>
-                  <Loader2 className="w-5 h-5 sm:w-4 sm:h-4 animate-spin" />
-                  <span>Breaking down...</span>
-                </>
-              ) : (
-                <>
-                  <ListTree className="w-5 h-5 sm:w-4 sm:h-4" />
-                  <span className="sm:hidden">Break into Subtasks</span>
-                  <span className="hidden sm:inline">Break into subtasks</span>
-                </>
+          {/* Subtask action buttons */}
+          {onUpdateSubtasks && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* Break down into subtasks button - only show if no subtasks yet */}
+              {subtasks.length === 0 && (
+                <button
+                  onClick={handleBreakdownTask}
+                  disabled={isBreakingDown}
+                  className="flex-1 sm:flex-initial text-base sm:text-sm px-4 py-3 sm:py-2 rounded-lg bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300 text-indigo-700 font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                >
+                  {isBreakingDown ? (
+                    <>
+                      <Loader2 className="w-5 h-5 sm:w-4 sm:h-4 animate-spin" />
+                      <span>Breaking down...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ListTree className="w-5 h-5 sm:w-4 sm:h-4" />
+                      <span className="sm:hidden">Break into Subtasks</span>
+                      <span className="hidden sm:inline">Break into subtasks</span>
+                    </>
+                  )}
+                </button>
               )}
-            </button>
+
+              {/* Import from Email/Voicemail button */}
+              <button
+                onClick={() => setShowContentImporter(true)}
+                className="flex-1 sm:flex-initial text-base sm:text-sm px-4 py-3 sm:py-2 rounded-lg bg-amber-100 hover:bg-amber-200 active:bg-amber-300 text-amber-700 font-medium flex items-center justify-center gap-2 transition-colors touch-manipulation"
+              >
+                <Mail className="w-5 h-5 sm:w-4 sm:h-4" />
+                <span className="sm:hidden">Import Email/Voicemail</span>
+                <span className="hidden sm:inline">Import Email/Voicemail</span>
+              </button>
+            </div>
           )}
 
           {/* Row 2: Notes */}
@@ -478,6 +503,15 @@ export default function TodoItem({
             </div>
           )}
         </div>
+      )}
+
+      {/* Content to Subtasks Importer Modal */}
+      {showContentImporter && (
+        <ContentToSubtasksImporter
+          onClose={() => setShowContentImporter(false)}
+          onAddSubtasks={handleAddImportedSubtasks}
+          parentTaskText={todo.text}
+        />
       )}
     </div>
   );

@@ -51,8 +51,9 @@ test.describe('Core Functionality Tests', () => {
     const userName = uniqueUserName();
     await registerUser(page, userName);
 
-    // Verify we see the welcome message
-    await expect(page.locator(`text=Welcome, ${userName}`)).toBeVisible();
+    // Verify we see the welcome message (format is "Welcome back, [username]")
+    await expect(page.locator(`text=Welcome back,`)).toBeVisible();
+    await expect(page.locator(`text=${userName}`)).toBeVisible();
     console.log('✓ User registered and main app loaded');
   });
 
@@ -85,8 +86,8 @@ test.describe('Core Functionality Tests', () => {
     await expect(taskLocator).toBeVisible({ timeout: 10000 });
     console.log('✓ Task created and visible');
 
-    // Verify stats updated
-    const statsCard = page.locator('text=Total Tasks').locator('..');
+    // Verify stats are visible (stats card shows "Total" not "Total Tasks")
+    const statsCard = page.locator('text=Total').first();
     await expect(statsCard).toBeVisible();
   });
 
@@ -133,6 +134,11 @@ test.describe('Core Functionality Tests', () => {
     await userBtn.click();
     await page.waitForTimeout(500);
 
+    // Scroll to Sign Out button within the dropdown (dropdown now has max-height with scroll)
+    const dropdown = page.locator('.overflow-y-auto').first();
+    await dropdown.evaluate(el => el.scrollTo(0, el.scrollHeight));
+    await page.waitForTimeout(300);
+
     const signOutBtn = page.locator('button').filter({ hasText: 'Sign Out' });
     await signOutBtn.click();
 
@@ -159,8 +165,8 @@ test.describe('Core Functionality Tests', () => {
     // Take screenshot of PIN modal
     await page.screenshot({ path: 'test-results/core-pin-modal.png', fullPage: true });
 
-    // Verify PIN modal is visible
-    await expect(page.locator('text=Enter PIN to switch')).toBeVisible({ timeout: 5000 });
+    // Verify PIN modal is visible (modal title is "Enter PIN", subtitle is "Enter 4-digit PIN")
+    await expect(page.locator('text=Enter 4-digit PIN')).toBeVisible({ timeout: 5000 });
     console.log('✓ PIN modal displayed correctly');
 
     // Verify PIN inputs are visible (4 inputs)
@@ -181,8 +187,9 @@ test.describe('Core Functionality Tests', () => {
     // Take screenshot after switch
     await page.screenshot({ path: 'test-results/core-after-switch.png', fullPage: true });
 
-    // Verify we switched to user1
-    await expect(page.locator(`text=Welcome, ${user1}`)).toBeVisible({ timeout: 10000 });
+    // Verify we switched to user1 (format is "Welcome back, [username]")
+    await expect(page.locator(`text=Welcome back,`)).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text=${user1}`)).toBeVisible({ timeout: 10000 });
     console.log('✓ Successfully switched users');
   });
 });

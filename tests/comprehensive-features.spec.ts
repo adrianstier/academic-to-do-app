@@ -1,10 +1,55 @@
 import { test, expect, Page } from '@playwright/test';
 
-// Helper function to setup user and navigate to app
-async function setupUser(page: Page, userName: string = 'Test User') {
+// Helper to generate truly unique user names
+function uniqueUserName() {
+  return `CF${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+}
+
+// Helper to register a new user - uses proper auth flow
+async function registerUser(page: Page, userName: string, pin: string = '1234') {
   await page.goto('/');
-  await page.evaluate((name) => localStorage.setItem('userName', name), userName);
-  await page.reload();
+
+  // Wait for login screen
+  const header = page.locator('h1').filter({ hasText: 'Bealer Agency' });
+  await expect(header).toBeVisible({ timeout: 15000 });
+
+  // Click Add New User button
+  const addUserBtn = page.getByRole('button', { name: 'Add New User' });
+  await addUserBtn.click();
+
+  // Wait for register form - look for name input
+  const nameInput = page.locator('input[placeholder="Enter name"]').or(page.locator('input[type="text"]').first());
+  await expect(nameInput).toBeVisible({ timeout: 5000 });
+
+  // Fill name
+  await nameInput.fill(userName);
+
+  // Enter PIN digits (first 4 inputs)
+  const pinInputs = page.locator('input[type="password"]');
+  for (let i = 0; i < 4; i++) {
+    await pinInputs.nth(i).fill(pin[i]);
+  }
+
+  // Confirm PIN (inputs 4-7)
+  for (let i = 4; i < 8; i++) {
+    await pinInputs.nth(i).fill(pin[i - 4]);
+  }
+
+  // Click Create Account button (not heading)
+  const createBtn = page.getByRole('button', { name: 'Create Account' });
+  await createBtn.click();
+
+  // Wait for main app to load
+  const todoInput = page.locator('textarea[placeholder="What needs to be done?"]');
+  await expect(todoInput).toBeVisible({ timeout: 15000 });
+
+  return todoInput;
+}
+
+// Helper function to setup user and navigate to app (using proper registration)
+async function setupUser(page: Page, userName?: string) {
+  const name = userName || uniqueUserName();
+  return registerUser(page, name);
 }
 
 // Helper to wait for app to load (either app or config screen)
@@ -39,16 +84,9 @@ async function isSupabaseConfigured(page: Page): Promise<boolean> {
 test.describe('Comprehensive Feature Tests', () => {
   test.describe('Task Creation (CRUD - Create)', () => {
     test('should create a basic task', async ({ page }) => {
-      await setupUser(page);
-      await waitForAppLoad(page);
+      // setupUser now properly registers and waits for app
+      const input = await setupUser(page);
 
-      if (!(await isSupabaseConfigured(page))) {
-        test.skip();
-        return;
-      }
-
-      const input = page.locator('textarea[placeholder="What needs to be done?"]');
-      await expect(input).toBeVisible();
       await input.fill('Test task creation');
       await page.keyboard.press('Enter');
 
@@ -57,15 +95,7 @@ test.describe('Comprehensive Feature Tests', () => {
     });
 
     test('should create task with priority selection', async ({ page }) => {
-      await setupUser(page);
-      await waitForAppLoad(page);
-
-      if (!(await isSupabaseConfigured(page))) {
-        test.skip();
-        return;
-      }
-
-      const input = page.locator('textarea[placeholder="What needs to be done?"]');
+      const input = await setupUser(page);
       await input.click();
       await input.fill('High priority task');
 

@@ -240,7 +240,7 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50">
+          <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 max-h-[80vh] overflow-y-auto">
             {/* Current user */}
             <div className="p-3 bg-slate-50 border-b border-slate-100">
               <div className="flex items-center gap-3">

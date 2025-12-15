@@ -13,7 +13,10 @@ export interface Subtask {
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, users } = await request.json();
+    const body = await request.json();
+    // Accept both 'text' and 'taskText' for compatibility
+    const text = body.text || body.taskText;
+    const users = body.users;
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json(

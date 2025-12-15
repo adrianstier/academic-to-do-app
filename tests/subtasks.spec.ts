@@ -192,15 +192,19 @@ test.describe('Subtask Feature', () => {
     // Wait for subtasks to appear
     await expect(page.locator('text=Progress')).toBeVisible({ timeout: 30000 });
 
-    // Wait for progress bar to show 0%
-    await expect(page.locator('text=0%')).toBeVisible({ timeout: 5000 });
+    // Wait for progress bar to show 0% (using exact match)
+    const progressText = page.locator('.bg-indigo-50\\/50 span:text-is("0%")');
+    await expect(progressText).toBeVisible({ timeout: 5000 });
 
     // Click first subtask checkbox to complete it
     const firstSubtaskCheckbox = page.locator('.bg-indigo-50\\/50 button[class*="rounded border-2"]').first();
     await firstSubtaskCheckbox.click();
 
-    // Progress should update (no longer 0%)
-    await expect(page.locator('text=0%')).not.toBeVisible({ timeout: 3000 });
+    // Wait for progress to update
+    await page.waitForTimeout(500);
+
+    // Progress should no longer be 0% (should be higher)
+    await expect(progressText).not.toBeVisible({ timeout: 3000 });
   });
 
   test('should delete subtask', async ({ page }) => {
