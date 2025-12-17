@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Loader2, Plus, Mail, Pencil } from 'lucide-react';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil } from 'lucide-react';
 import { Todo, TodoPriority, PRIORITY_CONFIG, RecurrencePattern, Subtask } from '@/types/todo';
 import Celebration from './Celebration';
 import ContentToSubtasksImporter from './ContentToSubtasksImporter';
@@ -177,7 +177,6 @@ export default function TodoItem({
   const [notes, setNotes] = useState(todo.notes || '');
   const [showNotes, setShowNotes] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
-  const [isBreakingDown, setIsBreakingDown] = useState(false);
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [showContentImporter, setShowContentImporter] = useState(false);
   const priority = todo.priority || 'medium';
@@ -201,37 +200,6 @@ export default function TodoItem({
   const subtasks = todo.subtasks || [];
   const completedSubtasks = subtasks.filter(s => s.completed).length;
   const subtaskProgress = subtasks.length > 0 ? Math.round((completedSubtasks / subtasks.length) * 100) : 0;
-
-  const handleBreakdownTask = async () => {
-    if (!onUpdateSubtasks) return;
-    setIsBreakingDown(true);
-    try {
-      const response = await fetch('/api/ai/breakdown-task', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskText: todo.text, priority: todo.priority }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.subtasks) {
-          const newSubtasks: Subtask[] = data.subtasks.map((s: { text: string; priority: TodoPriority; estimatedMinutes?: number }, idx: number) => ({
-            id: `${todo.id}-sub-${Date.now()}-${idx}`,
-            text: s.text,
-            completed: false,
-            priority: s.priority,
-            estimatedMinutes: s.estimatedMinutes,
-          }));
-          onUpdateSubtasks(todo.id, newSubtasks);
-          setShowSubtasks(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error breaking down task:', error);
-    } finally {
-      setIsBreakingDown(false);
-    }
-  };
 
   const toggleSubtask = (subtaskId: string) => {
     if (!onUpdateSubtasks) return;
@@ -524,24 +492,6 @@ export default function TodoItem({
                   )}
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
-                  {/* AI Break down button */}
-                  <button
-                    onClick={handleBreakdownTask}
-                    disabled={isBreakingDown}
-                    className="text-xs px-2 py-1.5 rounded-md bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300 text-indigo-700 font-medium flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                  >
-                    {isBreakingDown ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>AI...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ListTree className="w-3.5 h-3.5" />
-                        <span className="hidden xs:inline">AI </span><span>Breakdown</span>
-                      </>
-                    )}
-                  </button>
                   {/* Import button */}
                   <button
                     onClick={() => setShowContentImporter(true)}
