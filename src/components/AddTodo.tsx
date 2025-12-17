@@ -147,7 +147,9 @@ export default function AddTodo({ onAdd, users }: AddTodoProps) {
       }
 
       const data = await response.json();
+      console.log('Smart parse response:', data);
       if (data.success && data.result) {
+        console.log('Subtasks found:', data.result.subtasks?.length || 0);
         return data.result as SmartParseResult;
       }
       return null;
