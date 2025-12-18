@@ -531,6 +531,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId }
             setShowFileImporter(false);
           }}
           users={users}
+          darkMode={darkMode}
         />
       )}
     </>

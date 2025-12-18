@@ -42,6 +42,7 @@ interface FileImporterProps {
     subtasks?: Subtask[]
   ) => void;
   users: string[];
+  darkMode?: boolean;
 }
 
 type FileType = 'audio' | 'pdf' | 'image' | 'unknown';
@@ -79,6 +80,7 @@ export default function FileImporter({
   onClose,
   onCreateTask,
   users,
+  darkMode = false,
 }: FileImporterProps) {
   // File state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -396,26 +398,34 @@ export default function FileImporter({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className={`rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden ${
+        darkMode ? 'bg-slate-800' : 'bg-white'
+      }`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+        <div className={`p-4 border-b flex items-center justify-between flex-shrink-0 ${
+          darkMode ? 'border-slate-700' : 'border-slate-200'
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <FileIcon className="w-5 h-5 text-purple-600" />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              darkMode ? 'bg-purple-900/50' : 'bg-purple-100'
+            }`}>
+              <FileIcon className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-800">Import File</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>Import File</h2>
+              <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                 Upload a voicemail, PDF, or image to create a task
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className={`p-2 rounded-lg transition-colors ${
+              darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'
+            }`}
             aria-label="Close"
           >
-            <X className="w-5 h-5 text-slate-500" />
+            <X className={`w-5 h-5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
           </button>
         </div>
 
@@ -430,30 +440,38 @@ export default function FileImporter({
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer
                 ${isDragging
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-slate-300 hover:border-purple-400 hover:bg-purple-50/50'
+                  ? 'border-purple-500 bg-purple-500/10'
+                  : darkMode
+                    ? 'border-slate-600 hover:border-purple-400 hover:bg-purple-500/10'
+                    : 'border-slate-300 hover:border-purple-400 hover:bg-purple-50/50'
                 }`}
             >
-              <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${isDragging ? 'text-purple-500' : 'text-slate-400'}`} />
-              <p className="font-medium text-slate-700 text-lg">
+              <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${isDragging ? 'text-purple-500' : darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+              <p className={`font-medium text-lg ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                 {isDragging ? 'Drop your file here' : 'Drop your file here'}
               </p>
-              <p className="text-slate-500 mt-2">or click to browse</p>
+              <p className={`mt-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>or click to browse</p>
               <div className="flex flex-wrap gap-2 justify-center mt-4">
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm flex items-center gap-1">
+                <span className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
+                  darkMode ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-700'
+                }`}>
                   <FileAudio className="w-4 h-4" />
                   Audio
                 </span>
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1">
+                <span className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
+                  darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'
+                }`}>
                   <FileText className="w-4 h-4" />
                   PDF
                 </span>
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-1">
+                <span className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
+                  darkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700'
+                }`}>
                   <File className="w-4 h-4" />
                   Image
                 </span>
               </div>
-              <p className="text-sm text-slate-400 mt-3">
+              <p className={`text-sm mt-3 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                 Max 25MB
               </p>
               <input
@@ -470,7 +488,7 @@ export default function FileImporter({
           {status === 'idle' && selectedFile && (
             <div className="space-y-4">
               {/* File preview */}
-              <div className="p-4 bg-slate-50 rounded-xl">
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
                 <div className="flex items-center gap-4">
                   {fileType === 'audio' ? (
                     <button
@@ -482,20 +500,22 @@ export default function FileImporter({
                     </button>
                   ) : (
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center
-                                  ${fileType === 'pdf' ? 'bg-red-100' : 'bg-blue-100'}`}>
-                      <FileIcon className={`w-6 h-6 ${fileType === 'pdf' ? 'text-red-600' : 'text-blue-600'}`} />
+                                  ${fileType === 'pdf'
+                                    ? darkMode ? 'bg-red-900/50' : 'bg-red-100'
+                                    : darkMode ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
+                      <FileIcon className={`w-6 h-6 ${fileType === 'pdf' ? 'text-red-500' : 'text-blue-500'}`} />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-700 truncate">{selectedFile.name}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className={`font-medium truncate ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{selectedFile.name}</p>
+                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       {(selectedFile.size / 1024 / 1024).toFixed(1)} MB •{' '}
                       {fileType === 'audio' ? 'Audio' : fileType === 'pdf' ? 'PDF' : 'Image'}
                     </p>
                   </div>
                   <button
                     onClick={handleClear}
-                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    className={`p-2 transition-colors ${darkMode ? 'text-slate-500 hover:text-red-400' : 'text-slate-400 hover:text-red-500'}`}
                     aria-label="Remove file"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -527,25 +547,30 @@ export default function FileImporter({
           {(status === 'processing' || status === 'parsing') && (
             <div className="p-8 text-center">
               <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
-              <p className="font-medium text-slate-700 text-lg">{getProcessingText()}</p>
-              <p className="text-sm text-slate-500 mt-2">This may take a moment</p>
+              <p className={`font-medium text-lg ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{getProcessingText()}</p>
+              <p className={`text-sm mt-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>This may take a moment</p>
             </div>
           )}
 
           {/* Error state */}
           {status === 'error' && (
             <div className="space-y-4">
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <div className={`p-4 border rounded-xl flex items-start gap-3 ${
+                darkMode ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'
+              }`}>
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-red-700">Error processing file</p>
-                  <p className="text-sm text-red-600 mt-1">{error}</p>
+                  <p className={`font-medium ${darkMode ? 'text-red-400' : 'text-red-700'}`}>Error processing file</p>
+                  <p className={`text-sm mt-1 ${darkMode ? 'text-red-300' : 'text-red-600'}`}>{error}</p>
                 </div>
               </div>
               <button
                 onClick={handleClear}
-                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700
-                         rounded-xl font-medium transition-colors"
+                className={`w-full py-3 rounded-xl font-medium transition-colors ${
+                  darkMode
+                    ? 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
               >
                 Try Again
               </button>
@@ -557,20 +582,20 @@ export default function FileImporter({
             <div className="space-y-6">
               {/* Extracted text/transcript section */}
               {extractedText && (
-                <div className="p-4 bg-slate-50 rounded-xl">
+                <div className={`p-4 rounded-xl ${darkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-slate-600">
+                    <p className={`text-sm font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                       {fileType === 'audio' ? 'Transcript' : 'Extracted Content'}
                     </p>
                     <button
                       onClick={() => setShowFullText(!showFullText)}
-                      className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                      className="text-sm text-purple-500 hover:text-purple-400 flex items-center gap-1"
                     >
                       {showFullText ? 'Show less' : 'Show more'}
                       {showFullText ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className={`text-sm text-slate-600 italic ${showFullText ? '' : 'line-clamp-3'}`}>
+                  <p className={`text-sm italic ${showFullText ? '' : 'line-clamp-3'} ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                     &ldquo;{extractedText}&rdquo;
                   </p>
                 </div>
@@ -578,22 +603,26 @@ export default function FileImporter({
 
               {/* Summary */}
               {summary && (
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-700">{summary}</p>
+                <div className={`p-3 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-50'}`}>
+                  <p className={`text-sm ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}>{summary}</p>
                 </div>
               )}
 
               {/* Main task editor */}
               <div className="space-y-4">
-                <h3 className="font-medium text-slate-800">Main Task</h3>
+                <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-slate-800'}`}>Main Task</h3>
 
                 <input
                   type="text"
                   value={mainTask.text}
                   onChange={(e) => setMainTask(prev => ({ ...prev, text: e.target.value }))}
                   placeholder="Task description..."
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-800
-                           focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                  className={`w-full px-4 py-3 border rounded-xl
+                           focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 ${
+                             darkMode
+                               ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
+                               : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                           }`}
                 />
 
                 <div className="flex flex-wrap gap-3">
@@ -602,9 +631,11 @@ export default function FileImporter({
                     <select
                       value={mainTask.priority}
                       onChange={(e) => setMainTask(prev => ({ ...prev, priority: e.target.value as TodoPriority }))}
-                      className="appearance-none pl-8 pr-8 py-2 rounded-lg text-sm font-medium cursor-pointer
-                               focus:outline-none focus:ring-2 focus:ring-purple-200 border border-slate-200"
-                      style={{ backgroundColor: priorityConfig.bgColor, color: priorityConfig.color }}
+                      className={`appearance-none pl-8 pr-8 py-2 rounded-lg text-sm font-medium cursor-pointer
+                               focus:outline-none focus:ring-2 focus:ring-purple-500/30 border ${
+                                 darkMode ? 'border-slate-600' : 'border-slate-200'
+                               }`}
+                      style={{ backgroundColor: darkMode ? 'rgb(51 65 85)' : priorityConfig.bgColor, color: priorityConfig.color }}
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -622,10 +653,14 @@ export default function FileImporter({
                       type="date"
                       value={mainTask.dueDate}
                       onChange={(e) => setMainTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                      className="pl-8 pr-3 py-2 rounded-lg text-sm border border-slate-200
-                               focus:outline-none focus:ring-2 focus:ring-purple-200"
+                      className={`pl-8 pr-3 py-2 rounded-lg text-sm border
+                               focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+                                 darkMode
+                                   ? 'bg-slate-700 border-slate-600 text-white'
+                                   : 'bg-white border-slate-200 text-slate-700'
+                               }`}
                     />
-                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <Calendar className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-400'}`} />
                   </div>
 
                   {/* Assignee */}
@@ -633,15 +668,19 @@ export default function FileImporter({
                     <select
                       value={mainTask.assignedTo}
                       onChange={(e) => setMainTask(prev => ({ ...prev, assignedTo: e.target.value }))}
-                      className="appearance-none pl-8 pr-8 py-2 rounded-lg text-sm border border-slate-200
-                               focus:outline-none focus:ring-2 focus:ring-purple-200"
+                      className={`appearance-none pl-8 pr-8 py-2 rounded-lg text-sm border
+                               focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+                                 darkMode
+                                   ? 'bg-slate-700 border-slate-600 text-white'
+                                   : 'bg-white border-slate-200 text-slate-700'
+                               }`}
                     >
                       <option value="">Unassigned</option>
                       {users.map((user) => (
                         <option key={user} value={user}>{user}</option>
                       ))}
                     </select>
-                    <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <User className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-400'}`} />
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none opacity-50" />
                   </div>
                 </div>
@@ -650,12 +689,12 @@ export default function FileImporter({
               {/* Subtasks section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-slate-800">
-                    Subtasks {subtasks.length > 0 && <span className="text-slate-400">({totalSelected} selected)</span>}
+                  <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                    Subtasks {subtasks.length > 0 && <span className={darkMode ? 'text-slate-400' : 'text-slate-400'}>({totalSelected} selected)</span>}
                   </h3>
                   <button
                     onClick={addSubtask}
-                    className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                    className="text-sm text-purple-500 hover:text-purple-400 flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" />
                     Add subtask
@@ -663,7 +702,7 @@ export default function FileImporter({
                 </div>
 
                 {subtasks.length === 0 ? (
-                  <p className="text-sm text-slate-400 py-4 text-center">
+                  <p className={`text-sm py-4 text-center ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                     No subtasks extracted. Click &ldquo;Add subtask&rdquo; to create one manually.
                   </p>
                 ) : (
@@ -673,8 +712,12 @@ export default function FileImporter({
                         key={index}
                         className={`p-3 rounded-lg border transition-colors ${
                           subtask.selected
-                            ? 'border-purple-200 bg-purple-50/50'
-                            : 'border-slate-200 bg-slate-50 opacity-60'
+                            ? darkMode
+                              ? 'border-purple-500/50 bg-purple-900/20'
+                              : 'border-purple-200 bg-purple-50/50'
+                            : darkMode
+                              ? 'border-slate-600 bg-slate-700/50 opacity-60'
+                              : 'border-slate-200 bg-slate-50 opacity-60'
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -683,7 +726,9 @@ export default function FileImporter({
                             className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                               subtask.selected
                                 ? 'bg-purple-500 border-purple-500 text-white'
-                                : 'border-slate-300'
+                                : darkMode
+                                  ? 'border-slate-500'
+                                  : 'border-slate-300'
                             }`}
                           >
                             {subtask.selected && <Check className="w-3 h-3" />}
@@ -695,18 +740,26 @@ export default function FileImporter({
                               value={subtask.text}
                               onChange={(e) => updateSubtask(index, { text: e.target.value })}
                               placeholder="Subtask description..."
-                              className="w-full bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5 text-sm
-                                       focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                              className={`w-full border rounded-lg px-3 py-1.5 text-sm
+                                       focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 ${
+                                         darkMode
+                                           ? 'bg-slate-600 border-slate-500 text-white placeholder-slate-400'
+                                           : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                                       }`}
                             />
 
                             <div className="flex items-center gap-3 mt-2 flex-wrap">
                               <div className="flex items-center gap-1">
-                                <Flag className="w-3 h-3 text-slate-400" />
+                                <Flag className={`w-3 h-3 ${darkMode ? 'text-slate-400' : 'text-slate-400'}`} />
                                 <select
                                   value={subtask.priority}
                                   onChange={(e) => updateSubtask(index, { priority: e.target.value as TodoPriority })}
-                                  className="text-xs px-2 py-1 rounded border border-slate-200 bg-white
-                                           focus:outline-none focus:ring-2 focus:ring-purple-200"
+                                  className={`text-xs px-2 py-1 rounded border
+                                           focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+                                             darkMode
+                                               ? 'bg-slate-600 border-slate-500 text-white'
+                                               : 'bg-white border-slate-200 text-slate-700'
+                                           }`}
                                 >
                                   <option value="low">Low</option>
                                   <option value="medium">Medium</option>
@@ -716,7 +769,7 @@ export default function FileImporter({
                               </div>
 
                               {subtask.estimatedMinutes && (
-                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                <div className={`flex items-center gap-1 text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                                   <Clock className="w-3 h-3" />
                                   {subtask.estimatedMinutes}m
                                 </div>
@@ -726,7 +779,11 @@ export default function FileImporter({
 
                           <button
                             onClick={() => removeSubtask(index)}
-                            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                            className={`p-1 transition-colors ${
+                              darkMode
+                                ? 'text-slate-400 hover:text-red-400'
+                                : 'text-slate-400 hover:text-red-500'
+                            }`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -741,7 +798,11 @@ export default function FileImporter({
 
           {/* General error display */}
           {error && status !== 'error' && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <div className={`mt-4 p-3 border rounded-lg text-sm ${
+              darkMode
+                ? 'bg-red-900/20 border-red-800 text-red-400'
+                : 'bg-red-50 border-red-200 text-red-600'
+            }`}>
               {error}
             </div>
           )}
@@ -749,26 +810,39 @@ export default function FileImporter({
 
         {/* Footer */}
         {status === 'ready' && (
-          <div className="p-4 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+          <div className={`p-4 border-t flex items-center justify-between flex-shrink-0 ${
+            darkMode ? 'border-slate-700' : 'border-slate-200'
+          }`}>
             <button
               onClick={handleClear}
-              className="text-sm text-slate-500 hover:text-slate-700"
+              className={`text-sm transition-colors ${
+                darkMode
+                  ? 'text-slate-400 hover:text-slate-300'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
             >
               Start over
             </button>
             <div className="flex gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  darkMode
+                    ? 'text-slate-300 hover:bg-slate-700'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={!mainTask.text.trim()}
-                className="px-4 py-2 bg-purple-500 hover:bg-purple-600 disabled:bg-slate-200
-                         text-white disabled:text-slate-400 rounded-lg font-medium transition-colors
-                         disabled:cursor-not-allowed flex items-center gap-2"
+                className={`px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg font-medium transition-colors
+                         disabled:cursor-not-allowed flex items-center gap-2 ${
+                           darkMode
+                             ? 'text-white disabled:bg-slate-600 disabled:text-slate-400'
+                             : 'text-white disabled:bg-slate-200 disabled:text-slate-400'
+                         }`}
               >
                 <Check className="w-4 h-4" />
                 Create Task
