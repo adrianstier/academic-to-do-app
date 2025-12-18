@@ -2,13 +2,26 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { ChatMessage, AuthUser, ChatConversation } from '@/types/todo';
+import { ChatMessage, AuthUser, ChatConversation, TapbackType, MessageReaction } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
 import {
   MessageSquare, Send, X, Minimize2, Maximize2, ChevronDown,
-  Users, ChevronLeft, User
+  Users, ChevronLeft, User, Smile, Check, CheckCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Tapback emoji mapping
+const TAPBACK_EMOJIS: Record<TapbackType, string> = {
+  heart: '❤️',
+  thumbsup: '👍',
+  thumbsdown: '👎',
+  haha: '😂',
+  exclamation: '❗',
+  question: '❓',
+};
+
+// Common emojis for quick picker
+const QUICK_EMOJIS = ['😀', '😂', '❤️', '👍', '👎', '🎉', '🔥', '💯', '👏', '🙏', '😊', '🤔'];
 
 interface ChatPanelProps {
   currentUser: AuthUser;
@@ -30,9 +43,13 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   // Track last read timestamp per conversation
   const [lastReadTimestamps, setLastReadTimestamps] = useState<Record<string, string>>({});
+  // Emoji picker and tapback state
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [tapbackMessageId, setTapbackMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   // Other users (excluding current user)
   const otherUsers = useMemo(() =>
@@ -222,6 +239,11 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
                 [msgConvKey]: (prev[msgConvKey] || 0) + 1
               }));
             }
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedMsg = payload.new as ChatMessage;
+            setMessages((prev) => prev.map(m =>
+              m.id === updatedMsg.id ? { ...m, reactions: updatedMsg.reactions, read_by: updatedMsg.read_by } : m
+            ));
           } else if (payload.eventType === 'DELETE') {
             setMessages((prev) => prev.filter((m) => m.id !== payload.old.id));
           }
@@ -285,6 +307,122 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
       sendMessage();
     }
   };
+
+  // Add emoji to message input
+  const addEmoji = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+    inputRef.current?.focus();
+  };
+
+  // Add or toggle tapback reaction on a message
+  const toggleTapback = async (messageId: string, reaction: TapbackType) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const currentReactions = message.reactions || [];
+    const existingReaction = currentReactions.find(r => r.user === currentUser.name);
+
+    let newReactions: MessageReaction[];
+
+    if (existingReaction?.reaction === reaction) {
+      // Remove reaction if clicking same one
+      newReactions = currentReactions.filter(r => r.user !== currentUser.name);
+    } else if (existingReaction) {
+      // Replace reaction
+      newReactions = currentReactions.map(r =>
+        r.user === currentUser.name
+          ? { user: currentUser.name, reaction, created_at: new Date().toISOString() }
+          : r
+      );
+    } else {
+      // Add new reaction
+      newReactions = [...currentReactions, {
+        user: currentUser.name,
+        reaction,
+        created_at: new Date().toISOString()
+      }];
+    }
+
+    // Optimistic update
+    setMessages(prev => prev.map(m =>
+      m.id === messageId ? { ...m, reactions: newReactions } : m
+    ));
+    setTapbackMessageId(null);
+
+    // Update in database
+    const { error } = await supabase
+      .from('messages')
+      .update({ reactions: newReactions })
+      .eq('id', messageId);
+
+    if (error) {
+      console.error('Error updating reaction:', error);
+      // Revert on error
+      setMessages(prev => prev.map(m =>
+        m.id === messageId ? { ...m, reactions: currentReactions } : m
+      ));
+    }
+  };
+
+  // Mark messages as read
+  const markMessagesAsRead = useCallback(async (messageIds: string[]) => {
+    if (messageIds.length === 0) return;
+
+    // Update locally first
+    setMessages(prev => prev.map(m => {
+      if (messageIds.includes(m.id) && m.created_by !== currentUser.name) {
+        const readBy = m.read_by || [];
+        if (!readBy.includes(currentUser.name)) {
+          return { ...m, read_by: [...readBy, currentUser.name] };
+        }
+      }
+      return m;
+    }));
+
+    // Batch update in database
+    for (const messageId of messageIds) {
+      const message = messages.find(m => m.id === messageId);
+      if (message && message.created_by !== currentUser.name) {
+        const readBy = message.read_by || [];
+        if (!readBy.includes(currentUser.name)) {
+          await supabase
+            .from('messages')
+            .update({ read_by: [...readBy, currentUser.name] })
+            .eq('id', messageId);
+        }
+      }
+    }
+  }, [messages, currentUser.name]);
+
+  // Mark visible messages as read when viewing conversation
+  useEffect(() => {
+    if (isOpen && !showConversationList && conversation && filteredMessages.length > 0) {
+      const unreadMessageIds = filteredMessages
+        .filter(m => m.created_by !== currentUser.name && !(m.read_by || []).includes(currentUser.name))
+        .map(m => m.id);
+
+      if (unreadMessageIds.length > 0) {
+        markMessagesAsRead(unreadMessageIds);
+      }
+    }
+  }, [isOpen, showConversationList, conversation, filteredMessages, currentUser.name, markMessagesAsRead]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+      // Close tapback menu when clicking elsewhere
+      if (tapbackMessageId) {
+        setTapbackMessageId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [tapbackMessageId]);
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -556,9 +694,19 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
                           </p>
                         </div>
                       ) : (
-                        groupedMessages.map((msg) => {
+                        groupedMessages.map((msg, msgIndex) => {
                           const isOwn = msg.created_by === currentUser.name;
                           const userColor = getUserColor(msg.created_by);
+                          const reactions = msg.reactions || [];
+                          const readBy = msg.read_by || [];
+                          const isLastOwnMessage = isOwn && msgIndex === groupedMessages.length - 1;
+                          const showTapbackMenu = tapbackMessageId === msg.id;
+
+                          // Group reactions by type
+                          const reactionCounts = reactions.reduce((acc, r) => {
+                            acc[r.reaction] = (acc[r.reaction] || 0) + 1;
+                            return acc;
+                          }, {} as Record<TapbackType, number>);
 
                           return (
                             <motion.div
@@ -566,7 +714,7 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               className={`flex ${isOwn ? 'justify-end' : 'justify-start'}
-                                        ${msg.isGrouped ? 'mt-0.5' : 'mt-3'}`}
+                                        ${msg.isGrouped ? 'mt-0.5' : 'mt-3'} group relative`}
                             >
                               <div className={`flex items-end gap-2 max-w-[80%] ${isOwn ? 'flex-row-reverse' : ''}`}>
                                 {/* Avatar - only show for first in group */}
@@ -596,16 +744,92 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
                                     </div>
                                   )}
 
-                                  {/* Message bubble */}
-                                  <div
-                                    className={`px-3 py-2 rounded-2xl break-words whitespace-pre-wrap
-                                              ${isOwn
-                                                ? 'bg-[var(--accent)] text-white rounded-br-md'
-                                                : 'bg-[var(--surface-2)] text-[var(--foreground)] rounded-bl-md'
-                                              }`}
-                                  >
-                                    {msg.text}
+                                  {/* Message bubble with tapback trigger */}
+                                  <div className="relative">
+                                    <div
+                                      onClick={() => setTapbackMessageId(tapbackMessageId === msg.id ? null : msg.id)}
+                                      className={`px-3 py-2 rounded-2xl break-words whitespace-pre-wrap cursor-pointer
+                                                transition-transform hover:scale-[1.02]
+                                                ${isOwn
+                                                  ? 'bg-[var(--accent)] text-white rounded-br-md'
+                                                  : 'bg-[var(--surface-2)] text-[var(--foreground)] rounded-bl-md'
+                                                }`}
+                                    >
+                                      {msg.text}
+                                    </div>
+
+                                    {/* Tapback menu */}
+                                    <AnimatePresence>
+                                      {showTapbackMenu && (
+                                        <motion.div
+                                          initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                                          exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                                          className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-10
+                                                    bg-[var(--surface)] border border-[var(--border)]
+                                                    rounded-full shadow-lg px-2 py-1 flex gap-1`}
+                                        >
+                                          {(Object.keys(TAPBACK_EMOJIS) as TapbackType[]).map((reaction) => {
+                                            const myReaction = reactions.find(r => r.user === currentUser.name);
+                                            const isSelected = myReaction?.reaction === reaction;
+                                            return (
+                                              <button
+                                                key={reaction}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  toggleTapback(msg.id, reaction);
+                                                }}
+                                                className={`w-8 h-8 flex items-center justify-center rounded-full
+                                                          transition-all hover:scale-125 text-lg
+                                                          ${isSelected ? 'bg-[var(--accent-light)] scale-110' : 'hover:bg-[var(--surface-2)]'}`}
+                                              >
+                                                {TAPBACK_EMOJIS[reaction]}
+                                              </button>
+                                            );
+                                          })}
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+
+                                    {/* Reactions display */}
+                                    {Object.keys(reactionCounts).length > 0 && (
+                                      <div className={`absolute ${isOwn ? 'left-0 -translate-x-1/2' : 'right-0 translate-x-1/2'}
+                                                    -bottom-2 flex gap-0.5 z-5`}>
+                                        <div className="bg-[var(--surface)] border border-[var(--border)]
+                                                      rounded-full px-1.5 py-0.5 flex gap-0.5 shadow-sm text-xs">
+                                          {(Object.entries(reactionCounts) as [TapbackType, number][]).map(([reaction, count]) => (
+                                            <span key={reaction} className="flex items-center">
+                                              {TAPBACK_EMOJIS[reaction]}
+                                              {count > 1 && <span className="text-[10px] ml-0.5 text-[var(--text-muted)]">{count}</span>}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
+
+                                  {/* Read receipts - show for own messages */}
+                                  {isOwn && (
+                                    <div className={`flex items-center gap-1 mt-1 text-xs text-[var(--text-muted)]
+                                                  ${reactions.length > 0 ? 'mt-3' : ''}`}>
+                                      {readBy.length === 0 ? (
+                                        <Check className="w-3 h-3" />
+                                      ) : (
+                                        <>
+                                          <CheckCheck className="w-3 h-3 text-blue-500" />
+                                          {conversation?.type === 'dm' ? (
+                                            <span className="text-[10px]">Read</span>
+                                          ) : readBy.length > 0 && (
+                                            <span className="text-[10px]">
+                                              {readBy.length === 1
+                                                ? `Read by ${readBy[0]}`
+                                                : `Read by ${readBy.length}`}
+                                            </span>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </motion.div>
@@ -637,7 +861,46 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
 
                     {/* Input Area */}
                     <div className="p-3 border-t border-[var(--border)] bg-[var(--surface)]">
+                      {/* Emoji Picker */}
+                      <AnimatePresence>
+                        {showEmojiPicker && (
+                          <motion.div
+                            ref={emojiPickerRef}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="mb-2 p-2 bg-[var(--background)] border border-[var(--border)]
+                                     rounded-xl shadow-lg"
+                          >
+                            <div className="grid grid-cols-6 gap-1">
+                              {QUICK_EMOJIS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => addEmoji(emoji)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-lg
+                                           hover:bg-[var(--surface-2)] transition-colors text-lg"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <div className="flex items-end gap-2">
+                        {/* Emoji button */}
+                        <button
+                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                          disabled={!tableExists}
+                          className={`p-2.5 rounded-full transition-all duration-200
+                                   hover:bg-[var(--surface-2)] disabled:opacity-50
+                                   disabled:cursor-not-allowed
+                                   ${showEmojiPicker ? 'bg-[var(--surface-2)] text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}
+                        >
+                          <Smile className="w-5 h-5" />
+                        </button>
+
                         <textarea
                           ref={inputRef}
                           value={newMessage}
@@ -683,7 +946,7 @@ export default function ChatPanel({ currentUser, users }: ChatPanelProps) {
                         </button>
                       </div>
                       <p className="text-xs text-[var(--text-muted)] mt-2 text-center">
-                        Press Enter to send, Shift+Enter for new line
+                        Tap message to react • Press Enter to send
                       </p>
                     </div>
                   </>

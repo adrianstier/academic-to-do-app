@@ -70,6 +70,15 @@ export const STATUS_CONFIG: Record<TodoStatus, { label: string; color: string; b
   done: { label: 'Done', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
 };
 
+// Tapback reaction types (iMessage-style)
+export type TapbackType = 'heart' | 'thumbsup' | 'thumbsdown' | 'haha' | 'exclamation' | 'question';
+
+export interface MessageReaction {
+  user: string;
+  reaction: TapbackType;
+  created_at: string;
+}
+
 // Chat message types
 export interface ChatMessage {
   id: string;
@@ -78,6 +87,8 @@ export interface ChatMessage {
   created_at: string;
   related_todo_id?: string;
   recipient?: string | null; // null = team chat, username = DM
+  reactions?: MessageReaction[]; // Tapback reactions
+  read_by?: string[]; // Users who have read this message
 }
 
 // Chat conversation type
