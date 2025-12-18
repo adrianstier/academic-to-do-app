@@ -379,11 +379,11 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId }
             darkMode ? 'bg-purple-900/90' : 'bg-purple-100/95'
           }`}>
             <div className="text-center">
-              <Upload className={`w-12 h-12 mx-auto mb-3 ${darkMode ? 'text-purple-300' : 'text-purple-600'}`} />
-              <p className={`font-semibold text-lg ${darkMode ? 'text-purple-200' : 'text-purple-700'}`}>
+              <Upload className={`w-8 h-8 mx-auto mb-2 ${darkMode ? 'text-purple-300' : 'text-purple-600'}`} />
+              <p className={`font-medium text-sm ${darkMode ? 'text-purple-200' : 'text-purple-700'}`}>
                 Drop to import file
               </p>
-              <p className={`text-base mt-1 ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+              <p className={`text-xs mt-0.5 ${darkMode ? 'text-purple-300' : 'text-purple-600'}`}>
                 Audio, PDF, or Image
               </p>
             </div>
