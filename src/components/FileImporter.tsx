@@ -695,7 +695,7 @@ export default function FileImporter({
                               value={subtask.text}
                               onChange={(e) => updateSubtask(index, { text: e.target.value })}
                               placeholder="Subtask description..."
-                              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm
+                              className="w-full bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5 text-sm
                                        focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
                             />
 
