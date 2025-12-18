@@ -52,3 +52,17 @@ prisma/*.db
 **/playwright-report/
 **/playwright/.cache/
 screenshots/
+
+# Supabase
+supabase/.temp/
+
+# iOS
+ios-app/SharedTodoList/Resources/Secrets.plist
+*.xcuserstate
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.p8

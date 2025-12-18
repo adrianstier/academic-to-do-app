@@ -1,4 +1,6 @@
 -- Create device_tokens table for push notifications
+-- APPLIED: 2024-12-18
+-- Database: postgresql://postgres@db.bzjssogezdnybbenqygq.supabase.co:5432/postgres
 CREATE TABLE IF NOT EXISTS device_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
