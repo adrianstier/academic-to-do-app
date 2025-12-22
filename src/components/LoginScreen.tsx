@@ -239,47 +239,83 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0033A0] to-[#001a52]">
-        <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-[#0033A0] to-slate-900">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-[#D4A853]/30 border-t-[#D4A853] rounded-full animate-spin" />
+          <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-b-white/20 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0033A0] to-[#001a52] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-[#0033A0] to-slate-900 p-4 overflow-hidden">
       {/* Skip link for accessibility */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:z-50">
         Skip to content
       </a>
 
-      {/* Decorative elements */}
+      {/* Animated background pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4A853]/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+        {/* Floating orbs */}
+        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[#D4A853]/15 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-[#0033A0]/40 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-[120px]" />
+
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}
+        />
+
+        {/* Decorative floating shapes */}
+        <div className="absolute top-20 left-[10%] w-2 h-2 bg-[#D4A853] rounded-full opacity-60 animate-bounce" style={{ animationDuration: '3s' }} />
+        <div className="absolute top-40 right-[15%] w-3 h-3 bg-white/30 rounded-full animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }} />
+        <div className="absolute bottom-32 left-[20%] w-2 h-2 bg-[#D4A853]/50 rounded-full animate-bounce" style={{ animationDuration: '3.5s', animationDelay: '0.5s' }} />
+        <div className="absolute bottom-48 right-[25%] w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDuration: '4.5s', animationDelay: '2s' }} />
       </div>
 
       <div id="main-content" className="w-full max-w-[calc(100vw-2rem)] sm:max-w-sm relative z-10">
         {screen === 'users' && (
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Simplified Header */}
-            <div className="p-4 sm:p-6 text-center bg-gradient-to-b from-white to-slate-50 border-b border-slate-100">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#0033A0] rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 shadow-lg shadow-[#0033A0]/30">
-                <CheckSquare className="w-6 h-6 sm:w-7 sm:h-7 text-white" aria-hidden="true" />
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/20 overflow-hidden border border-white/20 transition-all duration-300 hover:shadow-[#D4A853]/10">
+            {/* Premium Header with gradient accent */}
+            <div className="relative p-6 sm:p-8 text-center overflow-hidden">
+              {/* Header background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0033A0] via-[#0033A0] to-[#001a52]" />
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+
+              {/* Decorative corner accents */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4A853]/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-xl translate-y-1/2 -translate-x-1/2" />
+
+              <div className="relative z-10">
+                {/* Logo container with glow effect */}
+                <div className="relative inline-block mb-4">
+                  <div className="absolute inset-0 bg-[#D4A853] rounded-2xl blur-lg opacity-40 scale-110" />
+                  <div className="relative w-16 h-16 sm:w-18 sm:h-18 bg-gradient-to-br from-[#D4A853] to-[#b8923f] rounded-2xl flex items-center justify-center shadow-lg">
+                    <CheckSquare className="w-8 h-8 sm:w-9 sm:h-9 text-white drop-shadow-sm" aria-hidden="true" />
+                  </div>
+                </div>
+
+                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Bealer Agency</h1>
+                <p className="text-sm text-white/60 mt-1 font-medium">Task Management</p>
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900">Bealer Agency Tasks</h1>
             </div>
 
             {/* Search for large user lists */}
             {users.length > 5 && (
-              <div className="px-3 sm:px-4 pt-3 sm:pt-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
+              <div className="px-4 sm:px-5 pt-4 sm:pt-5">
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-[#0033A0]" aria-hidden="true" />
                   <input
                     type="text"
-                    placeholder="Search users..."
+                    placeholder="Search team members..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 sm:py-2.5 rounded-lg border border-slate-200 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#0033A0]/20 focus:border-[#0033A0] text-slate-800 min-h-[44px] touch-manipulation"
+                    className="w-full pl-11 pr-4 py-3 sm:py-3 rounded-xl border-2 border-slate-200/80 bg-slate-50/50 text-base sm:text-sm focus:outline-none focus:ring-4 focus:ring-[#0033A0]/10 focus:border-[#0033A0] focus:bg-white text-slate-800 min-h-[48px] touch-manipulation transition-all duration-200 placeholder:text-slate-400"
                     aria-label="Search users"
                   />
                 </div>
@@ -288,23 +324,27 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
             {/* Users list */}
             {filteredUsers.length > 0 ? (
-              <div className="px-3 sm:px-4 py-3 max-h-[50vh] sm:max-h-[300px] overflow-y-auto">
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide px-2 mb-2">
+              <div className="px-4 sm:px-5 py-4 max-h-[50vh] sm:max-h-[320px] overflow-y-auto">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1 mb-3 flex items-center gap-2">
+                  <span className="w-8 h-px bg-gradient-to-r from-slate-200 to-transparent" />
                   Select Account
+                  <span className="w-8 h-px bg-gradient-to-l from-slate-200 to-transparent" />
                 </p>
 
                 {/* Show grouped users if more than 10, otherwise flat list */}
                 {users.length > 10 ? (
                   Object.entries(groupedUsers).sort().map(([letter, letterUsers]) => (
-                    <div key={letter} className="mb-2">
-                      <p className="text-xs font-bold text-slate-300 px-2 py-1">{letter}</p>
-                      {letterUsers.map((user) => (
-                        <UserButton key={user.id} user={user} onSelect={handleUserSelect} />
-                      ))}
+                    <div key={letter} className="mb-3">
+                      <p className="text-xs font-bold text-[#0033A0]/60 px-2 py-1.5 bg-slate-50 rounded-lg inline-block mb-1">{letter}</p>
+                      <div className="space-y-1">
+                        {letterUsers.map((user) => (
+                          <UserButton key={user.id} user={user} onSelect={handleUserSelect} />
+                        ))}
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {filteredUsers.map((user) => (
                       <UserButton key={user.id} user={user} onSelect={handleUserSelect} />
                     ))}
@@ -312,13 +352,19 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 )}
               </div>
             ) : users.length === 0 ? (
-              <div className="px-4 py-8 text-center">
-                <p className="text-slate-500 font-medium">No users yet</p>
-                <p className="text-sm text-slate-400 mt-1">Create your first account below</p>
+              <div className="px-6 py-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center">
+                  <UserPlus className="w-7 h-7 text-slate-400" />
+                </div>
+                <p className="text-slate-700 font-semibold">Welcome!</p>
+                <p className="text-sm text-slate-400 mt-1">Create your first account to get started</p>
               </div>
             ) : (
-              <div className="px-4 py-8 text-center">
-                <p className="text-slate-500">No users match "{searchQuery}"</p>
+              <div className="px-6 py-10 text-center">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-100 flex items-center justify-center">
+                  <Search className="w-5 h-5 text-slate-400" />
+                </div>
+                <p className="text-slate-500">No results for &ldquo;{searchQuery}&rdquo;</p>
               </div>
             )}
 

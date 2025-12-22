@@ -36,7 +36,7 @@ import {
   ArrowUpDown, User, Calendar, AlertTriangle, CheckSquare,
   Trash2, X, Sun, Moon, ChevronDown, BarChart2, Activity
 } from 'lucide-react';
-import { AuthUser, ACTIVITY_FEED_USERS, FULL_VISIBILITY_USERS } from '@/types/todo';
+import { AuthUser } from '@/types/todo';
 import UserSwitcher from './UserSwitcher';
 import ChatPanel from './ChatPanel';
 import TemplatePicker from './TemplatePicker';
@@ -806,18 +806,10 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     setSelectedTodos(new Set());
   };
 
-  // Filter todos based on user role visibility
-  // Admins and users in FULL_VISIBILITY_USERS can see all tasks
-  // Other members can only see their own or assigned to them
+  // All users can now see all tasks
   const visibleTodos = useMemo(() => {
-    if (currentUser.role === 'admin' || FULL_VISIBILITY_USERS.includes(userName)) {
-      return todos;
-    }
-    // Members can only see tasks they created or are assigned to them
-    return todos.filter(
-      (todo) => todo.created_by === userName || todo.assigned_to === userName
-    );
-  }, [todos, currentUser.role, userName]);
+    return todos;
+  }, [todos]);
 
   // Filter and sort todos
   const filteredAndSortedTodos = useMemo(() => {
@@ -1006,16 +998,14 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                 </button>
               </div>
 
-              {/* Activity Feed - only for Derrick & Adrian */}
-              {ACTIVITY_FEED_USERS.includes(userName) && (
-                <button
-                  onClick={() => setShowActivityFeed(true)}
-                  className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                  aria-label="View activity feed"
-                >
-                  <Activity className="w-4 h-4" />
-                </button>
-              )}
+              {/* Activity Feed - accessible to all users */}
+              <button
+                onClick={() => setShowActivityFeed(true)}
+                className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="View activity feed"
+              >
+                <Activity className="w-4 h-4" />
+              </button>
 
               {/* Weekly progress chart */}
               <button
@@ -1429,7 +1419,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       />
 
       {/* Activity Feed Slide-over */}
-      {showActivityFeed && ACTIVITY_FEED_USERS.includes(userName) && (
+      {showActivityFeed && (
         <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Activity Feed">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"

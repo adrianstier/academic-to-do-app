@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X } from 'lucide-react';
-import { ActivityLogEntry, ActivityAction, ACTIVITY_FEED_USERS, PRIORITY_CONFIG } from '@/types/todo';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X, Bell, BellOff, Volume2, VolumeX, Settings } from 'lucide-react';
+import { ActivityLogEntry, ActivityAction, PRIORITY_CONFIG, ActivityNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS } from '@/types/todo';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 
@@ -10,6 +10,29 @@ interface ActivityFeedProps {
   currentUserName: string;
   darkMode?: boolean;
   onClose?: () => void;
+}
+
+// Local storage key for notification settings
+const NOTIFICATION_SETTINGS_KEY = 'activityNotificationSettings';
+
+// Get notification settings from localStorage
+function getNotificationSettings(): ActivityNotificationSettings {
+  if (typeof window === 'undefined') return DEFAULT_NOTIFICATION_SETTINGS;
+  try {
+    const stored = localStorage.getItem(NOTIFICATION_SETTINGS_KEY);
+    if (stored) {
+      return { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(stored) };
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return DEFAULT_NOTIFICATION_SETTINGS;
+}
+
+// Save notification settings to localStorage
+function saveNotificationSettings(settings: ActivityNotificationSettings): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(settings));
 }
 
 const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: string; color: string }> = {
@@ -33,16 +56,65 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
 export default function ActivityFeed({ currentUserName, darkMode = true, onClose }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<ActivityNotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
+  const [showSettings, setShowSettings] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lastActivityIdRef = useRef<string | null>(null);
+
+  // Load notification settings on mount
+  useEffect(() => {
+    setNotificationSettings(getNotificationSettings());
+  }, []);
+
+  // Create audio element for notification sound
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      audioRef.current = new Audio('/notification.mp3');
+      audioRef.current.volume = 0.5;
+    }
+  }, []);
+
+  const playNotificationSound = useCallback(() => {
+    if (notificationSettings.soundEnabled && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {
+        // Ignore autoplay errors
+      });
+    }
+  }, [notificationSettings.soundEnabled]);
+
+  const showBrowserNotification = useCallback((activity: ActivityLogEntry) => {
+    if (!notificationSettings.browserNotificationsEnabled) return;
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const config = ACTION_CONFIG[activity.action];
+    new Notification(`${activity.user_name} ${config.label}`, {
+      body: activity.todo_text || 'Activity update',
+      icon: '/favicon.ico',
+      tag: activity.id,
+    });
+  }, [notificationSettings.browserNotificationsEnabled]);
+
+  const handleNotificationSettingsChange = (key: keyof ActivityNotificationSettings, value: boolean) => {
+    const newSettings = { ...notificationSettings, [key]: value };
+    setNotificationSettings(newSettings);
+    saveNotificationSettings(newSettings);
+  };
+
+  const requestBrowserNotificationPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        handleNotificationSettingsChange('browserNotificationsEnabled', true);
+      }
+    } else if (Notification.permission === 'granted') {
+      handleNotificationSettingsChange('browserNotificationsEnabled', true);
+    }
+  };
 
   const fetchActivities = useCallback(async () => {
-    if (!ACTIVITY_FEED_USERS.includes(currentUserName)) {
-      setIsAuthorized(false);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsAuthorized(true);
     setIsLoading(true);
 
     try {
@@ -50,6 +122,9 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
       if (response.ok) {
         const data = await response.json();
         setActivities(data);
+        if (data.length > 0) {
+          lastActivityIdRef.current = data[0].id;
+        }
       }
     } catch (error) {
       console.error('Failed to fetch activities:', error);
@@ -62,10 +137,8 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
     fetchActivities();
   }, [fetchActivities]);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates with notifications
   useEffect(() => {
-    if (!isAuthorized) return;
-
     const channel = supabase
       .channel('activity-feed')
       .on(
@@ -76,7 +149,15 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
           table: 'activity_log',
         },
         (payload) => {
-          setActivities((prev) => [payload.new as ActivityLogEntry, ...prev]);
+          const newActivity = payload.new as ActivityLogEntry;
+
+          // Only notify for activities from other users
+          if (notificationSettings.enabled && newActivity.user_name !== currentUserName) {
+            playNotificationSound();
+            showBrowserNotification(newActivity);
+          }
+
+          setActivities((prev) => [newActivity, ...prev]);
         }
       )
       .subscribe();
@@ -84,11 +165,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAuthorized]);
-
-  if (!isAuthorized) {
-    return null;
-  }
+  }, [currentUserName, notificationSettings.enabled, playNotificationSound, showBrowserNotification]);
 
   // Group activities by date
   const groupedActivities = activities.reduce((groups, activity) => {
@@ -119,15 +196,109 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
           <Activity className={`w-5 h-5 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
           <h2 className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Activity Feed</h2>
         </div>
-        {onClose && (
+        <div className="flex items-center gap-1">
+          {/* Notification toggle button */}
           <button
-            onClick={onClose}
-            className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            onClick={() => setShowSettings(!showSettings)}
+            className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${
+              notificationSettings.enabled
+                ? darkMode ? 'text-purple-400' : 'text-purple-600'
+                : darkMode ? 'text-slate-500' : 'text-slate-400'
+            }`}
+            title="Notification settings"
           >
-            <X className="w-5 h-5" />
+            <Settings className="w-5 h-5" />
           </button>
-        )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Notification Settings Panel */}
+      {showSettings && (
+        <div className={`px-4 py-3 border-b ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
+          <p className={`text-xs font-medium uppercase tracking-wide mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            Notification Settings
+          </p>
+          <div className="space-y-3">
+            {/* Enable notifications */}
+            <label className="flex items-center justify-between cursor-pointer">
+              <div className="flex items-center gap-2">
+                {notificationSettings.enabled ? (
+                  <Bell className={`w-4 h-4 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                ) : (
+                  <BellOff className={`w-4 h-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                )}
+                <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Enable notifications
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={notificationSettings.enabled}
+                onChange={(e) => handleNotificationSettingsChange('enabled', e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+              />
+            </label>
+
+            {/* Sound notifications */}
+            <label className={`flex items-center justify-between cursor-pointer ${!notificationSettings.enabled ? 'opacity-50' : ''}`}>
+              <div className="flex items-center gap-2">
+                {notificationSettings.soundEnabled ? (
+                  <Volume2 className={`w-4 h-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                ) : (
+                  <VolumeX className={`w-4 h-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                )}
+                <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Sound alerts
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={notificationSettings.soundEnabled}
+                onChange={(e) => handleNotificationSettingsChange('soundEnabled', e.target.checked)}
+                disabled={!notificationSettings.enabled}
+                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
+              />
+            </label>
+
+            {/* Browser notifications */}
+            <label className={`flex items-center justify-between cursor-pointer ${!notificationSettings.enabled ? 'opacity-50' : ''}`}>
+              <div className="flex items-center gap-2">
+                <Bell className={`w-4 h-4 ${notificationSettings.browserNotificationsEnabled ? (darkMode ? 'text-green-400' : 'text-green-600') : (darkMode ? 'text-slate-500' : 'text-slate-400')}`} />
+                <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Browser notifications
+                </span>
+              </div>
+              {typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'denied' ? (
+                <span className={`text-xs ${darkMode ? 'text-red-400' : 'text-red-500'}`}>Blocked</span>
+              ) : notificationSettings.browserNotificationsEnabled ? (
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={() => handleNotificationSettingsChange('browserNotificationsEnabled', false)}
+                  disabled={!notificationSettings.enabled}
+                  className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
+                />
+              ) : (
+                <button
+                  onClick={requestBrowserNotificationPermission}
+                  disabled={!notificationSettings.enabled}
+                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'} disabled:opacity-50`}
+                >
+                  Enable
+                </button>
+              )}
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Activity List */}
       <div className="flex-1 overflow-y-auto">

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { ACTIVITY_FEED_USERS } from '@/types/todo';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// GET - Fetch activity log (restricted to Derrick & Adrian)
+// GET - Fetch activity log (accessible to all authenticated users)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -18,11 +17,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'userName is required' }, { status: 400 });
     }
 
-    // Check if user is authorized to view activity feed
-    if (!ACTIVITY_FEED_USERS.includes(userName)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
+    // Activity feed is now accessible to all users
     let query = supabase
       .from('activity_log')
       .select('*')

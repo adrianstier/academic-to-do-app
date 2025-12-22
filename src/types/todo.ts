@@ -144,8 +144,22 @@ export interface ActivityLogEntry {
   created_at: string;
 }
 
-// Users who can see the activity feed
-export const ACTIVITY_FEED_USERS = ['Derrick', 'Adrian', 'Sefra'];
+// Activity feed is now accessible to all users (legacy constants kept for compatibility)
+export const ACTIVITY_FEED_USERS: string[] = [];
 
-// Users who can see all todos (admins/managers)
-export const FULL_VISIBILITY_USERS = ['Derrick', 'Adrian', 'Sefra'];
+// All users can now see all todos (legacy constants kept for compatibility)
+export const FULL_VISIBILITY_USERS: string[] = [];
+
+// Notification settings for activity feed
+export interface ActivityNotificationSettings {
+  enabled: boolean;
+  soundEnabled: boolean;
+  browserNotificationsEnabled: boolean;
+}
+
+// Default notification settings
+export const DEFAULT_NOTIFICATION_SETTINGS: ActivityNotificationSettings = {
+  enabled: true,
+  soundEnabled: true,
+  browserNotificationsEnabled: false,
+};

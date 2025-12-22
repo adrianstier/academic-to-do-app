@@ -13,27 +13,44 @@ export default function Home() {
 
   useEffect(() => {
     const loadSession = async () => {
-      // Check for stored session
-      const session = getStoredSession();
+      try {
+        // Check for stored session
+        const session = getStoredSession();
 
-      if (session && isSupabaseConfigured()) {
-        // Verify user still exists
-        const { data } = await supabase
-          .from('users')
-          .select('id, name, color, role, created_at, last_login, streak_count, streak_last_date, welcome_shown_at')
-          .eq('id', session.userId)
-          .single();
+        if (session && isSupabaseConfigured()) {
+          // Verify user still exists with a timeout
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Query timeout')), 10000)
+          );
 
-        if (data) {
-          // Default role to 'member' if not set
-          setCurrentUser({ ...data, role: data.role || 'member' });
-        } else {
-          // User no longer exists, clear session
-          clearStoredSession();
+          const queryPromise = supabase
+            .from('users')
+            .select('id, name, color, role, created_at, last_login, streak_count, streak_last_date, welcome_shown_at')
+            .eq('id', session.userId)
+            .single();
+
+          try {
+            const result = await Promise.race([queryPromise, timeoutPromise]);
+            const { data } = result as { data: AuthUser | null };
+
+            if (data) {
+              // Default role to 'member' if not set
+              setCurrentUser({ ...data, role: data.role || 'member' });
+            } else {
+              // User no longer exists, clear session
+              clearStoredSession();
+            }
+          } catch (queryError) {
+            console.error('Session verification failed:', queryError);
+            // If query fails, clear session and let user log in again
+            clearStoredSession();
+          }
         }
+      } catch (error) {
+        console.error('Session load error:', error);
+      } finally {
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     loadSession();
