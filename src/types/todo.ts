@@ -89,6 +89,31 @@ export interface ChatMessage {
   recipient?: string | null; // null = team chat, username = DM
   reactions?: MessageReaction[]; // Tapback reactions
   read_by?: string[]; // Users who have read this message
+  reply_to_id?: string | null; // ID of message being replied to
+  reply_to_text?: string | null; // Cached text of replied message
+  reply_to_user?: string | null; // Cached user of replied message
+  edited_at?: string | null; // Timestamp when message was edited
+  deleted_at?: string | null; // Timestamp when message was deleted (soft delete)
+  is_pinned?: boolean; // Whether message is pinned
+  pinned_by?: string | null; // User who pinned the message
+  pinned_at?: string | null; // When it was pinned
+  mentions?: string[]; // Array of mentioned usernames
+}
+
+// User presence status
+export type PresenceStatus = 'online' | 'away' | 'offline' | 'dnd';
+
+export interface UserPresence {
+  user_name: string;
+  status: PresenceStatus;
+  last_seen: string;
+  custom_status?: string;
+}
+
+// Muted conversation settings
+export interface MutedConversation {
+  conversation_key: string; // 'team' or username
+  muted_until?: string | null; // null = forever, date = until then
 }
 
 // Chat conversation type
@@ -163,3 +188,65 @@ export const DEFAULT_NOTIFICATION_SETTINGS: ActivityNotificationSettings = {
   soundEnabled: true,
   browserNotificationsEnabled: false,
 };
+
+// Strategic Goals Types (Owner Dashboard)
+export type GoalStatus = 'not_started' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+export type GoalPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface GoalCategory {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+  display_order: number;
+  created_at: string;
+}
+
+export interface StrategicGoal {
+  id: string;
+  title: string;
+  description?: string;
+  category_id?: string;
+  status: GoalStatus;
+  priority: GoalPriority;
+  target_date?: string;
+  target_value?: string;
+  current_value?: string;
+  progress_percent: number;
+  notes?: string;
+  display_order: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  category?: GoalCategory;
+  milestones?: GoalMilestone[];
+}
+
+export interface GoalMilestone {
+  id: string;
+  goal_id: string;
+  title: string;
+  completed: boolean;
+  target_date?: string;
+  display_order: number;
+  created_at: string;
+}
+
+export const GOAL_STATUS_CONFIG: Record<GoalStatus, { label: string; color: string; bgColor: string; icon: string }> = {
+  not_started: { label: 'Not Started', color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.1)', icon: '○' },
+  in_progress: { label: 'In Progress', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)', icon: '◐' },
+  on_hold: { label: 'On Hold', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)', icon: '⏸' },
+  completed: { label: 'Completed', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)', icon: '✓' },
+  cancelled: { label: 'Cancelled', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)', icon: '✕' },
+};
+
+export const GOAL_PRIORITY_CONFIG: Record<GoalPriority, { label: string; color: string; bgColor: string }> = {
+  critical: { label: 'Critical', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.1)' },
+  high: { label: 'High', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.1)' },
+  medium: { label: 'Medium', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
+  low: { label: 'Low', color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.1)' },
+};
+
+// Owner username for dashboard access
+export const OWNER_USERNAME = 'Derrick';

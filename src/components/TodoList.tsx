@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask } from '@/types/todo';
+import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, OWNER_USERNAME } from '@/types/todo';
 import TodoItem from './TodoItem';
 import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
@@ -34,13 +34,14 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   LayoutList, LayoutGrid, Wifi, WifiOff, Search,
   ArrowUpDown, User, Calendar, AlertTriangle, CheckSquare,
-  Trash2, X, Sun, Moon, ChevronDown, BarChart2, Activity
+  Trash2, X, Sun, Moon, ChevronDown, BarChart2, Activity, Target
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import UserSwitcher from './UserSwitcher';
 import ChatPanel from './ChatPanel';
 import TemplatePicker from './TemplatePicker';
 import ActivityFeed from './ActivityFeed';
+import StrategicDashboard from './StrategicDashboard';
 import SaveTemplateModal from './SaveTemplateModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logActivity } from '@/lib/activityLogger';
@@ -109,6 +110,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [showWeeklyChart, setShowWeeklyChart] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
+  const [showStrategicDashboard, setShowStrategicDashboard] = useState(false);
   const [templateTodo, setTemplateTodo] = useState<Todo | null>(null);
   const [customOrder, setCustomOrder] = useState<string[]>([]);
 
@@ -1007,6 +1009,18 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                 <Activity className="w-4 h-4" />
               </button>
 
+              {/* Strategic Dashboard - Owner only */}
+              {userName === OWNER_USERNAME && (
+                <button
+                  onClick={() => setShowStrategicDashboard(true)}
+                  className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Strategic Goals Dashboard"
+                  title="Strategic Goals"
+                >
+                  <Target className="w-4 h-4" />
+                </button>
+              )}
+
               {/* Weekly progress chart */}
               <button
                 onClick={() => setShowWeeklyChart(true)}
@@ -1433,6 +1447,15 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
             />
           </div>
         </div>
+      )}
+
+      {/* Strategic Dashboard - Owner only */}
+      {showStrategicDashboard && userName === OWNER_USERNAME && (
+        <StrategicDashboard
+          userName={userName}
+          darkMode={darkMode}
+          onClose={() => setShowStrategicDashboard(false)}
+        />
       )}
 
       {/* Save Template Modal */}
