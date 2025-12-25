@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { UserPlus, AlertCircle, ChevronLeft, Lock, CheckSquare, Search, Shield, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { UserPlus, AlertCircle, ChevronLeft, Lock, CheckSquare, Search, Shield, Sparkles, ArrowRight } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import {
   hashPin,
@@ -22,6 +23,103 @@ interface LoginScreenProps {
 }
 
 type Screen = 'users' | 'pin' | 'register';
+
+// Floating particle component
+function FloatingParticle({ delay, duration, size, left, top }: { delay: number; duration: number; size: number; left: string; top: string }) {
+  return (
+    <motion.div
+      className="absolute rounded-full bg-[#C9A227]/20"
+      style={{ width: size, height: size, left, top }}
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{
+        opacity: [0, 0.6, 0.3, 0.6, 0],
+        scale: [0.5, 1, 0.8, 1, 0.5],
+        y: [-20, 20, -10, 15, -20],
+        x: [-10, 15, -5, 10, -10],
+      }}
+      transition={{
+        duration,
+        delay,
+        repeat: Infinity,
+        ease: 'easeInOut',
+      }}
+    />
+  );
+}
+
+// Animated logo component
+function AnimatedLogo() {
+  return (
+    <motion.div
+      className="relative"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {/* Outer glow rings */}
+      <motion.div
+        className="absolute -inset-8 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(201,162,39,0.15) 0%, transparent 70%)',
+        }}
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.5, 0.8, 0.5],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+      />
+      <motion.div
+        className="absolute -inset-4 rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(201,162,39,0.2) 0%, transparent 70%)',
+        }}
+        animate={{
+          scale: [1.1, 1, 1.1],
+          opacity: [0.3, 0.6, 0.3],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: 'easeInOut',
+          delay: 0.5,
+        }}
+      />
+
+      {/* Main logo container */}
+      <motion.div
+        className="relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #C9A227 0%, #E5B936 50%, #C9A227 100%)',
+          boxShadow: '0 20px 60px -10px rgba(201,162,39,0.5), inset 0 -4px 20px rgba(0,0,0,0.2), inset 0 4px 20px rgba(255,255,255,0.2)',
+        }}
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      >
+        {/* Shimmer effect */}
+        <motion.div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)',
+          }}
+          animate={{
+            x: ['-100%', '200%'],
+          }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            repeatDelay: 3,
+            ease: 'easeInOut',
+          }}
+        />
+        <CheckSquare className="w-10 h-10 text-[#0A1628] relative z-10" strokeWidth={2.5} />
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [screen, setScreen] = useState<Screen>('users');
@@ -234,423 +332,756 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0A1628] relative overflow-hidden">
-        {/* Ambient background */}
+      <div className="min-h-screen flex items-center justify-center bg-[#050A12] relative overflow-hidden">
+        {/* Deep ambient background */}
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 right-1/3 w-[600px] h-[600px] bg-[#C9A227]/10 rounded-full blur-[150px] animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute bottom-1/3 left-1/4 w-[500px] h-[500px] bg-[#1E3A5F]/40 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '6s' }} />
+          <div className="absolute top-1/4 right-1/3 w-[800px] h-[800px] bg-[#C9A227]/8 rounded-full blur-[200px]" />
+          <div className="absolute bottom-1/3 left-1/4 w-[600px] h-[600px] bg-[#1E3A5F]/30 rounded-full blur-[150px]" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] flex items-center justify-center shadow-lg shadow-[#C9A227]/30">
-              <CheckSquare className="w-7 h-7 text-[#0A1628]" />
-            </div>
-            <div className="absolute -inset-2 bg-[#C9A227]/20 rounded-3xl blur-xl animate-pulse" />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-2 h-2 rounded-full bg-[#C9A227] animate-bounce" style={{ animationDelay: '300ms' }} />
-          </div>
-        </div>
+        <motion.div
+          className="relative z-10 flex flex-col items-center gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <AnimatedLogo />
+          <motion.div
+            className="flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#C9A227] to-[#E5B936]"
+                animate={{
+                  y: [-8, 8, -8],
+                  opacity: [0.4, 1, 0.4],
+                }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  delay: i * 0.15,
+                  ease: 'easeInOut',
+                }}
+              />
+            ))}
+          </motion.div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A1628] p-4 overflow-hidden relative">
+    <div className="min-h-screen flex items-center justify-center bg-[#050A12] p-4 overflow-hidden relative">
       {/* Skip link for accessibility */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:z-50">
         Skip to content
       </a>
 
-      {/* Sophisticated background */}
+      {/* Cinematic layered background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Gradient orbs */}
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-bl from-[#C9A227]/15 via-[#1E3A5F]/20 to-transparent rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-gradient-to-tr from-[#1E3A5F]/30 via-[#2563EB]/10 to-transparent rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4" />
-        <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-[#C9A227]/5 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2" />
+        {/* Deep gradient base */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_#1E3A5F_0%,_#050A12_100%)]" />
 
-        {/* Subtle grid */}
-        <div
-          className="absolute inset-0 opacity-[0.02]"
+        {/* Animated gradient orbs */}
+        <motion.div
+          className="absolute top-0 right-0 w-[1000px] h-[1000px] rounded-full opacity-60"
           style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '60px 60px'
+            background: 'radial-gradient(circle, rgba(201,162,39,0.12) 0%, transparent 60%)',
+          }}
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-0 w-[800px] h-[800px] rounded-full opacity-50"
+          style={{
+            background: 'radial-gradient(circle, rgba(30,58,95,0.4) 0%, transparent 60%)',
+          }}
+          animate={{
+            x: [0, -30, 0],
+            y: [0, -40, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 left-1/2 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30"
+          style={{
+            background: 'radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 50%)',
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut',
           }}
         />
 
-        {/* Decorative elements */}
-        <div className="absolute top-20 left-20 w-px h-32 bg-gradient-to-b from-transparent via-[#C9A227]/30 to-transparent" />
-        <div className="absolute bottom-32 right-24 w-px h-24 bg-gradient-to-b from-transparent via-[#C9A227]/20 to-transparent" />
-        <div className="absolute top-1/3 right-16 w-24 h-px bg-gradient-to-r from-transparent via-[#C9A227]/20 to-transparent" />
+        {/* Floating particles */}
+        <FloatingParticle delay={0} duration={8} size={6} left="10%" top="20%" />
+        <FloatingParticle delay={1} duration={10} size={4} left="85%" top="15%" />
+        <FloatingParticle delay={2} duration={7} size={8} left="70%" top="70%" />
+        <FloatingParticle delay={0.5} duration={9} size={5} left="20%" top="80%" />
+        <FloatingParticle delay={1.5} duration={11} size={7} left="50%" top="10%" />
+        <FloatingParticle delay={3} duration={8} size={4} left="30%" top="50%" />
+
+        {/* Subtle noise overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")',
+          }}
+        />
+
+        {/* Decorative light beams */}
+        <motion.div
+          className="absolute top-0 left-1/4 w-px h-48 bg-gradient-to-b from-[#C9A227]/30 via-[#C9A227]/10 to-transparent"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-1/3 w-px h-32 bg-gradient-to-t from-[#C9A227]/20 via-[#C9A227]/5 to-transparent"
+          animate={{ opacity: [0.2, 0.5, 0.2] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        />
+        <motion.div
+          className="absolute top-1/4 right-16 w-32 h-px bg-gradient-to-r from-transparent via-[#C9A227]/15 to-transparent"
+          animate={{ opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+        />
       </div>
 
-      <div id="main-content" className="w-full max-w-[420px] relative z-10">
-        {screen === 'users' && (
-          <div className="relative">
-            {/* Card glow effect */}
-            <div className="absolute -inset-px bg-gradient-to-b from-[#C9A227]/20 via-white/5 to-transparent rounded-[28px] blur-sm" />
+      <div id="main-content" className="w-full max-w-[440px] relative z-10">
+        <AnimatePresence mode="wait">
+          {screen === 'users' && (
+            <motion.div
+              key="users"
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative"
+            >
+              {/* Card border glow */}
+              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#C9A227]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
 
-            <div className="relative bg-white/[0.03] backdrop-blur-2xl rounded-[28px] border border-white/[0.08] overflow-hidden shadow-2xl shadow-black/40">
-              {/* Premium Header */}
-              <div className="relative p-8 text-center overflow-hidden">
-                {/* Header gradient layers */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#0A1628] via-[#1E3A5F] to-[#0A1628]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#C9A227]/10 via-transparent to-transparent" />
+              {/* Main card */}
+              <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
+                {/* Premium Header */}
+                <div className="relative px-8 pt-10 pb-8 text-center overflow-hidden">
+                  {/* Header background effects */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#0A1628]/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(201,162,39,0.15)_0%,_transparent_60%)]" />
 
-                {/* Animated accent line */}
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
+                  {/* Animated accent line at bottom */}
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-px"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(201,162,39,0.5), transparent)',
+                    }}
+                    animate={{ opacity: [0.3, 0.7, 0.3] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  />
 
-                <div className="relative z-10">
-                  {/* Logo with glow */}
-                  <div className="relative inline-block mb-5">
-                    <div className="absolute inset-0 bg-[#C9A227] rounded-2xl blur-xl opacity-30 scale-125" />
-                    <div className="relative w-16 h-16 bg-gradient-to-br from-[#C9A227] to-[#E5B936] rounded-2xl flex items-center justify-center shadow-lg shadow-[#C9A227]/30 ring-1 ring-white/10">
-                      <CheckSquare className="w-8 h-8 text-[#0A1628]" aria-hidden="true" />
+                  <div className="relative z-10">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      <AnimatedLogo />
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                    >
+                      <h1 className="text-3xl font-bold text-white tracking-tight mt-6">
+                        Bealer Agency
+                      </h1>
+                      <p className="text-sm text-[#C9A227]/80 mt-2 font-medium tracking-[0.2em] uppercase">
+                        Task Management
+                      </p>
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Search bar for larger user lists */}
+                {users.length > 5 && (
+                  <motion.div
+                    className="px-6 pt-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <div className="relative group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors duration-300 group-focus-within:text-[#C9A227]" aria-hidden="true" />
+                      <input
+                        type="text"
+                        placeholder="Search team members..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]/40 focus:bg-white/[0.06] transition-all duration-300 min-h-[52px]"
+                        aria-label="Search users"
+                      />
                     </div>
-                  </div>
+                  </motion.div>
+                )}
 
-                  <h1 className="text-2xl font-bold text-white tracking-tight">Bealer Agency</h1>
-                  <p className="text-sm text-white/50 mt-1.5 font-medium tracking-wide uppercase">Task Management</p>
-                </div>
-              </div>
+                {/* Users list */}
+                {filteredUsers.length > 0 ? (
+                  <motion.div
+                    className="px-6 py-6 max-h-[50vh] sm:max-h-[380px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <div className="flex items-center gap-4 mb-5 px-1">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.25em]">Select Account</p>
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    </div>
 
-              {/* Search bar for larger user lists */}
-              {users.length > 5 && (
-                <div className="px-5 pt-5">
-                  <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors group-focus-within:text-[#C9A227]" aria-hidden="true" />
-                    <input
-                      type="text"
-                      placeholder="Search team members..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]/40 focus:border-[#C9A227]/50 focus:bg-white/[0.08] transition-all duration-200 min-h-[48px]"
-                      aria-label="Search users"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Users list */}
-              {filteredUsers.length > 0 ? (
-                <div className="px-5 py-5 max-h-[50vh] sm:max-h-[340px] overflow-y-auto">
-                  <div className="flex items-center gap-3 mb-4 px-1">
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                    <p className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Select Account</p>
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                  </div>
-
-                  {users.length > 10 ? (
-                    Object.entries(groupedUsers).sort().map(([letter, letterUsers]) => (
-                      <div key={letter} className="mb-4">
-                        <p className="text-xs font-bold text-[#C9A227]/60 px-2 py-1 mb-1">{letter}</p>
-                        <div className="space-y-1.5">
-                          {letterUsers.map((user) => (
-                            <UserButton key={user.id} user={user} onSelect={handleUserSelect} />
-                          ))}
-                        </div>
+                    {users.length > 10 ? (
+                      Object.entries(groupedUsers).sort().map(([letter, letterUsers], groupIndex) => (
+                        <motion.div
+                          key={letter}
+                          className="mb-5"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5 + groupIndex * 0.05 }}
+                        >
+                          <p className="text-xs font-bold text-[#C9A227]/50 px-3 py-1.5 mb-2 tracking-wide">{letter}</p>
+                          <div className="space-y-1.5">
+                            {letterUsers.map((user, index) => (
+                              <UserButton
+                                key={user.id}
+                                user={user}
+                                onSelect={handleUserSelect}
+                                delay={0.5 + groupIndex * 0.05 + index * 0.03}
+                              />
+                            ))}
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredUsers.map((user, index) => (
+                          <UserButton
+                            key={user.id}
+                            user={user}
+                            onSelect={handleUserSelect}
+                            delay={0.5 + index * 0.08}
+                          />
+                        ))}
                       </div>
-                    ))
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredUsers.map((user) => (
-                        <UserButton key={user.id} user={user} onSelect={handleUserSelect} />
-                      ))}
+                    )}
+                  </motion.div>
+                ) : users.length === 0 ? (
+                  <motion.div
+                    className="px-8 py-16 text-center"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <motion.div
+                      className="relative inline-block mb-6"
+                      animate={{
+                        y: [-4, 4, -4],
+                      }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-[#C9A227]/20 rounded-3xl blur-xl scale-150" />
+                      <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-white/[0.1] to-white/[0.03] border border-white/[0.1] flex items-center justify-center">
+                        <Sparkles className="w-9 h-9 text-[#C9A227]" />
+                      </div>
+                    </motion.div>
+                    <h2 className="text-white font-bold text-2xl tracking-tight">Welcome!</h2>
+                    <p className="text-base text-white/40 mt-2">Create your first account to get started</p>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className="px-8 py-14 text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+                      <Search className="w-7 h-7 text-white/25" />
                     </div>
+                    <p className="text-white/40 text-sm">No results for &ldquo;{searchQuery}&rdquo;</p>
+                  </motion.div>
+                )}
+
+                {/* Add user button */}
+                {users.length === 0 && (
+                  <motion.div
+                    className="p-6 pt-0"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <motion.button
+                      onClick={() => {
+                        setScreen('register');
+                        setNewUserName('');
+                        setNewUserPin(['', '', '', '']);
+                        setConfirmPin(['', '', '', '']);
+                        setError('');
+                      }}
+                      className="group relative w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-semibold text-base overflow-hidden min-h-[60px]"
+                      style={{
+                        background: 'linear-gradient(135deg, #C9A227 0%, #E5B936 50%, #C9A227 100%)',
+                        boxShadow: '0 20px 40px -10px rgba(201,162,39,0.4), inset 0 -2px 10px rgba(0,0,0,0.1)',
+                      }}
+                      whileHover={{ scale: 1.02, boxShadow: '0 25px 50px -10px rgba(201,162,39,0.5)' }}
+                      whileTap={{ scale: 0.98 }}
+                      aria-label="Add new user account"
+                    >
+                      {/* Shimmer effect */}
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{
+                          background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)',
+                        }}
+                        animate={{ x: ['-100%', '200%'] }}
+                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                      />
+                      <UserPlus className="w-5 h-5 text-[#0A1628] relative z-10" aria-hidden="true" />
+                      <span className="text-[#0A1628] relative z-10">Get Started</span>
+                      <ArrowRight className="w-5 h-5 text-[#0A1628] relative z-10 transition-transform group-hover:translate-x-1" />
+                    </motion.button>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {screen === 'pin' && selectedUser && (
+            <motion.div
+              key="pin"
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative"
+            >
+              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#C9A227]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
+
+              <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] p-8 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
+                <motion.button
+                  onClick={() => {
+                    setScreen('users');
+                    setSearchQuery('');
+                  }}
+                  className="group flex items-center gap-2 text-sm text-white/40 hover:text-white mb-8 transition-all duration-300 min-h-[44px] -ml-2 px-3 rounded-xl hover:bg-white/[0.05]"
+                  aria-label="Go back to user selection"
+                  whileHover={{ x: -2 }}
+                >
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  Back
+                </motion.button>
+
+                <div className="text-center mb-10">
+                  {/* User avatar with animated glow */}
+                  <motion.div
+                    className="relative inline-block mb-6"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 rounded-3xl blur-2xl opacity-50 scale-125"
+                      style={{ backgroundColor: selectedUser.color }}
+                      animate={{
+                        scale: [1.2, 1.4, 1.2],
+                        opacity: [0.3, 0.5, 0.3],
+                      }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    <div
+                      className="relative w-24 h-24 rounded-3xl flex items-center justify-center text-white text-3xl font-bold shadow-2xl ring-2 ring-white/20"
+                      style={{
+                        backgroundColor: selectedUser.color,
+                        boxShadow: `0 20px 40px -10px ${selectedUser.color}80`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      {getUserInitials(selectedUser.name)}
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <h2 className="text-2xl font-bold text-white tracking-tight">{selectedUser.name}</h2>
+                    <p className="text-sm text-white/40 mt-3 flex items-center justify-center gap-2">
+                      <Shield className="w-4 h-4 text-[#C9A227]" />
+                      Enter your 4-digit PIN
+                    </p>
+                  </motion.div>
+
+                  {lockoutSeconds === 0 && attemptsRemaining < 3 && (
+                    <motion.div
+                      className="mt-5 inline-flex items-center gap-2.5 text-xs text-amber-400/90 font-medium bg-amber-500/10 px-5 py-2.5 rounded-full border border-amber-500/20"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {attemptsRemaining} attempt{attemptsRemaining !== 1 ? 's' : ''} remaining
+                    </motion.div>
                   )}
                 </div>
-              ) : users.length === 0 ? (
-                <div className="px-6 py-14 text-center">
-                  <div className="relative inline-block mb-5">
-                    <div className="absolute inset-0 bg-[#C9A227]/20 rounded-2xl blur-lg" />
-                    <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.08] flex items-center justify-center">
-                      <Sparkles className="w-7 h-7 text-[#C9A227]" />
-                    </div>
-                  </div>
-                  <p className="text-white font-semibold text-lg">Welcome!</p>
-                  <p className="text-sm text-white/40 mt-1.5">Create your first account to get started</p>
-                </div>
-              ) : (
-                <div className="px-6 py-12 text-center">
-                  <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
-                    <Search className="w-6 h-6 text-white/30" />
-                  </div>
-                  <p className="text-white/50">No results for &ldquo;{searchQuery}&rdquo;</p>
-                </div>
-              )}
 
-              {/* Add user button - only shown when no users exist */}
-              {users.length === 0 && (
-                <div className="p-5 bg-gradient-to-b from-transparent to-white/[0.02]">
-                  <button
-                    onClick={() => {
-                      setScreen('register');
-                      setNewUserName('');
-                      setNewUserPin(['', '', '', '']);
-                      setConfirmPin(['', '', '', '']);
-                      setError('');
-                    }}
-                    className="group relative w-full flex items-center justify-center gap-2.5 py-4 bg-gradient-to-r from-[#C9A227] to-[#E5B936] hover:from-[#E5B936] hover:to-[#C9A227] text-[#0A1628] rounded-xl font-semibold transition-all duration-300 shadow-lg shadow-[#C9A227]/25 hover:shadow-xl hover:shadow-[#C9A227]/30 min-h-[56px] text-base overflow-hidden"
-                    aria-label="Add new user account"
-                  >
-                    <span className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-                    <UserPlus className="w-5 h-5 relative z-10 transition-transform group-hover:scale-110" aria-hidden="true" />
-                    <span className="relative z-10">Get Started</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {screen === 'pin' && selectedUser && (
-          <div className="relative">
-            <div className="absolute -inset-px bg-gradient-to-b from-[#C9A227]/20 via-white/5 to-transparent rounded-[28px] blur-sm" />
-
-            <div className="relative bg-white/[0.03] backdrop-blur-2xl rounded-[28px] border border-white/[0.08] p-6 sm:p-8 shadow-2xl shadow-black/40">
-              <button
-                onClick={() => {
-                  setScreen('users');
-                  setSearchQuery('');
-                }}
-                className="group flex items-center gap-1.5 text-sm text-white/40 hover:text-white mb-6 transition-all duration-200 min-h-[44px] -ml-2 px-2 rounded-lg hover:bg-white/[0.05]"
-                aria-label="Go back to user selection"
-              >
-                <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
-                Back
-              </button>
-
-              <div className="text-center mb-8">
-                {/* User avatar with glow */}
-                <div className="relative inline-block mb-5">
-                  <div
-                    className="absolute inset-0 rounded-2xl blur-xl opacity-40 scale-110"
-                    style={{ backgroundColor: selectedUser.color }}
-                  />
-                  <div
-                    className="relative w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-2 ring-white/20"
-                    style={{ backgroundColor: selectedUser.color }}
-                    aria-hidden="true"
-                  >
-                    {getUserInitials(selectedUser.name)}
-                  </div>
-                </div>
-
-                <h2 className="text-2xl font-bold text-white tracking-tight">{selectedUser.name}</h2>
-                <p className="text-sm text-white/40 mt-2 flex items-center justify-center gap-2">
-                  <Shield className="w-3.5 h-3.5 text-[#C9A227]" />
-                  Enter your 4-digit PIN
-                </p>
-
-                {lockoutSeconds === 0 && attemptsRemaining < 3 && (
-                  <div className="mt-4 inline-flex items-center gap-2 text-xs text-amber-400/80 font-medium bg-amber-500/10 px-4 py-2 rounded-full border border-amber-500/20">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    {attemptsRemaining} attempt{attemptsRemaining !== 1 ? 's' : ''} remaining
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-center gap-3 sm:gap-4 mb-6" role="group" aria-label="PIN entry">
-                {pin.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => { pinRefs.current[index] = el; }}
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value, pinRefs, pin, setPin)}
-                    onKeyDown={(e) => handlePinKeyDown(e, index, pinRefs, pin)}
-                    disabled={lockoutSeconds > 0 || isSubmitting}
-                    aria-label={`PIN digit ${index + 1}`}
-                    className={`w-14 h-16 sm:w-16 sm:h-[72px] text-center text-2xl sm:text-3xl font-bold rounded-2xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
-                      lockoutSeconds > 0
-                        ? 'border-red-500/50 bg-red-500/10 focus:ring-red-500/20 text-red-400'
-                        : digit
-                          ? 'border-[#C9A227] bg-[#C9A227]/10 focus:ring-[#C9A227]/20 shadow-sm text-white'
-                          : 'border-white/10 focus:border-[#C9A227] focus:ring-[#C9A227]/10 bg-white/[0.03] text-white'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {(error || lockoutSeconds > 0) && (
-                <div className="flex items-center justify-center gap-3 text-red-400 text-sm bg-red-500/10 py-4 px-5 rounded-xl border border-red-500/20" role="alert">
-                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                    <AlertCircle className="w-4 h-4" aria-hidden="true" />
-                  </div>
-                  <span className="font-medium">{lockoutSeconds > 0 ? `Account locked. Please wait ${lockoutSeconds}s` : error}</span>
-                </div>
-              )}
-
-              {isSubmitting && (
-                <div className="flex flex-col items-center gap-3" aria-live="polite">
-                  <div className="relative w-10 h-10">
-                    <div className="absolute inset-0 border-3 border-[#C9A227]/20 rounded-full" />
-                    <div className="absolute inset-0 border-3 border-[#C9A227] border-t-transparent rounded-full animate-spin" />
-                  </div>
-                  <span className="text-sm text-white/50">Verifying...</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {screen === 'register' && (
-          <div className="relative">
-            <div className="absolute -inset-px bg-gradient-to-b from-[#C9A227]/20 via-white/5 to-transparent rounded-[28px] blur-sm" />
-
-            <div className="relative bg-white/[0.03] backdrop-blur-2xl rounded-[28px] border border-white/[0.08] p-6 sm:p-8 shadow-2xl shadow-black/40">
-              <button
-                onClick={() => setScreen('users')}
-                className="group flex items-center gap-1.5 text-sm text-white/40 hover:text-white mb-6 transition-all duration-200 min-h-[44px] -ml-2 px-2 rounded-lg hover:bg-white/[0.05]"
-                aria-label="Go back to user selection"
-              >
-                <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
-                Back
-              </button>
-
-              <div className="text-center mb-8">
-                <div className="relative inline-block mb-5">
-                  <div className="absolute inset-0 bg-[#2563EB] rounded-2xl blur-xl opacity-30 scale-110" />
-                  <div className="relative w-16 h-16 bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] rounded-2xl flex items-center justify-center shadow-lg ring-1 ring-white/10">
-                    <UserPlus className="w-8 h-8 text-white" aria-hidden="true" />
-                  </div>
-                </div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Create Account</h2>
-                <p className="text-sm text-white/40 mt-1.5">Join the team in seconds</p>
-              </div>
-
-              <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }} className="space-y-6">
-                <div>
-                  <label htmlFor="user-name" className="block text-sm font-semibold text-white/70 mb-2.5">
-                    Your Name
-                  </label>
-                  <input
-                    id="user-name"
-                    type="text"
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Enter your name"
-                    autoFocus
-                    autoComplete="name"
-                    className="w-full px-4 py-4 rounded-xl bg-white/[0.05] border border-white/[0.1] focus:border-[#C9A227]/50 focus:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/20 transition-all duration-200 text-white placeholder-white/30 text-base min-h-[56px]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white/70 mb-2.5">
-                    Choose a PIN
-                  </label>
-                  <div className="flex justify-center gap-3" role="group" aria-label="Choose PIN">
-                    {newUserPin.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={(el) => { newPinRefs.current[index] = el; }}
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handlePinChange(index, e.target.value, newPinRefs, newUserPin, setNewUserPin)}
-                        onKeyDown={(e) => handlePinKeyDown(e, index, newPinRefs, newUserPin)}
-                        aria-label={`New PIN digit ${index + 1}`}
-                        className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#C9A227]/10 ${
-                          digit ? 'border-[#C9A227] bg-[#C9A227]/10 shadow-sm text-white' : 'border-white/10 bg-white/[0.03] focus:border-[#C9A227] focus:bg-white/[0.05] text-white'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-white/70 mb-2.5">
-                    Confirm PIN
-                  </label>
-                  <div className="flex justify-center gap-3" role="group" aria-label="Confirm PIN">
-                    {confirmPin.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={(el) => { confirmPinRefs.current[index] = el; }}
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handlePinChange(index, e.target.value, confirmPinRefs, confirmPin, setConfirmPin)}
-                        onKeyDown={(e) => handlePinKeyDown(e, index, confirmPinRefs, confirmPin)}
-                        aria-label={`Confirm PIN digit ${index + 1}`}
-                        className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-4 ${
-                          digit ? 'border-emerald-500 bg-emerald-500/10 focus:ring-emerald-500/20 shadow-sm text-white' : 'border-white/10 bg-white/[0.03] focus:border-emerald-500 focus:bg-white/[0.05] focus:ring-emerald-500/10 text-white'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="flex items-center justify-center gap-3 text-red-400 text-sm bg-red-500/10 py-4 px-5 rounded-xl border border-red-500/20" role="alert">
-                    <div className="w-7 h-7 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                      <AlertCircle className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <span className="font-medium">{error}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="group relative w-full py-4 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] hover:from-[#1D4ED8] hover:to-[#1E40AF] text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#2563EB]/25 hover:shadow-xl hover:shadow-[#2563EB]/30 min-h-[56px] text-base overflow-hidden"
+                <motion.div
+                  className="flex justify-center gap-4 mb-8"
+                  role="group"
+                  aria-label="PIN entry"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        Create Account
-                        <ChevronLeft className="w-4 h-4 rotate-180 transition-transform group-hover:translate-x-0.5" />
-                      </>
+                  {pin.map((digit, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + index * 0.08 }}
+                      className="relative"
+                    >
+                      {/* Glow effect when filled */}
+                      {digit && (
+                        <motion.div
+                          className="absolute inset-0 rounded-2xl bg-[#C9A227]/30 blur-lg"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1.1 }}
+                        />
+                      )}
+                      <input
+                        ref={(el) => { pinRefs.current[index] = el; }}
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handlePinChange(index, e.target.value, pinRefs, pin, setPin)}
+                        onKeyDown={(e) => handlePinKeyDown(e, index, pinRefs, pin)}
+                        disabled={lockoutSeconds > 0 || isSubmitting}
+                        aria-label={`PIN digit ${index + 1}`}
+                        className={`relative w-16 h-20 sm:w-[72px] sm:h-[88px] text-center text-3xl font-bold rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 ${
+                          lockoutSeconds > 0
+                            ? 'border-red-500/50 bg-red-500/10 focus:ring-red-500/20 text-red-400'
+                            : digit
+                              ? 'border-[#C9A227] bg-[#C9A227]/10 focus:ring-[#C9A227]/20 text-white'
+                              : 'border-white/10 focus:border-[#C9A227] focus:ring-[#C9A227]/10 bg-white/[0.03] text-white hover:border-white/20'
+                        }`}
+                      />
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                <AnimatePresence mode="wait">
+                  {(error || lockoutSeconds > 0) && (
+                    <motion.div
+                      className="flex items-center justify-center gap-3 text-red-400 text-sm bg-red-500/10 py-4 px-6 rounded-2xl border border-red-500/20"
+                      role="alert"
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                        <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <span className="font-medium">{lockoutSeconds > 0 ? `Account locked. Please wait ${lockoutSeconds}s` : error}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {isSubmitting && (
+                  <motion.div
+                    className="flex flex-col items-center gap-4"
+                    aria-live="polite"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <div className="relative w-12 h-12">
+                      <div className="absolute inset-0 border-3 border-[#C9A227]/20 rounded-full" />
+                      <motion.div
+                        className="absolute inset-0 border-3 border-[#C9A227] border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      />
+                    </div>
+                    <span className="text-sm text-white/50 font-medium">Verifying...</span>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {screen === 'register' && (
+            <motion.div
+              key="register"
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="relative"
+            >
+              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#2563EB]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
+
+              <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] p-8 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
+                <motion.button
+                  onClick={() => setScreen('users')}
+                  className="group flex items-center gap-2 text-sm text-white/40 hover:text-white mb-8 transition-all duration-300 min-h-[44px] -ml-2 px-3 rounded-xl hover:bg-white/[0.05]"
+                  aria-label="Go back to user selection"
+                  whileHover={{ x: -2 }}
+                >
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  Back
+                </motion.button>
+
+                <div className="text-center mb-10">
+                  <motion.div
+                    className="relative inline-block mb-6"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-[#2563EB] rounded-3xl blur-2xl opacity-40 scale-125"
+                      animate={{
+                        scale: [1.2, 1.4, 1.2],
+                        opacity: [0.3, 0.5, 0.3],
+                      }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    <div
+                      className="relative w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl ring-1 ring-white/10"
+                      style={{
+                        background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                        boxShadow: '0 20px 40px -10px rgba(37,99,235,0.5)',
+                      }}
+                    >
+                      <UserPlus className="w-10 h-10 text-white" aria-hidden="true" />
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Create Account</h2>
+                    <p className="text-sm text-white/40 mt-2">Join the team in seconds</p>
+                  </motion.div>
+                </div>
+
+                <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }} className="space-y-7">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <label htmlFor="user-name" className="block text-sm font-semibold text-white/60 mb-3">
+                      Your Name
+                    </label>
+                    <input
+                      id="user-name"
+                      type="text"
+                      value={newUserName}
+                      onChange={(e) => setNewUserName(e.target.value)}
+                      placeholder="Enter your name"
+                      autoFocus
+                      autoComplete="name"
+                      className="w-full px-5 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.1] focus:border-[#C9A227]/40 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/20 transition-all duration-300 text-white placeholder-white/25 text-base min-h-[60px]"
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <label className="block text-sm font-semibold text-white/60 mb-3">
+                      Choose a PIN
+                    </label>
+                    <div className="flex justify-center gap-3" role="group" aria-label="Choose PIN">
+                      {newUserPin.map((digit, index) => (
+                        <motion.input
+                          key={index}
+                          ref={(el) => { newPinRefs.current[index] = el; }}
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handlePinChange(index, e.target.value, newPinRefs, newUserPin, setNewUserPin)}
+                          onKeyDown={(e) => handlePinKeyDown(e, index, newPinRefs, newUserPin)}
+                          aria-label={`New PIN digit ${index + 1}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.4 + index * 0.05 }}
+                          className={`w-14 h-16 sm:w-16 sm:h-[72px] text-center text-2xl font-bold rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#C9A227]/10 ${
+                            digit ? 'border-[#C9A227] bg-[#C9A227]/10 text-white' : 'border-white/10 bg-white/[0.03] focus:border-[#C9A227] focus:bg-white/[0.05] text-white hover:border-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <label className="block text-sm font-semibold text-white/60 mb-3">
+                      Confirm PIN
+                    </label>
+                    <div className="flex justify-center gap-3" role="group" aria-label="Confirm PIN">
+                      {confirmPin.map((digit, index) => (
+                        <motion.input
+                          key={index}
+                          ref={(el) => { confirmPinRefs.current[index] = el; }}
+                          type="password"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handlePinChange(index, e.target.value, confirmPinRefs, confirmPin, setConfirmPin)}
+                          onKeyDown={(e) => handlePinKeyDown(e, index, confirmPinRefs, confirmPin)}
+                          aria-label={`Confirm PIN digit ${index + 1}`}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5 + index * 0.05 }}
+                          className={`w-14 h-16 sm:w-16 sm:h-[72px] text-center text-2xl font-bold rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 ${
+                            digit ? 'border-emerald-500 bg-emerald-500/10 focus:ring-emerald-500/20 text-white' : 'border-white/10 bg-white/[0.03] focus:border-emerald-500 focus:bg-white/[0.05] focus:ring-emerald-500/10 text-white hover:border-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  <AnimatePresence mode="wait">
+                    {error && (
+                      <motion.div
+                        className="flex items-center justify-center gap-3 text-red-400 text-sm bg-red-500/10 py-4 px-6 rounded-2xl border border-red-500/20"
+                        role="alert"
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                          <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <span className="font-medium">{error}</span>
+                      </motion.div>
                     )}
-                  </span>
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
+                  </AnimatePresence>
+
+                  <motion.button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="group relative w-full py-5 rounded-2xl font-semibold text-base overflow-hidden min-h-[60px] text-white disabled:opacity-50"
+                    style={{
+                      background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                      boxShadow: '0 20px 40px -10px rgba(37,99,235,0.4)',
+                    }}
+                    whileHover={{ scale: 1.02, boxShadow: '0 25px 50px -10px rgba(37,99,235,0.5)' }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    {/* Shimmer effect */}
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)',
+                      }}
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
+                    />
+                    <span className="relative z-10 flex items-center justify-center gap-2.5">
+                      {isSubmitting ? (
+                        <>
+                          <motion.div
+                            className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          />
+                          Creating Account...
+                        </>
+                      ) : (
+                        <>
+                          Create Account
+                          <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
+                    </span>
+                  </motion.button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Footer branding */}
-        <div className="mt-8 text-center">
-          <p className="text-white/20 text-xs font-medium tracking-widest uppercase">
+        <motion.div
+          className="mt-10 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <p className="text-white/15 text-xs font-semibold tracking-[0.3em] uppercase">
             Bealer Agency
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
 }
 
-// Refined user button component
-function UserButton({ user, onSelect }: { user: AuthUser; onSelect: (user: AuthUser) => void }) {
+// Refined user button component with staggered animation
+function UserButton({ user, onSelect, delay = 0 }: { user: AuthUser; onSelect: (user: AuthUser) => void; delay?: number }) {
   return (
-    <button
+    <motion.button
       onClick={() => onSelect(user)}
-      className="group w-full flex items-center gap-4 p-3.5 rounded-xl hover:bg-white/[0.05] active:bg-white/[0.08] transition-all duration-200 text-left min-h-[64px] border border-transparent hover:border-white/[0.08]"
+      className="group w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.06] active:bg-white/[0.08] transition-all duration-300 text-left min-h-[72px] border border-transparent hover:border-white/[0.1]"
       aria-label={`Sign in as ${user.name}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ x: 4 }}
     >
       {/* Avatar with glow on hover */}
       <div className="relative flex-shrink-0">
-        <div
-          className="absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+        <motion.div
+          className="absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-50 transition-all duration-500"
           style={{ backgroundColor: user.color }}
         />
         <div
-          className="relative w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold shadow-md text-sm ring-1 ring-white/10 group-hover:ring-white/20 transition-all duration-200"
-          style={{ backgroundColor: user.color }}
+          className="relative w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold shadow-lg text-sm ring-1 ring-white/10 group-hover:ring-white/20 transition-all duration-300"
+          style={{
+            backgroundColor: user.color,
+            boxShadow: `0 8px 20px -8px ${user.color}60`,
+          }}
           aria-hidden="true"
         >
           {getUserInitials(user.name)}
@@ -660,16 +1091,19 @@ function UserButton({ user, onSelect }: { user: AuthUser; onSelect: (user: AuthU
       <div className="flex-1 min-w-0">
         <span className="font-semibold text-white block truncate text-base group-hover:text-white transition-colors">{user.name}</span>
         {user.last_login && (
-          <p className="text-xs text-white/30 mt-0.5 group-hover:text-white/40 transition-colors">
+          <p className="text-xs text-white/30 mt-1 group-hover:text-white/40 transition-colors">
             Last login {new Date(user.last_login).toLocaleDateString()}
           </p>
         )}
       </div>
 
-      {/* Lock icon */}
-      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/[0.05] group-hover:bg-[#C9A227] flex items-center justify-center transition-all duration-200 border border-white/[0.06] group-hover:border-transparent">
-        <Lock className="w-4 h-4 text-white/40 group-hover:text-[#0A1628] transition-colors" aria-hidden="true" />
-      </div>
-    </button>
+      {/* Lock icon with animated background */}
+      <motion.div
+        className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/[0.04] group-hover:bg-[#C9A227] flex items-center justify-center transition-all duration-300 border border-white/[0.06] group-hover:border-transparent"
+        whileHover={{ scale: 1.05 }}
+      >
+        <Lock className="w-4 h-4 text-white/40 group-hover:text-[#0A1628] transition-colors duration-300" aria-hidden="true" />
+      </motion.div>
+    </motion.button>
   );
 }
