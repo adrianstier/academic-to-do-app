@@ -8,7 +8,7 @@ import {
   MessageSquare, Send, X, Minimize2, Maximize2, ChevronDown,
   Users, ChevronLeft, User, Smile, Check, CheckCheck, Wifi, WifiOff,
   Bell, BellOff, Search, Reply, MoreHorizontal, Edit3, Trash2, Pin,
-  AtSign, Link2, Plus, Moon, Volume2, VolumeX, Circle, Clock
+  AtSign, Plus, Moon, Volume2, VolumeX, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -97,22 +97,28 @@ function TypingIndicator({ userName }: { userName: string }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="flex items-center gap-2 px-3 py-2"
+      className="flex items-center gap-3 px-4 py-2"
     >
-      <span className="text-sm text-[var(--text-muted)]">{userName} is typing</span>
-      <div className="flex gap-1">
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)]"
-            animate={{ y: [0, -4, 0] }}
-            transition={{
-              duration: 0.6,
-              repeat: Infinity,
-              delay: i * 0.15,
-            }}
-          />
-        ))}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/[0.06] border border-white/[0.08]">
+        <span className="text-sm text-white/50">{userName}</span>
+        <div className="flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="w-1.5 h-1.5 rounded-full bg-[#C9A227]"
+              animate={{
+                y: [0, -4, 0],
+                opacity: [0.4, 1, 0.4]
+              }}
+              transition={{
+                duration: 0.8,
+                repeat: Infinity,
+                delay: i * 0.15,
+                ease: 'easeInOut'
+              }}
+            />
+          ))}
+        </div>
       </div>
     </motion.div>
   );
@@ -138,27 +144,25 @@ function MentionAutocomplete({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 5 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 5 }}
-      className="absolute z-30 bg-[var(--surface)] border border-[var(--border)]
-                 rounded-lg shadow-xl overflow-hidden min-w-[150px]"
+      initial={{ opacity: 0, y: 5, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 5, scale: 0.95 }}
+      className="absolute z-30 bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden min-w-[180px] backdrop-blur-xl"
       style={{ bottom: position.top, left: position.left }}
     >
       {filteredUsers.map((user) => (
         <button
           key={user.name}
           onClick={() => onSelect(user.name)}
-          className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[var(--surface-2)]
-                   transition-colors text-left"
+          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/[0.06] transition-all duration-200 text-left group"
         >
           <div
-            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-lg ring-1 ring-white/10 group-hover:ring-white/20 transition-all"
             style={{ backgroundColor: user.color }}
           >
             {user.name.charAt(0).toUpperCase()}
           </div>
-          <span className="text-sm text-[var(--foreground)]">{user.name}</span>
+          <span className="text-sm text-white/80 group-hover:text-white transition-colors">{user.name}</span>
         </button>
       ))}
     </motion.div>
@@ -174,13 +178,13 @@ function ReactionsSummary({ reactions, users }: { reactions: MessageReaction[]; 
   }, {} as Record<TapbackType, string[]>);
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-xl p-2 min-w-[120px]">
+    <div className="bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-2xl p-3 min-w-[140px] backdrop-blur-xl">
       {Object.entries(groupedByReaction).map(([reaction, userNames]) => (
-        <div key={reaction} className="flex items-center gap-2 py-1">
+        <div key={reaction} className="flex items-center gap-3 py-1.5">
           <span className="text-lg">{TAPBACK_EMOJIS[reaction as TapbackType]}</span>
           <div className="flex flex-wrap gap-1">
             {userNames.map(name => (
-              <span key={name} className="text-xs text-[var(--foreground)]">{name}</span>
+              <span key={name} className="text-xs text-white/70">{name}</span>
             ))}
           </div>
         </div>
@@ -271,7 +275,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
 
   const getUserColor = useCallback((userName: string) => {
     const user = users.find(u => u.name === userName);
-    return user?.color || '#0033A0';
+    return user?.color || '#2563EB';
   }, [users]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -964,10 +968,10 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
           return (
             <span
               key={i}
-              className={`px-1 rounded font-medium ${
+              className={`px-1.5 py-0.5 rounded-md font-medium ${
                 isMe
-                  ? 'bg-yellow-500/30 text-yellow-200'
-                  : 'bg-[var(--accent)]/30 text-[var(--accent)]'
+                  ? 'bg-[#C9A227]/30 text-[#C9A227]'
+                  : 'bg-[#2563EB]/30 text-[#2563EB]'
               }`}
             >
               {part}
@@ -1010,7 +1014,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
 
   return (
     <>
-      {/* Chat Toggle Button */}
+      {/* Chat Toggle Button - Cinematic Design */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -1026,389 +1030,452 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                 setShowConversationList(true);
               }
             }}
-            className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full
-                       bg-[var(--accent)] hover:bg-[var(--allstate-blue-dark)]
-                       text-white shadow-lg hover:shadow-xl
-                       transition-all duration-200 flex items-center justify-center
-                       group"
+            className="fixed bottom-6 right-6 z-50 group"
             aria-label={`Open chat${totalUnreadCount > 0 ? `, ${totalUnreadCount} unread messages` : ''}`}
           >
-            <MessageSquare className="w-6 h-6" />
+            {/* Outer glow ring */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl bg-[#C9A227]/20 blur-xl"
+              animate={{
+                scale: [1, 1.3, 1],
+                opacity: [0.3, 0.5, 0.3]
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
+
+            {/* Main button */}
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-[#C9A227]/30 transition-all duration-300">
+              {/* Shimmer effect */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)',
+                }}
+                animate={{ x: ['-100%', '200%'] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+              />
+              <MessageSquare className="w-6 h-6 text-[#0A1628] relative z-10" strokeWidth={2.5} />
+            </div>
+
+            {/* Unread badge */}
             {totalUnreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[1.5rem] h-6 px-1.5 bg-red-500
-                             rounded-full text-xs font-bold flex items-center
-                             justify-center text-white shadow-lg border-2 border-white animate-pulse">
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -top-2 -right-2 min-w-[1.75rem] h-7 px-2 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-lg border-2 border-[#0A1628]"
+              >
                 {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
-              </span>
+              </motion.span>
             )}
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
+      {/* Chat Panel - Cinematic Design */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{
               opacity: 1,
               y: 0,
               scale: 1,
-              height: isMinimized ? 'auto' : 'min(600px, 85vh)'
+              height: isMinimized ? 'auto' : 'min(650px, 85vh)'
             }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 z-50 w-[400px] max-w-[calc(100vw-2rem)]
-                       bg-[var(--surface)] border border-[var(--border)]
-                       rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-6 right-6 z-50 w-[420px] max-w-[calc(100vw-2rem)] flex flex-col"
             role="dialog"
             aria-label="Chat panel"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3
-                          bg-[var(--accent)] text-white">
-              <div className="flex items-center gap-2">
-                {showConversationList ? (
-                  <>
-                    <MessageSquare className="w-5 h-5" />
-                    <span className="font-semibold">Messages</span>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setShowConversationList(true)}
-                      className="p-1 hover:bg-white/20 rounded-lg transition-colors -ml-1"
-                      aria-label="Back to conversations"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    {conversation?.type === 'team' ? (
-                      <Users className="w-5 h-5" />
-                    ) : conversation?.type === 'dm' ? (
-                      <div className="relative">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
-                                     ring-2 ring-white/30"
-                          style={{ backgroundColor: getUserColor(conversation.userName) }}
-                        >
-                          {getInitials(conversation.userName)}
-                        </div>
-                        {/* Presence indicator */}
-                        <div
-                          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--accent)]"
-                          style={{ backgroundColor: PRESENCE_CONFIG[userPresence[conversation.userName] || 'offline'].color }}
-                          title={PRESENCE_CONFIG[userPresence[conversation.userName] || 'offline'].label}
-                        />
+            {/* Outer glow */}
+            <div className="absolute -inset-[1px] bg-gradient-to-b from-[#C9A227]/30 via-white/[0.08] to-white/[0.02] rounded-[28px] blur-[1px]" />
+
+            {/* Main container */}
+            <div className="relative bg-gradient-to-b from-[#0A1628] to-[#050A12] rounded-[28px] border border-white/[0.1] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col h-full">
+
+              {/* Header */}
+              <div className="relative flex items-center justify-between px-5 py-4 overflow-hidden">
+                {/* Header background effects */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#C9A227]/10 via-transparent to-[#C9A227]/5" />
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-px"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(201,162,39,0.4), transparent)',
+                  }}
+                  animate={{ opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                />
+
+                <div className="flex items-center gap-3 relative z-10">
+                  {showConversationList ? (
+                    <>
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] flex items-center justify-center shadow-lg shadow-[#C9A227]/20">
+                        <MessageSquare className="w-5 h-5 text-[#0A1628]" strokeWidth={2.5} />
                       </div>
-                    ) : (
-                      <MessageSquare className="w-5 h-5" />
-                    )}
-                    <span className="font-semibold">{getConversationTitle()}</span>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {/* Search toggle */}
-                {!showConversationList && (
-                  <button
-                    onClick={() => setShowSearch(!showSearch)}
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      showSearch ? 'bg-white/20' : 'hover:bg-white/20'
-                    }`}
-                    title="Search messages"
-                  >
-                    <Search className="w-4 h-4" />
-                  </button>
-                )}
-
-                {/* Pinned messages */}
-                {!showConversationList && pinnedMessages.length > 0 && (
-                  <button
-                    onClick={() => setShowPinnedMessages(!showPinnedMessages)}
-                    className={`p-1.5 rounded-lg transition-colors relative ${
-                      showPinnedMessages ? 'bg-white/20' : 'hover:bg-white/20'
-                    }`}
-                    title="Pinned messages"
-                  >
-                    <Pin className="w-4 h-4" />
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full text-[10px] flex items-center justify-center">
-                      {pinnedMessages.length}
-                    </span>
-                  </button>
-                )}
-
-                {/* DND toggle */}
-                <button
-                  onClick={() => setIsDndMode(!isDndMode)}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    isDndMode
-                      ? 'bg-red-500/20 text-red-200'
-                      : 'hover:bg-white/20'
-                  }`}
-                  title={isDndMode ? 'Do Not Disturb (ON)' : 'Do Not Disturb (OFF)'}
-                >
-                  {isDndMode ? <Moon className="w-4 h-4" /> : <Moon className="w-4 h-4 opacity-50" />}
-                </button>
-
-                {/* Notification toggle */}
-                <button
-                  onClick={enableNotifications}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    notificationsEnabled
-                      ? 'bg-green-500/20 text-green-200'
-                      : 'hover:bg-white/20 text-white/70'
-                  }`}
-                  title={notificationsEnabled ? 'Notifications enabled' : 'Enable notifications'}
-                >
-                  {notificationsEnabled ? (
-                    <Bell className="w-4 h-4" />
+                      <span className="font-bold text-white text-lg tracking-tight">Messages</span>
+                    </>
                   ) : (
-                    <BellOff className="w-4 h-4" />
-                  )}
-                </button>
-
-                {/* Connection status */}
-                <div
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs
-                             ${connected ? 'bg-green-500/20' : 'bg-red-500/20'}`}
-                  title={connected ? 'Connected' : 'Disconnected'}
-                >
-                  {connected ? (
-                    <Wifi className="w-3 h-3" />
-                  ) : (
-                    <WifiOff className="w-3 h-3" />
+                    <>
+                      <motion.button
+                        onClick={() => setShowConversationList(true)}
+                        className="p-2 hover:bg-white/[0.08] rounded-xl transition-all duration-200 -ml-1"
+                        aria-label="Back to conversations"
+                        whileHover={{ x: -2 }}
+                      >
+                        <ChevronLeft className="w-5 h-5 text-white/70" />
+                      </motion.button>
+                      {conversation?.type === 'team' ? (
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] flex items-center justify-center shadow-lg">
+                          <Users className="w-5 h-5 text-white" />
+                        </div>
+                      ) : conversation?.type === 'dm' ? (
+                        <div className="relative">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10"
+                            style={{ backgroundColor: getUserColor(conversation.userName) }}
+                          >
+                            {getInitials(conversation.userName)}
+                          </div>
+                          {/* Presence indicator */}
+                          <div
+                            className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0A1628]"
+                            style={{ backgroundColor: PRESENCE_CONFIG[userPresence[conversation.userName] || 'offline'].color }}
+                            title={PRESENCE_CONFIG[userPresence[conversation.userName] || 'offline'].label}
+                          />
+                        </div>
+                      ) : (
+                        <MessageSquare className="w-5 h-5 text-[#C9A227]" />
+                      )}
+                      <span className="font-bold text-white text-lg tracking-tight">{getConversationTitle()}</span>
+                    </>
                   )}
                 </div>
 
-                <button
-                  onClick={() => setIsMinimized(!isMinimized)}
-                  className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                <div className="flex items-center gap-1 relative z-10">
+                  {/* Search toggle */}
+                  {!showConversationList && (
+                    <motion.button
+                      onClick={() => setShowSearch(!showSearch)}
+                      className={`p-2 rounded-xl transition-all duration-200 ${
+                        showSearch ? 'bg-[#C9A227]/20 text-[#C9A227]' : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
+                      }`}
+                      title="Search messages"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Search className="w-4 h-4" />
+                    </motion.button>
+                  )}
 
-            {/* Search bar */}
-            <AnimatePresence>
-              {showSearch && !showConversationList && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="border-b border-[var(--border)] bg-[var(--surface)]"
-                >
-                  <div className="p-2">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search messages..."
-                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)]
-                                 bg-[var(--background)] text-[var(--foreground)]
-                                 placeholder:text-[var(--text-muted)] text-sm
-                                 focus:outline-none focus:border-[var(--accent)]"
-                        autoFocus
-                      />
+                  {/* Pinned messages */}
+                  {!showConversationList && pinnedMessages.length > 0 && (
+                    <motion.button
+                      onClick={() => setShowPinnedMessages(!showPinnedMessages)}
+                      className={`p-2 rounded-xl transition-all duration-200 relative ${
+                        showPinnedMessages ? 'bg-[#C9A227]/20 text-[#C9A227]' : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
+                      }`}
+                      title="Pinned messages"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <Pin className="w-4 h-4" />
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C9A227] rounded-full text-[9px] flex items-center justify-center text-[#0A1628] font-bold">
+                        {pinnedMessages.length}
+                      </span>
+                    </motion.button>
+                  )}
+
+                  {/* DND toggle */}
+                  <motion.button
+                    onClick={() => setIsDndMode(!isDndMode)}
+                    className={`p-2 rounded-xl transition-all duration-200 ${
+                      isDndMode
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
+                    }`}
+                    title={isDndMode ? 'Do Not Disturb (ON)' : 'Do Not Disturb (OFF)'}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Moon className="w-4 h-4" />
+                  </motion.button>
+
+                  {/* Notification toggle */}
+                  <motion.button
+                    onClick={enableNotifications}
+                    className={`p-2 rounded-xl transition-all duration-200 ${
+                      notificationsEnabled
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'hover:bg-white/[0.08] text-white/50'
+                    }`}
+                    title={notificationsEnabled ? 'Notifications enabled' : 'Enable notifications'}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {notificationsEnabled ? (
+                      <Bell className="w-4 h-4" />
+                    ) : (
+                      <BellOff className="w-4 h-4" />
+                    )}
+                  </motion.button>
+
+                  {/* Connection status */}
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
+                      connected ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                    }`}
+                    title={connected ? 'Connected' : 'Disconnected'}
+                  >
+                    {connected ? (
+                      <Wifi className="w-3.5 h-3.5" />
+                    ) : (
+                      <WifiOff className="w-3.5 h-3.5" />
+                    )}
+                  </div>
+
+                  <motion.button
+                    onClick={() => setIsMinimized(!isMinimized)}
+                    className="p-2 hover:bg-white/[0.08] rounded-xl transition-all duration-200 text-white/50 hover:text-white"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setIsOpen(false)}
+                    className="p-2 hover:bg-white/[0.08] rounded-xl transition-all duration-200 text-white/50 hover:text-white"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X className="w-4 h-4" />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Search bar */}
+              <AnimatePresence>
+                {showSearch && !showConversationList && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="border-b border-white/[0.06] bg-white/[0.02]"
+                  >
+                    <div className="p-3">
+                      <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search messages..."
+                          className="w-full pl-11 pr-10 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#C9A227]/50 focus:ring-2 focus:ring-[#C9A227]/20 transition-all duration-200"
+                          autoFocus
+                        />
+                        {searchQuery && (
+                          <button
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/[0.1] rounded-lg transition-colors"
+                          >
+                            <X className="w-4 h-4 text-white/40" />
+                          </button>
+                        )}
+                      </div>
                       {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery('')}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          <X className="w-4 h-4 text-[var(--text-muted)]" />
-                        </button>
+                        <div className="mt-2 text-xs text-white/40 px-1">
+                          {filteredMessages.length} result{filteredMessages.length !== 1 ? 's' : ''}
+                        </div>
                       )}
                     </div>
-                    {searchQuery && (
-                      <div className="mt-1 text-xs text-[var(--text-muted)]">
-                        {filteredMessages.length} result{filteredMessages.length !== 1 ? 's' : ''}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Pinned messages panel */}
+              <AnimatePresence>
+                {showPinnedMessages && !showConversationList && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="border-b border-white/[0.06] bg-[#C9A227]/5 max-h-36 overflow-y-auto"
+                  >
+                    <div className="p-3">
+                      <div className="flex items-center gap-2 text-xs text-[#C9A227]/70 mb-2 font-medium">
+                        <Pin className="w-3.5 h-3.5" />
+                        <span>Pinned Messages</span>
                       </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Pinned messages panel */}
-            <AnimatePresence>
-              {showPinnedMessages && !showConversationList && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="border-b border-[var(--border)] bg-yellow-500/5 max-h-32 overflow-y-auto"
-                >
-                  <div className="p-2">
-                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-2">
-                      <Pin className="w-3 h-3" />
-                      <span>Pinned Messages</span>
-                    </div>
-                    {pinnedMessages.map(msg => (
-                      <div
-                        key={msg.id}
-                        className="text-sm p-2 rounded bg-[var(--surface)] mb-1 cursor-pointer
-                                 hover:bg-[var(--surface-2)]"
-                        onClick={() => {
-                          setShowPinnedMessages(false);
-                          // Could scroll to message here
-                        }}
-                      >
-                        <span className="font-medium">{msg.created_by}: </span>
-                        <span className="text-[var(--text-muted)]">
-                          {msg.text.slice(0, 50)}{msg.text.length > 50 ? '...' : ''}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Content */}
-            {!isMinimized && (
-              <>
-                {showConversationList ? (
-                  /* Conversation List */
-                  <div className="flex-1 overflow-y-auto bg-[var(--background)]">
-                    {sortedConversations.map(({ conv, lastMessage }) => {
-                      const isTeam = conv.type === 'team';
-                      const userName = conv.type === 'dm' ? conv.userName : '';
-                      const userColor = isTeam ? 'var(--accent)' : getUserColor(userName);
-                      const unreadCount = unreadCounts[isTeam ? 'team' : userName] || 0;
-                      const isMuted = mutedConversations.has(isTeam ? 'team' : userName);
-                      const presence = isTeam ? null : userPresence[userName];
-                      const isSelected = conversation?.type === conv.type &&
-                        (conv.type === 'team' || (conv.type === 'dm' && conversation?.type === 'dm' && conversation.userName === conv.userName));
-
-                      return (
+                      {pinnedMessages.map(msg => (
                         <div
-                          key={isTeam ? 'team' : userName}
-                          className={`px-4 py-3 flex items-center gap-3
-                                    hover:bg-[var(--surface-2)] transition-colors border-b border-[var(--border)]/50
-                                    ${isSelected ? 'bg-[var(--accent)]/10' : ''}
-                                    ${unreadCount > 0 && !isMuted ? 'bg-[var(--accent)]/5' : ''}`}
+                          key={msg.id}
+                          className="text-sm p-3 rounded-xl bg-white/[0.04] border border-white/[0.06] mb-2 cursor-pointer hover:bg-white/[0.06] transition-colors"
+                          onClick={() => setShowPinnedMessages(false)}
                         >
-                          <button
-                            onClick={() => selectConversation(conv)}
-                            className="flex-1 flex items-center gap-3"
-                          >
-                            <div className="relative flex-shrink-0">
-                              <div
-                                className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shadow-sm
-                                           ${isTeam ? 'bg-[var(--accent)]' : ''}`}
-                                style={!isTeam ? { backgroundColor: userColor } : undefined}
-                              >
-                                {isTeam ? <Users className="w-5 h-5" /> : getInitials(userName)}
-                              </div>
-                              {/* Presence indicator for DMs */}
-                              {!isTeam && presence && (
-                                <div
-                                  className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[var(--background)]"
-                                  style={{ backgroundColor: PRESENCE_CONFIG[presence].color }}
-                                />
-                              )}
-                              {unreadCount > 0 && !isMuted && (
-                                <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-red-500
-                                               rounded-full text-xs font-bold flex items-center justify-center text-white
-                                               shadow-md border border-white/50 animate-pulse">
-                                  {unreadCount > 99 ? '99+' : unreadCount}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0 text-left">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className={`font-medium text-[var(--foreground)] truncate
-                                                ${unreadCount > 0 && !isMuted ? 'font-semibold' : ''}`}>
-                                  {isTeam ? 'Team Chat' : userName}
-                                </span>
-                                {lastMessage && (
-                                  <span className={`text-xs flex-shrink-0
-                                                  ${unreadCount > 0 && !isMuted ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-muted)]'}`}>
-                                    {formatRelativeTime(lastMessage.created_at)}
-                                  </span>
-                                )}
-                              </div>
-                              <div className={`text-sm truncate mt-0.5
-                                            ${unreadCount > 0 && !isMuted ? 'text-[var(--foreground)] font-medium' : 'text-[var(--text-muted)]'}`}>
-                                {lastMessage ? (
-                                  <>
-                                    {lastMessage.created_by === currentUser.name ? 'You: ' : `${lastMessage.created_by}: `}
-                                    {lastMessage.text.slice(0, 35)}{lastMessage.text.length > 35 ? '...' : ''}
-                                  </>
-                                ) : (
-                                  <span className="italic">No messages yet</span>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                          {/* Mute button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleMute(isTeam ? 'team' : userName);
-                            }}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              isMuted ? 'bg-[var(--surface-2)] text-[var(--text-muted)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'
-                            }`}
-                            title={isMuted ? 'Unmute' : 'Mute'}
-                          >
-                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                          </button>
+                          <span className="font-medium text-white">{msg.created_by}: </span>
+                          <span className="text-white/60">
+                            {msg.text.slice(0, 50)}{msg.text.length > 50 ? '...' : ''}
+                          </span>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                    {otherUsers.length === 0 && (
-                      <div className="px-4 py-8 text-center text-[var(--text-muted)]">
-                        <User className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                        <p className="font-medium">No other users yet</p>
-                        <p className="text-sm mt-1">Invite teammates to start chatting</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Messages View */
-                  <>
-                    <div
-                      ref={messagesContainerRef}
-                      onScroll={handleScroll}
-                      className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 bg-[var(--background)]"
-                    >
-                      {loading ? (
-                        <div className="flex items-center justify-center h-full text-[var(--text-muted)]">
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-                            <span>Loading messages...</span>
+              {/* Content */}
+              {!isMinimized && (
+                <>
+                  {showConversationList ? (
+                    /* Conversation List */
+                    <div className="flex-1 overflow-y-auto">
+                      {sortedConversations.map(({ conv, lastMessage }, index) => {
+                        const isTeam = conv.type === 'team';
+                        const userName = conv.type === 'dm' ? conv.userName : '';
+                        const userColor = isTeam ? '#2563EB' : getUserColor(userName);
+                        const unreadCount = unreadCounts[isTeam ? 'team' : userName] || 0;
+                        const isMuted = mutedConversations.has(isTeam ? 'team' : userName);
+                        const presence = isTeam ? null : userPresence[userName];
+                        const isSelected = conversation?.type === conv.type &&
+                          (conv.type === 'team' || (conv.type === 'dm' && conversation?.type === 'dm' && conversation.userName === conv.userName));
+
+                        return (
+                          <motion.div
+                            key={isTeam ? 'team' : userName}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                            className={`px-4 py-4 flex items-center gap-4 transition-all duration-200 border-b border-white/[0.04] ${
+                              isSelected ? 'bg-[#C9A227]/10' : 'hover:bg-white/[0.04]'
+                            } ${unreadCount > 0 && !isMuted ? 'bg-[#C9A227]/5' : ''}`}
+                          >
+                            <button
+                              onClick={() => selectConversation(conv)}
+                              className="flex-1 flex items-center gap-4"
+                            >
+                              <div className="relative flex-shrink-0">
+                                <motion.div
+                                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg ring-1 ring-white/10`}
+                                  style={{ backgroundColor: userColor }}
+                                  whileHover={{ scale: 1.05 }}
+                                >
+                                  {isTeam ? <Users className="w-5 h-5" /> : getInitials(userName)}
+                                </motion.div>
+                                {/* Presence indicator for DMs */}
+                                {!isTeam && presence && (
+                                  <div
+                                    className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-[#0A1628]"
+                                    style={{ backgroundColor: PRESENCE_CONFIG[presence].color }}
+                                  />
+                                )}
+                                {unreadCount > 0 && !isMuted && (
+                                  <motion.span
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-lg border border-[#0A1628]"
+                                  >
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                  </motion.span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0 text-left">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`font-semibold text-white truncate ${
+                                    unreadCount > 0 && !isMuted ? 'text-[#C9A227]' : ''
+                                  }`}>
+                                    {isTeam ? 'Team Chat' : userName}
+                                  </span>
+                                  {lastMessage && (
+                                    <span className={`text-xs flex-shrink-0 ${
+                                      unreadCount > 0 && !isMuted ? 'text-[#C9A227] font-medium' : 'text-white/40'
+                                    }`}>
+                                      {formatRelativeTime(lastMessage.created_at)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className={`text-sm truncate mt-1 ${
+                                  unreadCount > 0 && !isMuted ? 'text-white/80 font-medium' : 'text-white/40'
+                                }`}>
+                                  {lastMessage ? (
+                                    <>
+                                      {lastMessage.created_by === currentUser.name ? 'You: ' : `${lastMessage.created_by}: `}
+                                      {lastMessage.text.slice(0, 35)}{lastMessage.text.length > 35 ? '...' : ''}
+                                    </>
+                                  ) : (
+                                    <span className="italic text-white/30">No messages yet</span>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                            {/* Mute button */}
+                            <motion.button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleMute(isTeam ? 'team' : userName);
+                              }}
+                              className={`p-2 rounded-xl transition-all duration-200 ${
+                                isMuted ? 'bg-white/[0.06] text-white/40' : 'hover:bg-white/[0.06] text-white/30 hover:text-white/60'
+                              }`}
+                              title={isMuted ? 'Unmute' : 'Mute'}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                            </motion.button>
+                          </motion.div>
+                        );
+                      })}
+
+                      {otherUsers.length === 0 && (
+                        <div className="px-6 py-12 text-center">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+                            <User className="w-8 h-8 text-white/20" />
                           </div>
+                          <p className="font-medium text-white/80">No other users yet</p>
+                          <p className="text-sm mt-1 text-white/40">Invite teammates to start chatting</p>
                         </div>
-                      ) : !tableExists ? (
-                        <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] gap-3 p-4 text-center">
-                          <div className="w-16 h-16 rounded-full bg-[var(--surface-2)] flex items-center justify-center">
-                            <MessageSquare className="w-8 h-8 opacity-50" />
+                      )}
+                    </div>
+                  ) : (
+                    /* Messages View */
+                    <>
+                      <div
+                        ref={messagesContainerRef}
+                        onScroll={handleScroll}
+                        className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
+                      >
+                        {loading ? (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="flex flex-col items-center gap-4">
+                              <motion.div
+                                className="w-10 h-10 border-3 border-[#C9A227]/20 border-t-[#C9A227] rounded-full"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                              />
+                              <span className="text-white/50 text-sm">Loading messages...</span>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-[var(--foreground)]">Chat Setup Required</p>
-                            <p className="text-sm mt-1">Run the messages migration in Supabase to enable chat.</p>
+                        ) : !tableExists ? (
+                          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                            <div className="w-20 h-20 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-5">
+                              <MessageSquare className="w-10 h-10 text-white/20" />
+                            </div>
+                            <p className="font-semibold text-white text-lg">Chat Setup Required</p>
+                            <p className="text-sm mt-2 text-white/40">Run the messages migration in Supabase to enable chat.</p>
                           </div>
-                        </div>
-                      ) : filteredMessages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] gap-3">
-                          <div className="w-16 h-16 rounded-full bg-[var(--surface-2)] flex items-center justify-center">
-                            <MessageSquare className="w-8 h-8 opacity-50" />
-                          </div>
-                          <div className="text-center">
-                            <p className="font-medium text-[var(--foreground)]">
+                        ) : filteredMessages.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                            <motion.div
+                              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/[0.08] flex items-center justify-center mb-5"
+                              animate={{ y: [-4, 4, -4] }}
+                              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                            >
+                              <Sparkles className="w-10 h-10 text-[#C9A227]/60" />
+                            </motion.div>
+                            <p className="font-semibold text-white text-lg">
                               {searchQuery ? 'No messages found' : 'No messages yet'}
                             </p>
-                            <p className="text-sm mt-1">
+                            <p className="text-sm mt-2 text-white/40">
                               {searchQuery
                                 ? 'Try a different search term'
                                 : conversation?.type === 'team'
@@ -1418,544 +1485,523 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                 : 'Select a conversation'}
                             </p>
                           </div>
-                        </div>
-                      ) : (
-                        <>
-                          {groupedMessages.map((msg, msgIndex) => {
-                            const isOwn = msg.created_by === currentUser.name;
-                            const userColor = getUserColor(msg.created_by);
-                            const reactions = msg.reactions || [];
-                            const readBy = msg.read_by || [];
-                            const isLastOwnMessage = isOwn && msgIndex === groupedMessages.length - 1;
-                            const showTapbackMenu = tapbackMessageId === msg.id;
-                            const isHovered = hoveredMessageId === msg.id;
-                            const isFirstUnread = msg.id === firstUnreadId;
+                        ) : (
+                          <>
+                            {groupedMessages.map((msg, msgIndex) => {
+                              const isOwn = msg.created_by === currentUser.name;
+                              const userColor = getUserColor(msg.created_by);
+                              const reactions = msg.reactions || [];
+                              const readBy = msg.read_by || [];
+                              const isLastOwnMessage = isOwn && msgIndex === groupedMessages.length - 1;
+                              const showTapbackMenu = tapbackMessageId === msg.id;
+                              const isHovered = hoveredMessageId === msg.id;
+                              const isFirstUnread = msg.id === firstUnreadId;
 
-                            const reactionCounts = reactions.reduce((acc, r) => {
-                              acc[r.reaction] = (acc[r.reaction] || 0) + 1;
-                              return acc;
-                            }, {} as Record<TapbackType, number>);
+                              const reactionCounts = reactions.reduce((acc, r) => {
+                                acc[r.reaction] = (acc[r.reaction] || 0) + 1;
+                                return acc;
+                              }, {} as Record<TapbackType, number>);
 
-                            return (
-                              <div key={msg.id}>
-                                {/* Unread divider */}
-                                {isFirstUnread && (
-                                  <div className="flex items-center gap-2 my-3">
-                                    <div className="flex-1 h-px bg-red-500/50" />
-                                    <span className="text-xs text-red-500 font-medium px-2">New Messages</span>
-                                    <div className="flex-1 h-px bg-red-500/50" />
-                                  </div>
-                                )}
-
-                                <motion.div
-                                  initial={{ opacity: 0, y: 8 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ duration: 0.15 }}
-                                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}
-                                            ${msg.isGrouped ? 'mt-0.5' : 'mt-3'} group relative`}
-                                  onMouseEnter={() => setHoveredMessageId(msg.id)}
-                                  onMouseLeave={() => setHoveredMessageId(null)}
-                                >
-                                  <div className={`flex items-end gap-2 max-w-[85%] ${isOwn ? 'flex-row-reverse' : ''}`}>
-                                    {/* Avatar */}
-                                    {!msg.isGrouped ? (
-                                      <div
-                                        className="w-7 h-7 rounded-full flex items-center justify-center
-                                                 text-white text-[10px] font-bold flex-shrink-0 shadow-sm"
-                                        style={{ backgroundColor: userColor }}
-                                      >
-                                        {getInitials(msg.created_by)}
-                                      </div>
-                                    ) : (
-                                      <div className="w-7 flex-shrink-0" />
-                                    )}
-
-                                    <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
-                                      {/* Name and time */}
-                                      {!msg.isGrouped && (
-                                        <div className={`flex items-center gap-2 mb-0.5 text-xs
-                                                      ${isOwn ? 'flex-row-reverse' : ''}`}>
-                                          <span className="font-medium text-[var(--foreground)]">
-                                            {isOwn ? 'You' : msg.created_by}
-                                          </span>
-                                          <span className="text-[var(--text-muted)]">
-                                            {formatTime(msg.created_at)}
-                                          </span>
-                                          {msg.edited_at && (
-                                            <span className="text-[var(--text-muted)] italic">(edited)</span>
-                                          )}
-                                          {msg.is_pinned && (
-                                            <Pin className="w-3 h-3 text-yellow-500" />
-                                          )}
-                                        </div>
-                                      )}
-
-                                      {/* Reply preview */}
-                                      {msg.reply_to_text && (
-                                        <div className={`text-xs px-2 py-1 mb-1 rounded border-l-2 border-[var(--accent)]
-                                                       bg-[var(--surface-2)] text-[var(--text-muted)] max-w-full truncate`}>
-                                          <span className="font-medium">{msg.reply_to_user}: </span>
-                                          {msg.reply_to_text}
-                                        </div>
-                                      )}
-
-                                      {/* Message bubble */}
-                                      <div className="relative">
-                                        <div
-                                          onClick={() => setTapbackMessageId(tapbackMessageId === msg.id ? null : msg.id)}
-                                          className={`px-3 py-1.5 rounded-2xl break-words whitespace-pre-wrap cursor-pointer
-                                                    transition-all duration-150 text-[15px] leading-relaxed
-                                                    ${isOwn
-                                                      ? 'bg-[var(--accent)] text-white rounded-br-sm shadow-sm'
-                                                      : 'bg-[var(--surface-2)] text-[var(--foreground)] rounded-bl-sm'
-                                                    }
-                                                    ${showTapbackMenu ? 'ring-2 ring-[var(--accent)]/50' : ''}
-                                                    hover:shadow-md`}
-                                        >
-                                          {renderMessageText(msg.text)}
-                                        </div>
-
-                                        {/* Action buttons on hover */}
-                                        {isHovered && !showTapbackMenu && (
-                                          <div className={`absolute top-0 flex gap-0.5 bg-[var(--surface)]
-                                                         border border-[var(--border)] rounded-lg shadow-lg p-0.5
-                                                         ${isOwn ? 'right-full mr-1' : 'left-full ml-1'}`}>
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setReplyingTo(msg);
-                                              }}
-                                              className="p-1.5 hover:bg-[var(--surface-2)] rounded"
-                                              title="Reply"
-                                            >
-                                              <Reply className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                                            </button>
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setShowMessageMenu(showMessageMenu === msg.id ? null : msg.id);
-                                              }}
-                                              className="p-1.5 hover:bg-[var(--surface-2)] rounded"
-                                              title="More"
-                                            >
-                                              <MoreHorizontal className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                                            </button>
-                                          </div>
-                                        )}
-
-                                        {/* Message menu dropdown */}
-                                        <AnimatePresence>
-                                          {showMessageMenu === msg.id && (
-                                            <motion.div
-                                              initial={{ opacity: 0, scale: 0.95 }}
-                                              animate={{ opacity: 1, scale: 1 }}
-                                              exit={{ opacity: 0, scale: 0.95 }}
-                                              className={`absolute top-full mt-1 z-30 bg-[var(--surface)] border border-[var(--border)]
-                                                        rounded-lg shadow-xl overflow-hidden min-w-[140px]
-                                                        ${isOwn ? 'right-0' : 'left-0'}`}
-                                            >
-                                              <button
-                                                onClick={() => {
-                                                  setReplyingTo(msg);
-                                                  setShowMessageMenu(null);
-                                                }}
-                                                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                                         hover:bg-[var(--surface-2)]"
-                                              >
-                                                <Reply className="w-4 h-4" /> Reply
-                                              </button>
-                                              <button
-                                                onClick={() => togglePin(msg)}
-                                                className="w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                                         hover:bg-[var(--surface-2)]"
-                                              >
-                                                <Pin className="w-4 h-4" /> {msg.is_pinned ? 'Unpin' : 'Pin'}
-                                              </button>
-                                              {onCreateTask && (
-                                                <button
-                                                  onClick={() => createTaskFromMessage(msg)}
-                                                  className="w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                                           hover:bg-[var(--surface-2)]"
-                                                >
-                                                  <Plus className="w-4 h-4" /> Create Task
-                                                </button>
-                                              )}
-                                              {isOwn && (
-                                                <>
-                                                  <button
-                                                    onClick={() => startEdit(msg)}
-                                                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                                             hover:bg-[var(--surface-2)]"
-                                                  >
-                                                    <Edit3 className="w-4 h-4" /> Edit
-                                                  </button>
-                                                  <button
-                                                    onClick={() => deleteMessage(msg.id)}
-                                                    className="w-full px-3 py-2 text-left text-sm flex items-center gap-2
-                                                             hover:bg-[var(--surface-2)] text-red-500"
-                                                  >
-                                                    <Trash2 className="w-4 h-4" /> Delete
-                                                  </button>
-                                                </>
-                                              )}
-                                            </motion.div>
-                                          )}
-                                        </AnimatePresence>
-
-                                        {/* Time on hover for grouped messages */}
-                                        {msg.isGrouped && isHovered && (
-                                          <div className={`absolute top-1/2 -translate-y-1/2 text-[10px] text-[var(--text-muted)]
-                                                        pointer-events-none whitespace-nowrap
-                                                        ${isOwn ? 'right-full mr-2' : 'left-full ml-2'}`}>
-                                            {formatTime(msg.created_at)}
-                                          </div>
-                                        )}
-
-                                        {/* Tapback menu */}
-                                        <AnimatePresence>
-                                          {showTapbackMenu && (
-                                            <motion.div
-                                              initial={{ opacity: 0, scale: 0.9, y: 8 }}
-                                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                                              exit={{ opacity: 0, scale: 0.9, y: 8 }}
-                                              transition={{ duration: 0.15 }}
-                                              className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-20
-                                                        bg-[var(--surface)] border border-[var(--border)]
-                                                        rounded-2xl shadow-xl px-1.5 py-1 flex gap-0.5`}
-                                            >
-                                              {(Object.keys(TAPBACK_EMOJIS) as TapbackType[]).map((reaction) => {
-                                                const myReaction = reactions.find(r => r.user === currentUser.name);
-                                                const isSelected = myReaction?.reaction === reaction;
-                                                return (
-                                                  <button
-                                                    key={reaction}
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      toggleTapback(msg.id, reaction);
-                                                    }}
-                                                    className={`w-9 h-9 flex items-center justify-center rounded-full
-                                                              transition-all duration-150 text-xl
-                                                              ${isSelected
-                                                                ? 'bg-[var(--accent)] scale-110 shadow-md'
-                                                                : 'hover:bg-[var(--surface-2)] hover:scale-110'}`}
-                                                  >
-                                                    {TAPBACK_EMOJIS[reaction]}
-                                                  </button>
-                                                );
-                                              })}
-                                            </motion.div>
-                                          )}
-                                        </AnimatePresence>
-
-                                        {/* Reactions display */}
-                                        {Object.keys(reactionCounts).length > 0 && (
-                                          <div
-                                            className={`absolute ${isOwn ? '-left-2' : '-right-2'} -bottom-2.5 z-10`}
-                                            onMouseEnter={() => setShowReactionsSummary(msg.id)}
-                                            onMouseLeave={() => setShowReactionsSummary(null)}
-                                          >
-                                            <div className="bg-[var(--surface)] border border-[var(--border)]
-                                                          rounded-full px-1.5 py-0.5 flex items-center gap-0.5 shadow-sm cursor-pointer">
-                                              {(Object.entries(reactionCounts) as [TapbackType, number][]).map(([reaction, count]) => (
-                                                <span key={reaction} className="flex items-center text-sm">
-                                                  {TAPBACK_EMOJIS[reaction]}
-                                                  {count > 1 && (
-                                                    <span className="text-[10px] ml-0.5 text-[var(--text-muted)] font-medium">
-                                                      {count}
-                                                    </span>
-                                                  )}
-                                                </span>
-                                              ))}
-                                            </div>
-                                            {/* Reactions summary tooltip */}
-                                            <AnimatePresence>
-                                              {showReactionsSummary === msg.id && (
-                                                <motion.div
-                                                  initial={{ opacity: 0, y: 5 }}
-                                                  animate={{ opacity: 1, y: 0 }}
-                                                  exit={{ opacity: 0, y: 5 }}
-                                                  className={`absolute bottom-full mb-2 z-30
-                                                            ${isOwn ? 'right-0' : 'left-0'}`}
-                                                >
-                                                  <ReactionsSummary reactions={reactions} users={users} />
-                                                </motion.div>
-                                              )}
-                                            </AnimatePresence>
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* Read receipts */}
-                                      {isOwn && isLastOwnMessage && (
-                                        <div className={`flex items-center gap-1 mt-1 text-[10px] text-[var(--text-muted)]
-                                                      ${reactions.length > 0 ? 'mt-3' : ''}`}>
-                                          {readBy.length === 0 ? (
-                                            <span className="flex items-center gap-0.5">
-                                              <Check className="w-3 h-3" />
-                                              Sent
-                                            </span>
-                                          ) : (
-                                            <span className="flex items-center gap-0.5 text-blue-500">
-                                              <CheckCheck className="w-3 h-3" />
-                                              {conversation?.type === 'dm' ? 'Read' : `Read by ${readBy.length}`}
-                                            </span>
-                                          )}
-                                        </div>
-                                      )}
+                              return (
+                                <div key={msg.id}>
+                                  {/* Unread divider */}
+                                  {isFirstUnread && (
+                                    <div className="flex items-center gap-3 my-4">
+                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
+                                      <span className="text-xs text-[#C9A227] font-semibold px-3 py-1 bg-[#C9A227]/10 rounded-full">New Messages</span>
+                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
                                     </div>
-                                  </div>
-                                </motion.div>
-                              </div>
-                            );
-                          })}
+                                  )}
 
-                          {/* Typing indicator */}
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${msg.isGrouped ? 'mt-0.5' : 'mt-4'} group relative`}
+                                    onMouseEnter={() => setHoveredMessageId(msg.id)}
+                                    onMouseLeave={() => setHoveredMessageId(null)}
+                                  >
+                                    <div className={`flex items-end gap-2.5 max-w-[85%] ${isOwn ? 'flex-row-reverse' : ''}`}>
+                                      {/* Avatar */}
+                                      {!msg.isGrouped ? (
+                                        <div
+                                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-lg ring-1 ring-white/10"
+                                          style={{ backgroundColor: userColor }}
+                                        >
+                                          {getInitials(msg.created_by)}
+                                        </div>
+                                      ) : (
+                                        <div className="w-8 flex-shrink-0" />
+                                      )}
+
+                                      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+                                        {/* Name and time */}
+                                        {!msg.isGrouped && (
+                                          <div className={`flex items-center gap-2 mb-1 text-xs ${isOwn ? 'flex-row-reverse' : ''}`}>
+                                            <span className="font-semibold text-white/80">
+                                              {isOwn ? 'You' : msg.created_by}
+                                            </span>
+                                            <span className="text-white/30">
+                                              {formatTime(msg.created_at)}
+                                            </span>
+                                            {msg.edited_at && (
+                                              <span className="text-white/30 italic">(edited)</span>
+                                            )}
+                                            {msg.is_pinned && (
+                                              <Pin className="w-3 h-3 text-[#C9A227]" />
+                                            )}
+                                          </div>
+                                        )}
+
+                                        {/* Reply preview */}
+                                        {msg.reply_to_text && (
+                                          <div className={`text-xs px-3 py-1.5 mb-1.5 rounded-lg border-l-2 border-[#C9A227] bg-white/[0.04] text-white/50 max-w-full truncate`}>
+                                            <span className="font-medium text-[#C9A227]">{msg.reply_to_user}: </span>
+                                            {msg.reply_to_text}
+                                          </div>
+                                        )}
+
+                                        {/* Message bubble */}
+                                        <div className="relative">
+                                          <motion.div
+                                            onClick={() => setTapbackMessageId(tapbackMessageId === msg.id ? null : msg.id)}
+                                            className={`px-4 py-2.5 rounded-2xl break-words whitespace-pre-wrap cursor-pointer transition-all duration-200 text-[15px] leading-relaxed ${
+                                              isOwn
+                                                ? 'bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] rounded-br-md shadow-lg shadow-[#C9A227]/20'
+                                                : 'bg-white/[0.08] text-white rounded-bl-md border border-white/[0.06]'
+                                            } ${showTapbackMenu ? 'ring-2 ring-[#C9A227]/50' : ''}`}
+                                            whileHover={{ scale: 1.01 }}
+                                          >
+                                            {renderMessageText(msg.text)}
+                                          </motion.div>
+
+                                          {/* Action buttons on hover */}
+                                          {isHovered && !showTapbackMenu && (
+                                            <motion.div
+                                              initial={{ opacity: 0, scale: 0.9 }}
+                                              animate={{ opacity: 1, scale: 1 }}
+                                              className={`absolute top-0 flex gap-0.5 bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-xl p-1 ${
+                                                isOwn ? 'right-full mr-2' : 'left-full ml-2'
+                                              }`}
+                                            >
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setReplyingTo(msg);
+                                                }}
+                                                className="p-2 hover:bg-white/[0.08] rounded-lg transition-colors"
+                                                title="Reply"
+                                              >
+                                                <Reply className="w-3.5 h-3.5 text-white/50" />
+                                              </button>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setShowMessageMenu(showMessageMenu === msg.id ? null : msg.id);
+                                                }}
+                                                className="p-2 hover:bg-white/[0.08] rounded-lg transition-colors"
+                                                title="More"
+                                              >
+                                                <MoreHorizontal className="w-3.5 h-3.5 text-white/50" />
+                                              </button>
+                                            </motion.div>
+                                          )}
+
+                                          {/* Message menu dropdown */}
+                                          <AnimatePresence>
+                                            {showMessageMenu === msg.id && (
+                                              <motion.div
+                                                initial={{ opacity: 0, scale: 0.95, y: 5 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95, y: 5 }}
+                                                className={`absolute top-full mt-2 z-30 bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden min-w-[160px] backdrop-blur-xl ${
+                                                  isOwn ? 'right-0' : 'left-0'
+                                                }`}
+                                              >
+                                                <button
+                                                  onClick={() => {
+                                                    setReplyingTo(msg);
+                                                    setShowMessageMenu(null);
+                                                  }}
+                                                  className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/[0.06] text-white/80 transition-colors"
+                                                >
+                                                  <Reply className="w-4 h-4" /> Reply
+                                                </button>
+                                                <button
+                                                  onClick={() => togglePin(msg)}
+                                                  className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/[0.06] text-white/80 transition-colors"
+                                                >
+                                                  <Pin className="w-4 h-4" /> {msg.is_pinned ? 'Unpin' : 'Pin'}
+                                                </button>
+                                                {onCreateTask && (
+                                                  <button
+                                                    onClick={() => createTaskFromMessage(msg)}
+                                                    className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/[0.06] text-white/80 transition-colors"
+                                                  >
+                                                    <Plus className="w-4 h-4" /> Create Task
+                                                  </button>
+                                                )}
+                                                {isOwn && (
+                                                  <>
+                                                    <button
+                                                      onClick={() => startEdit(msg)}
+                                                      className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/[0.06] text-white/80 transition-colors"
+                                                    >
+                                                      <Edit3 className="w-4 h-4" /> Edit
+                                                    </button>
+                                                    <button
+                                                      onClick={() => deleteMessage(msg.id)}
+                                                      className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-white/[0.06] text-red-400 transition-colors"
+                                                    >
+                                                      <Trash2 className="w-4 h-4" /> Delete
+                                                    </button>
+                                                  </>
+                                                )}
+                                              </motion.div>
+                                            )}
+                                          </AnimatePresence>
+
+                                          {/* Time on hover for grouped messages */}
+                                          {msg.isGrouped && isHovered && (
+                                            <div className={`absolute top-1/2 -translate-y-1/2 text-[10px] text-white/30 pointer-events-none whitespace-nowrap ${
+                                              isOwn ? 'right-full mr-3' : 'left-full ml-3'
+                                            }`}>
+                                              {formatTime(msg.created_at)}
+                                            </div>
+                                          )}
+
+                                          {/* Tapback menu */}
+                                          <AnimatePresence>
+                                            {showTapbackMenu && (
+                                              <motion.div
+                                                initial={{ opacity: 0, scale: 0.9, y: 8 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.9, y: 8 }}
+                                                transition={{ duration: 0.15 }}
+                                                className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-20 bg-[#0A1628] border border-white/[0.1] rounded-2xl shadow-2xl px-2 py-1.5 flex gap-1`}
+                                              >
+                                                {(Object.keys(TAPBACK_EMOJIS) as TapbackType[]).map((reaction) => {
+                                                  const myReaction = reactions.find(r => r.user === currentUser.name);
+                                                  const isSelected = myReaction?.reaction === reaction;
+                                                  return (
+                                                    <motion.button
+                                                      key={reaction}
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleTapback(msg.id, reaction);
+                                                      }}
+                                                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 text-xl ${
+                                                        isSelected
+                                                          ? 'bg-[#C9A227]/30 ring-2 ring-[#C9A227]'
+                                                          : 'hover:bg-white/[0.08]'
+                                                      }`}
+                                                      whileHover={{ scale: 1.15 }}
+                                                      whileTap={{ scale: 0.9 }}
+                                                    >
+                                                      {TAPBACK_EMOJIS[reaction]}
+                                                    </motion.button>
+                                                  );
+                                                })}
+                                              </motion.div>
+                                            )}
+                                          </AnimatePresence>
+
+                                          {/* Reactions display */}
+                                          {Object.keys(reactionCounts).length > 0 && (
+                                            <div
+                                              className={`absolute ${isOwn ? '-left-2' : '-right-2'} -bottom-3 z-10`}
+                                              onMouseEnter={() => setShowReactionsSummary(msg.id)}
+                                              onMouseLeave={() => setShowReactionsSummary(null)}
+                                            >
+                                              <div className="bg-[#0A1628] border border-white/[0.1] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg cursor-pointer">
+                                                {(Object.entries(reactionCounts) as [TapbackType, number][]).map(([reaction, count]) => (
+                                                  <span key={reaction} className="flex items-center text-sm">
+                                                    {TAPBACK_EMOJIS[reaction]}
+                                                    {count > 1 && (
+                                                      <span className="text-[10px] ml-0.5 text-white/50 font-medium">
+                                                        {count}
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                              {/* Reactions summary tooltip */}
+                                              <AnimatePresence>
+                                                {showReactionsSummary === msg.id && (
+                                                  <motion.div
+                                                    initial={{ opacity: 0, y: 5 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 5 }}
+                                                    className={`absolute bottom-full mb-2 z-30 ${isOwn ? 'right-0' : 'left-0'}`}
+                                                  >
+                                                    <ReactionsSummary reactions={reactions} users={users} />
+                                                  </motion.div>
+                                                )}
+                                              </AnimatePresence>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Read receipts */}
+                                        {isOwn && isLastOwnMessage && (
+                                          <div className={`flex items-center gap-1.5 mt-1.5 text-[10px] text-white/40 ${reactions.length > 0 ? 'mt-4' : ''}`}>
+                                            {readBy.length === 0 ? (
+                                              <span className="flex items-center gap-1">
+                                                <Check className="w-3 h-3" />
+                                                Sent
+                                              </span>
+                                            ) : (
+                                              <span className="flex items-center gap-1 text-[#C9A227]">
+                                                <CheckCheck className="w-3 h-3" />
+                                                {conversation?.type === 'dm' ? 'Read' : `Read by ${readBy.length}`}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                </div>
+                              );
+                            })}
+
+                            {/* Typing indicator */}
+                            <AnimatePresence>
+                              {activeTypingUsers.length > 0 && (
+                                <TypingIndicator userName={activeTypingUsers[0]} />
+                              )}
+                            </AnimatePresence>
+                          </>
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+
+                      {/* Scroll to bottom button */}
+                      <AnimatePresence>
+                        {!isAtBottom && filteredMessages.length > 0 && (
+                          <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            onClick={() => scrollToBottom()}
+                            className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-[#0A1628] border border-white/[0.1] rounded-full px-4 py-2 shadow-xl flex items-center gap-2 text-sm text-white hover:bg-white/[0.06] transition-all"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                            <span>New messages</span>
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Reply preview bar */}
+                      <AnimatePresence>
+                        {replyingTo && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="border-t border-white/[0.06] bg-[#C9A227]/5 px-4 py-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Reply className="w-4 h-4 text-[#C9A227]" />
+                                <span className="text-white/50">Replying to</span>
+                                <span className="font-semibold text-white">{replyingTo.created_by}</span>
+                              </div>
+                              <button
+                                onClick={() => setReplyingTo(null)}
+                                className="p-1.5 hover:bg-white/[0.08] rounded-lg transition-colors"
+                              >
+                                <X className="w-4 h-4 text-white/40" />
+                              </button>
+                            </div>
+                            <p className="text-sm text-white/40 truncate mt-1 pl-6">
+                              {replyingTo.text}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Edit mode bar */}
+                      <AnimatePresence>
+                        {editingMessage && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="border-t border-white/[0.06] bg-[#C9A227]/10 px-4 py-3"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Edit3 className="w-4 h-4 text-[#C9A227]" />
+                                <span className="font-semibold text-white">Editing message</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setEditingMessage(null);
+                                  setEditText('');
+                                }}
+                                className="p-1.5 hover:bg-white/[0.08] rounded-lg transition-colors"
+                              >
+                                <X className="w-4 h-4 text-white/40" />
+                              </button>
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                className="flex-1 px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white text-sm focus:outline-none focus:border-[#C9A227]/50 focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+                                autoFocus
+                              />
+                              <motion.button
+                                onClick={saveEdit}
+                                disabled={!editText.trim()}
+                                className="px-5 py-3 bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[#C9A227]/20"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                Save
+                              </motion.button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Input Area */}
+                      {!editingMessage && (
+                        <div className="p-4 border-t border-white/[0.06] bg-gradient-to-t from-[#050A12] to-transparent relative">
+                          {/* Mention autocomplete */}
                           <AnimatePresence>
-                            {activeTypingUsers.length > 0 && (
-                              <TypingIndicator userName={activeTypingUsers[0]} />
+                            {showMentions && (
+                              <MentionAutocomplete
+                                users={otherUsers}
+                                filter={mentionFilter}
+                                onSelect={insertMention}
+                                position={{ top: 60, left: 50 }}
+                              />
                             )}
                           </AnimatePresence>
-                        </>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
 
-                    {/* Scroll to bottom button */}
-                    <AnimatePresence>
-                      {!isAtBottom && filteredMessages.length > 0 && (
-                        <motion.button
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          onClick={() => scrollToBottom()}
-                          className="absolute bottom-[120px] left-1/2 -translate-x-1/2
-                                   bg-[var(--surface)] border border-[var(--border)]
-                                   rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5
-                                   text-sm text-[var(--foreground)] hover:bg-[var(--surface-2)]
-                                   transition-colors"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                          <span>New messages</span>
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Reply preview bar */}
-                    <AnimatePresence>
-                      {replyingTo && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="border-t border-[var(--border)] bg-[var(--surface-2)] px-3 py-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Reply className="w-4 h-4 text-[var(--accent)]" />
-                              <span className="text-[var(--text-muted)]">Replying to</span>
-                              <span className="font-medium">{replyingTo.created_by}</span>
-                            </div>
-                            <button
-                              onClick={() => setReplyingTo(null)}
-                              className="p-1 hover:bg-[var(--surface)] rounded"
-                            >
-                              <X className="w-4 h-4 text-[var(--text-muted)]" />
-                            </button>
-                          </div>
-                          <p className="text-sm text-[var(--text-muted)] truncate mt-1">
-                            {replyingTo.text}
-                          </p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Edit mode bar */}
-                    <AnimatePresence>
-                      {editingMessage && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="border-t border-[var(--border)] bg-yellow-500/10 px-3 py-2"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Edit3 className="w-4 h-4 text-yellow-500" />
-                              <span className="font-medium">Editing message</span>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setEditingMessage(null);
-                                setEditText('');
-                              }}
-                              className="p-1 hover:bg-[var(--surface)] rounded"
-                            >
-                              <X className="w-4 h-4 text-[var(--text-muted)]" />
-                            </button>
-                          </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={editText}
-                              onChange={(e) => setEditText(e.target.value)}
-                              onKeyDown={handleKeyDown}
-                              className="flex-1 px-3 py-2 rounded-lg border border-[var(--border)]
-                                       bg-[var(--background)] text-[var(--foreground)] text-sm
-                                       focus:outline-none focus:border-[var(--accent)]"
-                              autoFocus
-                            />
-                            <button
-                              onClick={saveEdit}
-                              disabled={!editText.trim()}
-                              className="px-3 py-2 bg-[var(--accent)] text-white rounded-lg text-sm
-                                       hover:bg-[var(--allstate-blue-dark)] disabled:opacity-50"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Input Area */}
-                    {!editingMessage && (
-                      <div className="p-3 border-t border-[var(--border)] bg-[var(--surface)] relative">
-                        {/* Mention autocomplete */}
-                        <AnimatePresence>
-                          {showMentions && (
-                            <MentionAutocomplete
-                              users={otherUsers}
-                              filter={mentionFilter}
-                              onSelect={insertMention}
-                              position={{ top: 50, left: 40 }}
-                            />
-                          )}
-                        </AnimatePresence>
-
-                        {/* Emoji Picker */}
-                        <AnimatePresence>
-                          {showEmojiPicker && (
-                            <motion.div
-                              ref={emojiPickerRef}
-                              initial={{ opacity: 0, y: 8, height: 0 }}
-                              animate={{ opacity: 1, y: 0, height: 'auto' }}
-                              exit={{ opacity: 0, y: 8, height: 0 }}
-                              className="mb-2 bg-[var(--background)] border border-[var(--border)]
-                                       rounded-xl shadow-lg overflow-hidden"
-                            >
-                              <div className="flex border-b border-[var(--border)]">
-                                {(Object.keys(EMOJI_CATEGORIES) as (keyof typeof EMOJI_CATEGORIES)[]).map((cat) => (
-                                  <button
-                                    key={cat}
-                                    onClick={() => setEmojiCategory(cat)}
-                                    className={`flex-1 py-2 text-xs font-medium capitalize transition-colors
-                                              ${emojiCategory === cat
-                                                ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-b-2 border-[var(--accent)]'
-                                                : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'}`}
-                                  >
-                                    {cat}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="p-2">
-                                <div className="grid grid-cols-6 gap-1">
-                                  {EMOJI_CATEGORIES[emojiCategory].map((emoji, i) => (
+                          {/* Emoji Picker */}
+                          <AnimatePresence>
+                            {showEmojiPicker && (
+                              <motion.div
+                                ref={emojiPickerRef}
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="mb-3 bg-[#0A1628] border border-white/[0.1] rounded-2xl shadow-2xl overflow-hidden"
+                              >
+                                <div className="flex border-b border-white/[0.06]">
+                                  {(Object.keys(EMOJI_CATEGORIES) as (keyof typeof EMOJI_CATEGORIES)[]).map((cat) => (
                                     <button
-                                      key={`${emoji}-${i}`}
-                                      onClick={() => addEmoji(emoji)}
-                                      className="w-9 h-9 flex items-center justify-center rounded-lg
-                                               hover:bg-[var(--surface-2)] transition-colors text-xl
-                                               hover:scale-110 active:scale-95"
+                                      key={cat}
+                                      onClick={() => setEmojiCategory(cat)}
+                                      className={`flex-1 py-3 text-xs font-semibold capitalize transition-all duration-200 ${
+                                        emojiCategory === cat
+                                          ? 'bg-[#C9A227]/20 text-[#C9A227] border-b-2 border-[#C9A227]'
+                                          : 'text-white/40 hover:bg-white/[0.04] hover:text-white/60'
+                                      }`}
                                     >
-                                      {emoji}
+                                      {cat}
                                     </button>
                                   ))}
                                 </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                                <div className="p-3">
+                                  <div className="grid grid-cols-6 gap-1">
+                                    {EMOJI_CATEGORIES[emojiCategory].map((emoji, i) => (
+                                      <motion.button
+                                        key={`${emoji}-${i}`}
+                                        onClick={() => addEmoji(emoji)}
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/[0.08] transition-all text-xl"
+                                        whileHover={{ scale: 1.2 }}
+                                        whileTap={{ scale: 0.9 }}
+                                      >
+                                        {emoji}
+                                      </motion.button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
 
-                        <div className="flex items-end gap-2">
-                          <button
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            disabled={!tableExists}
-                            className={`p-2 rounded-full transition-all duration-200
-                                     hover:bg-[var(--surface-2)] disabled:opacity-50
-                                     disabled:cursor-not-allowed
-                                     ${showEmojiPicker ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}
-                          >
-                            <Smile className="w-5 h-5" />
-                          </button>
+                          <div className="flex items-end gap-2">
+                            <motion.button
+                              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                              disabled={!tableExists}
+                              className={`p-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                showEmojiPicker ? 'bg-[#C9A227]/20 text-[#C9A227]' : 'hover:bg-white/[0.06] text-white/40 hover:text-white/70'
+                              }`}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Smile className="w-5 h-5" />
+                            </motion.button>
 
-                          {/* Mention button */}
-                          <button
-                            onClick={() => {
-                              setNewMessage(prev => prev + '@');
-                              setShowMentions(true);
-                              setMentionFilter('');
-                              inputRef.current?.focus();
-                            }}
-                            disabled={!tableExists}
-                            className="p-2 rounded-full transition-all duration-200
-                                     hover:bg-[var(--surface-2)] disabled:opacity-50
-                                     text-[var(--text-muted)]"
-                            title="Mention someone"
-                          >
-                            <AtSign className="w-5 h-5" />
-                          </button>
+                            {/* Mention button */}
+                            <motion.button
+                              onClick={() => {
+                                setNewMessage(prev => prev + '@');
+                                setShowMentions(true);
+                                setMentionFilter('');
+                                inputRef.current?.focus();
+                              }}
+                              disabled={!tableExists}
+                              className="p-3 rounded-xl transition-all duration-200 hover:bg-white/[0.06] text-white/40 hover:text-white/70 disabled:opacity-50"
+                              title="Mention someone"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <AtSign className="w-5 h-5" />
+                            </motion.button>
 
-                          <textarea
-                            ref={inputRef}
-                            value={newMessage}
-                            onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
-                            placeholder={
-                              !tableExists
-                                ? "Chat not available"
-                                : !conversation
-                                ? "Select a conversation"
-                                : conversation.type === 'team'
-                                ? "Message team..."
-                                : `Message ${conversation.userName}...`
-                            }
-                            disabled={!tableExists}
-                            rows={1}
-                            className="flex-1 px-4 py-2 rounded-2xl border border-[var(--border)]
-                                     bg-[var(--background)] text-[var(--foreground)]
-                                     placeholder:text-[var(--text-muted)]
-                                     focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20
-                                     resize-none max-h-24 transition-all text-[15px]
-                                     disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{
-                              height: 'auto',
-                              minHeight: '40px',
-                              maxHeight: '96px'
-                            }}
-                            onInput={(e) => {
-                              const target = e.target as HTMLTextAreaElement;
-                              target.style.height = 'auto';
-                              target.style.height = Math.min(target.scrollHeight, 96) + 'px';
-                            }}
-                          />
-                          <button
-                            onClick={sendMessage}
-                            disabled={!newMessage.trim() || !tableExists}
-                            className="p-2.5 rounded-full bg-[var(--accent)] text-white
-                                     hover:bg-[var(--allstate-blue-dark)] disabled:opacity-40
-                                     disabled:cursor-not-allowed transition-all duration-200
-                                     hover:scale-105 active:scale-95 shadow-sm
-                                     disabled:hover:scale-100"
-                          >
-                            <Send className="w-5 h-5" />
-                          </button>
+                            <textarea
+                              ref={inputRef}
+                              value={newMessage}
+                              onChange={handleInputChange}
+                              onKeyDown={handleKeyDown}
+                              placeholder={
+                                !tableExists
+                                  ? "Chat not available"
+                                  : !conversation
+                                  ? "Select a conversation"
+                                  : conversation.type === 'team'
+                                  ? "Message team..."
+                                  : `Message ${conversation.userName}...`
+                              }
+                              disabled={!tableExists}
+                              rows={1}
+                              className="flex-1 px-5 py-3 rounded-2xl border border-white/[0.1] bg-white/[0.04] text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9A227]/50 focus:ring-2 focus:ring-[#C9A227]/20 resize-none max-h-28 transition-all text-[15px] disabled:opacity-50 disabled:cursor-not-allowed"
+                              style={{
+                                height: 'auto',
+                                minHeight: '48px',
+                                maxHeight: '112px'
+                              }}
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = 'auto';
+                                target.style.height = Math.min(target.scrollHeight, 112) + 'px';
+                              }}
+                            />
+                            <motion.button
+                              onClick={sendMessage}
+                              disabled={!newMessage.trim() || !tableExists}
+                              className="p-3 rounded-xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#C9A227]/20 disabled:shadow-none"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Send className="w-5 h-5" />
+                            </motion.button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1967,36 +2013,38 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setShowCreateTaskModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[var(--surface)] rounded-xl shadow-2xl p-6 max-w-md w-full"
+              className="bg-[#0A1628] border border-white/[0.1] rounded-2xl shadow-2xl p-6 max-w-md w-full"
             >
-              <h3 className="text-lg font-semibold mb-4">Create Task from Message</h3>
-              <div className="p-3 bg-[var(--surface-2)] rounded-lg mb-4">
-                <p className="text-sm text-[var(--text-muted)]">From {taskFromMessage.created_by}:</p>
-                <p className="mt-1">{taskFromMessage.text}</p>
+              <h3 className="text-xl font-bold text-white mb-5">Create Task from Message</h3>
+              <div className="p-4 bg-white/[0.04] border border-white/[0.08] rounded-xl mb-5">
+                <p className="text-sm text-white/50 mb-1">From {taskFromMessage.created_by}:</p>
+                <p className="text-white">{taskFromMessage.text}</p>
               </div>
-              <div className="flex justify-end gap-2">
-                <button
+              <div className="flex justify-end gap-3">
+                <motion.button
                   onClick={() => setShowCreateTaskModal(false)}
-                  className="px-4 py-2 rounded-lg border border-[var(--border)]
-                           hover:bg-[var(--surface-2)] transition-colors"
+                  className="px-5 py-3 rounded-xl border border-white/[0.1] text-white/70 hover:bg-white/[0.04] transition-all font-medium"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Cancel
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={handleCreateTask}
-                  className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white
-                           hover:bg-[var(--allstate-blue-dark)] transition-colors"
+                  className="px-5 py-3 rounded-xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] font-semibold shadow-lg shadow-[#C9A227]/20 hover:opacity-90 transition-all"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Create Task
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
