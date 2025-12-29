@@ -110,6 +110,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [showWeeklyChart, setShowWeeklyChart] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
+  const [unreadActivityCount, setUnreadActivityCount] = useState(0);
   const [showStrategicDashboard, setShowStrategicDashboard] = useState(false);
   const [templateTodo, setTemplateTodo] = useState<Todo | null>(null);
   const [customOrder, setCustomOrder] = useState<string[]>([]);
@@ -258,9 +259,27 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
         if (isMounted) setConnected(status === 'SUBSCRIBED');
       });
 
+    // Subscribe to activity_log for unread badge notifications
+    const activityChannel = supabase
+      .channel('activity-badge-channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'activity_log' },
+        (payload) => {
+          if (!isMounted) return;
+          const newActivity = payload.new as { user_name: string };
+          // Only increment for activities from other users
+          if (newActivity.user_name !== userName) {
+            setUnreadActivityCount((prev) => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
+      supabase.removeChannel(activityChannel);
     };
   }, [fetchTodos, userName, currentUser]);
 
@@ -1089,11 +1108,19 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
 
               {/* Activity Feed - accessible to all users */}
               <button
-                onClick={() => setShowActivityFeed(true)}
-                className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+                onClick={() => {
+                  setShowActivityFeed(true);
+                  setUnreadActivityCount(0);
+                }}
+                className="relative p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
                 aria-label="View activity feed"
               >
                 <Activity className="w-4 h-4" />
+                {unreadActivityCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-lg animate-pulse">
+                    {unreadActivityCount > 99 ? '99+' : unreadActivityCount}
+                  </span>
+                )}
               </button>
 
               {/* Strategic Dashboard - Owner only */}
