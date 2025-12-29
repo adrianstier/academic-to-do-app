@@ -17,7 +17,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File | null;
     const usersJson = formData.get('users') as string | null;
-    const users: string[] = usersJson ? JSON.parse(usersJson) : [];
+    let users: string[] = [];
+    if (usersJson) {
+      try {
+        const parsed = JSON.parse(usersJson);
+        users = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        console.warn('Failed to parse users JSON, using empty array');
+      }
+    }
     const modeParam = formData.get('mode') as string | null;
     const parentTaskText = formData.get('parentTaskText') as string | null;
 

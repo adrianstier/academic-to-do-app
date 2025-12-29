@@ -236,15 +236,21 @@ export default function FileImporter({
   };
 
   // Toggle audio playback
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioRef.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error('Failed to play audio:', err);
+        setError('Unable to play audio. Please try again.');
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   // Process the file - different paths for audio vs PDF/image
@@ -318,6 +324,15 @@ export default function FileImporter({
               assignedTo: '',
             });
           }
+        } else {
+          // Fallback on error - use transcript as main task
+          console.warn('Smart parse failed, using transcript as task');
+          setMainTask({
+            text: transcript.slice(0, 200),
+            priority: 'medium',
+            dueDate: '',
+            assignedTo: '',
+          });
         }
       } else {
         // PDF/Image: Use vision API to read and parse

@@ -58,6 +58,7 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
 export default function ActivityFeed({ currentUserName, darkMode = true, onClose }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [notificationSettings, setNotificationSettings] = useState<ActivityNotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [showSettings, setShowSettings] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -118,6 +119,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
 
   const fetchActivities = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
       const response = await fetch(`/api/activity?userName=${encodeURIComponent(currentUserName)}&limit=100`);
@@ -127,9 +129,12 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
         if (data.length > 0) {
           lastActivityIdRef.current = data[0].id;
         }
+      } else {
+        setError('Failed to load activity feed');
       }
-    } catch (error) {
-      console.error('Failed to fetch activities:', error);
+    } catch (err) {
+      console.error('Failed to fetch activities:', err);
+      setError('Unable to connect to server');
     } finally {
       setIsLoading(false);
     }
@@ -308,6 +313,21 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
           <div className="p-8 text-center">
             <div className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto ${darkMode ? 'border-slate-400' : 'border-slate-600'}`} />
             <p className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Loading activity...</p>
+          </div>
+        ) : error ? (
+          <div className={`p-8 text-center ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <Activity className="w-10 h-10 mx-auto mb-3 opacity-50 text-red-400" />
+            <p className="font-medium text-red-400">{error}</p>
+            <button
+              onClick={fetchActivities}
+              className={`mt-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                darkMode
+                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              Try Again
+            </button>
           </div>
         ) : activities.length === 0 ? (
           <div className={`p-8 text-center ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>

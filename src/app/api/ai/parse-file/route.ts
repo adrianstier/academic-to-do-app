@@ -8,7 +8,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const usersJson = formData.get('users') as string | null;
-    const users = usersJson ? JSON.parse(usersJson) : [];
+    let users: string[] = [];
+    if (usersJson) {
+      try {
+        const parsed = JSON.parse(usersJson);
+        users = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        console.warn('Failed to parse users JSON, using empty array');
+      }
+    }
 
     if (!file) {
       return NextResponse.json(

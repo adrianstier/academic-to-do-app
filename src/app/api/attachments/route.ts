@@ -160,46 +160,76 @@ export async function POST(request: NextRequest) {
       uploaded_at: new Date().toISOString(),
     };
 
-    // Re-fetch to verify count hasn't changed (optimistic concurrency check)
-    // This prevents race conditions by checking count before final update
-    const { data: verifyData, error: verifyError } = await supabase
-      .from('todos')
-      .select('attachments')
-      .eq('id', todoId)
-      .single();
+    // Use atomic update with jsonb concatenation to prevent race conditions
+    // This ensures the attachment is appended atomically without overwriting concurrent changes
+    const { data: updateData, error: updateError } = await supabase.rpc(
+      'append_attachment_if_under_limit',
+      {
+        p_todo_id: todoId,
+        p_attachment: attachment,
+        p_max_attachments: MAX_ATTACHMENTS_PER_TODO,
+      }
+    ).single();
 
-    if (verifyError) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
-      return NextResponse.json(
-        { success: false, error: 'Todo not found' },
-        { status: 404 }
-      );
-    }
+    // Type the RPC result
+    const rpcResult = updateData as { success: boolean; error?: string } | null;
 
-    const verifyAttachments = (verifyData.attachments || []) as Attachment[];
-    if (verifyAttachments.length >= MAX_ATTACHMENTS_PER_TODO) {
-      // Race condition - another upload completed first
-      await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
-      return NextResponse.json(
-        { success: false, error: `Maximum of ${MAX_ATTACHMENTS_PER_TODO} attachments reached` },
-        { status: 400 }
-      );
-    }
+    // If RPC doesn't exist, fall back to regular update with re-verification
+    if (updateError?.code === 'PGRST202' || updateError?.message?.includes('function') || updateError?.message?.includes('does not exist')) {
+      // Fallback: Re-fetch to verify count hasn't changed (optimistic concurrency check)
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('todos')
+        .select('attachments')
+        .eq('id', todoId)
+        .single();
 
-    // Use the verified attachments array to avoid overwriting concurrent changes
-    const finalAttachments = [...verifyAttachments, attachment];
-    const { error: updateError } = await supabase
-      .from('todos')
-      .update({ attachments: finalAttachments })
-      .eq('id', todoId);
+      if (verifyError) {
+        await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+        return NextResponse.json(
+          { success: false, error: 'Todo not found' },
+          { status: 404 }
+        );
+      }
 
-    if (updateError) {
+      const verifyAttachments = (verifyData.attachments || []) as Attachment[];
+      if (verifyAttachments.length >= MAX_ATTACHMENTS_PER_TODO) {
+        // Race condition - another upload completed first
+        await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+        return NextResponse.json(
+          { success: false, error: `Maximum of ${MAX_ATTACHMENTS_PER_TODO} attachments reached` },
+          { status: 400 }
+        );
+      }
+
+      // Use the verified attachments array to avoid overwriting concurrent changes
+      const finalAttachments = [...verifyAttachments, attachment];
+      const { error: fallbackError } = await supabase
+        .from('todos')
+        .update({ attachments: finalAttachments })
+        .eq('id', todoId);
+
+      if (fallbackError) {
+        await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+        console.error('Error updating todo:', fallbackError);
+        return NextResponse.json(
+          { success: false, error: 'Failed to save attachment metadata' },
+          { status: 500 }
+        );
+      }
+    } else if (updateError) {
       // Rollback: delete uploaded file
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
       console.error('Error updating todo:', updateError);
       return NextResponse.json(
         { success: false, error: 'Failed to save attachment metadata' },
         { status: 500 }
+      );
+    } else if (rpcResult && !rpcResult.success) {
+      // RPC returned false - limit was reached
+      await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+      return NextResponse.json(
+        { success: false, error: `Maximum of ${MAX_ATTACHMENTS_PER_TODO} attachments reached` },
+        { status: 400 }
       );
     }
 
