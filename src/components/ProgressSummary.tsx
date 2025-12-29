@@ -9,7 +9,11 @@ import {
   TrendingUp,
   Calendar,
   CheckCircle2,
-  Flame
+  Flame,
+  Dumbbell,
+  Star,
+  Sparkles,
+  LucideIcon
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
 import { supabase } from '@/lib/supabase';
@@ -126,11 +130,11 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
     }
   };
 
-  const getEmoji = () => {
-    if (stats.completedToday === 0) return '💪';
-    if (stats.completedToday < 3) return '⭐';
-    if (stats.completedToday < 5) return '🔥';
-    return '🏆';
+  const getMotivationIcon = (): { Icon: LucideIcon; color: string } => {
+    if (stats.completedToday === 0) return { Icon: Dumbbell, color: 'var(--accent)' };
+    if (stats.completedToday < 3) return { Icon: Star, color: 'var(--warning)' };
+    if (stats.completedToday < 5) return { Icon: Flame, color: '#EF4444' };
+    return { Icon: Trophy, color: 'var(--success)' };
   };
 
   return (
@@ -263,7 +267,14 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
                 transition={{ delay: 0.5 }}
                 className="bg-[var(--surface-2)] rounded-[var(--radius-lg)] p-4 text-center border border-[var(--border-subtle)]"
               >
-                <span className="text-2xl mb-2 block">{getEmoji()}</span>
+                {(() => {
+                  const { Icon, color } = getMotivationIcon();
+                  return (
+                    <div className="w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+                      <Icon className="w-6 h-6" style={{ color }} />
+                    </div>
+                  );
+                })()}
                 <p className="text-[var(--foreground)] font-medium">
                   {getMessage()}
                 </p>

@@ -36,7 +36,11 @@ import {
   Square,
   Plus,
   Paperclip,
-  Music
+  Music,
+  ClipboardList,
+  Zap,
+  CheckCircle2,
+  LucideIcon
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG, Subtask } from '@/types/todo';
 import Celebration from './Celebration';
@@ -55,10 +59,10 @@ interface KanbanBoardProps {
   onUpdateSubtasks?: (id: string, subtasks: Subtask[]) => void;
 }
 
-const columns: { id: TodoStatus; title: string; icon: string; color: string; bgColor: string }[] = [
-  { id: 'todo', title: 'To Do', icon: '📋', color: 'var(--accent)', bgColor: 'var(--accent-light)' },
-  { id: 'in_progress', title: 'In Progress', icon: '⚡', color: 'var(--warning)', bgColor: 'var(--warning-light)' },
-  { id: 'done', title: 'Done', icon: '✓', color: 'var(--success)', bgColor: 'var(--success-light)' },
+const columns: { id: TodoStatus; title: string; Icon: LucideIcon; color: string; bgColor: string }[] = [
+  { id: 'todo', title: 'To Do', Icon: ClipboardList, color: 'var(--accent)', bgColor: 'var(--accent-light)' },
+  { id: 'in_progress', title: 'In Progress', Icon: Zap, color: 'var(--warning)', bgColor: 'var(--warning-light)' },
+  { id: 'done', title: 'Done', Icon: CheckCircle2, color: 'var(--success)', bgColor: 'var(--success-light)' },
 ];
 
 const formatDueDate = (date: string) => {
@@ -875,7 +879,7 @@ export default function KanbanBoard({
                 style={{ backgroundColor: column.bgColor, borderColor: column.color + '30' }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-base sm:text-lg">{column.icon}</span>
+                  <column.Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: column.color }} />
                   <h3 className="font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-100">
                     {column.title}
                   </h3>
@@ -919,7 +923,7 @@ export default function KanbanBoard({
                         className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3"
                         style={{ backgroundColor: column.bgColor }}
                       >
-                        <span className="text-xl sm:text-2xl">{column.icon}</span>
+                        <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
                       </div>
                       <p className="text-xs sm:text-sm font-medium">Drop tasks here</p>
                     </motion.div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, PartyPopper, Star, Zap, Award, LucideIcon } from 'lucide-react';
 
 interface CelebrationProps {
   trigger: boolean;
@@ -21,12 +22,18 @@ interface Particle {
 }
 
 const COLORS = ['#0033A0', '#D4A853', '#059669', '#f59e0b', '#ec4899', '#8b5cf6'];
-const EMOJIS = ['✨', '🎉', '⭐', '🌟', '💫'];
+const ICONS: { Icon: LucideIcon; color: string }[] = [
+  { Icon: Sparkles, color: '#D4A853' },
+  { Icon: PartyPopper, color: '#ec4899' },
+  { Icon: Star, color: '#f59e0b' },
+  { Icon: Zap, color: '#8b5cf6' },
+  { Icon: Award, color: '#0033A0' },
+];
 
 export default function Celebration({ trigger, onComplete }: CelebrationProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [showCheckmark, setShowCheckmark] = useState(false);
-  const [emoji, setEmoji] = useState('');
+  const [celebrationIcon, setCelebrationIcon] = useState<{ Icon: LucideIcon; color: string } | null>(null);
 
   useEffect(() => {
     if (trigger) {
@@ -47,13 +54,13 @@ export default function Celebration({ trigger, onComplete }: CelebrationProps) {
       }
       setParticles(newParticles);
       setShowCheckmark(true);
-      setEmoji(EMOJIS[Math.floor(Math.random() * EMOJIS.length)]);
+      setCelebrationIcon(ICONS[Math.floor(Math.random() * ICONS.length)]);
 
       // Clean up after animation
       const timer = setTimeout(() => {
         setParticles([]);
         setShowCheckmark(false);
-        setEmoji('');
+        setCelebrationIcon(null);
         onComplete?.();
       }, 1000);
 
@@ -133,9 +140,9 @@ export default function Celebration({ trigger, onComplete }: CelebrationProps) {
         )}
       </AnimatePresence>
 
-      {/* Floating emoji */}
+      {/* Floating icon */}
       <AnimatePresence>
-        {emoji && (
+        {celebrationIcon && (
           <motion.div
             initial={{ scale: 0, y: 0, opacity: 0 }}
             animate={{
@@ -144,9 +151,9 @@ export default function Celebration({ trigger, onComplete }: CelebrationProps) {
               opacity: [0, 1, 1, 0],
             }}
             transition={{ duration: 0.8 }}
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 text-2xl"
+            className="absolute top-1/3 left-1/2 -translate-x-1/2"
           >
-            {emoji}
+            <celebrationIcon.Icon className="w-8 h-8" style={{ color: celebrationIcon.color }} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -755,8 +755,9 @@ export default function FileImporter({
               </div>
 
               {/* Helpful tip */}
-              <p className={`text-center text-xs mt-6 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                💡 AI is analyzing your content and extracting actionable tasks
+              <p className={`text-center text-xs mt-6 flex items-center justify-center gap-1.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                AI is analyzing your content and extracting actionable tasks
               </p>
             </div>
           )}
