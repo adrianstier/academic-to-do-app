@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, Attachment, OWNER_USERNAME } from '@/types/todo';
 import TodoItem from './TodoItem';
@@ -111,6 +111,8 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [unreadActivityCount, setUnreadActivityCount] = useState(0);
+  const lastCheckedActivityIdRef = useRef<string | null>(null);
+  const showActivityFeedRef = useRef(false);
   const [showStrategicDashboard, setShowStrategicDashboard] = useState(false);
   const [templateTodo, setTemplateTodo] = useState<Todo | null>(null);
   const [customOrder, setCustomOrder] = useState<string[]>([]);
@@ -211,6 +213,11 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     setLoading(false);
   }, []);
 
+  // Keep ref in sync with state for use in polling interval
+  useEffect(() => {
+    showActivityFeedRef.current = showActivityFeed;
+  }, [showActivityFeed]);
+
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setError('Supabase is not configured. Please check your environment variables.');
@@ -281,36 +288,49 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       });
 
     // Polling fallback for activity count (in case Realtime is not enabled for activity_log)
-    let lastCheckedActivityId: string | null = null;
     const pollForActivities = async () => {
-      if (!isMounted || showActivityFeed) return; // Don't poll if feed is open
+      if (!isMounted) return;
+      // Don't poll if feed is open (use ref to get current value)
+      if (showActivityFeedRef.current) {
+        console.log('[ActivityBadge] Skipping poll - feed is open');
+        return;
+      }
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('activity_log')
           .select('id, user_name, action')
           .order('created_at', { ascending: false })
           .limit(1);
 
+        if (error) {
+          console.error('[ActivityBadge] Polling error:', error);
+          return;
+        }
+
         if (data && data.length > 0) {
           const latestActivity = data[0];
-          if (lastCheckedActivityId && latestActivity.id !== lastCheckedActivityId) {
+          console.log('[ActivityBadge] Poll result - latest activity:', latestActivity.id, 'by', latestActivity.user_name, 'lastChecked:', lastCheckedActivityIdRef.current);
+
+          if (lastCheckedActivityIdRef.current && latestActivity.id !== lastCheckedActivityIdRef.current) {
             // New activity detected
             if (latestActivity.user_name !== userName) {
-              console.log('[ActivityBadge] Polling detected new activity:', latestActivity.action, 'by', latestActivity.user_name);
+              console.log('[ActivityBadge] NEW ACTIVITY DETECTED! Incrementing badge');
               setUnreadActivityCount((prev) => prev + 1);
+            } else {
+              console.log('[ActivityBadge] New activity is from current user, not incrementing');
             }
           }
-          lastCheckedActivityId = latestActivity.id;
+          lastCheckedActivityIdRef.current = latestActivity.id;
         }
       } catch (err) {
-        // Silently fail polling
+        console.error('[ActivityBadge] Polling exception:', err);
       }
     };
 
     // Initial check
     pollForActivities();
-    // Poll every 5 seconds as fallback
-    const pollInterval = setInterval(pollForActivities, 5000);
+    // Poll every 3 seconds as fallback (more responsive)
+    const pollInterval = setInterval(pollForActivities, 3000);
 
     return () => {
       isMounted = false;
@@ -318,7 +338,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       supabase.removeChannel(activityChannel);
       clearInterval(pollInterval);
     };
-  }, [fetchTodos, userName, currentUser, showActivityFeed]);
+  }, [fetchTodos, userName, currentUser]);
 
   const addTodo = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string) => {
     const newTodo: Todo = {
