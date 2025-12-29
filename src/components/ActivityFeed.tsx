@@ -55,6 +55,10 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
   attachment_removed: { icon: Paperclip, label: 'removed attachment', color: '#ef4444' },
 };
 
+// Allstate brand colors
+const ALLSTATE_BLUE = '#0033A0';
+const ALLSTATE_SKY = '#72B5E8';
+
 export default function ActivityFeed({ currentUserName, darkMode = true, onClose }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -196,20 +200,20 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
   };
 
   return (
-    <div className={`h-full flex flex-col ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+    <div className={`h-full flex flex-col ${darkMode ? 'bg-[#162236]' : 'bg-white'}`}>
       {/* Header */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+      <div className={`px-4 py-3 border-b flex items-center justify-between ${darkMode ? 'border-[#334155]' : 'border-slate-200'}`}>
         <div className="flex items-center gap-2">
-          <Activity className={`w-5 h-5 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+          <Activity className={`w-5 h-5 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
           <h2 className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Activity Feed</h2>
         </div>
         <div className="flex items-center gap-1">
           {/* Notification toggle button */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-100'} ${
+            className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-[#1E2D47]' : 'hover:bg-slate-100'} ${
               notificationSettings.enabled
-                ? darkMode ? 'text-purple-400' : 'text-purple-600'
+                ? darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'
                 : darkMode ? 'text-slate-500' : 'text-slate-400'
             }`}
             title="Notification settings"
@@ -219,7 +223,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
           {onClose && (
             <button
               onClick={onClose}
-              className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+              className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-[#1E2D47] text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
             >
               <X className="w-5 h-5" />
             </button>
@@ -229,7 +233,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
 
       {/* Notification Settings Panel */}
       {showSettings && (
-        <div className={`px-4 py-3 border-b ${darkMode ? 'border-slate-700 bg-slate-900/50' : 'border-slate-200 bg-slate-50'}`}>
+        <div className={`px-4 py-3 border-b ${darkMode ? 'border-[#334155] bg-[#0F1D32]/50' : 'border-slate-200 bg-slate-50'}`}>
           <p className={`text-xs font-medium uppercase tracking-wide mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
             Notification Settings
           </p>
@@ -238,7 +242,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
             <label className="flex items-center justify-between cursor-pointer">
               <div className="flex items-center gap-2">
                 {notificationSettings.enabled ? (
-                  <Bell className={`w-4 h-4 ${darkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                  <Bell className={`w-4 h-4 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
                 ) : (
                   <BellOff className={`w-4 h-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                 )}
@@ -250,7 +254,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
                 type="checkbox"
                 checked={notificationSettings.enabled}
                 onChange={(e) => handleNotificationSettingsChange('enabled', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8]"
               />
             </label>
 
@@ -258,7 +262,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
             <label className={`flex items-center justify-between cursor-pointer ${!notificationSettings.enabled ? 'opacity-50' : ''}`}>
               <div className="flex items-center gap-2">
                 {notificationSettings.soundEnabled ? (
-                  <Volume2 className={`w-4 h-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <Volume2 className={`w-4 h-4 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
                 ) : (
                   <VolumeX className={`w-4 h-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                 )}
@@ -271,7 +275,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
                 checked={notificationSettings.soundEnabled}
                 onChange={(e) => handleNotificationSettingsChange('soundEnabled', e.target.checked)}
                 disabled={!notificationSettings.enabled}
-                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
+                className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8] disabled:opacity-50"
               />
             </label>
 
@@ -291,13 +295,13 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
                   checked={true}
                   onChange={() => handleNotificationSettingsChange('browserNotificationsEnabled', false)}
                   disabled={!notificationSettings.enabled}
-                  className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 disabled:opacity-50"
+                  className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8] disabled:opacity-50"
                 />
               ) : (
                 <button
                   onClick={requestBrowserNotificationPermission}
                   disabled={!notificationSettings.enabled}
-                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'} disabled:opacity-50`}
+                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-[#0033A0] text-white hover:bg-[#00205B]' : 'bg-[#72B5E8]/20 text-[#0033A0] hover:bg-[#72B5E8]/30'} disabled:opacity-50`}
                 >
                   Enable
                 </button>
@@ -311,7 +315,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="p-8 text-center">
-            <div className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto ${darkMode ? 'border-slate-400' : 'border-slate-600'}`} />
+            <div className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto ${darkMode ? 'border-[#72B5E8]' : 'border-[#0033A0]'}`} />
             <p className={`mt-3 text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Loading activity...</p>
           </div>
         ) : error ? (
@@ -322,7 +326,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
               onClick={fetchActivities}
               className={`mt-3 px-4 py-2 text-sm rounded-lg transition-colors ${
                 darkMode
-                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                  ? 'bg-[#1E2D47] hover:bg-[#263852] text-slate-200'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
@@ -336,16 +340,16 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
             <p className="text-sm mt-1">Task changes will appear here</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-700/50">
+          <div className="divide-y divide-[#334155]/50">
             {Object.entries(groupedActivities).map(([date, dayActivities]) => (
               <div key={date}>
                 {/* Date Header */}
-                <div className={`px-4 py-2 text-xs font-medium uppercase tracking-wide sticky top-0 ${darkMode ? 'bg-slate-900/80 text-slate-400 backdrop-blur-sm' : 'bg-slate-50 text-slate-500'}`}>
+                <div className={`px-4 py-2 text-xs font-medium uppercase tracking-wide sticky top-0 ${darkMode ? 'bg-[#0F1D32]/80 text-slate-400 backdrop-blur-sm' : 'bg-slate-50 text-slate-500'}`}>
                   {formatDate(date)}
                 </div>
 
                 {/* Activities for this date */}
-                <div className="divide-y divide-slate-700/30">
+                <div className="divide-y divide-[#334155]/30">
                   {dayActivities.map((activity) => (
                     <ActivityItem key={activity.id} activity={activity} darkMode={darkMode} />
                   ))}
@@ -421,7 +425,7 @@ function ActivityItem({ activity, darkMode }: { activity: ActivityLogEntry; dark
   };
 
   return (
-    <div className={`px-4 py-3 flex items-start gap-3 ${darkMode ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50'} transition-colors`}>
+    <div className={`px-4 py-3 flex items-start gap-3 ${darkMode ? 'hover:bg-[#1E2D47]/30' : 'hover:bg-slate-50'} transition-colors`}>
       {/* Icon */}
       <div
         className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"

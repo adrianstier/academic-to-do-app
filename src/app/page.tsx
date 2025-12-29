@@ -83,8 +83,8 @@ export default function Home() {
         {/* Loading indicator */}
         <div className="relative z-10 flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--accent-gold)] to-[#E5B936] flex items-center justify-center shadow-lg" style={{ boxShadow: '0 8px 24px rgba(201, 162, 39, 0.3)' }}>
-              <svg className="w-7 h-7 text-[#0A1628]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 51, 160, 0.3)' }}>
+              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 11l3 3L22 4" />
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
               </svg>

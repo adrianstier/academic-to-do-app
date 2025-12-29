@@ -105,7 +105,7 @@ function TypingIndicator({ userName }: { userName: string }) {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-1.5 h-1.5 rounded-full bg-[#C9A227]"
+              className="w-1.5 h-1.5 rounded-full bg-[#72B5E8]"
               animate={{
                 y: [0, -4, 0],
                 opacity: [0.4, 1, 0.4]
@@ -147,7 +147,7 @@ function MentionAutocomplete({
       initial={{ opacity: 0, y: 5, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 5, scale: 0.95 }}
-      className="absolute z-30 bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden min-w-[180px] backdrop-blur-xl"
+      className="absolute z-30 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden min-w-[180px] backdrop-blur-xl"
       style={{ bottom: position.top, left: position.left }}
     >
       {filteredUsers.map((user) => (
@@ -178,7 +178,7 @@ function ReactionsSummary({ reactions, users }: { reactions: MessageReaction[]; 
   }, {} as Record<TapbackType, string[]>);
 
   return (
-    <div className="bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-2xl p-3 min-w-[140px] backdrop-blur-xl">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-2xl p-3 min-w-[140px] backdrop-blur-xl">
       {Object.entries(groupedByReaction).map(([reaction, userNames]) => (
         <div key={reaction} className="flex items-center gap-3 py-1.5">
           <span className="text-lg">{TAPBACK_EMOJIS[reaction as TapbackType]}</span>
@@ -971,8 +971,8 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
               key={i}
               className={`px-1.5 py-0.5 rounded-md font-medium ${
                 isMe
-                  ? 'bg-[#C9A227]/30 text-[#C9A227]'
-                  : 'bg-[#2563EB]/30 text-[#2563EB]'
+                  ? 'bg-[#72B5E8]/30 text-[#72B5E8]'
+                  : 'bg-[#0033A0]/30 text-[#0033A0] dark:text-[#72B5E8]'
               }`}
             >
               {part}
@@ -1036,7 +1036,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
           >
             {/* Outer glow ring */}
             <motion.div
-              className="absolute inset-0 rounded-2xl bg-[#C9A227]/20 blur-xl"
+              className="absolute inset-0 rounded-2xl bg-[#72B5E8]/20 blur-xl"
               animate={{
                 scale: [1, 1.3, 1],
                 opacity: [0.3, 0.5, 0.3]
@@ -1045,7 +1045,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
             />
 
             {/* Main button */}
-            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-[#C9A227]/30 transition-all duration-300">
+            <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5] flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:shadow-[#72B5E8]/30 transition-all duration-300">
               {/* Shimmer effect */}
               <motion.div
                 className="absolute inset-0 rounded-2xl overflow-hidden"
@@ -1055,7 +1055,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                 animate={{ x: ['-100%', '200%'] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
               />
-              <MessageSquare className="w-6 h-6 text-[#0A1628] relative z-10" strokeWidth={2.5} />
+              <MessageSquare className="w-6 h-6 text-[#00205B] relative z-10" strokeWidth={2.5} />
             </div>
 
             {/* Unread badge */}
@@ -1063,7 +1063,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute -top-2 -right-2 min-w-[1.75rem] h-7 px-2 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-lg border-2 border-[#0A1628]"
+                className="absolute -top-2 -right-2 min-w-[1.75rem] h-7 px-2 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-lg border-2 border-[#00205B]"
               >
                 {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
               </motion.span>
@@ -1090,15 +1090,15 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
             aria-label="Chat panel"
           >
             {/* Outer glow */}
-            <div className="absolute -inset-[1px] bg-gradient-to-b from-[#C9A227]/30 via-white/[0.08] to-white/[0.02] rounded-[28px] blur-[1px]" />
+            <div className="absolute -inset-[1px] bg-gradient-to-b from-[#72B5E8]/30 via-white/[0.08] to-white/[0.02] rounded-[28px] blur-[1px]" />
 
             {/* Main container */}
-            <div className="relative bg-gradient-to-b from-[#0A1628] to-[#050A12] rounded-[28px] border border-white/[0.1] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col h-full">
+            <div className="relative bg-gradient-to-b from-[#00205B] to-[#050A12] rounded-[28px] border border-white/[0.1] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col h-full">
 
               {/* Header */}
               <div className="relative flex items-center justify-between px-5 py-4 overflow-hidden">
                 {/* Header background effects */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#C9A227]/10 via-transparent to-[#C9A227]/5" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#72B5E8]/10 via-transparent to-[#72B5E8]/5" />
                 <motion.div
                   className="absolute bottom-0 left-0 right-0 h-px"
                   style={{
@@ -1111,8 +1111,8 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                 <div className="flex items-center gap-3 relative z-10">
                   {showConversationList ? (
                     <>
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] flex items-center justify-center shadow-lg shadow-[#C9A227]/20">
-                        <MessageSquare className="w-5 h-5 text-[#0A1628]" strokeWidth={2.5} />
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5] flex items-center justify-center shadow-lg shadow-[#72B5E8]/20">
+                        <MessageSquare className="w-5 h-5 text-[#00205B]" strokeWidth={2.5} />
                       </div>
                       <span className="font-bold text-white text-lg tracking-tight">Messages</span>
                     </>
@@ -1140,13 +1140,13 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                           </div>
                           {/* Presence indicator */}
                           <div
-                            className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0A1628]"
+                            className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#00205B]"
                             style={{ backgroundColor: PRESENCE_CONFIG[userPresence[conversation.userName] || 'offline'].color }}
                             title={PRESENCE_CONFIG[userPresence[conversation.userName] || 'offline'].label}
                           />
                         </div>
                       ) : (
-                        <MessageSquare className="w-5 h-5 text-[#C9A227]" />
+                        <MessageSquare className="w-5 h-5 text-[#72B5E8]" />
                       )}
                       <span className="font-bold text-white text-lg tracking-tight">{getConversationTitle()}</span>
                     </>
@@ -1159,7 +1159,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                     <motion.button
                       onClick={() => setShowSearch(!showSearch)}
                       className={`p-2 rounded-xl transition-all duration-200 ${
-                        showSearch ? 'bg-[#C9A227]/20 text-[#C9A227]' : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
+                        showSearch ? 'bg-[#72B5E8]/20 text-[#72B5E8]' : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
                       }`}
                       title="Search messages"
                       whileHover={{ scale: 1.05 }}
@@ -1174,14 +1174,14 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                     <motion.button
                       onClick={() => setShowPinnedMessages(!showPinnedMessages)}
                       className={`p-2 rounded-xl transition-all duration-200 relative ${
-                        showPinnedMessages ? 'bg-[#C9A227]/20 text-[#C9A227]' : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
+                        showPinnedMessages ? 'bg-[#72B5E8]/20 text-[#72B5E8]' : 'hover:bg-white/[0.08] text-white/50 hover:text-white'
                       }`}
                       title="Pinned messages"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <Pin className="w-4 h-4" />
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C9A227] rounded-full text-[9px] flex items-center justify-center text-[#0A1628] font-bold">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#72B5E8] rounded-full text-[9px] flex items-center justify-center text-[#00205B] font-bold">
                         {pinnedMessages.length}
                       </span>
                     </motion.button>
@@ -1271,7 +1271,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search messages..."
-                          className="w-full pl-11 pr-10 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#C9A227]/50 focus:ring-2 focus:ring-[#C9A227]/20 transition-all duration-200"
+                          className="w-full pl-11 pr-10 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#72B5E8]/50 focus:ring-2 focus:ring-[#72B5E8]/20 transition-all duration-200"
                           autoFocus
                         />
                         {searchQuery && (
@@ -1300,10 +1300,10 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="border-b border-white/[0.06] bg-[#C9A227]/5 max-h-36 overflow-y-auto"
+                    className="border-b border-white/[0.06] bg-[#72B5E8]/5 max-h-36 overflow-y-auto"
                   >
                     <div className="p-3">
-                      <div className="flex items-center gap-2 text-xs text-[#C9A227]/70 mb-2 font-medium">
+                      <div className="flex items-center gap-2 text-xs text-[#72B5E8]/70 mb-2 font-medium">
                         <Pin className="w-3.5 h-3.5" />
                         <span>Pinned Messages</span>
                       </div>
@@ -1347,8 +1347,8 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05, duration: 0.3 }}
                             className={`px-4 py-4 flex items-center gap-4 transition-all duration-200 border-b border-white/[0.04] ${
-                              isSelected ? 'bg-[#C9A227]/10' : 'hover:bg-white/[0.04]'
-                            } ${unreadCount > 0 && !isMuted ? 'bg-[#C9A227]/5' : ''}`}
+                              isSelected ? 'bg-[#72B5E8]/10' : 'hover:bg-white/[0.04]'
+                            } ${unreadCount > 0 && !isMuted ? 'bg-[#72B5E8]/5' : ''}`}
                           >
                             <button
                               onClick={() => selectConversation(conv)}
@@ -1365,7 +1365,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                 {/* Presence indicator for DMs */}
                                 {!isTeam && presence && (
                                   <div
-                                    className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-[#0A1628]"
+                                    className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-[#00205B]"
                                     style={{ backgroundColor: PRESENCE_CONFIG[presence].color }}
                                   />
                                 )}
@@ -1373,7 +1373,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                   <motion.span
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-lg border border-[#0A1628]"
+                                    className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-lg border border-[#00205B]"
                                   >
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                   </motion.span>
@@ -1382,13 +1382,13 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                               <div className="flex-1 min-w-0 text-left">
                                 <div className="flex items-center justify-between gap-2">
                                   <span className={`font-semibold text-white truncate ${
-                                    unreadCount > 0 && !isMuted ? 'text-[#C9A227]' : ''
+                                    unreadCount > 0 && !isMuted ? 'text-[#72B5E8]' : ''
                                   }`}>
                                     {isTeam ? 'Team Chat' : userName}
                                   </span>
                                   {lastMessage && (
                                     <span className={`text-xs flex-shrink-0 ${
-                                      unreadCount > 0 && !isMuted ? 'text-[#C9A227] font-medium' : 'text-white/40'
+                                      unreadCount > 0 && !isMuted ? 'text-[#72B5E8] font-medium' : 'text-white/40'
                                     }`}>
                                       {formatRelativeTime(lastMessage.created_at)}
                                     </span>
@@ -1449,7 +1449,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                           <div className="flex items-center justify-center h-full">
                             <div className="flex flex-col items-center gap-4">
                               <motion.div
-                                className="w-10 h-10 border-3 border-[#C9A227]/20 border-t-[#C9A227] rounded-full"
+                                className="w-10 h-10 border-3 border-[#72B5E8]/20 border-t-[#72B5E8] rounded-full"
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                               />
@@ -1471,7 +1471,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                               animate={{ y: [-4, 4, -4] }}
                               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                             >
-                              <Sparkles className="w-10 h-10 text-[#C9A227]/60" />
+                              <Sparkles className="w-10 h-10 text-[#72B5E8]/60" />
                             </motion.div>
                             <p className="font-semibold text-white text-lg">
                               {searchQuery ? 'No messages found' : 'No messages yet'}
@@ -1508,9 +1508,9 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                   {/* Unread divider */}
                                   {isFirstUnread && (
                                     <div className="flex items-center gap-3 my-4">
-                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
-                                      <span className="text-xs text-[#C9A227] font-semibold px-3 py-1 bg-[#C9A227]/10 rounded-full">New Messages</span>
-                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#C9A227]/50 to-transparent" />
+                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#72B5E8]/50 to-transparent" />
+                                      <span className="text-xs text-[#72B5E8] font-semibold px-3 py-1 bg-[#72B5E8]/10 rounded-full">New Messages</span>
+                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#72B5E8]/50 to-transparent" />
                                     </div>
                                   )}
 
@@ -1549,15 +1549,15 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                               <span className="text-white/30 italic">(edited)</span>
                                             )}
                                             {msg.is_pinned && (
-                                              <Pin className="w-3 h-3 text-[#C9A227]" />
+                                              <Pin className="w-3 h-3 text-[#72B5E8]" />
                                             )}
                                           </div>
                                         )}
 
                                         {/* Reply preview */}
                                         {msg.reply_to_text && (
-                                          <div className={`text-xs px-3 py-1.5 mb-1.5 rounded-lg border-l-2 border-[#C9A227] bg-white/[0.04] text-white/50 max-w-full truncate`}>
-                                            <span className="font-medium text-[#C9A227]">{msg.reply_to_user}: </span>
+                                          <div className={`text-xs px-3 py-1.5 mb-1.5 rounded-lg border-l-2 border-[#72B5E8] bg-white/[0.04] text-white/50 max-w-full truncate`}>
+                                            <span className="font-medium text-[#72B5E8]">{msg.reply_to_user}: </span>
                                             {msg.reply_to_text}
                                           </div>
                                         )}
@@ -1568,9 +1568,9 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                             onClick={() => setTapbackMessageId(tapbackMessageId === msg.id ? null : msg.id)}
                                             className={`px-4 py-2.5 rounded-2xl break-words whitespace-pre-wrap cursor-pointer transition-all duration-200 text-[15px] leading-relaxed ${
                                               isOwn
-                                                ? 'bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] rounded-br-md shadow-lg shadow-[#C9A227]/20'
+                                                ? 'bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5] text-[#00205B] rounded-br-md shadow-lg shadow-[#72B5E8]/20'
                                                 : 'bg-white/[0.08] text-white rounded-bl-md border border-white/[0.06]'
-                                            } ${showTapbackMenu ? 'ring-2 ring-[#C9A227]/50' : ''}`}
+                                            } ${showTapbackMenu ? 'ring-2 ring-[#72B5E8]/50' : ''}`}
                                             whileHover={{ scale: 1.01 }}
                                           >
                                             {renderMessageText(msg.text)}
@@ -1581,7 +1581,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                             <motion.div
                                               initial={{ opacity: 0, scale: 0.9 }}
                                               animate={{ opacity: 1, scale: 1 }}
-                                              className={`absolute top-0 flex gap-0.5 bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-xl p-1 ${
+                                              className={`absolute top-0 flex gap-0.5 bg-[#00205B] border border-white/[0.1] rounded-xl shadow-xl p-1 ${
                                                 isOwn ? 'right-full mr-2' : 'left-full ml-2'
                                               }`}
                                             >
@@ -1615,7 +1615,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                                 initial={{ opacity: 0, scale: 0.95, y: 5 }}
                                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                                 exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                                                className={`absolute top-full mt-2 z-30 bg-[#0A1628] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden min-w-[160px] backdrop-blur-xl ${
+                                                className={`absolute top-full mt-2 z-30 bg-[#00205B] border border-white/[0.1] rounded-xl shadow-2xl overflow-hidden min-w-[160px] backdrop-blur-xl ${
                                                   isOwn ? 'right-0' : 'left-0'
                                                 }`}
                                               >
@@ -1679,7 +1679,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                                 exit={{ opacity: 0, scale: 0.9, y: 8 }}
                                                 transition={{ duration: 0.15 }}
-                                                className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-20 bg-[#0A1628] border border-white/[0.1] rounded-2xl shadow-2xl px-2 py-1.5 flex gap-1`}
+                                                className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-20 bg-[#00205B] border border-white/[0.1] rounded-2xl shadow-2xl px-2 py-1.5 flex gap-1`}
                                               >
                                                 {(Object.keys(TAPBACK_EMOJIS) as TapbackType[]).map((reaction) => {
                                                   const myReaction = reactions.find(r => r.user === currentUser.name);
@@ -1693,7 +1693,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                                       }}
                                                       className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 text-xl ${
                                                         isSelected
-                                                          ? 'bg-[#C9A227]/30 ring-2 ring-[#C9A227]'
+                                                          ? 'bg-[#72B5E8]/30 ring-2 ring-[#72B5E8]'
                                                           : 'hover:bg-white/[0.08]'
                                                       }`}
                                                       whileHover={{ scale: 1.15 }}
@@ -1714,7 +1714,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                               onMouseEnter={() => setShowReactionsSummary(msg.id)}
                                               onMouseLeave={() => setShowReactionsSummary(null)}
                                             >
-                                              <div className="bg-[#0A1628] border border-white/[0.1] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg cursor-pointer">
+                                              <div className="bg-[#00205B] border border-white/[0.1] rounded-full px-2 py-1 flex items-center gap-1 shadow-lg cursor-pointer">
                                                 {(Object.entries(reactionCounts) as [TapbackType, number][]).map(([reaction, count]) => (
                                                   <span key={reaction} className="flex items-center text-sm">
                                                     {TAPBACK_EMOJIS[reaction]}
@@ -1752,7 +1752,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                                 Sent
                                               </span>
                                             ) : (
-                                              <span className="flex items-center gap-1 text-[#C9A227]">
+                                              <span className="flex items-center gap-1 text-[#72B5E8]">
                                                 <CheckCheck className="w-3 h-3" />
                                                 {conversation?.type === 'dm' ? 'Read' : `Read by ${readBy.length}`}
                                               </span>
@@ -1785,7 +1785,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             onClick={() => scrollToBottom()}
-                            className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-[#0A1628] border border-white/[0.1] rounded-full px-4 py-2 shadow-xl flex items-center gap-2 text-sm text-white hover:bg-white/[0.06] transition-all"
+                            className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-[#00205B] border border-white/[0.1] rounded-full px-4 py-2 shadow-xl flex items-center gap-2 text-sm text-white hover:bg-white/[0.06] transition-all"
                           >
                             <ChevronDown className="w-4 h-4" />
                             <span>New messages</span>
@@ -1800,11 +1800,11 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="border-t border-white/[0.06] bg-[#C9A227]/5 px-4 py-3"
+                            className="border-t border-white/[0.06] bg-[#72B5E8]/5 px-4 py-3"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-sm">
-                                <Reply className="w-4 h-4 text-[#C9A227]" />
+                                <Reply className="w-4 h-4 text-[#72B5E8]" />
                                 <span className="text-white/50">Replying to</span>
                                 <span className="font-semibold text-white">{replyingTo.created_by}</span>
                               </div>
@@ -1829,11 +1829,11 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="border-t border-white/[0.06] bg-[#C9A227]/10 px-4 py-3"
+                            className="border-t border-white/[0.06] bg-[#72B5E8]/10 px-4 py-3"
                           >
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2 text-sm">
-                                <Edit3 className="w-4 h-4 text-[#C9A227]" />
+                                <Edit3 className="w-4 h-4 text-[#72B5E8]" />
                                 <span className="font-semibold text-white">Editing message</span>
                               </div>
                               <button
@@ -1852,13 +1852,13 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                 value={editText}
                                 onChange={(e) => setEditText(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                className="flex-1 px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white text-sm focus:outline-none focus:border-[#C9A227]/50 focus:ring-2 focus:ring-[#C9A227]/20 transition-all"
+                                className="flex-1 px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-white text-sm focus:outline-none focus:border-[#72B5E8]/50 focus:ring-2 focus:ring-[#72B5E8]/20 transition-all"
                                 autoFocus
                               />
                               <motion.button
                                 onClick={saveEdit}
                                 disabled={!editText.trim()}
-                                className="px-5 py-3 bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[#C9A227]/20"
+                                className="px-5 py-3 bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5] text-[#00205B] rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[#72B5E8]/20"
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                               >
@@ -1892,7 +1892,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="mb-3 bg-[#0A1628] border border-white/[0.1] rounded-2xl shadow-2xl overflow-hidden"
+                                className="mb-3 bg-[#00205B] border border-white/[0.1] rounded-2xl shadow-2xl overflow-hidden"
                               >
                                 <div className="flex border-b border-white/[0.06]">
                                   {(Object.keys(EMOJI_CATEGORIES) as (keyof typeof EMOJI_CATEGORIES)[]).map((cat) => (
@@ -1901,7 +1901,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                       onClick={() => setEmojiCategory(cat)}
                                       className={`flex-1 py-3 text-xs font-semibold capitalize transition-all duration-200 ${
                                         emojiCategory === cat
-                                          ? 'bg-[#C9A227]/20 text-[#C9A227] border-b-2 border-[#C9A227]'
+                                          ? 'bg-[#72B5E8]/20 text-[#72B5E8] border-b-2 border-[#72B5E8]'
                                           : 'text-white/40 hover:bg-white/[0.04] hover:text-white/60'
                                       }`}
                                     >
@@ -1933,7 +1933,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                               disabled={!tableExists}
                               className={`p-3 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                showEmojiPicker ? 'bg-[#C9A227]/20 text-[#C9A227]' : 'hover:bg-white/[0.06] text-white/40 hover:text-white/70'
+                                showEmojiPicker ? 'bg-[#72B5E8]/20 text-[#72B5E8]' : 'hover:bg-white/[0.06] text-white/40 hover:text-white/70'
                               }`}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
@@ -1974,7 +1974,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                               }
                               disabled={!tableExists}
                               rows={1}
-                              className="flex-1 px-5 py-3 rounded-2xl border border-white/[0.1] bg-white/[0.04] text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9A227]/50 focus:ring-2 focus:ring-[#C9A227]/20 resize-none max-h-28 transition-all text-[15px] disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="flex-1 px-5 py-3 rounded-2xl border border-white/[0.1] bg-white/[0.04] text-white placeholder:text-white/30 focus:outline-none focus:border-[#72B5E8]/50 focus:ring-2 focus:ring-[#72B5E8]/20 resize-none max-h-28 transition-all text-[15px] disabled:opacity-50 disabled:cursor-not-allowed"
                               style={{
                                 height: 'auto',
                                 minHeight: '48px',
@@ -1989,7 +1989,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                             <motion.button
                               onClick={sendMessage}
                               disabled={!newMessage.trim() || !tableExists}
-                              className="p-3 rounded-xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#C9A227]/20 disabled:shadow-none"
+                              className="p-3 rounded-xl bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5] text-[#00205B] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[#72B5E8]/20 disabled:shadow-none"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -2022,7 +2022,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#0A1628] border border-white/[0.1] rounded-2xl shadow-2xl p-6 max-w-md w-full"
+              className="bg-[#00205B] border border-white/[0.1] rounded-2xl shadow-2xl p-6 max-w-md w-full"
             >
               <h3 className="text-xl font-bold text-white mb-5">Create Task from Message</h3>
               <div className="p-4 bg-white/[0.04] border border-white/[0.08] rounded-xl mb-5">
@@ -2040,7 +2040,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                 </motion.button>
                 <motion.button
                   onClick={handleCreateTask}
-                  className="px-5 py-3 rounded-xl bg-gradient-to-br from-[#C9A227] to-[#E5B936] text-[#0A1628] font-semibold shadow-lg shadow-[#C9A227]/20 hover:opacity-90 transition-all"
+                  className="px-5 py-3 rounded-xl bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5] text-[#00205B] font-semibold shadow-lg shadow-[#72B5E8]/20 hover:opacity-90 transition-all"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

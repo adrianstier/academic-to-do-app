@@ -165,10 +165,10 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
                   initial={{ rotate: -20 }}
                   animate={{ rotate: [-20, 20, -10, 10, 0] }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--accent-gold)] to-[#E5B936] flex items-center justify-center shadow-lg"
-                  style={{ boxShadow: '0 8px 24px rgba(201, 162, 39, 0.35)' }}
+                  className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center shadow-lg"
+                  style={{ boxShadow: '0 8px 24px rgba(0, 51, 160, 0.35)' }}
                 >
-                  <Trophy className="w-8 h-8 text-[#0A1628]" />
+                  <Trophy className="w-8 h-8 text-white" />
                 </motion.div>
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight">Your Progress</h2>
@@ -275,7 +275,7 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
                 onClick={onClose}
-                className="w-full mt-6 py-3.5 px-4 bg-gradient-to-br from-[var(--accent-gold)] to-[#E5B936] hover:opacity-90 text-[#0A1628] font-semibold rounded-[var(--radius-lg)] transition-all shadow-[var(--shadow-gold)] active:scale-[0.98]"
+                className="w-full mt-6 py-3.5 px-4 bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] hover:opacity-90 text-white font-semibold rounded-[var(--radius-lg)] transition-all shadow-[var(--shadow-blue)] active:scale-[0.98]"
               >
                 Keep Going!
               </motion.button>

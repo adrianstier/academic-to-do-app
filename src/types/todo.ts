@@ -81,6 +81,7 @@ export interface Todo {
   updated_by?: string;
   subtasks?: Subtask[];
   attachments?: Attachment[];
+  transcription?: string;
 }
 
 export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical' | 'custom';

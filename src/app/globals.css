@@ -1,40 +1,47 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   BEALER AGENCY - REFINED INDUSTRIAL DESIGN SYSTEM
-   A premium, intentional aesthetic that balances warmth with professionalism
+   ALLSTATE INSPIRED - PROFESSIONAL INSURANCE DESIGN SYSTEM
+   A trustworthy, clean aesthetic built on Allstate's iconic blue and white
+   "You're in Good Hands"
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ─── Core Brand Colors ─── */
-  --brand-navy: #0A1628;
-  --brand-blue: #1E3A5F;
+  /* ─── Core Allstate Brand Colors ─── */
+  --brand-navy: #00205B;
+  --brand-blue: #0033A0;
+  --brand-blue-light: #1E4DB7;
   --brand-blue-vivid: #2563EB;
-  --brand-gold: #C9A227;
-  --brand-gold-warm: #E5B936;
-  --brand-gold-muted: #A68B1B;
+  --brand-sky: #72B5E8;
+  --brand-sky-light: #A8D4F5;
+  --brand-white: #FFFFFF;
+  --brand-silver: #F5F7FA;
 
   /* ─── Light Theme ─── */
-  --background: #F8F6F3;
-  --background-warm: #FAF8F5;
-  --foreground: #1A1814;
+  --background: #F8FAFC;
+  --background-warm: #FFFFFF;
+  --foreground: #0F172A;
   --surface: #FFFFFF;
-  --surface-2: #F3F0EC;
-  --surface-3: #EBE7E1;
+  --surface-2: #F1F5F9;
+  --surface-3: #E2E8F0;
   --surface-elevated: #FFFFFF;
-  --border: #E2DDD5;
-  --border-hover: #D4CEC4;
-  --border-subtle: #EBE7E1;
-  --text-muted: #6B6560;
-  --text-light: #9B958E;
-  --text-inverse: #FAFAF9;
+  --border: #CBD5E1;
+  --border-hover: #94A3B8;
+  --border-subtle: #E2E8F0;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
+  --text-inverse: #FFFFFF;
 
   /* ─── Accent Colors ─── */
-  --accent: var(--brand-blue-vivid);
-  --accent-hover: #1D4ED8;
-  --accent-light: rgba(37, 99, 235, 0.08);
-  --accent-gold: var(--brand-gold);
-  --accent-gold-light: rgba(201, 162, 39, 0.12);
+  --accent: var(--brand-blue);
+  --accent-hover: var(--brand-navy);
+  --accent-light: rgba(0, 51, 160, 0.08);
+  --accent-vivid: var(--brand-blue-vivid);
+  --accent-sky: var(--brand-sky);
+  --accent-sky-light: rgba(114, 181, 232, 0.15);
+  /* Legacy gold mapped to sky for backward compatibility */
+  --accent-gold: var(--brand-sky);
+  --accent-gold-light: rgba(114, 181, 232, 0.12);
 
   /* ─── Semantic Colors ─── */
   --success: #059669;
@@ -46,19 +53,21 @@
   --danger-light: rgba(220, 38, 38, 0.08);
 
   /* ─── Effects ─── */
-  --shadow-color: 30 20% 10%;
-  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.04);
-  --shadow-md: 0 4px 12px hsl(var(--shadow-color) / 0.06), 0 1px 3px hsl(var(--shadow-color) / 0.04);
-  --shadow-lg: 0 12px 32px hsl(var(--shadow-color) / 0.1), 0 4px 12px hsl(var(--shadow-color) / 0.06);
-  --shadow-xl: 0 24px 48px hsl(var(--shadow-color) / 0.12), 0 12px 24px hsl(var(--shadow-color) / 0.08);
-  --shadow-gold: 0 8px 24px rgba(201, 162, 39, 0.25);
-  --shadow-blue: 0 8px 24px rgba(37, 99, 235, 0.2);
+  --shadow-color: 215 28% 17%;
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.05);
+  --shadow-md: 0 4px 12px hsl(var(--shadow-color) / 0.08), 0 1px 3px hsl(var(--shadow-color) / 0.05);
+  --shadow-lg: 0 12px 32px hsl(var(--shadow-color) / 0.12), 0 4px 12px hsl(var(--shadow-color) / 0.08);
+  --shadow-xl: 0 24px 48px hsl(var(--shadow-color) / 0.15), 0 12px 24px hsl(var(--shadow-color) / 0.1);
+  --shadow-blue: 0 8px 24px rgba(0, 51, 160, 0.2);
+  --shadow-sky: 0 8px 24px rgba(114, 181, 232, 0.25);
 
   /* ─── Gradients ─── */
   --gradient-brand: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-blue) 100%);
-  --gradient-gold: linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-warm) 100%);
+  --gradient-brand-light: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-light) 100%);
+  --gradient-sky: linear-gradient(135deg, var(--brand-sky) 0%, var(--brand-sky-light) 100%);
   --gradient-surface: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
-  --gradient-hero: linear-gradient(160deg, #0A1628 0%, #1E3A5F 40%, #2D4A6F 100%);
+  --gradient-hero: linear-gradient(160deg, #00205B 0%, #0033A0 40%, #1E4DB7 100%);
+  --gradient-subtle: linear-gradient(180deg, rgba(0, 51, 160, 0.02) 0%, rgba(114, 181, 232, 0.05) 100%);
 
   /* ─── Blur & Glass ─── */
   --blur-sm: 8px;
@@ -83,71 +92,81 @@
 
 /* ─── Dark Theme (via class toggle) ─── */
 :root.dark {
-  --background: #0C0B09;
-  --background-warm: #0F0E0C;
-  --foreground: #F5F4F2;
-  --surface: #18160F;
-  --surface-2: #211E17;
-  --surface-3: #2A261D;
-  --surface-elevated: #1F1C15;
-  --border: #3D3830;
-  --border-hover: #4D473E;
-  --border-subtle: #2D2A24;
-  --text-muted: #A09A90;
-  --text-light: #6D675E;
-  --text-inverse: #0C0B09;
+  --background: #0A1628;
+  --background-warm: #0F1D32;
+  --foreground: #F1F5F9;
+  --surface: #162236;
+  --surface-2: #1E2D47;
+  --surface-3: #263852;
+  --surface-elevated: #1A2840;
+  --border: #334155;
+  --border-hover: #475569;
+  --border-subtle: #1E293B;
+  --text-muted: #94A3B8;
+  --text-light: #64748B;
+  --text-inverse: #0A1628;
 
-  --accent: #60A5FA;
-  --accent-hover: #3B82F6;
-  --accent-light: rgba(96, 165, 250, 0.12);
-  --accent-gold: #ECBF44;
-  --accent-gold-light: rgba(236, 191, 68, 0.15);
+  --accent: #72B5E8;
+  --accent-hover: #A8D4F5;
+  --accent-light: rgba(114, 181, 232, 0.15);
+  --accent-vivid: #60A5FA;
+  --accent-sky: #72B5E8;
+  --accent-sky-light: rgba(114, 181, 232, 0.2);
+  /* Legacy gold mapped to sky for backward compatibility */
+  --accent-gold: #72B5E8;
+  --accent-gold-light: rgba(114, 181, 232, 0.18);
 
   --success: #34D399;
-  --success-light: rgba(52, 211, 153, 0.12);
+  --success-light: rgba(52, 211, 153, 0.15);
   --success-vivid: #10B981;
   --warning: #FBBF24;
-  --warning-light: rgba(251, 191, 36, 0.12);
+  --warning-light: rgba(251, 191, 36, 0.15);
   --danger: #F87171;
-  --danger-light: rgba(248, 113, 113, 0.12);
+  --danger-light: rgba(248, 113, 113, 0.15);
 
-  --shadow-color: 30 30% 4%;
-  --gradient-hero: linear-gradient(160deg, #0C0B09 0%, #18160F 40%, #211E17 100%);
+  --shadow-color: 215 50% 8%;
+  --gradient-hero: linear-gradient(160deg, #0A1628 0%, #162236 40%, #1E2D47 100%);
+  --gradient-subtle: linear-gradient(180deg, rgba(114, 181, 232, 0.03) 0%, rgba(114, 181, 232, 0.08) 100%);
 }
 
-/* ─── Dark Theme (via system preference, used as fallback) ─── */
+/* ─── Dark Theme (via system preference, only when no explicit theme class) ─── */
 @media (prefers-color-scheme: dark) {
-  :root:not(.dark):not(:has(.light-override)) {
-    --background: #0C0B09;
-    --background-warm: #0F0E0C;
-    --foreground: #F5F4F2;
-    --surface: #18160F;
-    --surface-2: #211E17;
-    --surface-3: #2A261D;
-    --surface-elevated: #1F1C15;
-    --border: #3D3830;
-    --border-hover: #4D473E;
-    --border-subtle: #2D2A24;
-    --text-muted: #A09A90;
-    --text-light: #6D675E;
-    --text-inverse: #0C0B09;
+  :root:not(.dark):not(.light) {
+    --background: #0A1628;
+    --background-warm: #0F1D32;
+    --foreground: #F1F5F9;
+    --surface: #162236;
+    --surface-2: #1E2D47;
+    --surface-3: #263852;
+    --surface-elevated: #1A2840;
+    --border: #334155;
+    --border-hover: #475569;
+    --border-subtle: #1E293B;
+    --text-muted: #94A3B8;
+    --text-light: #64748B;
+    --text-inverse: #0A1628;
 
-    --accent: #60A5FA;
-    --accent-hover: #3B82F6;
-    --accent-light: rgba(96, 165, 250, 0.12);
-    --accent-gold: #ECBF44;
-    --accent-gold-light: rgba(236, 191, 68, 0.15);
+    --accent: #72B5E8;
+    --accent-hover: #A8D4F5;
+    --accent-light: rgba(114, 181, 232, 0.15);
+    --accent-vivid: #60A5FA;
+    --accent-sky: #72B5E8;
+    --accent-sky-light: rgba(114, 181, 232, 0.2);
+    /* Legacy gold mapped to sky for backward compatibility */
+    --accent-gold: #72B5E8;
+    --accent-gold-light: rgba(114, 181, 232, 0.18);
 
     --success: #34D399;
-    --success-light: rgba(52, 211, 153, 0.12);
+    --success-light: rgba(52, 211, 153, 0.15);
     --success-vivid: #10B981;
     --warning: #FBBF24;
-    --warning-light: rgba(251, 191, 36, 0.12);
+    --warning-light: rgba(251, 191, 36, 0.15);
     --danger: #F87171;
-    --danger-light: rgba(248, 113, 113, 0.12);
+    --danger-light: rgba(248, 113, 113, 0.15);
 
-    --shadow-color: 30 30% 4%;
-    --gradient-hero: linear-gradient(160deg, #0C0B09 0%, #18160F 40%, #211E17 100%);
+    --shadow-color: 215 50% 8%;
+    --gradient-hero: linear-gradient(160deg, #0A1628 0%, #162236 40%, #1E2D47 100%);
+    --gradient-subtle: linear-gradient(180deg, rgba(114, 181, 232, 0.03) 0%, rgba(114, 181, 232, 0.08) 100%);
   }
 }
 
@@ -190,7 +209,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ─── Selection ─── */
 ::selection {
-  background: var(--accent-gold);
+  background: var(--accent-sky);
   color: var(--brand-navy);
 }
 
@@ -220,7 +239,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
+  background: var(--accent);
 }
 
 ::-webkit-scrollbar-corner {
@@ -233,21 +252,21 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ─── Glass Cards ─── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(0, 51, 160, 0.1);
 }
 
 :root.dark .glass-card {
-  background: rgba(24, 22, 15, 0.9);
-  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(22, 34, 54, 0.9);
+  border-color: rgba(114, 181, 232, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.dark) .glass-card {
-    background: rgba(24, 22, 15, 0.9);
-    border-color: rgba(255, 255, 255, 0.06);
+  :root:not(.dark):not(.light) .glass-card {
+    background: rgba(22, 34, 54, 0.9);
+    border-color: rgba(114, 181, 232, 0.1);
   }
 }
 
@@ -295,7 +314,7 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.1),
+    rgba(114, 181, 232, 0.15),
     transparent
   );
   transform: translateX(-100%);
@@ -309,9 +328,15 @@ h1, h2, h3, h4, h5, h6 {
 /* ─── Grid Pattern Background ─── */
 .grid-pattern {
   background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(0, 51, 160, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 51, 160, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+
+:root.dark .grid-pattern {
+  background-image:
+    linear-gradient(rgba(114, 181, 232, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(114, 181, 232, 0.05) 1px, transparent 1px);
 }
 
 /* ─── Noise Texture Overlay ─── */
@@ -319,7 +344,7 @@ h1, h2, h3, h4, h5, h6 {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0.03;
+  opacity: 0.02;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
@@ -344,19 +369,19 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(0);
 }
 
-.btn-gold {
-  background: var(--gradient-gold);
+.btn-sky {
+  background: var(--gradient-sky);
   color: var(--brand-navy);
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-lg);
   transition: all var(--duration-normal) var(--ease-smooth);
-  box-shadow: var(--shadow-md), var(--shadow-gold);
+  box-shadow: var(--shadow-md), var(--shadow-sky);
 }
 
-.btn-gold:hover {
+.btn-sky:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-lg), var(--shadow-gold);
+  box-shadow: var(--shadow-lg), var(--shadow-sky);
 }
 
 /* ─── Input Styles ─── */
@@ -390,4 +415,117 @@ h1, h2, h3, h4, h5, h6 {
 .card-elevated:hover {
   box-shadow: var(--shadow-lg);
   border-color: var(--border);
+}
+
+/* ─── Allstate Blue Accents ─── */
+.accent-bar {
+  background: var(--gradient-brand);
+  height: 4px;
+  border-radius: 2px;
+}
+
+.accent-glow {
+  box-shadow: 0 0 20px rgba(0, 51, 160, 0.3), 0 0 40px rgba(114, 181, 232, 0.2);
+}
+
+:root.dark .accent-glow {
+  box-shadow: 0 0 20px rgba(114, 181, 232, 0.3), 0 0 40px rgba(114, 181, 232, 0.15);
+}
+
+/* ─── Chat & Activity Panel Styles ─── */
+.panel-allstate {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+:root.dark .panel-allstate {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* ─── Badge Styles ─── */
+.badge-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.badge-sky {
+  background: var(--accent-sky-light);
+  color: var(--brand-blue);
+}
+
+:root.dark .badge-sky {
+  background: var(--accent-sky-light);
+  color: var(--accent-sky);
+}
+
+/* ─── Status Indicator Colors ─── */
+.status-todo {
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+.status-progress {
+  color: var(--warning);
+  background: var(--warning-light);
+}
+
+.status-done {
+  color: var(--success);
+  background: var(--success-light);
+}
+
+/* ─── Priority Colors (keeping consistent with original but themed) ─── */
+.priority-urgent {
+  --priority-color: var(--danger);
+  --priority-bg: var(--danger-light);
+}
+
+.priority-high {
+  --priority-color: var(--warning);
+  --priority-bg: var(--warning-light);
+}
+
+.priority-medium {
+  --priority-color: var(--accent);
+  --priority-bg: var(--accent-light);
+}
+
+.priority-low {
+  --priority-color: var(--text-muted);
+  --priority-bg: var(--surface-2);
+}
+
+/* ─── Decorative Elements ─── */
+.allstate-hands-pattern {
+  background-image: radial-gradient(circle at 20% 80%, rgba(0, 51, 160, 0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(114, 181, 232, 0.03) 0%, transparent 50%);
+}
+
+:root.dark .allstate-hands-pattern {
+  background-image: radial-gradient(circle at 20% 80%, rgba(114, 181, 232, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(114, 181, 232, 0.03) 0%, transparent 50%);
+}
+
+/* ─── Loading States ─── */
+.loading-spinner {
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Transitions for Theme Switch ─── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-smooth);
+}
+
+/* Disable transitions for elements that shouldn't animate */
+.no-transition, .no-transition * {
+  transition: none !important;
 }

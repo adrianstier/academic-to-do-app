@@ -9,7 +9,7 @@ import { TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
 
 interface AddTodoProps {
-  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[]) => void;
+  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string) => void;
   users: string[];
   darkMode?: boolean;
   currentUserId?: string;
@@ -467,7 +467,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId }
               <button
                 type="submit"
                 disabled={!text.trim() || isProcessing}
-                className="px-5 py-2.5 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--accent-gold)] to-[#E5B936] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-[#0A1628] font-semibold transition-all duration-200 min-h-[48px] flex items-center gap-2 touch-manipulation shadow-[var(--shadow-gold)] active:scale-95"
+                className="px-5 py-2.5 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-all duration-200 min-h-[48px] flex items-center gap-2 touch-manipulation shadow-[var(--shadow-blue)] active:scale-95"
                 aria-label="Add task"
               >
                 <Plus className="w-5 h-5" />
@@ -486,60 +486,54 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId }
 
         {/* Options row - visible when focused or has content */}
         {(showOptions || text) && (
-          <div className="px-4 pb-4 pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center gap-2">
+          <div className="px-4 pb-4 pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center gap-3">
             {/* Priority */}
-            <div className="relative">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-colors">
+              <Flag className="w-4 h-4 flex-shrink-0" style={{ color: priorityConfig.color }} />
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TodoPriority)}
                 aria-label="Priority"
-                className="input-refined appearance-none pl-9 pr-8 py-2.5 sm:py-2 text-base sm:text-sm font-medium cursor-pointer min-h-[44px] sm:min-h-[40px] touch-manipulation"
-                style={{
-                  backgroundColor: `${priorityConfig.bgColor}`,
-                  color: priorityConfig.color,
-                  borderColor: `${priorityConfig.color}30`,
-                }}
+                className="bg-transparent text-sm font-medium cursor-pointer focus:outline-none"
+                style={{ color: priorityConfig.color }}
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
+                <option value="low" className="text-[var(--foreground)] bg-[var(--surface)]">Low</option>
+                <option value="medium" className="text-[var(--foreground)] bg-[var(--surface)]">Medium</option>
+                <option value="high" className="text-[var(--foreground)] bg-[var(--surface)]">High</option>
+                <option value="urgent" className="text-[var(--foreground)] bg-[var(--surface)]">Urgent</option>
               </select>
-              <Flag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-3.5 sm:h-3.5 pointer-events-none" style={{ color: priorityConfig.color }} />
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-3.5 sm:h-3.5 pointer-events-none opacity-50" style={{ color: priorityConfig.color }} />
             </div>
 
             {/* Due date */}
-            <div className="relative">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-colors">
+              <Calendar className="w-4 h-4 flex-shrink-0 text-[var(--text-muted)]" />
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 aria-label="Due date"
-                className={`input-refined pl-9 pr-3 py-2.5 sm:py-2 text-base sm:text-sm cursor-pointer min-h-[44px] sm:min-h-[40px] touch-manipulation text-[var(--foreground)] ${
-                  dueDate ? '' : 'text-[var(--text-light)]'
+                className={`bg-transparent text-sm cursor-pointer focus:outline-none ${
+                  dueDate ? 'text-[var(--foreground)]' : 'text-[var(--text-muted)]'
                 }`}
               />
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-3.5 sm:h-3.5 pointer-events-none text-[var(--text-muted)]" />
             </div>
 
             {/* Assignee */}
-            <div className="relative">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-colors">
+              <User className="w-4 h-4 flex-shrink-0 text-[var(--text-muted)]" />
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
                 aria-label="Assign to"
-                className={`input-refined appearance-none pl-9 pr-8 py-2.5 sm:py-2 text-base sm:text-sm cursor-pointer min-h-[44px] sm:min-h-[40px] touch-manipulation ${
+                className={`bg-transparent text-sm cursor-pointer focus:outline-none ${
                   assignedTo ? 'text-[var(--foreground)]' : 'text-[var(--text-muted)]'
                 }`}
               >
-                <option value="">Unassigned</option>
+                <option value="" className="text-[var(--foreground)] bg-[var(--surface)]">Unassigned</option>
                 {users.map((user) => (
-                  <option key={user} value={user}>{user}</option>
+                  <option key={user} value={user} className="text-[var(--foreground)] bg-[var(--surface)]">{user}</option>
                 ))}
               </select>
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-3.5 sm:h-3.5 pointer-events-none text-[var(--text-muted)]" />
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-3.5 sm:h-3.5 pointer-events-none text-[var(--text-light)]" />
             </div>
           </div>
         )}
@@ -583,8 +577,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId }
             setShowFileImporter(false);
             setDraggedFile(null);
           }}
-          onCreateTask={(text, priority, dueDate, assignedTo, subtasks) => {
-            onAdd(text, priority, dueDate, assignedTo, subtasks);
+          onCreateTask={(text, priority, dueDate, assignedTo, subtasks, transcription) => {
+            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription);
             setShowFileImporter(false);
             setDraggedFile(null);
           }}

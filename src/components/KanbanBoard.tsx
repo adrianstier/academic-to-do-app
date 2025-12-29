@@ -34,7 +34,9 @@ import {
   Edit3,
   CheckSquare,
   Square,
-  Plus
+  Plus,
+  Paperclip,
+  Music
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG, Subtask } from '@/types/todo';
 import Celebration from './Celebration';
@@ -113,6 +115,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
   const hasNotes = todo.notes && todo.notes.trim().length > 0;
   const subtaskCount = todo.subtasks?.length || 0;
   const completedSubtasks = todo.subtasks?.filter(s => s.completed).length || 0;
+  const attachmentCount = todo.attachments?.length || 0;
 
   // Handle click to open detail modal (not during drag)
   const handleCardClick = (e: React.MouseEvent) => {
@@ -183,8 +186,8 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
             )}
           </div>
 
-          {/* Notes & Subtasks indicators */}
-          {(hasNotes || subtaskCount > 0) && (
+          {/* Notes, Subtasks & Attachments indicators */}
+          {(hasNotes || subtaskCount > 0 || attachmentCount > 0) && (
             <div className="flex items-center gap-2 mt-2">
               {hasNotes && (
                 <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
@@ -198,6 +201,17 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
                   {completedSubtasks}/{subtaskCount}
                 </span>
               )}
+              {attachmentCount > 0 && (() => {
+                const hasAudio = todo.attachments?.some(a => a.file_type === 'audio');
+                const AttachmentIcon = hasAudio ? Music : Paperclip;
+                const colorClass = hasAudio ? 'text-purple-500 dark:text-purple-400' : 'text-amber-500 dark:text-amber-400';
+                return (
+                  <span className={`inline-flex items-center gap-1 text-xs ${colorClass}`}>
+                    <AttachmentIcon className="w-3 h-3" />
+                    {attachmentCount}
+                  </span>
+                );
+              })()}
             </div>
           )}
 

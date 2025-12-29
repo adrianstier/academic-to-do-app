@@ -99,7 +99,7 @@ export default function OutlookSetupPage() {
 
         {/* How It Works - Hero Card */}
         <div className="relative mb-8 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0A1628] via-[#1E3A5F] to-[#0A1628] rounded-2xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#00205B] via-[#0033A0] to-[#00205B] rounded-2xl" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[var(--accent-gold)]/20 via-transparent to-transparent rounded-2xl" />
 
           <div className="relative p-6 sm:p-8">

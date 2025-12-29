@@ -283,7 +283,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     };
   }, [fetchTodos, userName, currentUser]);
 
-  const addTodo = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[]) => {
+  const addTodo = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string) => {
     const newTodo: Todo = {
       id: uuidv4(),
       text,
@@ -295,6 +295,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       due_date: dueDate,
       assigned_to: assignedTo,
       subtasks: subtasks,
+      transcription: transcription,
     };
 
     setTodos((prev) => [newTodo, ...prev]);
@@ -312,6 +313,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     if (newTodo.due_date) insertData.due_date = newTodo.due_date;
     if (newTodo.assigned_to) insertData.assigned_to = newTodo.assigned_to;
     if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;
+    if (newTodo.transcription) insertData.transcription = newTodo.transcription;
 
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
@@ -330,6 +332,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           assigned_to: newTodo.assigned_to,
           due_date: newTodo.due_date,
           has_subtasks: (subtasks?.length || 0) > 0,
+          has_transcription: !!transcription,
         },
       });
     }
@@ -1016,18 +1019,18 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
         </div>
         <div className="relative z-10 flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--accent-gold)] to-[#E5B936] flex items-center justify-center shadow-lg" style={{ boxShadow: '0 8px 24px rgba(201, 162, 39, 0.3)' }}>
-              <svg className="w-7 h-7 text-[#0A1628]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 51, 160, 0.3)' }}>
+              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 11l3 3L22 4" />
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
               </svg>
             </div>
-            <div className="absolute -inset-3 bg-[var(--accent-gold)]/20 rounded-3xl blur-xl animate-pulse" />
+            <div className="absolute -inset-3 bg-[var(--accent)]/20 rounded-3xl blur-xl animate-pulse" />
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-bounce" style={{ animationDelay: '300ms' }} />
+            <div className="w-2 h-2 rounded-full bg-[var(--accent-sky)] animate-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-2 h-2 rounded-full bg-[var(--accent-sky)] animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-2 h-2 rounded-full bg-[var(--accent-sky)] animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
         </div>
       </div>
@@ -1057,19 +1060,23 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           Skip to main content
         </a>
 
-        {/* Header - Refined Industrial */}
-        <header className="sticky top-0 z-40 bg-[var(--gradient-hero)] shadow-[var(--shadow-lg)] border-b border-white/5">
+        {/* Header - Theme Responsive */}
+        <header className={`sticky top-0 z-40 shadow-[var(--shadow-lg)] border-b ${
+          darkMode
+            ? 'bg-[var(--gradient-hero)] border-white/5'
+            : 'bg-white border-[var(--border)]'
+        }`}>
         <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-2xl'}`}>
           <div className="flex items-center justify-between gap-3">
             {/* Logo & Context Info */}
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent-gold)] to-[#E5B936] flex items-center justify-center flex-shrink-0 shadow-lg" style={{ boxShadow: '0 4px 12px rgba(201, 162, 39, 0.35)' }}>
-                <span className="text-[#0A1628] font-bold text-base">B</span>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center flex-shrink-0 shadow-lg" style={{ boxShadow: '0 4px 12px rgba(0, 51, 160, 0.35)' }}>
+                <span className="text-white font-bold text-base">B</span>
               </div>
               <div className="min-w-0">
-                <h1 className="text-base font-bold text-white truncate tracking-tight">Bealer Agency</h1>
+                <h1 className={`text-base font-bold truncate tracking-tight ${darkMode ? 'text-white' : 'text-[var(--brand-navy)]'}`}>Bealer Agency</h1>
                 {/* Show contextual info instead of "Welcome back" */}
-                <p className="text-xs text-white/60 truncate">
+                <p className={`text-xs truncate ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>
                   {stats.active} active{stats.dueToday > 0 && ` • ${stats.dueToday} due today`}{stats.overdue > 0 && ` • ${stats.overdue} overdue`}
                 </p>
               </div>
@@ -1077,13 +1084,19 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
 
             <div className="flex items-center gap-1.5">
               {/* View toggle with labels */}
-              <div className="flex bg-white/8 backdrop-blur-sm rounded-xl p-1 border border-white/10">
+              <div className={`flex backdrop-blur-sm rounded-xl p-1 border ${
+                darkMode
+                  ? 'bg-white/8 border-white/10'
+                  : 'bg-[var(--surface-2)] border-[var(--border)]'
+              }`}>
                 <button
                   onClick={() => setViewMode('list')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                     viewMode === 'list'
-                      ? 'bg-[var(--accent-gold)] text-[#0A1628] shadow-md'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
+                      : darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
                   }`}
                   aria-pressed={viewMode === 'list'}
                   aria-label="List view"
@@ -1095,8 +1108,10 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                   onClick={() => setViewMode('kanban')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                     viewMode === 'kanban'
-                      ? 'bg-[var(--accent-gold)] text-[#0A1628] shadow-md'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
+                      : darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
                   }`}
                   aria-pressed={viewMode === 'kanban'}
                   aria-label="Board view"
@@ -1112,7 +1127,11 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                   setShowActivityFeed(true);
                   setUnreadActivityCount(0);
                 }}
-                className="relative p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className={`relative p-2 rounded-xl transition-all duration-200 ${
+                  darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
+                }`}
                 aria-label="View activity feed"
               >
                 <Activity className="w-4 h-4" />
@@ -1127,7 +1146,11 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               {userName === OWNER_USERNAME && (
                 <button
                   onClick={() => setShowStrategicDashboard(true)}
-                  className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+                  className={`p-2 rounded-xl transition-all duration-200 ${
+                    darkMode
+                      ? 'text-white/60 hover:text-white hover:bg-white/10'
+                      : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
+                  }`}
                   aria-label="Strategic Goals Dashboard"
                   title="Strategic Goals"
                 >
@@ -1138,7 +1161,11 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               {/* Weekly progress chart */}
               <button
                 onClick={() => setShowWeeklyChart(true)}
-                className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className={`p-2 rounded-xl transition-all duration-200 ${
+                  darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
+                }`}
                 aria-label="View weekly progress"
               >
                 <BarChart2 className="w-4 h-4" />
@@ -1147,7 +1174,11 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+                className={`p-2 rounded-xl transition-all duration-200 ${
+                  darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
+                }`}
                 aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
               >
                 {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -1344,7 +1375,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
                 showBulkActions
-                  ? 'bg-[var(--accent-gold)] text-[#0A1628] shadow-sm'
+                  ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-sm'
                   : 'bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] border border-[var(--border)]'
               }`}
             >

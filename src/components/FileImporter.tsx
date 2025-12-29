@@ -43,7 +43,8 @@ interface FileImporterProps {
     priority: TodoPriority,
     dueDate?: string,
     assignedTo?: string,
-    subtasks?: Subtask[]
+    subtasks?: Subtask[],
+    transcription?: string
   ) => void;
   users: string[];
   darkMode?: boolean;
@@ -473,12 +474,16 @@ export default function FileImporter({
         estimatedMinutes: st.estimatedMinutes,
       }));
 
+    // Pass transcription only for audio files
+    const transcription = fileType === 'audio' && extractedText ? extractedText : undefined;
+
     onCreateTask(
       mainTask.text.trim(),
       mainTask.priority,
       mainTask.dueDate || undefined,
       mainTask.assignedTo || undefined,
-      selectedSubtasks.length > 0 ? selectedSubtasks : undefined
+      selectedSubtasks.length > 0 ? selectedSubtasks : undefined,
+      transcription
     );
 
     onClose();

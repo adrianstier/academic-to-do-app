@@ -28,7 +28,7 @@ type Screen = 'users' | 'pin' | 'register';
 function FloatingParticle({ delay, duration, size, left, top }: { delay: number; duration: number; size: number; left: string; top: string }) {
   return (
     <motion.div
-      className="absolute rounded-full bg-[#C9A227]/20"
+      className="absolute rounded-full bg-[#72B5E8]/20"
       style={{ width: size, height: size, left, top }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{
@@ -93,7 +93,7 @@ function AnimatedLogo() {
       <motion.div
         className="relative w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, #C9A227 0%, #E5B936 50%, #C9A227 100%)',
+          background: 'linear-gradient(135deg, #72B5E8 0%, #A8D4F5 50%, #72B5E8 100%)',
           boxShadow: '0 20px 60px -10px rgba(201,162,39,0.5), inset 0 -4px 20px rgba(0,0,0,0.2), inset 0 4px 20px rgba(255,255,255,0.2)',
         }}
         whileHover={{ scale: 1.05 }}
@@ -115,7 +115,7 @@ function AnimatedLogo() {
             ease: 'easeInOut',
           }}
         />
-        <CheckSquare className="w-10 h-10 text-[#0A1628] relative z-10" strokeWidth={2.5} />
+        <CheckSquare className="w-10 h-10 text-[#00205B] relative z-10" strokeWidth={2.5} />
       </motion.div>
     </motion.div>
   );
@@ -332,11 +332,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050A12] relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-[#0A1628] relative overflow-hidden">
         {/* Deep ambient background */}
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 right-1/3 w-[800px] h-[800px] bg-[#C9A227]/8 rounded-full blur-[200px]" />
-          <div className="absolute bottom-1/3 left-1/4 w-[600px] h-[600px] bg-[#1E3A5F]/30 rounded-full blur-[150px]" />
+          <div className="absolute top-1/4 right-1/3 w-[800px] h-[800px] bg-[#72B5E8]/8 rounded-full blur-[200px]" />
+          <div className="absolute bottom-1/3 left-1/4 w-[600px] h-[600px] bg-[#0033A0]/30 rounded-full blur-[150px]" />
         </div>
 
         <motion.div
@@ -354,7 +354,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             {[0, 1, 2].map((i) => (
               <motion.div
                 key={i}
-                className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#C9A227] to-[#E5B936]"
+                className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-[#72B5E8] to-[#A8D4F5]"
                 animate={{
                   y: [-8, 8, -8],
                   opacity: [0.4, 1, 0.4],
@@ -374,7 +374,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050A12] p-4 overflow-hidden relative">
+    <div className="min-h-screen flex items-center justify-center bg-[#0A1628] p-4 overflow-hidden relative">
       {/* Skip link for accessibility */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:z-50">
         Skip to content
@@ -383,7 +383,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       {/* Cinematic layered background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Deep gradient base */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_#1E3A5F_0%,_#050A12_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_#0033A0_0%,_#0A1628_100%)]" />
 
         {/* Animated gradient orbs */}
         <motion.div
@@ -449,17 +449,17 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
         {/* Decorative light beams */}
         <motion.div
-          className="absolute top-0 left-1/4 w-px h-48 bg-gradient-to-b from-[#C9A227]/30 via-[#C9A227]/10 to-transparent"
+          className="absolute top-0 left-1/4 w-px h-48 bg-gradient-to-b from-[#72B5E8]/30 via-[#72B5E8]/10 to-transparent"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute bottom-0 right-1/3 w-px h-32 bg-gradient-to-t from-[#C9A227]/20 via-[#C9A227]/5 to-transparent"
+          className="absolute bottom-0 right-1/3 w-px h-32 bg-gradient-to-t from-[#72B5E8]/20 via-[#72B5E8]/5 to-transparent"
           animate={{ opacity: [0.2, 0.5, 0.2] }}
           transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         />
         <motion.div
-          className="absolute top-1/4 right-16 w-32 h-px bg-gradient-to-r from-transparent via-[#C9A227]/15 to-transparent"
+          className="absolute top-1/4 right-16 w-32 h-px bg-gradient-to-r from-transparent via-[#72B5E8]/15 to-transparent"
           animate={{ opacity: [0.2, 0.4, 0.2] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
         />
@@ -477,14 +477,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               className="relative"
             >
               {/* Card border glow */}
-              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#C9A227]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
+              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#72B5E8]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
 
               {/* Main card */}
               <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
                 {/* Premium Header */}
                 <div className="relative px-8 pt-10 pb-8 text-center overflow-hidden">
                   {/* Header background effects */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#0A1628]/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#00205B]/80 via-transparent to-transparent" />
                   <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(201,162,39,0.15)_0%,_transparent_60%)]" />
 
                   {/* Animated accent line at bottom */}
@@ -514,7 +514,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       <h1 className="text-3xl font-bold text-white tracking-tight mt-6">
                         Bealer Agency
                       </h1>
-                      <p className="text-sm text-[#C9A227]/80 mt-2 font-medium tracking-[0.2em] uppercase">
+                      <p className="text-sm text-[#72B5E8]/80 mt-2 font-medium tracking-[0.2em] uppercase">
                         Task Management
                       </p>
                     </motion.div>
@@ -530,13 +530,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     transition={{ delay: 0.4 }}
                   >
                     <div className="relative group">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors duration-300 group-focus-within:text-[#C9A227]" aria-hidden="true" />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 transition-colors duration-300 group-focus-within:text-[#72B5E8]" aria-hidden="true" />
                       <input
                         type="text"
                         placeholder="Search team members..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A227]/30 focus:border-[#C9A227]/40 focus:bg-white/[0.06] transition-all duration-300 min-h-[52px]"
+                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[#72B5E8]/30 focus:border-[#72B5E8]/40 focus:bg-white/[0.06] transition-all duration-300 min-h-[52px]"
                         aria-label="Search users"
                       />
                     </div>
@@ -566,7 +566,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.5 + groupIndex * 0.05 }}
                         >
-                          <p className="text-xs font-bold text-[#C9A227]/50 px-3 py-1.5 mb-2 tracking-wide">{letter}</p>
+                          <p className="text-xs font-bold text-[#72B5E8]/50 px-3 py-1.5 mb-2 tracking-wide">{letter}</p>
                           <div className="space-y-1.5">
                             {letterUsers.map((user, index) => (
                               <UserButton
@@ -610,9 +610,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                         ease: 'easeInOut',
                       }}
                     >
-                      <div className="absolute inset-0 bg-[#C9A227]/20 rounded-3xl blur-xl scale-150" />
+                      <div className="absolute inset-0 bg-[#72B5E8]/20 rounded-3xl blur-xl scale-150" />
                       <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-white/[0.1] to-white/[0.03] border border-white/[0.1] flex items-center justify-center">
-                        <Sparkles className="w-9 h-9 text-[#C9A227]" />
+                        <Sparkles className="w-9 h-9 text-[#72B5E8]" />
                       </div>
                     </motion.div>
                     <h2 className="text-white font-bold text-2xl tracking-tight">Welcome!</h2>
@@ -649,7 +649,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       }}
                       className="group relative w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-semibold text-base overflow-hidden min-h-[60px]"
                       style={{
-                        background: 'linear-gradient(135deg, #C9A227 0%, #E5B936 50%, #C9A227 100%)',
+                        background: 'linear-gradient(135deg, #72B5E8 0%, #A8D4F5 50%, #72B5E8 100%)',
                         boxShadow: '0 20px 40px -10px rgba(201,162,39,0.4), inset 0 -2px 10px rgba(0,0,0,0.1)',
                       }}
                       whileHover={{ scale: 1.02, boxShadow: '0 25px 50px -10px rgba(201,162,39,0.5)' }}
@@ -665,9 +665,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                         animate={{ x: ['-100%', '200%'] }}
                         transition={{ duration: 2, repeat: Infinity, repeatDelay: 2, ease: 'easeInOut' }}
                       />
-                      <UserPlus className="w-5 h-5 text-[#0A1628] relative z-10" aria-hidden="true" />
-                      <span className="text-[#0A1628] relative z-10">Get Started</span>
-                      <ArrowRight className="w-5 h-5 text-[#0A1628] relative z-10 transition-transform group-hover:translate-x-1" />
+                      <UserPlus className="w-5 h-5 text-[#00205B] relative z-10" aria-hidden="true" />
+                      <span className="text-[#00205B] relative z-10">Get Started</span>
+                      <ArrowRight className="w-5 h-5 text-[#00205B] relative z-10 transition-transform group-hover:translate-x-1" />
                     </motion.button>
                   </motion.div>
                 )}
@@ -684,7 +684,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="relative"
             >
-              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#C9A227]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
+              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#72B5E8]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
 
               <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] p-8 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
                 <motion.button
@@ -736,7 +736,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   >
                     <h2 className="text-2xl font-bold text-white tracking-tight">{selectedUser.name}</h2>
                     <p className="text-sm text-white/40 mt-3 flex items-center justify-center gap-2">
-                      <Shield className="w-4 h-4 text-[#C9A227]" />
+                      <Shield className="w-4 h-4 text-[#72B5E8]" />
                       Enter your 4-digit PIN
                     </p>
                   </motion.div>
@@ -772,7 +772,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       {/* Glow effect when filled */}
                       {digit && (
                         <motion.div
-                          className="absolute inset-0 rounded-2xl bg-[#C9A227]/30 blur-lg"
+                          className="absolute inset-0 rounded-2xl bg-[#72B5E8]/30 blur-lg"
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1.1 }}
                         />
@@ -791,8 +791,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                           lockoutSeconds > 0
                             ? 'border-red-500/50 bg-red-500/10 focus:ring-red-500/20 text-red-400'
                             : digit
-                              ? 'border-[#C9A227] bg-[#C9A227]/10 focus:ring-[#C9A227]/20 text-white'
-                              : 'border-white/10 focus:border-[#C9A227] focus:ring-[#C9A227]/10 bg-white/[0.03] text-white hover:border-white/20'
+                              ? 'border-[#72B5E8] bg-[#72B5E8]/10 focus:ring-[#72B5E8]/20 text-white'
+                              : 'border-white/10 focus:border-[#72B5E8] focus:ring-[#72B5E8]/10 bg-white/[0.03] text-white hover:border-white/20'
                         }`}
                       />
                     </motion.div>
@@ -824,9 +824,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     animate={{ opacity: 1 }}
                   >
                     <div className="relative w-12 h-12">
-                      <div className="absolute inset-0 border-3 border-[#C9A227]/20 rounded-full" />
+                      <div className="absolute inset-0 border-3 border-[#72B5E8]/20 rounded-full" />
                       <motion.div
-                        className="absolute inset-0 border-3 border-[#C9A227] border-t-transparent rounded-full"
+                        className="absolute inset-0 border-3 border-[#72B5E8] border-t-transparent rounded-full"
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                       />
@@ -912,7 +912,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       placeholder="Enter your name"
                       autoFocus
                       autoComplete="name"
-                      className="w-full px-5 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.1] focus:border-[#C9A227]/40 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#C9A227]/20 transition-all duration-300 text-white placeholder-white/25 text-base min-h-[60px]"
+                      className="w-full px-5 py-4 rounded-2xl bg-white/[0.04] border border-white/[0.1] focus:border-[#72B5E8]/40 focus:bg-white/[0.06] focus:outline-none focus:ring-2 focus:ring-[#72B5E8]/20 transition-all duration-300 text-white placeholder-white/25 text-base min-h-[60px]"
                     />
                   </motion.div>
 
@@ -939,8 +939,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.4 + index * 0.05 }}
-                          className={`w-14 h-16 sm:w-16 sm:h-[72px] text-center text-2xl font-bold rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#C9A227]/10 ${
-                            digit ? 'border-[#C9A227] bg-[#C9A227]/10 text-white' : 'border-white/10 bg-white/[0.03] focus:border-[#C9A227] focus:bg-white/[0.05] text-white hover:border-white/20'
+                          className={`w-14 h-16 sm:w-16 sm:h-[72px] text-center text-2xl font-bold rounded-2xl border-2 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-[#72B5E8]/10 ${
+                            digit ? 'border-[#72B5E8] bg-[#72B5E8]/10 text-white' : 'border-white/10 bg-white/[0.03] focus:border-[#72B5E8] focus:bg-white/[0.05] text-white hover:border-white/20'
                           }`}
                         />
                       ))}
@@ -1099,10 +1099,10 @@ function UserButton({ user, onSelect, delay = 0 }: { user: AuthUser; onSelect: (
 
       {/* Lock icon with animated background */}
       <motion.div
-        className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/[0.04] group-hover:bg-[#C9A227] flex items-center justify-center transition-all duration-300 border border-white/[0.06] group-hover:border-transparent"
+        className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/[0.04] group-hover:bg-[#72B5E8] flex items-center justify-center transition-all duration-300 border border-white/[0.06] group-hover:border-transparent"
         whileHover={{ scale: 1.05 }}
       >
-        <Lock className="w-4 h-4 text-white/40 group-hover:text-[#0A1628] transition-colors duration-300" aria-hidden="true" />
+        <Lock className="w-4 h-4 text-white/40 group-hover:text-[#00205B] transition-colors duration-300" aria-hidden="true" />
       </motion.div>
     </motion.button>
   );

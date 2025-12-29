@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip } from 'lucide-react';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip, Music, Mic } from 'lucide-react';
 import { Todo, TodoPriority, PRIORITY_CONFIG, RecurrencePattern, Subtask, Attachment, MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
 import AttachmentList from './AttachmentList';
 import AttachmentUpload from './AttachmentUpload';
@@ -191,6 +191,7 @@ export default function TodoItem({
   const [showContentImporter, setShowContentImporter] = useState(false);
   const [showAttachmentUpload, setShowAttachmentUpload] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
   const priority = todo.priority || 'medium';
   const priorityConfig = PRIORITY_CONFIG[priority];
   const dueDateStatus = todo.due_date ? getDueDateStatus(todo.due_date, todo.completed) : null;
@@ -343,6 +344,17 @@ export default function TodoItem({
               </button>
             )}
 
+            {/* Transcription indicator */}
+            {todo.transcription && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowTranscription(!showTranscription); }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-[var(--radius-sm)] text-xs font-medium bg-purple-500/10 text-purple-500 hover:bg-purple-500/15 active:bg-purple-500/20 touch-manipulation"
+              >
+                <Mic className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                Voicemail
+              </button>
+            )}
+
             {/* Subtasks indicator - larger touch target */}
             {subtasks.length > 0 && (
               <button
@@ -356,15 +368,20 @@ export default function TodoItem({
             )}
 
             {/* Attachments indicator */}
-            {todo.attachments && todo.attachments.length > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowAttachments(!showAttachments); }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-[var(--radius-sm)] text-xs font-medium bg-[var(--accent-gold-light)] text-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/15 active:bg-[var(--accent-gold)]/20 touch-manipulation"
-              >
-                <Paperclip className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                {todo.attachments.length}
-              </button>
-            )}
+            {todo.attachments && todo.attachments.length > 0 && (() => {
+              const hasAudio = todo.attachments.some(a => a.file_type === 'audio');
+              const AttachmentIcon = hasAudio ? Music : Paperclip;
+              const iconColor = hasAudio ? 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/15 active:bg-purple-500/20' : 'bg-[var(--accent-gold-light)] text-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/15 active:bg-[var(--accent-gold)]/20';
+              return (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowAttachments(!showAttachments); }}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-[var(--radius-sm)] text-xs font-medium touch-manipulation ${iconColor}`}
+                >
+                  <AttachmentIcon className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                  {todo.attachments.length}
+                </button>
+              );
+            })()}
 
             {/* Assigned to */}
             {todo.assigned_to && (
@@ -433,6 +450,19 @@ export default function TodoItem({
       {showNotes && todo.notes && (
         <div className="mx-4 mb-3 p-3 bg-[var(--surface-2)] rounded-[var(--radius-md)] text-sm text-[var(--text-muted)]">
           {todo.notes}
+        </div>
+      )}
+
+      {/* Transcription display */}
+      {showTranscription && todo.transcription && (
+        <div className="mx-3 sm:mx-4 mb-3 p-3 bg-purple-500/5 rounded-[var(--radius-lg)] border border-purple-500/10">
+          <div className="flex items-center gap-2 mb-2">
+            <Mic className="w-4 h-4 text-purple-500" />
+            <span className="text-sm font-medium text-purple-500">Voicemail Transcription</span>
+          </div>
+          <p className="text-sm text-[var(--foreground)] whitespace-pre-wrap leading-relaxed">
+            {todo.transcription}
+          </p>
         </div>
       )}
 
@@ -646,7 +676,7 @@ export default function TodoItem({
                 <button
                   onClick={() => setShowAttachmentUpload(true)}
                   disabled={(todo.attachments?.length || 0) >= MAX_ATTACHMENTS_PER_TODO}
-                  className="text-xs px-2.5 py-1.5 rounded-[var(--radius-sm)] bg-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/90 text-[#0A1628] font-medium flex items-center gap-1.5 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-xs px-2.5 py-1.5 rounded-[var(--radius-sm)] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium flex items-center gap-1.5 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add
