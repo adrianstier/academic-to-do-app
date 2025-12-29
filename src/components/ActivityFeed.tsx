@@ -65,7 +65,6 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
   const [error, setError] = useState<string | null>(null);
   const [notificationSettings, setNotificationSettings] = useState<ActivityNotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [showSettings, setShowSettings] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastActivityIdRef = useRef<string | null>(null);
 
   // Load notification settings on mount
@@ -73,20 +72,32 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
     setNotificationSettings(getNotificationSettings());
   }, []);
 
-  // Create audio element for notification sound
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio('/notification.mp3');
-      audioRef.current.volume = 0.5;
-    }
-  }, []);
-
+  // Create notification sound using Web Audio API
   const playNotificationSound = useCallback(() => {
-    if (notificationSettings.soundEnabled && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        // Ignore autoplay errors
-      });
+    if (!notificationSettings.soundEnabled) return;
+    if (typeof window === 'undefined') return;
+
+    try {
+      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Pleasant notification tone
+      oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
+      oscillator.frequency.setValueAtTime(1320, audioContext.currentTime + 0.1); // E6
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+
+      console.log('[ActivityFeed] Played notification sound');
+    } catch (e) {
+      console.error('[ActivityFeed] Failed to play notification sound:', e);
     }
   }, [notificationSettings.soundEnabled]);
 
@@ -162,16 +173,25 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
         (payload) => {
           const newActivity = payload.new as ActivityLogEntry;
 
-          // Only notify for activities from other users
-          if (notificationSettings.enabled && newActivity.user_name !== currentUserName) {
+          // Check if this is from another user
+          const isOtherUser = newActivity.user_name !== currentUserName;
+
+          // Notify for activities from other users (or all if notifyOwnActions is enabled)
+          const shouldNotify = notificationSettings.enabled && (isOtherUser || notificationSettings.notifyOwnActions);
+          if (shouldNotify) {
             playNotificationSound();
             showBrowserNotification(newActivity);
           }
 
           setActivities((prev) => [newActivity, ...prev]);
+
+          // Log for debugging
+          console.log('[ActivityFeed] Received realtime activity:', newActivity.action, 'from:', newActivity.user_name, 'shouldNotify:', shouldNotify);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[ActivityFeed] Realtime subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -306,6 +326,23 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
                   Enable
                 </button>
               )}
+            </label>
+
+            {/* Notify own actions (for testing) */}
+            <label className={`flex items-center justify-between cursor-pointer ${!notificationSettings.enabled ? 'opacity-50' : ''}`}>
+              <div className="flex items-center gap-2">
+                <User className={`w-4 h-4 ${notificationSettings.notifyOwnActions ? (darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]') : (darkMode ? 'text-slate-500' : 'text-slate-400')}`} />
+                <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Notify my own actions
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                checked={notificationSettings.notifyOwnActions}
+                onChange={(e) => handleNotificationSettingsChange('notifyOwnActions', e.target.checked)}
+                disabled={!notificationSettings.enabled}
+                className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8] disabled:opacity-50"
+              />
             </label>
           </div>
         </div>

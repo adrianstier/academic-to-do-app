@@ -237,6 +237,7 @@ export interface ActivityNotificationSettings {
   enabled: boolean;
   soundEnabled: boolean;
   browserNotificationsEnabled: boolean;
+  notifyOwnActions: boolean; // Also notify for your own actions (useful for testing)
 }
 
 // Default notification settings
@@ -244,6 +245,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: ActivityNotificationSettings = {
   enabled: true,
   soundEnabled: true,
   browserNotificationsEnabled: false,
+  notifyOwnActions: false,
 };
 
 // Strategic Goals Types (Owner Dashboard)
