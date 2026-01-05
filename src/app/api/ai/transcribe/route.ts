@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // The live microphone feature uses the browser's built-in Web Speech API and doesn't need this endpoint.
 
 // Supported audio formats by Whisper
-const SUPPORTED_FORMATS = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg', 'flac'];
+const SUPPORTED_FORMATS = ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm', 'ogg', 'aac', 'flac'];
 
 type ProcessingMode = 'transcribe' | 'tasks' | 'subtasks';
 

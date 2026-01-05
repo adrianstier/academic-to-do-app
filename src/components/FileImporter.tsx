@@ -83,7 +83,7 @@ function getFileType(file: File): FileType {
   const name = file.name.toLowerCase();
   const type = file.type;
 
-  if (type.startsWith('audio/') || name.match(/\.(mp3|wav|m4a|ogg|webm|aac|flac)$/)) {
+  if (type.startsWith('audio/') || name.match(/\.(mp3|mp4|mpeg|mpga|m4a|wav|webm|ogg|aac|flac)$/)) {
     return 'audio';
   }
   if (type === 'application/pdf' || name.endsWith('.pdf')) {
