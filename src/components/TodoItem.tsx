@@ -123,6 +123,7 @@ interface TodoItemProps {
   onUpdateSubtasks?: (id: string, subtasks: Subtask[]) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
+  onEmailCustomer?: (todo: Todo) => void;
 }
 
 const formatDueDate = (date: string) => {
@@ -181,6 +182,7 @@ export default function TodoItem({
   onUpdateSubtasks,
   onSaveAsTemplate,
   onUpdateAttachments,
+  onEmailCustomer,
 }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
@@ -432,6 +434,18 @@ export default function TodoItem({
               aria-label="Duplicate task"
             >
               <Copy className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Email Customer */}
+          {onEmailCustomer && (
+            <button
+              onClick={() => onEmailCustomer(todo)}
+              className="p-2 rounded-[var(--radius-md)] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-500/10 text-[var(--text-muted)] hover:text-blue-500"
+              aria-label="Email customer update"
+              title="Generate customer email"
+            >
+              <Mail className="w-4 h-4" />
             </button>
           )}
 

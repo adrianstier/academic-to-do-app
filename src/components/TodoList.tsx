@@ -129,6 +129,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [customOrder, setCustomOrder] = useState<string[]>([]);
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [mergeTargets, setMergeTargets] = useState<Todo[]>([]);
+  const [selectedPrimaryId, setSelectedPrimaryId] = useState<string | null>(null);
 
   // Duplicate detection state
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -2070,6 +2071,10 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                       onUpdateSubtasks={updateSubtasks}
                       onUpdateAttachments={updateAttachments}
                       onSaveAsTemplate={(t) => setTemplateTodo(t)}
+                      onEmailCustomer={(todo) => {
+                        setEmailTargetTodos([todo]);
+                        setShowEmailModal(true);
+                      }}
                       isDragEnabled={!showBulkActions && sortOption === 'custom'}
                     />
                   ))
@@ -2203,6 +2208,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
             onClick={() => {
               setShowMergeModal(false);
               setMergeTargets([]);
+              setSelectedPrimaryId(null);
             }}
           />
           <div className={`relative w-full max-w-lg rounded-[var(--radius-xl)] shadow-xl p-6 ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
@@ -2222,11 +2228,13 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               {mergeTargets.map((todo, index) => (
                 <button
                   key={todo.id}
-                  onClick={() => mergeTodos(todo.id)}
+                  onClick={() => setSelectedPrimaryId(todo.id)}
                   className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:shadow-md ${
-                    darkMode
-                      ? 'bg-slate-700/50 border-slate-600 hover:border-[var(--brand-sky)]'
-                      : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--brand-blue)]'
+                    selectedPrimaryId === todo.id
+                      ? 'border-[var(--brand-blue)] bg-[var(--brand-blue)]/10 shadow-md'
+                      : darkMode
+                        ? 'bg-slate-700/50 border-slate-600 hover:border-[var(--brand-sky)]'
+                        : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--brand-blue)]'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -2285,6 +2293,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                 onClick={() => {
                   setShowMergeModal(false);
                   setMergeTargets([]);
+                  setSelectedPrimaryId(null);
                 }}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   darkMode
@@ -2293,6 +2302,27 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                 }`}
               >
                 Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedPrimaryId) {
+                    mergeTodos(selectedPrimaryId);
+                    setSelectedPrimaryId(null);
+                  }
+                }}
+                disabled={!selectedPrimaryId}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  selectedPrimaryId
+                    ? 'bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue)]/90'
+                    : darkMode
+                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      : 'bg-[var(--surface-2)] text-[var(--text-light)] cursor-not-allowed'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <GitMerge className="w-4 h-4" />
+                  Merge Tasks
+                </span>
               </button>
             </div>
           </div>

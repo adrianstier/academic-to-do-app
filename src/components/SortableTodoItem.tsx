@@ -24,6 +24,7 @@ interface SortableTodoItemProps {
   onUpdateSubtasks?: (id: string, subtasks: Subtask[]) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
+  onEmailCustomer?: (todo: Todo) => void;
   isDragEnabled?: boolean;
 }
 
