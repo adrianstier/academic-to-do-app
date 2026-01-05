@@ -53,6 +53,7 @@ import {
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG, Subtask, RecurrencePattern, Attachment } from '@/types/todo';
 import Celebration from './Celebration';
+import ContentToSubtasksImporter from './ContentToSubtasksImporter';
 
 interface KanbanBoardProps {
   todos: Todo[];
@@ -418,6 +419,7 @@ function TaskDetailModal({
   const [newSubtaskText, setNewSubtaskText] = useState('');
   const [showRecurrenceMenu, setShowRecurrenceMenu] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showContentImporter, setShowContentImporter] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync local state when todo prop changes (e.g., from real-time updates)
@@ -472,6 +474,12 @@ function TaskDetailModal({
     if (!onUpdateSubtasks) return;
     const updated = subtasks.filter((_, i) => i !== index);
     onUpdateSubtasks(todo.id, updated);
+  };
+
+  const handleAddImportedSubtasks = (importedSubtasks: Subtask[]) => {
+    if (!onUpdateSubtasks) return;
+    onUpdateSubtasks(todo.id, [...subtasks, ...importedSubtasks]);
+    setShowContentImporter(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -728,10 +736,23 @@ function TaskDetailModal({
           {/* Subtasks */}
           {onUpdateSubtasks && (
             <div>
-              <label className={`block text-xs font-medium mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                <CheckSquare className="inline-block w-3.5 h-3.5 mr-1" />
-                Subtasks ({subtasks.filter(s => s.completed).length}/{subtasks.length})
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={`text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <CheckSquare className="inline-block w-3.5 h-3.5 mr-1" />
+                  Subtasks ({subtasks.filter(s => s.completed).length}/{subtasks.length})
+                </label>
+                <button
+                  onClick={() => setShowContentImporter(true)}
+                  className={`text-xs px-2 py-1 rounded-md flex items-center gap-1 transition-colors ${
+                    darkMode
+                      ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                      : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                  }`}
+                >
+                  <Mail className="w-3 h-3" />
+                  Import
+                </button>
+              </div>
 
               <div className="space-y-1.5">
                 {subtasks.map((subtask, index) => (
@@ -959,8 +980,8 @@ function TaskDetailModal({
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                     darkMode
-                      ? 'bg-[var(--brand-sky)]/20 text-[var(--brand-blue)] hover:bg-[var(--brand-sky)]/30'
-                      : 'bg-[var(--brand-sky)]/30 text-[var(--brand-navy)] hover:bg-[var(--brand-sky)]/50'
+                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   <Mail className="w-4 h-4" />
@@ -1006,6 +1027,15 @@ function TaskDetailModal({
           </button>
         </div>
       </motion.div>
+
+      {/* Content to Subtasks Importer Modal */}
+      {showContentImporter && (
+        <ContentToSubtasksImporter
+          onClose={() => setShowContentImporter(false)}
+          onAddSubtasks={handleAddImportedSubtasks}
+          parentTaskText={todo.text}
+        />
+      )}
     </div>
   );
 }
