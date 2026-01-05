@@ -34,7 +34,8 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   LayoutList, LayoutGrid, Wifi, WifiOff, Search,
   ArrowUpDown, User, Calendar, AlertTriangle, CheckSquare,
-  Trash2, X, Sun, Moon, ChevronDown, BarChart2, Activity, Target
+  Trash2, X, Sun, Moon, ChevronDown, BarChart2, Activity, Target, GitMerge,
+  Paperclip, Filter, RotateCcw
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import UserSwitcher from './UserSwitcher';
@@ -45,6 +46,8 @@ import StrategicDashboard from './StrategicDashboard';
 import SaveTemplateModal from './SaveTemplateModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logActivity } from '@/lib/activityLogger';
+import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch } from '@/lib/duplicateDetection';
+import DuplicateDetectionModal from './DuplicateDetectionModal';
 
 interface TodoListProps {
   currentUser: AuthUser;
@@ -98,6 +101,13 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [showCompleted, setShowCompleted] = useState(false);
 
+  // Advanced filter state
+  const [statusFilter, setStatusFilter] = useState<TodoStatus | 'all'>('all');
+  const [assignedToFilter, setAssignedToFilter] = useState<string>('all');
+  const [hasAttachmentsFilter, setHasAttachmentsFilter] = useState<boolean | null>(null);
+  const [dateRangeFilter, setDateRangeFilter] = useState<{ start: string; end: string }>({ start: '', end: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
   // Bulk actions state
   const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
@@ -116,6 +126,21 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const [showStrategicDashboard, setShowStrategicDashboard] = useState(false);
   const [templateTodo, setTemplateTodo] = useState<Todo | null>(null);
   const [customOrder, setCustomOrder] = useState<string[]>([]);
+  const [showMergeModal, setShowMergeModal] = useState(false);
+  const [mergeTargets, setMergeTargets] = useState<Todo[]>([]);
+
+  // Duplicate detection state
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateMatches, setDuplicateMatches] = useState<DuplicateMatch[]>([]);
+  const [pendingTask, setPendingTask] = useState<{
+    text: string;
+    priority: TodoPriority;
+    dueDate?: string;
+    assignedTo?: string;
+    subtasks?: Subtask[];
+    transcription?: string;
+    sourceFile?: File;
+  } | null>(null);
 
   // DnD sensors for drag-and-drop reordering
   const sensors = useSensors(
@@ -340,7 +365,26 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     };
   }, [fetchTodos, userName, currentUser]);
 
-  const addTodo = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string) => {
+  // Check for duplicates and either show modal or create task directly
+  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => {
+    // Check if we should look for duplicates
+    const combinedText = `${text} ${transcription || ''}`;
+    if (shouldCheckForDuplicates(combinedText)) {
+      const duplicates = findPotentialDuplicates(combinedText, todos);
+      if (duplicates.length > 0) {
+        // Store pending task and show modal
+        setPendingTask({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile });
+        setDuplicateMatches(duplicates);
+        setShowDuplicateModal(true);
+        return;
+      }
+    }
+    // No duplicates found, create directly
+    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile);
+  };
+
+  // Actually create the todo (called after duplicate check or when user confirms)
+  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => {
     const newTodo: Todo = {
       id: uuidv4(),
       text,
@@ -392,7 +436,178 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           has_transcription: !!transcription,
         },
       });
+
+      // Auto-attach source file if provided
+      if (sourceFile) {
+        try {
+          const formData = new FormData();
+          formData.append('file', sourceFile);
+          formData.append('todoId', newTodo.id);
+          formData.append('userName', userName);
+
+          const response = await fetch('/api/attachments', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const { attachment } = await response.json();
+            // Update local state with the attachment
+            setTodos((prev) =>
+              prev.map((t) =>
+                t.id === newTodo.id
+                  ? { ...t, attachments: [...(t.attachments || []), attachment] }
+                  : t
+              )
+            );
+            // Log attachment activity
+            logActivity({
+              action: 'attachment_added',
+              userName,
+              todoId: newTodo.id,
+              todoText: newTodo.text,
+              details: {
+                file_name: sourceFile.name,
+                file_type: attachment.file_type,
+                auto_attached: true,
+              },
+            });
+          } else {
+            console.error('Failed to auto-attach source file');
+          }
+        } catch (err) {
+          console.error('Error auto-attaching source file:', err);
+        }
+      }
     }
+  };
+
+  // Handle creating task anyway (user chose to ignore duplicates)
+  const handleCreateTaskAnyway = () => {
+    if (pendingTask) {
+      createTodoDirectly(
+        pendingTask.text,
+        pendingTask.priority,
+        pendingTask.dueDate,
+        pendingTask.assignedTo,
+        pendingTask.subtasks,
+        pendingTask.transcription,
+        pendingTask.sourceFile
+      );
+    }
+    setShowDuplicateModal(false);
+    setPendingTask(null);
+    setDuplicateMatches([]);
+  };
+
+  // Handle adding to existing task (merge with existing)
+  const handleAddToExistingTask = async (existingTodoId: string) => {
+    if (!pendingTask) return;
+
+    const existingTodo = todos.find(t => t.id === existingTodoId);
+    if (!existingTodo) return;
+
+    // Combine notes with new content
+    const combinedNotes = [
+      existingTodo.notes,
+      `\n--- Added Content (${new Date().toLocaleString()}) ---`,
+      pendingTask.text !== existingTodo.text ? pendingTask.text : null,
+      pendingTask.transcription ? `\nTranscription:\n${pendingTask.transcription}` : null,
+    ].filter(Boolean).join('\n');
+
+    // Combine subtasks
+    const combinedSubtasks = [
+      ...(existingTodo.subtasks || []),
+      ...(pendingTask.subtasks || []),
+    ];
+
+    // Keep higher priority
+    const priorityRank: Record<TodoPriority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const higherPriority = priorityRank[pendingTask.priority] < priorityRank[existingTodo.priority || 'medium']
+      ? pendingTask.priority
+      : existingTodo.priority;
+
+    // Keep earlier due date if both exist
+    let finalDueDate = existingTodo.due_date;
+    if (pendingTask.dueDate) {
+      if (!existingTodo.due_date || new Date(pendingTask.dueDate) < new Date(existingTodo.due_date)) {
+        finalDueDate = pendingTask.dueDate;
+      }
+    }
+
+    // Optimistically update UI
+    setTodos(prev => prev.map(t => t.id === existingTodoId ? {
+      ...t,
+      notes: combinedNotes,
+      subtasks: combinedSubtasks,
+      priority: higherPriority,
+      due_date: finalDueDate,
+    } : t));
+
+    // Update in database
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({
+        notes: combinedNotes,
+        subtasks: combinedSubtasks,
+        priority: higherPriority,
+        due_date: finalDueDate,
+      })
+      .eq('id', existingTodoId);
+
+    if (updateError) {
+      console.error('Error updating existing todo:', updateError);
+      fetchTodos(); // Refresh on error
+    } else {
+      // Upload source file if present
+      if (pendingTask.sourceFile) {
+        try {
+          const formData = new FormData();
+          formData.append('file', pendingTask.sourceFile);
+          formData.append('todoId', existingTodoId);
+          formData.append('userName', userName);
+
+          const response = await fetch('/api/attachments', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            const { attachment } = await response.json();
+            setTodos(prev => prev.map(t => t.id === existingTodoId
+              ? { ...t, attachments: [...(t.attachments || []), attachment] }
+              : t
+            ));
+          }
+        } catch (err) {
+          console.error('Error attaching file to existing task:', err);
+        }
+      }
+
+      // Log activity
+      logActivity({
+        action: 'task_updated',
+        userName,
+        todoId: existingTodoId,
+        todoText: existingTodo.text,
+        details: {
+          merged_content: true,
+          added_subtasks: (pendingTask.subtasks?.length || 0),
+          has_transcription: !!pendingTask.transcription,
+        },
+      });
+    }
+
+    setShowDuplicateModal(false);
+    setPendingTask(null);
+    setDuplicateMatches([]);
+  };
+
+  // Cancel duplicate detection
+  const handleCancelDuplicateDetection = () => {
+    setShowDuplicateModal(false);
+    setPendingTask(null);
+    setDuplicateMatches([]);
   };
 
   const duplicateTodo = async (todo: Todo) => {
@@ -934,6 +1149,133 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     }
   };
 
+  // Merge selected todos into one
+  const initiateMerge = () => {
+    if (selectedTodos.size < 2) return;
+    const todosToMerge = todos.filter(t => selectedTodos.has(t.id));
+    setMergeTargets(todosToMerge);
+    setShowMergeModal(true);
+  };
+
+  const mergeTodos = async (primaryTodoId: string) => {
+    if (mergeTargets.length < 2) return;
+
+    const primaryTodo = mergeTargets.find(t => t.id === primaryTodoId);
+    const secondaryTodos = mergeTargets.filter(t => t.id !== primaryTodoId);
+
+    if (!primaryTodo) return;
+
+    // Combine data from all todos
+    const combinedNotes = [
+      primaryTodo.notes,
+      ...secondaryTodos.map(t => t.notes),
+      // Add merge history
+      `\n--- Merged Tasks (${new Date().toLocaleString()}) ---`,
+      ...secondaryTodos.map(t => `• "${t.text}" (created ${new Date(t.created_at).toLocaleDateString()})`)
+    ].filter(Boolean).join('\n');
+
+    // Combine all attachments
+    const combinedAttachments = [
+      ...(primaryTodo.attachments || []),
+      ...secondaryTodos.flatMap(t => t.attachments || [])
+    ];
+
+    // Combine all subtasks
+    const combinedSubtasks = [
+      ...(primaryTodo.subtasks || []),
+      ...secondaryTodos.flatMap(t => t.subtasks || [])
+    ];
+
+    // Use earliest created date
+    const earliestDate = [primaryTodo, ...secondaryTodos]
+      .map(t => new Date(t.created_at).getTime())
+      .reduce((min, d) => Math.min(min, d));
+
+    // Combine text (primary text + secondary texts as context)
+    const combinedText = secondaryTodos.length > 0
+      ? `${primaryTodo.text} [+${secondaryTodos.length} merged]`
+      : primaryTodo.text;
+
+    // Keep highest priority
+    const priorityRank: Record<TodoPriority, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const highestPriority = [primaryTodo, ...secondaryTodos]
+      .reduce((highest, t) => {
+        return priorityRank[t.priority || 'medium'] < priorityRank[highest] ? (t.priority || 'medium') : highest;
+      }, primaryTodo.priority || 'medium');
+
+    // Store merged task IDs for history
+    const mergedFrom = secondaryTodos.map(t => t.id);
+
+    // Update primary todo with merged data
+    const updatedTodo = {
+      ...primaryTodo,
+      text: combinedText,
+      notes: combinedNotes,
+      attachments: combinedAttachments,
+      subtasks: combinedSubtasks,
+      priority: highestPriority,
+      created_at: new Date(earliestDate).toISOString(),
+      merged_from: [...(primaryTodo.merged_from || []), ...mergedFrom],
+    };
+
+    // Optimistically update UI
+    setTodos(prev => prev.map(t => t.id === primaryTodoId ? updatedTodo : t));
+
+    // Delete secondary todos from UI
+    setTodos(prev => prev.filter(t => !secondaryTodos.some(st => st.id === t.id)));
+
+    // Update primary todo in database
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({
+        text: combinedText,
+        notes: combinedNotes,
+        attachments: combinedAttachments,
+        subtasks: combinedSubtasks,
+        priority: highestPriority,
+        created_at: new Date(earliestDate).toISOString(),
+        merged_from: [...(primaryTodo.merged_from || []), ...mergedFrom],
+      })
+      .eq('id', primaryTodoId);
+
+    if (updateError) {
+      console.error('Error updating merged todo:', updateError);
+      // Rollback by refetching
+      fetchTodos();
+      return;
+    }
+
+    // Delete secondary todos from database
+    const { error: deleteError } = await supabase
+      .from('todos')
+      .delete()
+      .in('id', secondaryTodos.map(t => t.id));
+
+    if (deleteError) {
+      console.error('Error deleting merged todos:', deleteError);
+      fetchTodos();
+      return;
+    }
+
+    // Log activity
+    logActivity({
+      action: 'tasks_merged',
+      userName,
+      todoId: primaryTodoId,
+      todoText: combinedText,
+      details: {
+        merged_count: secondaryTodos.length,
+        merged_ids: mergedFrom,
+      },
+    });
+
+    // Clear selection and close modal
+    setSelectedTodos(new Set());
+    setShowBulkActions(false);
+    setShowMergeModal(false);
+    setMergeTargets([]);
+  };
+
   const handleSelectTodo = (id: string, selected: boolean) => {
     setSelectedTodos((prev) => {
       const next = new Set(prev);
@@ -963,7 +1305,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
   const filteredAndSortedTodos = useMemo(() => {
     let result = [...visibleTodos];
 
-    // Apply search filter
+    // Apply search filter (comprehensive search including transcription)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -971,7 +1313,14 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           todo.text.toLowerCase().includes(query) ||
           todo.created_by.toLowerCase().includes(query) ||
           (todo.assigned_to && todo.assigned_to.toLowerCase().includes(query)) ||
-          (todo.notes && todo.notes.toLowerCase().includes(query))
+          (todo.notes && todo.notes.toLowerCase().includes(query)) ||
+          (todo.transcription && todo.transcription.toLowerCase().includes(query)) ||
+          // Search phone numbers in text/notes/transcription
+          (query.match(/^\d+$/) && (
+            todo.text.includes(query) ||
+            (todo.notes && todo.notes.includes(query)) ||
+            (todo.transcription && todo.transcription.includes(query))
+          ))
       );
     }
 
@@ -989,6 +1338,50 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       case 'urgent':
         result = result.filter((todo) => todo.priority === 'urgent' && !todo.completed);
         break;
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter((todo) => todo.status === statusFilter);
+    }
+
+    // Apply assigned to filter
+    if (assignedToFilter !== 'all') {
+      if (assignedToFilter === 'unassigned') {
+        result = result.filter((todo) => !todo.assigned_to);
+      } else {
+        result = result.filter((todo) => todo.assigned_to === assignedToFilter);
+      }
+    }
+
+    // Apply has attachments filter
+    if (hasAttachmentsFilter !== null) {
+      if (hasAttachmentsFilter) {
+        result = result.filter((todo) => todo.attachments && todo.attachments.length > 0);
+      } else {
+        result = result.filter((todo) => !todo.attachments || todo.attachments.length === 0);
+      }
+    }
+
+    // Apply date range filter (on due_date)
+    if (dateRangeFilter.start) {
+      const startDate = new Date(dateRangeFilter.start);
+      startDate.setHours(0, 0, 0, 0);
+      result = result.filter((todo) => {
+        if (!todo.due_date) return false;
+        const dueDate = new Date(todo.due_date);
+        dueDate.setHours(0, 0, 0, 0);
+        return dueDate >= startDate;
+      });
+    }
+    if (dateRangeFilter.end) {
+      const endDate = new Date(dateRangeFilter.end);
+      endDate.setHours(23, 59, 59, 999);
+      result = result.filter((todo) => {
+        if (!todo.due_date) return false;
+        const dueDate = new Date(todo.due_date);
+        return dueDate <= endDate;
+      });
     }
 
     // Apply completed filter
@@ -1033,7 +1426,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
     }
 
     return result;
-  }, [visibleTodos, searchQuery, quickFilter, showCompleted, sortOption, userName, customOrder]);
+  }, [visibleTodos, searchQuery, quickFilter, showCompleted, sortOption, userName, customOrder, statusFilter, assignedToFilter, hasAttachmentsFilter, dateRangeFilter]);
 
   // Stats should be based on visible todos only
   const stats = {
@@ -1324,7 +1717,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           {/* Search Row */}
           <div className="flex gap-2 mb-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-light)]" aria-hidden="true" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-light)] pointer-events-none" aria-hidden="true" />
               <input
                 type="text"
                 value={searchQuery}
@@ -1407,17 +1800,121 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               Done ({stats.completed})
             </button>
 
-            {/* Active filter indicator */}
-            {quickFilter !== 'all' && (
+            <div className="w-px h-5 bg-[var(--border)] mx-1" />
+
+            {/* Advanced filters toggle */}
+            <button
+              type="button"
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+                showAdvancedFilters || statusFilter !== 'all' || assignedToFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end
+                  ? 'bg-[var(--brand-blue)] text-white shadow-sm'
+                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
+              }`}
+              aria-expanded={showAdvancedFilters}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              Filters
+              {(statusFilter !== 'all' || assignedToFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                  {[statusFilter !== 'all', assignedToFilter !== 'all', hasAttachmentsFilter !== null, dateRangeFilter.start || dateRangeFilter.end].filter(Boolean).length}
+                </span>
+              )}
+            </button>
+
+            {/* Active filter indicator / Clear all */}
+            {(quickFilter !== 'all' || statusFilter !== 'all' || assignedToFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
               <button
                 type="button"
-                onClick={() => { setQuickFilter('all'); setShowCompleted(false); }}
-                className="text-xs text-[var(--accent)] hover:underline ml-auto font-medium"
+                onClick={() => {
+                  setQuickFilter('all');
+                  setShowCompleted(false);
+                  setStatusFilter('all');
+                  setAssignedToFilter('all');
+                  setHasAttachmentsFilter(null);
+                  setDateRangeFilter({ start: '', end: '' });
+                }}
+                className="flex items-center gap-1 text-xs text-[var(--accent)] hover:underline ml-auto font-medium"
               >
-                Clear filter
+                <RotateCcw className="w-3 h-3" />
+                Clear all
               </button>
             )}
           </div>
+
+          {/* Advanced Filters Panel */}
+          {showAdvancedFilters && (
+            <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {/* Status filter */}
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as TodoStatus | 'all')}
+                  className="input-refined w-full text-sm py-2"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="todo">To Do</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+
+              {/* Assigned to filter */}
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Assigned To</label>
+                <select
+                  value={assignedToFilter}
+                  onChange={(e) => setAssignedToFilter(e.target.value)}
+                  className="input-refined w-full text-sm py-2"
+                >
+                  <option value="all">Anyone</option>
+                  <option value="unassigned">Unassigned</option>
+                  {users.map((user) => (
+                    <option key={user} value={user}>{user}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Has attachments filter */}
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Attachments</label>
+                <select
+                  value={hasAttachmentsFilter === null ? 'all' : hasAttachmentsFilter ? 'yes' : 'no'}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setHasAttachmentsFilter(val === 'all' ? null : val === 'yes');
+                  }}
+                  className="input-refined w-full text-sm py-2"
+                >
+                  <option value="all">Any</option>
+                  <option value="yes">Has Attachments</option>
+                  <option value="no">No Attachments</option>
+                </select>
+              </div>
+
+              {/* Date range filter */}
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Due Date Range</label>
+                <div className="flex gap-1">
+                  <input
+                    type="date"
+                    value={dateRangeFilter.start}
+                    onChange={(e) => setDateRangeFilter(prev => ({ ...prev, start: e.target.value }))}
+                    className="input-refined flex-1 text-xs py-2"
+                    placeholder="From"
+                  />
+                  <input
+                    type="date"
+                    value={dateRangeFilter.end}
+                    onChange={(e) => setDateRangeFilter(prev => ({ ...prev, end: e.target.value }))}
+                    className="input-refined flex-1 text-xs py-2"
+                    placeholder="To"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bulk Actions - Always visible checkbox in list view */}
@@ -1486,6 +1983,15 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
                   <Trash2 className="w-4 h-4" />
                   <span className="hidden sm:inline">Delete</span>
                 </button>
+                {selectedTodos.size >= 2 && (
+                  <button
+                    onClick={initiateMerge}
+                    className="px-3.5 py-2 text-sm rounded-[var(--radius-md)] bg-[var(--brand-blue)] text-white hover:opacity-90 flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <GitMerge className="w-4 h-4" />
+                    <span className="hidden sm:inline">Merge</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1670,6 +2176,129 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           darkMode={darkMode}
           onClose={() => setTemplateTodo(null)}
           onSave={saveAsTemplate}
+        />
+      )}
+
+      {/* Merge Tasks Modal */}
+      {showMergeModal && mergeTargets.length >= 2 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Merge Tasks">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setShowMergeModal(false);
+              setMergeTargets([]);
+            }}
+          />
+          <div className={`relative w-full max-w-lg rounded-[var(--radius-xl)] shadow-xl p-6 ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--brand-blue)]/10 flex items-center justify-center">
+                <GitMerge className="w-5 h-5 text-[var(--brand-blue)]" />
+              </div>
+              <div>
+                <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>Merge Tasks</h2>
+                <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[var(--text-muted)]'}`}>
+                  Select the primary task to merge {mergeTargets.length} tasks into
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-80 overflow-y-auto mb-6">
+              {mergeTargets.map((todo, index) => (
+                <button
+                  key={todo.id}
+                  onClick={() => mergeTodos(todo.id)}
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all hover:shadow-md ${
+                    darkMode
+                      ? 'bg-slate-700/50 border-slate-600 hover:border-[var(--brand-sky)]'
+                      : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--brand-blue)]'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      darkMode ? 'bg-slate-600 text-slate-300' : 'bg-[var(--surface-2)] text-[var(--text-muted)]'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium truncate ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+                        {todo.text}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 text-xs">
+                        <span className={darkMode ? 'text-slate-400' : 'text-[var(--text-muted)]'}>
+                          {new Date(todo.created_at).toLocaleDateString()}
+                        </span>
+                        {todo.attachments && todo.attachments.length > 0 && (
+                          <span className="px-1.5 py-0.5 rounded bg-[var(--accent-light)] text-[var(--accent)]">
+                            {todo.attachments.length} file{todo.attachments.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {todo.subtasks && todo.subtasks.length > 0 && (
+                          <span className="px-1.5 py-0.5 rounded bg-[var(--brand-sky)]/20 text-[var(--brand-blue)]">
+                            {todo.subtasks.length} subtask{todo.subtasks.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {todo.priority && todo.priority !== 'medium' && (
+                          <span className={`px-1.5 py-0.5 rounded capitalize ${
+                            todo.priority === 'urgent' ? 'bg-[var(--danger-light)] text-[var(--danger)]' :
+                            todo.priority === 'high' ? 'bg-[var(--warning-light)] text-[var(--warning)]' :
+                            'bg-[var(--surface-2)] text-[var(--text-muted)]'
+                          }`}>
+                            {todo.priority}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className={`p-3 rounded-lg text-sm ${darkMode ? 'bg-slate-700 text-slate-300' : 'bg-[var(--surface-2)] text-[var(--text-muted)]'}`}>
+              <p className="font-medium mb-1">What happens when you merge:</p>
+              <ul className="list-disc list-inside space-y-0.5 text-xs">
+                <li>All notes will be combined</li>
+                <li>All attachments will be preserved</li>
+                <li>All subtasks will be combined</li>
+                <li>Highest priority will be kept</li>
+                <li>Earliest creation date will be preserved</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowMergeModal(false);
+                  setMergeTargets([]);
+                }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  darkMode
+                    ? 'text-slate-300 hover:bg-slate-700'
+                    : 'text-[var(--text-muted)] hover:bg-[var(--surface-2)]'
+                }`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Detection Modal */}
+      {showDuplicateModal && pendingTask && (
+        <DuplicateDetectionModal
+          isOpen={showDuplicateModal}
+          darkMode={darkMode}
+          newTaskText={pendingTask.text}
+          newTaskPriority={pendingTask.priority}
+          newTaskDueDate={pendingTask.dueDate}
+          newTaskAssignedTo={pendingTask.assignedTo}
+          newTaskSubtasks={pendingTask.subtasks}
+          newTaskTranscription={pendingTask.transcription}
+          newTaskSourceFile={pendingTask.sourceFile}
+          duplicates={duplicateMatches}
+          onCreateAnyway={handleCreateTaskAnyway}
+          onAddToExisting={handleAddToExistingTask}
+          onCancel={handleCancelDuplicateDetection}
         />
       )}
 

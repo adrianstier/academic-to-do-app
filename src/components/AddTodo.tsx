@@ -9,7 +9,7 @@ import { TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
 
 interface AddTodoProps {
-  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string) => void;
+  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => void;
   users: string[];
   darkMode?: boolean;
   currentUserId?: string;
@@ -577,8 +577,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId }
             setShowFileImporter(false);
             setDraggedFile(null);
           }}
-          onCreateTask={(text, priority, dueDate, assignedTo, subtasks, transcription) => {
-            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription);
+          onCreateTask={(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile) => {
+            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile);
             setShowFileImporter(false);
             setDraggedFile(null);
           }}

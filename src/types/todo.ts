@@ -82,6 +82,7 @@ export interface Todo {
   subtasks?: Subtask[];
   attachments?: Attachment[];
   transcription?: string;
+  merged_from?: string[]; // IDs of tasks that were merged into this one
 }
 
 export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical' | 'custom';
@@ -214,7 +215,8 @@ export type ActivityAction =
   | 'template_created'
   | 'template_used'
   | 'attachment_added'
-  | 'attachment_removed';
+  | 'attachment_removed'
+  | 'tasks_merged';
 
 export interface ActivityLogEntry {
   id: string;

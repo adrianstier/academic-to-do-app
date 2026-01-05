@@ -44,7 +44,8 @@ interface FileImporterProps {
     dueDate?: string,
     assignedTo?: string,
     subtasks?: Subtask[],
-    transcription?: string
+    transcription?: string,
+    sourceFile?: File
   ) => void;
   users: string[];
   darkMode?: boolean;
@@ -477,13 +478,15 @@ export default function FileImporter({
     // Pass transcription only for audio files
     const transcription = fileType === 'audio' && extractedText ? extractedText : undefined;
 
+    // Pass the source file for auto-attachment
     onCreateTask(
       mainTask.text.trim(),
       mainTask.priority,
       mainTask.dueDate || undefined,
       mainTask.assignedTo || undefined,
       selectedSubtasks.length > 0 ? selectedSubtasks : undefined,
-      transcription
+      transcription,
+      selectedFile || undefined
     );
 
     onClose();

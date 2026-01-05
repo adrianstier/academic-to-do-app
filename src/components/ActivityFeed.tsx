@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X, Bell, BellOff, Volume2, VolumeX, Settings, Paperclip } from 'lucide-react';
+import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X, Bell, BellOff, Volume2, VolumeX, Settings, Paperclip, GitMerge } from 'lucide-react';
 import { ActivityLogEntry, ActivityAction, PRIORITY_CONFIG, ActivityNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS } from '@/types/todo';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
@@ -53,6 +53,7 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
   template_used: { icon: FileText, label: 'used template', color: '#3b82f6' },
   attachment_added: { icon: Paperclip, label: 'added attachment', color: '#10b981' },
   attachment_removed: { icon: Paperclip, label: 'removed attachment', color: '#ef4444' },
+  tasks_merged: { icon: GitMerge, label: 'merged tasks', color: '#0033A0' },
 };
 
 // Allstate brand colors
