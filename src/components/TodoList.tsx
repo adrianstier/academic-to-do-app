@@ -1601,7 +1601,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
             ? 'bg-[var(--gradient-hero)] border-white/5'
             : 'bg-white border-[var(--border)]'
         }`}>
-        <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-2xl'}`}>
+        <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-4xl'}`}>
           <div className="flex items-center justify-between gap-3">
             {/* Logo & Context Info */}
             <div className="flex items-center gap-3 min-w-0">
@@ -1738,7 +1738,7 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
       </div>
 
       {/* Main */}
-      <main id="main-content" className={`mx-auto px-4 sm:px-6 py-6 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-2xl'}`}>
+      <main id="main-content" className={`mx-auto px-4 sm:px-6 py-6 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-4xl'}`}>
         {/* Actionable Stats Cards - Premium Design */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <button
@@ -2039,116 +2039,30 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           )}
         </div>
 
-        {/* Bulk Actions - Available in both list and board views */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-            <button
-              onClick={() => {
-                if (showBulkActions) {
-                  clearSelection();
-                }
-                setShowBulkActions(!showBulkActions);
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 flex-shrink-0 ${
-                showBulkActions
-                  ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-sm'
-                  : 'bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] border border-[var(--border)]'
-              }`}
-            >
-              <CheckSquare className="w-4 h-4" />
-              {showBulkActions ? 'Cancel' : 'Select'}
-            </button>
-
-            {/* Bulk actions bar */}
-            {showBulkActions && selectedTodos.size > 0 && (
-              <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-                <span className="text-sm font-medium text-[var(--foreground)] flex-shrink-0">
-                  {selectedTodos.size} selected
-                </span>
-                <button
-                  onClick={selectAll}
-                  className="px-2.5 py-1 text-xs rounded-[var(--radius-sm)] bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] transition-colors flex-shrink-0"
-                >
-                  All
-                </button>
-                <button
-                  onClick={clearSelection}
-                  className="px-2.5 py-1 text-xs rounded-[var(--radius-sm)] bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] transition-colors flex-shrink-0"
-                >
-                  Clear
-                </button>
-                <div className="hidden sm:block flex-1" />
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={bulkComplete}
-                    className="px-3.5 py-2 text-sm rounded-[var(--radius-md)] bg-[var(--success)] text-white hover:opacity-90 flex items-center gap-1.5 transition-all shadow-sm flex-shrink-0"
-                  >
-                    <CheckSquare className="w-4 h-4" />
-                    <span className="hidden sm:inline">Complete</span>
-                  </button>
-                  <div className="relative flex-shrink-0">
-                    <select
-                      onChange={(e) => { if (e.target.value) bulkAssign(e.target.value); e.target.value = ''; }}
-                      className="input-refined appearance-none px-3 py-2 pr-8 text-sm cursor-pointer"
-                      aria-label="Assign to"
-                    >
-                      <option value="">Assign...</option>
-                      {users.map((user) => (
-                        <option key={user} value={user}>{user}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
-                  </div>
-                  {/* Reschedule dropdown */}
-                  <div className="relative flex-shrink-0">
-                    <select
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          bulkReschedule(e.target.value);
-                        }
-                        e.target.value = '';
-                      }}
-                      className="input-refined appearance-none px-3 py-2 pr-8 text-sm cursor-pointer"
-                      aria-label="Reschedule to"
-                    >
-                      <option value="">Reschedule...</option>
-                      <option value={getDateOffset(0)}>Today</option>
-                      <option value={getDateOffset(1)}>Tomorrow</option>
-                      <option value={getDateOffset(7)}>Next Week</option>
-                      <option value={getDateOffset(30)}>Next Month</option>
-                    </select>
-                    <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
-                  </div>
-                  <button
-                    onClick={bulkDelete}
-                    className="px-3.5 py-2 text-sm rounded-[var(--radius-md)] bg-[var(--danger)] text-white hover:opacity-90 flex items-center gap-1.5 transition-all shadow-sm flex-shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Delete</span>
-                  </button>
-                  {selectedTodos.size >= 2 && (
-                    <button
-                      onClick={initiateMerge}
-                      className="px-3.5 py-2 text-sm rounded-[var(--radius-md)] bg-[var(--brand-blue)] text-white hover:opacity-90 flex items-center gap-1.5 transition-all shadow-sm flex-shrink-0"
-                    >
-                      <GitMerge className="w-4 h-4" />
-                      <span className="hidden sm:inline">Merge</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      const selectedTaskList = todos.filter(t => selectedTodos.has(t.id));
-                      setEmailTargetTodos(selectedTaskList);
-                      setShowEmailModal(true);
-                    }}
-                    className="px-3.5 py-2 text-sm rounded-[var(--radius-md)] bg-[var(--brand-sky)] text-[var(--brand-navy)] hover:opacity-90 flex items-center gap-1.5 transition-all shadow-sm flex-shrink-0"
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span className="hidden sm:inline">Email</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Bulk Select Toggle */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => {
+              if (showBulkActions) {
+                clearSelection();
+              }
+              setShowBulkActions(!showBulkActions);
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              showBulkActions
+                ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-sm'
+                : 'bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] border border-[var(--border)]'
+            }`}
+          >
+            <CheckSquare className="w-4 h-4" />
+            {showBulkActions ? 'Cancel' : 'Select'}
+          </button>
+          {showBulkActions && (
+            <span className="text-sm text-[var(--text-muted)]">
+              Click tasks to select them
+            </span>
+          )}
+        </div>
 
         {/* List or Kanban */}
         {viewMode === 'list' ? (
@@ -2527,6 +2441,124 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           }}
           darkMode={darkMode}
         />
+      )}
+
+      {/* Floating Bulk Action Bar */}
+      {showBulkActions && selectedTodos.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
+          <div className="bg-[var(--surface)] border-t border-[var(--border)] shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
+            <div className={`mx-auto px-4 sm:px-6 py-3 ${viewMode === 'kanban' ? 'max-w-6xl' : 'max-w-4xl'}`}>
+              <div className="flex items-center justify-between gap-4">
+                {/* Left side - selection info */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[var(--brand-sky)] flex items-center justify-center">
+                      <span className="text-sm font-bold text-[var(--brand-navy)]">{selectedTodos.size}</span>
+                    </div>
+                    <span className="text-sm font-medium text-[var(--foreground)]">selected</span>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5">
+                    <button
+                      onClick={selectAll}
+                      className="px-2.5 py-1 text-xs rounded-full bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] transition-colors"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={clearSelection}
+                      className="px-2.5 py-1 text-xs rounded-full bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right side - action buttons */}
+                <div className="flex items-center gap-2">
+                  {/* Complete */}
+                  <button
+                    onClick={bulkComplete}
+                    className="p-2.5 sm:px-4 sm:py-2 rounded-xl bg-[var(--success)] text-white hover:opacity-90 flex items-center gap-2 transition-all shadow-sm"
+                    title="Complete selected"
+                  >
+                    <CheckSquare className="w-4 h-4" />
+                    <span className="hidden sm:inline text-sm font-medium">Complete</span>
+                  </button>
+
+                  {/* Assign dropdown */}
+                  <div className="relative">
+                    <select
+                      onChange={(e) => { if (e.target.value) bulkAssign(e.target.value); e.target.value = ''; }}
+                      className="appearance-none p-2.5 sm:px-4 sm:py-2 sm:pr-8 rounded-xl bg-[var(--surface-2)] text-[var(--foreground)] hover:bg-[var(--surface-3)] transition-colors cursor-pointer text-sm font-medium border border-[var(--border)]"
+                      aria-label="Assign to"
+                    >
+                      <option value="">Assign</option>
+                      {users.map((user) => (
+                        <option key={user} value={user}>{user}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
+                  </div>
+
+                  {/* Reschedule dropdown */}
+                  <div className="relative">
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) bulkReschedule(e.target.value);
+                        e.target.value = '';
+                      }}
+                      className="appearance-none p-2.5 sm:px-4 sm:py-2 sm:pr-8 rounded-xl bg-[var(--surface-2)] text-[var(--foreground)] hover:bg-[var(--surface-3)] transition-colors cursor-pointer text-sm font-medium border border-[var(--border)]"
+                      aria-label="Reschedule"
+                    >
+                      <option value="">Snooze</option>
+                      <option value={getDateOffset(0)}>Today</option>
+                      <option value={getDateOffset(1)}>Tomorrow</option>
+                      <option value={getDateOffset(7)}>Next Week</option>
+                      <option value={getDateOffset(30)}>Next Month</option>
+                    </select>
+                    <Clock className="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
+                  </div>
+
+                  {/* Merge - only show when 2+ selected */}
+                  {selectedTodos.size >= 2 && (
+                    <button
+                      onClick={initiateMerge}
+                      className="p-2.5 sm:px-4 sm:py-2 rounded-xl bg-[var(--brand-blue)] text-white hover:opacity-90 flex items-center gap-2 transition-all shadow-sm"
+                      title="Merge tasks"
+                    >
+                      <GitMerge className="w-4 h-4" />
+                      <span className="hidden sm:inline text-sm font-medium">Merge</span>
+                    </button>
+                  )}
+
+                  {/* Email */}
+                  <button
+                    onClick={() => {
+                      const selectedTaskList = todos.filter(t => selectedTodos.has(t.id));
+                      setEmailTargetTodos(selectedTaskList);
+                      setShowEmailModal(true);
+                    }}
+                    className="p-2.5 sm:px-4 sm:py-2 rounded-xl bg-[var(--brand-sky)] text-[var(--brand-navy)] hover:opacity-90 flex items-center gap-2 transition-all shadow-sm"
+                    title="Email about selected"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span className="hidden sm:inline text-sm font-medium">Email</span>
+                  </button>
+
+                  {/* Delete */}
+                  <button
+                    onClick={bulkDelete}
+                    className="p-2.5 sm:px-4 sm:py-2 rounded-xl bg-[var(--danger)] text-white hover:opacity-90 flex items-center gap-2 transition-all shadow-sm"
+                    title="Delete selected"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden sm:inline text-sm font-medium">Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <ChatPanel currentUser={currentUser} users={usersWithColors} />
