@@ -135,6 +135,23 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const splashHighlights = [
+    {
+      Icon: Sparkles,
+      title: 'AI task triage',
+      copy: 'Turn messy notes and emails into crisp, action-first tasks.',
+    },
+    {
+      Icon: Shield,
+      title: 'PIN-secured sessions',
+      copy: 'Fast, shared-device login without passwords or friction.',
+    },
+    {
+      Icon: CheckSquare,
+      title: 'Live team board',
+      copy: 'List + kanban views stay perfectly in sync across devices.',
+    },
+  ];
 
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const newPinRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -374,7 +391,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0A1628] p-4 overflow-hidden relative">
+    <div className="min-h-screen flex items-center justify-center bg-[#0A1628] px-4 py-10 overflow-hidden relative">
       {/* Skip link for accessibility */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:z-50">
         Skip to content
@@ -465,61 +482,153 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         />
       </div>
 
-      <div id="main-content" className="w-full max-w-[440px] relative z-10">
-        <AnimatePresence mode="wait">
-          {screen === 'users' && (
-            <motion.div
-              key="users"
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
-            >
-              {/* Card border glow */}
-              <div className="absolute -inset-[1px] bg-gradient-to-b from-[#72B5E8]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
+      <div className="relative z-10 w-full max-w-6xl">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <motion.div
+            className="hidden lg:block"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="max-w-xl">
+              <motion.div
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#A8D4F5]"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <span className="h-2 w-2 rounded-full bg-[#C9A227] shadow-[0_0_12px_rgba(201,162,39,0.8)]" />
+                Bealer Agency OS
+              </motion.div>
 
-              {/* Main card */}
-              <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
-                {/* Premium Header */}
-                <div className="relative px-8 pt-10 pb-8 text-center overflow-hidden">
-                  {/* Header background effects */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-[#00205B]/80 via-transparent to-transparent" />
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(201,162,39,0.15)_0%,_transparent_60%)]" />
+              <motion.h1
+                className="mt-6 text-5xl font-semibold tracking-tight text-white"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                Run the day with a board that feels alive.
+              </motion.h1>
+              <motion.p
+                className="mt-5 text-lg text-white/70 leading-relaxed"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Real-time task control for small teams, with AI that cleans inputs, spots urgency,
+                and keeps everyone aligned from inbox to completion.
+              </motion.p>
 
-                  {/* Animated accent line at bottom */}
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-px"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent, rgba(201,162,39,0.5), transparent)',
-                    }}
-                    animate={{ opacity: [0.3, 0.7, 0.3] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  />
-
-                  <div className="relative z-10">
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    >
-                      <AnimatedLogo />
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                    >
-                      <h1 className="text-3xl font-bold text-white tracking-tight mt-6">
-                        Bealer Agency
-                      </h1>
-                      <p className="text-sm text-[#72B5E8]/80 mt-2 font-medium tracking-[0.2em] uppercase">
-                        Task Management
-                      </p>
-                    </motion.div>
+              <motion.div
+                className="mt-10 grid gap-4"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                {splashHighlights.map(({ Icon, title, copy }) => (
+                  <div
+                    key={title}
+                    className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 backdrop-blur"
+                  >
+                    <div className="mt-1 rounded-xl bg-[#72B5E8]/15 p-2.5 text-[#72B5E8] shadow-[0_0_20px_rgba(114,181,232,0.2)]">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-white">{title}</p>
+                      <p className="mt-1 text-sm text-white/60">{copy}</p>
+                    </div>
                   </div>
+                ))}
+              </motion.div>
+
+              <motion.div
+                className="mt-10 flex items-center gap-5 rounded-3xl border border-white/10 bg-gradient-to-r from-white/[0.04] via-white/[0.02] to-transparent px-6 py-4"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="flex -space-x-3">
+                  {['#0033A0', '#C9A227', '#72B5E8', '#1E3A5F'].map((color) => (
+                    <div
+                      key={color}
+                      className="h-10 w-10 rounded-2xl border border-white/20"
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
                 </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Trusted by Bealer teams</p>
+                  <p className="text-xs text-white/50">Real-time updates, everywhere.</p>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          <div id="main-content" className="w-full max-w-[440px] lg:justify-self-end relative">
+            <AnimatePresence mode="wait">
+              {screen === 'users' && (
+                <motion.div
+                  key="users"
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative"
+                >
+                  <motion.div
+                    className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-white/70 lg:hidden"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <p className="text-sm font-semibold text-white">Bealer Agency OS</p>
+                    <p className="text-xs text-white/50 mt-1">AI-assisted tasks with live team sync.</p>
+                  </motion.div>
+
+                  {/* Card border glow */}
+                  <div className="absolute -inset-[1px] bg-gradient-to-b from-[#72B5E8]/30 via-white/[0.08] to-white/[0.02] rounded-[32px] blur-[1px]" />
+
+                  {/* Main card */}
+                  <div className="relative bg-gradient-to-b from-white/[0.06] to-white/[0.02] backdrop-blur-2xl rounded-[32px] border border-white/[0.08] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]">
+                    {/* Premium Header */}
+                    <div className="relative px-8 pt-10 pb-8 text-center overflow-hidden">
+                      {/* Header background effects */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-[#00205B]/80 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(201,162,39,0.15)_0%,_transparent_60%)]" />
+
+                      {/* Animated accent line at bottom */}
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-px"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent, rgba(201,162,39,0.5), transparent)',
+                        }}
+                        animate={{ opacity: [0.3, 0.7, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+
+                      <div className="relative z-10">
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          <AnimatedLogo />
+                        </motion.div>
+
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.3 }}
+                        >
+                          <h1 className="text-3xl font-bold text-white tracking-tight mt-6">
+                            Bealer Agency
+                          </h1>
+                          <p className="text-sm text-[#72B5E8]/80 mt-2 font-medium tracking-[0.2em] uppercase">
+                            Task Management
+                          </p>
+                        </motion.div>
+                      </div>
+                    </div>
 
                 {/* Search bar for larger user lists */}
                 {users.length > 5 && (
@@ -1053,6 +1162,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             Bealer Agency
           </p>
         </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );
