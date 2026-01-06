@@ -1925,9 +1925,8 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
           )}
         </div>
 
-        {/* Bulk Actions - Always visible checkbox in list view */}
-        {viewMode === 'list' && (
-          <div className="flex items-center gap-2 mb-4">
+        {/* Bulk Actions - Available in both list and board views */}
+        <div className="flex items-center gap-2 mb-4">
             <button
               onClick={() => {
                 if (showBulkActions) {
@@ -2014,7 +2013,6 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               </div>
             )}
           </div>
-        )}
 
         {/* List or Kanban */}
         {viewMode === 'list' ? (
@@ -2106,6 +2104,9 @@ export default function TodoList({ currentUser, onUserChange }: TodoListProps) {
               setEmailTargetTodos([todo]);
               setShowEmailModal(true);
             }}
+            showBulkActions={showBulkActions}
+            selectedTodos={selectedTodos}
+            onSelectTodo={handleSelectTodo}
           />
         )}
 

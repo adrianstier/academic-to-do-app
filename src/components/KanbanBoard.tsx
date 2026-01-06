@@ -73,6 +73,10 @@ interface KanbanBoardProps {
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
   onEmailCustomer?: (todo: Todo) => void;
+  // Selection support
+  showBulkActions?: boolean;
+  selectedTodos?: Set<string>;
+  onSelectTodo?: (id: string, selected: boolean) => void;
 }
 
 const columns: { id: TodoStatus; title: string; Icon: LucideIcon; color: string; bgColor: string }[] = [
@@ -111,9 +115,13 @@ interface SortableCardProps {
   onSetDueDate: (id: string, dueDate: string | null) => void;
   onSetPriority: (id: string, priority: TodoPriority) => void;
   onCardClick: (todo: Todo) => void;
+  // Selection support
+  showBulkActions?: boolean;
+  isSelected?: boolean;
+  onSelectTodo?: (id: string, selected: boolean) => void;
 }
 
-function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPriority, onCardClick }: SortableCardProps) {
+function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPriority, onCardClick, showBulkActions, isSelected, onSelectTodo }: SortableCardProps) {
   const [showActions, setShowActions] = useState(false);
   const {
     attributes,
@@ -133,6 +141,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
   const priorityConfig = PRIORITY_CONFIG[priority];
   const overdue = todo.due_date && !todo.completed && isOverdue(todo.due_date);
   const hasNotes = todo.notes && todo.notes.trim().length > 0;
+  const hasTranscription = todo.transcription && todo.transcription.trim().length > 0;
   const subtaskCount = todo.subtasks?.length || 0;
   const completedSubtasks = todo.subtasks?.filter(s => s.completed).length || 0;
   const attachmentCount = todo.attachments?.length || 0;
@@ -173,12 +182,30 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
 
       <div className="p-3 sm:p-3">
         {/* Card content */}
-        <div className="flex-1 min-w-0">
-          <p className={`text-base sm:text-sm font-medium leading-snug ${
-            todo.completed ? 'line-through text-slate-400' : 'text-slate-800 dark:text-white'
-          }`}>
-            {todo.text}
-          </p>
+        <div className="flex items-start gap-2">
+          {/* Selection checkbox */}
+          {showBulkActions && onSelectTodo && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectTodo(todo.id, !isSelected);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition-all mt-0.5 ${
+                isSelected
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'border-slate-300 dark:border-slate-600 hover:border-[var(--accent)]'
+              }`}
+            >
+              {isSelected && <CheckSquare className="w-3 h-3" />}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className={`text-base sm:text-sm font-medium leading-snug ${
+              todo.completed ? 'line-through text-slate-400' : 'text-slate-800 dark:text-white'
+            }`}>
+              {todo.text}
+            </p>
 
           {/* Metadata row */}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
@@ -206,9 +233,15 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
             )}
           </div>
 
-          {/* Notes, Subtasks & Attachments indicators */}
-          {(hasNotes || subtaskCount > 0 || attachmentCount > 0) && (
-            <div className="flex items-center gap-2 mt-2">
+          {/* Notes, Subtasks, Transcription & Attachments indicators */}
+          {(hasNotes || subtaskCount > 0 || attachmentCount > 0 || hasTranscription) && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {hasTranscription && (
+                <span className="inline-flex items-center gap-1 text-xs text-purple-500 dark:text-purple-400">
+                  <Mic className="w-3 h-3" />
+                  Voicemail
+                </span>
+              )}
               {hasNotes && (
                 <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                   <FileText className="w-3 h-3" />
@@ -251,6 +284,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
               </span>
               <Edit3 className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
+          </div>
           </div>
         </div>
 
@@ -733,6 +767,25 @@ function TaskDetailModal({
             />
           </div>
 
+          {/* Voicemail Transcription */}
+          {todo.transcription && (
+            <div className={`p-3 rounded-lg border ${
+              darkMode
+                ? 'bg-purple-500/10 border-purple-500/20'
+                : 'bg-purple-500/5 border-purple-500/10'
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="w-4 h-4 text-purple-500" />
+                <span className="text-sm font-medium text-purple-500">Voicemail Transcription</span>
+              </div>
+              <p className={`text-sm whitespace-pre-wrap leading-relaxed ${
+                darkMode ? 'text-slate-200' : 'text-slate-700'
+              }`}>
+                {todo.transcription}
+              </p>
+            </div>
+          )}
+
           {/* Subtasks */}
           {onUpdateSubtasks && (
             <div>
@@ -1058,6 +1111,9 @@ export default function KanbanBoard({
   onUpdateAttachments,
   onSaveAsTemplate,
   onEmailCustomer,
+  showBulkActions,
+  selectedTodos,
+  onSelectTodo,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -1224,6 +1280,9 @@ export default function KanbanBoard({
                         onSetDueDate={onSetDueDate}
                         onSetPriority={onSetPriority}
                         onCardClick={setSelectedTodo}
+                        showBulkActions={showBulkActions}
+                        isSelected={selectedTodos?.has(todo.id)}
+                        onSelectTodo={onSelectTodo}
                       />
                     ))}
                   </AnimatePresence>
