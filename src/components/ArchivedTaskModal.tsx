@@ -1,6 +1,6 @@
 'use client';
 
-import { X, User, Calendar, Flag, Repeat, FileText, Paperclip, Clock, MessageSquare, Mic } from 'lucide-react';
+import { X, User, Calendar, Flag, Repeat, FileText, Paperclip, Clock, MessageSquare, Mic, Circle, Loader2, CheckCircle } from 'lucide-react';
 import { Todo, PRIORITY_CONFIG, STATUS_CONFIG, Subtask } from '@/types/todo';
 import AttachmentList from './AttachmentList';
 
@@ -72,7 +72,13 @@ export default function ArchivedTaskModal({ todo, onClose }: ArchivedTaskModalPr
             {/* Status */}
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-[var(--surface-2)]">
-                <statusConfig.icon className="w-4 h-4" style={{ color: statusConfig.color }} />
+                {todo.status === 'done' ? (
+                  <CheckCircle className="w-4 h-4" style={{ color: statusConfig.color }} />
+                ) : todo.status === 'in_progress' ? (
+                  <Loader2 className="w-4 h-4" style={{ color: statusConfig.color }} />
+                ) : (
+                  <Circle className="w-4 h-4" style={{ color: statusConfig.color }} />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-[var(--text-muted)]">Status</p>

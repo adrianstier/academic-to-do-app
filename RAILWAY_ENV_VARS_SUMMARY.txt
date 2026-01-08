@@ -1,0 +1,55 @@
+═══════════════════════════════════════════════════════
+    RAILWAY ENVIRONMENT VARIABLES TO ADD
+═══════════════════════════════════════════════════════
+
+Copy and paste these into Railway → Variables:
+
+──────────────────────────────────────────────────────
+
+Variable Name: NEXTAUTH_URL
+Value: https://shared-todo-list-production.up.railway.app
+
+──────────────────────────────────────────────────────
+
+Variable Name: NEXTAUTH_SECRET
+Value: b9/NQvFL82eCNFmwc75pVm2oqAhosIoSCmaA+pcxaDM=
+
+──────────────────────────────────────────────────────
+
+Variable Name: GOOGLE_CLIENT_ID
+Value: <YOUR_CLIENT_ID_FROM_GOOGLE_CLOUD_CONSOLE>
+
+──────────────────────────────────────────────────────
+
+Variable Name: GOOGLE_CLIENT_SECRET
+Value: <YOUR_CLIENT_SECRET_FROM_GOOGLE_CLOUD_CONSOLE>
+
+──────────────────────────────────────────────────────
+
+Variable Name: ALLOWED_OAUTH_EMAILS
+Value: derrick@bealeragency.com,sefra@bealeragency.com
+
+⚠️ IMPORTANT: Replace with ACTUAL email addresses!
+This controls who can sign up with Google OAuth.
+
+──────────────────────────────────────────────────────
+
+Variable Name: NEXT_PUBLIC_USE_OAUTH
+Value: true
+
+──────────────────────────────────────────────────────
+
+Variable Name: NEXT_PUBLIC_USE_NORMALIZED_SCHEMA
+Value: false
+
+(We'll change this to 'true' later after migration)
+
+═══════════════════════════════════════════════════════
+
+What Happens Next:
+1. Railway will auto-redeploy when you save these variables
+2. The "Sign in with Google" button will appear on login page
+3. Only emails in ALLOWED_OAUTH_EMAILS can sign up with OAuth
+4. PIN login continues to work for existing users
+
+═══════════════════════════════════════════════════════
