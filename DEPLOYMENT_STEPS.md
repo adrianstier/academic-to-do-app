@@ -68,6 +68,11 @@ NEXTAUTH_SECRET=b9/NQvFL82eCNFmwc75pVm2oqAhosIoSCmaA+pcxaDM=
 GOOGLE_CLIENT_ID=<YOUR_CLIENT_ID>
 GOOGLE_CLIENT_SECRET=<YOUR_CLIENT_SECRET>
 
+# Email Whitelist (IMPORTANT - Security!)
+# Only these emails can sign up with Google/Apple OAuth
+# Replace with actual email addresses for Derrick and Sefra
+ALLOWED_OAUTH_EMAILS=derrick@bealeragency.com,sefra@bealeragency.com
+
 # Enable OAuth
 NEXT_PUBLIC_USE_OAUTH=true
 
@@ -75,7 +80,10 @@ NEXT_PUBLIC_USE_OAUTH=true
 NEXT_PUBLIC_USE_NORMALIZED_SCHEMA=false
 ```
 
-**Important:** Make sure to replace `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` with actual values from Step 1.
+**Important:**
+- Replace `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` with actual values from Step 1
+- Replace email addresses in `ALLOWED_OAUTH_EMAILS` with real emails for Derrick and Sefra
+- See [OAUTH_EMAIL_WHITELIST.md](./OAUTH_EMAIL_WHITELIST.md) for details on email whitelist
 
 ---
 

@@ -5,6 +5,12 @@ import { SupabaseAdapter } from '@auth/supabase-adapter';
 import { isFeatureEnabled } from '@/lib/featureFlags';
 import { logger } from '@/lib/logger';
 
+// Email whitelist - only these emails can sign up with OAuth
+const ALLOWED_EMAILS = (process.env.ALLOWED_OAUTH_EMAILS || '')
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(Boolean);
+
 export const authOptions: NextAuthOptions = {
   adapter: SupabaseAdapter({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,9 +53,27 @@ export const authOptions: NextAuthOptions = {
     },
 
     async signIn({ user, account, profile }) {
+      // Check email whitelist for OAuth providers
+      if (account?.provider === 'google' || account?.provider === 'apple') {
+        const userEmail = user.email?.toLowerCase();
+
+        // If whitelist is configured and email is not allowed, reject sign-in
+        if (ALLOWED_EMAILS.length > 0 && userEmail && !ALLOWED_EMAILS.includes(userEmail)) {
+          logger.warn('Unauthorized OAuth sign-in attempt', {
+            email: userEmail,
+            provider: account.provider,
+            action: 'sign_in_rejected',
+          });
+
+          // Return false to reject sign-in
+          return false;
+        }
+      }
+
       // Log successful sign-in
       logger.info('User signed in', {
         userId: user.id,
+        email: user.email,
         provider: account?.provider,
         action: 'sign_in',
       });
