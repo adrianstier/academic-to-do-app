@@ -1,9 +1,27 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
+import NextAuth, { NextAuthOptions, Session, User } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import AppleProvider from 'next-auth/providers/apple';
 import { SupabaseAdapter } from '@auth/supabase-adapter';
 import { isFeatureEnabled } from '@/lib/featureFlags';
 import { logger } from '@/lib/logger';
+
+// Extend NextAuth types to include our custom fields
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string;
+    };
+  }
+
+  interface User {
+    id: string;
+    role?: string;
+  }
+}
 
 // Email whitelist - only these emails can sign up with OAuth
 const ALLOWED_EMAILS = (process.env.ALLOWED_OAUTH_EMAILS || '')
@@ -11,11 +29,17 @@ const ALLOWED_EMAILS = (process.env.ALLOWED_OAUTH_EMAILS || '')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
 
+// Check if OAuth is configured
+const isOAuthConfigured =
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.SUPABASE_SERVICE_ROLE_KEY &&
+  (process.env.GOOGLE_CLIENT_ID || process.env.APPLE_CLIENT_ID);
+
 export const authOptions: NextAuthOptions = {
-  adapter: SupabaseAdapter({
+  adapter: isOAuthConfigured ? SupabaseAdapter({
     url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
     secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }),
+  }) : undefined,
 
   providers: [
     GoogleProvider({
@@ -40,7 +64,6 @@ export const authOptions: NextAuthOptions = {
       // Add user ID and role to session
       if (session.user) {
         session.user.id = user.id;
-        // @ts-ignore - adding custom field
         session.user.role = user.role || 'member';
       }
 

@@ -20,6 +20,8 @@ export interface LogContext {
   component?: string;
   duration?: number;
   metadata?: Record<string, unknown>;
+  // Allow any additional fields for flexibility
+  [key: string]: unknown;
 }
 
 class Logger {
