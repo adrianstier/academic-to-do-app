@@ -44,6 +44,7 @@ import TemplatePicker from './TemplatePicker';
 import ActivityFeed from './ActivityFeed';
 import StrategicDashboard from './StrategicDashboard';
 import SaveTemplateModal from './SaveTemplateModal';
+import ArchivedTaskModal from './ArchivedTaskModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logActivity } from '@/lib/activityLogger';
 import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch, extractPotentialNames } from '@/lib/duplicateDetection';
@@ -129,6 +130,7 @@ export default function TodoList({ currentUser, onUserChange, onBackToDashboard,
   const [showStrategicDashboard, setShowStrategicDashboard] = useState(false);
   const [templateTodo, setTemplateTodo] = useState<Todo | null>(null);
   const [showArchiveView, setShowArchiveView] = useState(false);
+  const [selectedArchivedTodo, setSelectedArchivedTodo] = useState<Todo | null>(null);
   const [archiveQuery, setArchiveQuery] = useState('');
   const [archiveTick, setArchiveTick] = useState(0);
   const [customOrder, setCustomOrder] = useState<string[]>([]);
@@ -2299,18 +2301,41 @@ export default function TodoList({ currentUser, onUserChange, onBackToDashboard,
                 ) : (
                   filteredArchivedTodos.map((todo) => {
                     const completedAt = getCompletedAtMs(todo);
+                    const hasSubtasks = todo.subtasks && todo.subtasks.length > 0;
+                    const hasAttachments = todo.attachments && todo.attachments.length > 0;
                     return (
-                      <div key={todo.id} className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] p-4">
+                      <button
+                        key={todo.id}
+                        onClick={() => setSelectedArchivedTodo(todo)}
+                        className="w-full text-left rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] p-4 hover:bg-[var(--surface-3)] hover:border-[var(--accent)] transition-all cursor-pointer group"
+                      >
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-[var(--foreground)]">{todo.text}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors">{todo.text}</p>
                             <p className="text-xs text-[var(--text-muted)] mt-1">
                               {todo.assigned_to ? `Assigned to ${todo.assigned_to}` : 'Unassigned'} • created by {todo.created_by}
                             </p>
+                            {/* Show indicators for subtasks and attachments */}
+                            {(hasSubtasks || hasAttachments) && (
+                              <div className="flex items-center gap-2 mt-2">
+                                {hasSubtasks && (
+                                  <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
+                                    <Check className="w-3 h-3" />
+                                    {todo.subtasks!.filter(st => st.completed).length}/{todo.subtasks!.length} subtasks
+                                  </span>
+                                )}
+                                {hasAttachments && (
+                                  <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
+                                    <Paperclip className="w-3 h-3" />
+                                    {todo.attachments!.length}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                           {completedAt && (
                             <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">
-                              Completed {new Date(completedAt).toLocaleString()}
+                              {new Date(completedAt).toLocaleDateString()}
                             </span>
                           )}
                         </div>
@@ -2319,7 +2344,7 @@ export default function TodoList({ currentUser, onUserChange, onBackToDashboard,
                             {todo.notes || todo.transcription}
                           </p>
                         )}
-                      </div>
+                      </button>
                     );
                   })
                 )}
@@ -2327,6 +2352,14 @@ export default function TodoList({ currentUser, onUserChange, onBackToDashboard,
             </div>
           </div>
         </div>
+      )}
+
+      {/* Archived Task Detail Modal */}
+      {selectedArchivedTodo && (
+        <ArchivedTaskModal
+          todo={selectedArchivedTodo}
+          onClose={() => setSelectedArchivedTodo(null)}
+        />
       )}
 
       {/* Save Template Modal */}
