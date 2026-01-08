@@ -107,6 +107,24 @@ const isOverdue = (date: string) => {
   return d < today;
 };
 
+const isDueToday = (date: string) => {
+  const d = new Date(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() === today.getTime();
+};
+
+const isDueSoon = (date: string) => {
+  const d = new Date(date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  const threeDaysFromNow = new Date(today);
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+  return d > today && d <= threeDaysFromNow;
+};
+
 interface SortableCardProps {
   todo: Todo;
   users: string[];
@@ -188,12 +206,6 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
       onMouseLeave={() => setShowActions(false)}
       onClick={handleCardClick}
     >
-      {/* Priority bar */}
-      <div
-        className="h-1.5"
-        style={{ backgroundColor: priorityConfig.color }}
-      />
-
       <div className="p-3 sm:p-3">
         {/* Card content */}
         <div className="flex items-start gap-2">
@@ -236,10 +248,14 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
             {todo.due_date && (
               <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium ${
                 todo.completed
-                  ? 'bg-slate-100 text-slate-400'
+                  ? 'bg-slate-100 dark:bg-slate-700 text-slate-400'
                   : overdue
-                    ? 'bg-red-100 text-red-600'
-                    : 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                    ? 'bg-red-500 text-white'
+                    : isDueToday(todo.due_date)
+                      ? 'bg-orange-500 text-white'
+                      : isDueSoon(todo.due_date)
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                        : 'text-slate-500 dark:text-slate-400'
               }`}>
                 {overdue ? <AlertCircle className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
                 {formatDueDate(todo.due_date)}
@@ -282,7 +298,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
             </div>
           )}
 
-          {/* Assignee & Creator */}
+          {/* Assignee */}
           <div className="flex items-center justify-between mt-2">
             {todo.assigned_to ? (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-[#D4A853]">
@@ -292,12 +308,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
             ) : (
               <span className="text-xs text-slate-400 dark:text-slate-500">Unassigned</span>
             )}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 dark:text-slate-500">
-                by {todo.created_by}
-              </span>
-              <Edit3 className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
+            <Edit3 className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           </div>
         </div>
@@ -1469,7 +1480,9 @@ export default function KanbanBoard({
                       >
                         <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
                       </div>
-                      <p className="text-xs sm:text-sm font-medium">Drop tasks here</p>
+                      <p className="text-xs sm:text-sm font-medium">
+                        {column.id === 'done' ? 'Complete tasks to see them here' : 'Drop tasks here'}
+                      </p>
                     </motion.div>
                   )}
                 </DroppableColumn>

@@ -361,7 +361,7 @@ export default function TodoItem({
 
           {/* Meta row */}
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-            {/* Priority */}
+            {/* Priority + Due date combined */}
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium"
               style={{ backgroundColor: priorityConfig.bgColor, color: priorityConfig.color }}
@@ -370,18 +370,18 @@ export default function TodoItem({
               {priorityConfig.label}
             </span>
 
-            {/* Status */}
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium"
-              style={{ backgroundColor: statusConfig.bgColor, color: statusConfig.color }}
-            >
-              {statusConfig.label}
-            </span>
-
-            {/* Due date with color coding */}
+            {/* Due date - improved color coding */}
             {todo.due_date && dueDateStatus && (
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${
-                todo.completed ? 'bg-slate-100 text-slate-400' : dueDateStyles[dueDateStatus]
+                todo.completed
+                  ? 'bg-slate-100 dark:bg-slate-700 text-slate-400'
+                  : dueDateStatus === 'overdue'
+                    ? 'bg-red-500 text-white'
+                    : dueDateStatus === 'today'
+                      ? 'bg-orange-500 text-white'
+                      : dueDateStatus === 'upcoming'
+                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                        : 'text-[var(--text-muted)]'
               }`}>
                 <Calendar className="w-3 h-3" />
                 {formatDueDate(todo.due_date)}
@@ -455,12 +455,6 @@ export default function TodoItem({
               </span>
             )}
 
-            {/* Created by - only show if different from assigned */}
-            {(!todo.assigned_to || todo.created_by !== todo.assigned_to) && (
-              <span className="text-xs text-[var(--text-light)]">
-                by {todo.created_by}
-              </span>
-            )}
           </div>
 
           {/* Quick inline actions - visible on hover for incomplete tasks */}
