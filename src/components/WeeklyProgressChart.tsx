@@ -167,29 +167,15 @@ export default function WeeklyProgressChart({
         <div className="p-4">
           <div className="flex items-end justify-between gap-2 h-32 mb-2">
             {weekData.map((day, index) => {
-              const height = stats.maxCompleted > 0
-                ? (day.completed / stats.maxCompleted) * 100
-                : 0;
+              // Calculate height in pixels (max container height is 128px / 8rem)
+              const maxBarHeight = 96; // Leave room for label
+              const barHeight = stats.maxCompleted > 0
+                ? Math.max((day.completed / stats.maxCompleted) * maxBarHeight, day.completed > 0 ? 8 : 4)
+                : 4;
               const isToday = index === weekData.length - 1;
 
               return (
-                <div key={day.day} className="flex-1 flex flex-col items-center gap-1">
-                  {/* Bar */}
-                  <div className="w-full flex-1 flex flex-col justify-end">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${Math.max(height, 4)}%` }}
-                      transition={{ delay: index * 0.05, duration: 0.4, ease: 'easeOut' }}
-                      className={`w-full rounded-t-md ${
-                        isToday
-                          ? 'bg-[#0033A0]'
-                          : day.completed > 0
-                            ? 'bg-[#0033A0]/50'
-                            : darkMode ? 'bg-slate-700' : 'bg-slate-200'
-                      }`}
-                    />
-                  </div>
-
+                <div key={day.day} className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
                   {/* Count label */}
                   <span className={`text-xs font-medium ${
                     day.completed > 0
@@ -198,6 +184,20 @@ export default function WeeklyProgressChart({
                   }`}>
                     {day.completed}
                   </span>
+
+                  {/* Bar */}
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: barHeight }}
+                    transition={{ delay: index * 0.05, duration: 0.4, ease: 'easeOut' }}
+                    className={`w-full rounded-t-md ${
+                      isToday
+                        ? 'bg-[#0033A0]'
+                        : day.completed > 0
+                          ? 'bg-[#0033A0]/50'
+                          : darkMode ? 'bg-slate-700' : 'bg-slate-200'
+                    }`}
+                  />
                 </div>
               );
             })}

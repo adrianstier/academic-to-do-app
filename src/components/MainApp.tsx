@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import Dashboard from './Dashboard';
 import TodoList from './TodoList';
+import DashboardModal, { shouldShowDailyDashboard } from './DashboardModal';
 import { AuthUser, Todo, QuickFilter } from '@/types/todo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-
-type AppView = 'dashboard' | 'tasks';
 
 interface MainAppProps {
   currentUser: AuthUser;
@@ -15,14 +12,14 @@ interface MainAppProps {
 }
 
 export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
-  const [view, setView] = useState<AppView>('dashboard');
   const [todos, setTodos] = useState<Todo[]>([]);
   const [users, setUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialFilter, setInitialFilter] = useState<QuickFilter | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
-  // Fetch todos for dashboard stats
+  // Fetch todos
   useEffect(() => {
     const fetchData = async () => {
       if (!isSupabaseConfigured()) {
@@ -75,21 +72,27 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
     };
   }, []);
 
+  // Check if we should show daily dashboard on mount
+  useEffect(() => {
+    if (!loading && shouldShowDailyDashboard()) {
+      setShowDashboard(true);
+    }
+  }, [loading]);
+
   const handleNavigateToTasks = useCallback((filter?: QuickFilter) => {
     if (filter) {
       setInitialFilter(filter);
     }
-    setView('tasks');
-  }, []);
-
-  const handleBackToDashboard = useCallback(() => {
-    setInitialFilter(null);
-    setView('dashboard');
+    setShowDashboard(false);
   }, []);
 
   const handleAddTask = useCallback(() => {
     setShowAddTask(true);
-    setView('tasks');
+    setShowDashboard(false);
+  }, []);
+
+  const handleOpenDashboard = useCallback(() => {
+    setShowDashboard(true);
   }, []);
 
   if (loading) {
@@ -105,43 +108,25 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {view === 'dashboard' ? (
-        <motion.div
-          key="dashboard"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Dashboard
-            todos={todos}
-            currentUser={currentUser}
-            users={users}
-            onNavigateToTasks={() => handleNavigateToTasks()}
-            onAddTask={handleAddTask}
-            onFilterOverdue={() => handleNavigateToTasks('overdue')}
-            onFilterDueToday={() => handleNavigateToTasks('due_today')}
-            onFilterMyTasks={() => handleNavigateToTasks('my_tasks')}
-          />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="tasks"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <TodoList
-            currentUser={currentUser}
-            onUserChange={onUserChange}
-            onBackToDashboard={handleBackToDashboard}
-            initialFilter={initialFilter}
-            autoFocusAddTask={showAddTask}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <>
+      <TodoList
+        currentUser={currentUser}
+        onUserChange={onUserChange}
+        initialFilter={initialFilter}
+        autoFocusAddTask={showAddTask}
+        onOpenDashboard={handleOpenDashboard}
+      />
+
+      <DashboardModal
+        isOpen={showDashboard}
+        onClose={() => setShowDashboard(false)}
+        todos={todos}
+        currentUser={currentUser}
+        onNavigateToTasks={() => handleNavigateToTasks()}
+        onAddTask={handleAddTask}
+        onFilterOverdue={() => handleNavigateToTasks('overdue')}
+        onFilterDueToday={() => handleNavigateToTasks('due_today')}
+      />
+    </>
   );
 }
