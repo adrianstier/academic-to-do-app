@@ -160,9 +160,18 @@ npm run migrate:status                # Check progress
 - `tests/factories/` - Mock data factories
 - `tests/unit/` - Unit tests
 
+### OAuth & Login UI
+- `src/components/OAuthLoginButtons.tsx` - Google + Apple login buttons
+- `src/components/LoginScreen.tsx` - Updated with OAuth integration
+
+### Migration Scripts
+- `scripts/migrate-schema.ts` - Background migration script
+- `scripts/verify-migration.ts` - Verification script
+
 ### Documentation
 - `REFACTORING_PLAN.md` - 12-week refactoring plan
 - `DEPLOYMENT_GUIDE.md` - Step-by-step deployment
+- `OAUTH_DEPLOYMENT_GUIDE.md` - ⭐ **OAuth + Schema Migration Guide**
 - `.env.example` - Environment variables template
 - `IMPLEMENTATION_SUMMARY.md` - This file
 
@@ -194,7 +203,7 @@ npm run dev
 git push origin refactor/security-and-architecture
 ```
 
-**Detailed Instructions**: See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+**Detailed Instructions**: See [OAUTH_DEPLOYMENT_GUIDE.md](./OAUTH_DEPLOYMENT_GUIDE.md) for OAuth and schema migration.
 
 ---
 
@@ -203,21 +212,28 @@ git push origin refactor/security-and-architecture
 ### Current State (All Disabled)
 ```bash
 # All new features are OFF by default
-NEXT_PUBLIC_ENABLE_OAUTH=false
-ENABLE_RATE_LIMITING=false
-NEXT_PUBLIC_ENABLE_NORMALIZED_SCHEMA=false
-NEXT_PUBLIC_USE_NEW_COMPONENTS=false
-NEXT_PUBLIC_USE_ZUSTAND=false
+NEXT_PUBLIC_USE_OAUTH=false           # OAuth login (Google + Apple)
+ENABLE_RATE_LIMITING=false             # Redis rate limiting (skip for now)
+NEXT_PUBLIC_USE_NORMALIZED_SCHEMA=false  # Normalized database tables
+NEXT_PUBLIC_USE_NEW_COMPONENTS=false   # Refactored components (future)
+NEXT_PUBLIC_USE_ZUSTAND=false          # Zustand state management (future)
 ```
 
 **Result:** Application runs exactly like before. New code is dormant.
 
-### Gradual Rollout Strategy
-1. **Week 1**: Enable rate limiting (100%)
-2. **Week 2**: Enable OAuth (10% → 100%)
-3. **Week 3**: Run schema migration
-4. **Week 4**: Enable normalized schema reads
-5. **Week 5+**: Component refactoring (future)
+### Recommended Rollout Strategy
+1. **Week 1**: Deploy with all flags OFF (verify nothing breaks)
+2. **Week 2**: Enable OAuth → `NEXT_PUBLIC_USE_OAUTH=true`
+3. **Week 3-4**: Monitor OAuth stability
+4. **Week 5**: Run schema migration → `npm run migrate:schema`
+5. **Week 6**: Enable normalized schema → `NEXT_PUBLIC_USE_NORMALIZED_SCHEMA=true`
+6. **Week 7+**: Monitor, then optionally clean up old JSONB columns
+
+**Skip for now** (not needed for 2 users):
+- ❌ Rate limiting (requires Upstash Redis - $10/month)
+- ❌ Sentry (nice to have but optional)
+- ❌ Component refactoring (Phase 4 - future work)
+- ❌ Zustand state management (Phase 5 - future work)
 
 ---
 
