@@ -238,6 +238,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const lastTypingBroadcastRef = useRef<number>(0);
   const presenceIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasInitialScrolled = useRef<string | null>(null); // Track which conversation we scrolled for
 
   // Initialize audio element for notification sound
   useEffect(() => {
@@ -616,14 +617,29 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
     }
   }, [filteredMessages, isAtBottom, isOpen, scrollToBottom, showConversationList]);
 
-  // Focus input when opening chat or switching conversations
+  // Initial scroll to bottom when messages load for a conversation
+  useEffect(() => {
+    if (!loading && isOpen && conversation && !showConversationList && filteredMessages.length > 0) {
+      const convKey = getConversationKey(conversation);
+      // Only do initial scroll once per conversation
+      if (hasInitialScrolled.current !== convKey) {
+        hasInitialScrolled.current = convKey;
+        // Use instant scroll on initial load to avoid animation
+        setTimeout(() => scrollToBottom('instant'), 50);
+      }
+    }
+  }, [loading, isOpen, conversation, showConversationList, filteredMessages.length, getConversationKey, scrollToBottom]);
+
+  // Focus input and scroll to bottom when opening chat or switching conversations
   useEffect(() => {
     if (isOpen && !isMinimized && !showConversationList && conversation) {
       setTimeout(() => inputRef.current?.focus(), 100);
+      // Scroll to bottom to show most recent messages
+      setTimeout(() => scrollToBottom('instant'), 50);
       const key = getConversationKey(conversation);
       setUnreadCounts(prev => ({ ...prev, [key]: 0 }));
     }
-  }, [isOpen, isMinimized, showConversationList, conversation, getConversationKey]);
+  }, [isOpen, isMinimized, showConversationList, conversation, getConversationKey, scrollToBottom]);
 
   // Handle mention detection in input
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1004,6 +1020,8 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
     setShowConversationList(false);
     const key = getConversationKey(conv);
     setUnreadCounts(prev => ({ ...prev, [key]: 0 }));
+    // Reset initial scroll tracking so we scroll to bottom for the new conversation
+    hasInitialScrolled.current = null;
   };
 
   const getConversationTitle = () => {
