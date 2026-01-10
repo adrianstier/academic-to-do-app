@@ -30,7 +30,7 @@ const FEATURE_FLAGS: Record<FeatureFlag, () => FeatureFlagConfig> = {
   }),
 
   oauth_login: () => ({
-    enabled: process.env.NEXT_PUBLIC_ENABLE_OAUTH === 'true',
+    enabled: process.env.NEXT_PUBLIC_ENABLE_OAUTH === 'true' || process.env.NEXT_PUBLIC_USE_OAUTH === 'true',
     description: 'OAuth 2.0 login (Google/Apple)',
   }),
 
