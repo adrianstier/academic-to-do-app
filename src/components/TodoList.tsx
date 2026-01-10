@@ -210,7 +210,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       if (e.key === '1') { e.preventDefault(); setQuickFilter('all'); }
       if (e.key === '2') { e.preventDefault(); setQuickFilter('my_tasks'); }
       if (e.key === '3') { e.preventDefault(); setQuickFilter('due_today'); }
-      if (e.key === '4') { e.preventDefault(); setQuickFilter('urgent'); }
+      if (e.key === '4') { e.preventDefault(); setQuickFilter('overdue'); }
 
       // '?' - show keyboard shortcuts help
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
@@ -1363,13 +1363,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         result = result.filter((todo) => isDueToday(todo.due_date) && !todo.completed);
         break;
       case 'overdue':
-        result = result.filter((todo) => isOverdue(todo.due_date, todo.completed));
-        break;
-      case 'urgent':
-        result = result.filter((todo) => todo.priority === 'urgent' && !todo.completed);
-        break;
-      case 'triage':
-        // Triage mode: show only overdue tasks, auto-sort by urgency
         result = result.filter((todo) => isOverdue(todo.due_date, todo.completed));
         break;
     }

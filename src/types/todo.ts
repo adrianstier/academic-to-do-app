@@ -86,7 +86,7 @@ export interface Todo {
 }
 
 export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical' | 'custom' | 'urgency';
-export type QuickFilter = 'all' | 'my_tasks' | 'due_today' | 'overdue' | 'urgent' | 'triage';
+export type QuickFilter = 'all' | 'my_tasks' | 'due_today' | 'overdue';
 
 export type ViewMode = 'list' | 'kanban';
 
