@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, AlertCircle, ChevronLeft, Lock, CheckSquare, Search, Shield, Sparkles, ArrowRight, Users, Zap } from 'lucide-react';
+import { AlertCircle, ChevronLeft, Lock, CheckSquare, Search, Shield, Sparkles, ArrowRight, Users, Zap } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import {
   hashPin,
   verifyPin,
   isValidPin,
-  getRandomUserColor,
   getUserInitials,
   isLockedOut,
   incrementLockout,
@@ -23,7 +22,7 @@ interface LoginScreenProps {
   onLogin: (user: AuthUser) => void;
 }
 
-type Screen = 'users' | 'pin' | 'register';
+type Screen = 'users' | 'pin';
 
 // Animated grid background
 function AnimatedGrid() {
@@ -221,9 +220,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<AuthUser | null>(null);
   const [pin, setPin] = useState(['', '', '', '']);
-  const [newUserName, setNewUserName] = useState('');
-  const [newUserPin, setNewUserPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
   const [error, setError] = useState('');
   const [attemptsRemaining, setAttemptsRemaining] = useState(3);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
@@ -254,8 +250,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   ];
 
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const newPinRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const confirmPinRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -422,60 +416,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         }
         setPin(['', '', '', '']);
         pinRefs.current[0]?.focus();
-      }
-    } catch {
-      setError('Something went wrong.');
-    }
-
-    setIsSubmitting(false);
-  };
-
-  const handleRegister = async () => {
-    const name = newUserName.trim();
-    if (!name) {
-      setError('Enter your name');
-      return;
-    }
-
-    const pinString = newUserPin.join('');
-    if (!isValidPin(pinString)) {
-      setError('Enter a 4-digit PIN');
-      return;
-    }
-
-    const confirmString = confirmPin.join('');
-    if (pinString !== confirmString) {
-      setError('PINs don\'t match');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const pinHash = await hashPin(pinString);
-      const color = getRandomUserColor();
-
-      const { data, error: insertError } = await supabase
-        .from('users')
-        .insert({ name, pin_hash: pinHash, color, role: 'member' })
-        .select('id, name, color, role, created_at, last_login')
-        .single();
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setError('Name already taken');
-        } else {
-          setError('Failed to create account');
-        }
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (data) {
-        const userData = { ...data, role: data.role || 'member' };
-        setStoredSession(userData);
-        onLogin(userData);
       }
     } catch {
       setError('Something went wrong.');
@@ -798,46 +738,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     )}
 
                     {/* OAuth buttons */}
-                    {filteredUsers.length > 0 && (
-                      <div className="px-6 pb-2">
-                        <OAuthLoginButtons />
-                      </div>
-                    )}
-
-                    {/* Register button */}
                     <div className="p-6 pt-2">
-                      <motion.button
-                        onClick={() => {
-                          setScreen('register');
-                          setNewUserName('');
-                          setNewUserPin(['', '', '', '']);
-                          setConfirmPin(['', '', '', '']);
-                          setError('');
-                        }}
-                        className="group relative w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm overflow-hidden"
-                        style={{
-                          background: users.length === 0
-                            ? 'linear-gradient(135deg, #A8D4F5 0%, #72B5E8 50%, #0033A0 100%)'
-                            : 'transparent',
-                          border: users.length > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                        }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {users.length === 0 && (
-                          <motion.div
-                            className="absolute inset-0"
-                            style={{ background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)' }}
-                            animate={{ x: ['-100%', '200%'] }}
-                            transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
-                          />
-                        )}
-                        <UserPlus className={`w-4 h-4 relative z-10 ${users.length === 0 ? 'text-white' : 'text-white/60 group-hover:text-white'}`} />
-                        <span className={`relative z-10 ${users.length === 0 ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>
-                          {users.length === 0 ? 'Get Started' : 'New Account'}
-                        </span>
-                        {users.length === 0 && <ArrowRight className="w-4 h-4 text-white relative z-10 group-hover:translate-x-1 transition-transform" />}
-                      </motion.button>
+                      <OAuthLoginButtons />
                     </div>
                   </div>
                 </motion.div>
@@ -967,146 +869,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 </motion.div>
               )}
 
-              {screen === 'register' && (
-                <motion.div
-                  key="register"
-                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <div className="absolute -inset-[1px] bg-gradient-to-b from-[var(--brand-sky)]/40 via-white/10 to-white/5 rounded-[28px] blur-sm" />
-
-                  <div className="relative bg-gradient-to-b from-white/[0.08] to-white/[0.02] backdrop-blur-2xl rounded-[28px] border border-white/10 p-8 shadow-2xl">
-                    <motion.button
-                      onClick={() => setScreen('users')}
-                      className="flex items-center gap-2 text-sm text-white/40 hover:text-white mb-8 transition-colors -ml-2 px-3 py-2 rounded-lg hover:bg-white/5"
-                      whileHover={{ x: -2 }}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                      Back
-                    </motion.button>
-
-                    <div className="text-center mb-8">
-                      <motion.div
-                        className="relative inline-block mb-6"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                      >
-                        <motion.div
-                          className="absolute inset-0 bg-[var(--brand-blue)] rounded-2xl blur-xl opacity-40"
-                          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-                          transition={{ duration: 3, repeat: Infinity }}
-                        />
-                        <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--brand-sky)] to-[var(--brand-blue)] flex items-center justify-center shadow-2xl">
-                          <UserPlus className="w-8 h-8 text-white" />
-                        </div>
-                      </motion.div>
-                      <h2 className="text-xl font-bold text-white">Create Account</h2>
-                      <p className="text-sm text-white/40 mt-1">Join the team</p>
-                    </div>
-
-                    <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }} className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-medium text-white/60 mb-2">Your Name</label>
-                        <input
-                          type="text"
-                          value={newUserName}
-                          onChange={(e) => setNewUserName(e.target.value)}
-                          placeholder="Enter your name"
-                          autoFocus
-                          className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-sky)]/30 focus:border-[var(--brand-sky)]/40 transition-all"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-white/60 mb-2">Choose PIN</label>
-                        <div className="flex justify-center gap-3">
-                          {newUserPin.map((digit, index) => (
-                            <input
-                              key={index}
-                              ref={(el) => { newPinRefs.current[index] = el; }}
-                              type="password"
-                              inputMode="numeric"
-                              maxLength={1}
-                              value={digit}
-                              onChange={(e) => handlePinChange(index, e.target.value, newPinRefs, newUserPin, setNewUserPin)}
-                              onKeyDown={(e) => handlePinKeyDown(e, index, newPinRefs, newUserPin)}
-                              className={`w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all focus:outline-none ${
-                                digit ? 'border-[var(--brand-sky)] bg-[var(--brand-sky)]/10 text-white' : 'border-white/10 bg-white/5 text-white focus:border-[var(--brand-sky)]'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-white/60 mb-2">Confirm PIN</label>
-                        <div className="flex justify-center gap-3">
-                          {confirmPin.map((digit, index) => (
-                            <input
-                              key={index}
-                              ref={(el) => { confirmPinRefs.current[index] = el; }}
-                              type="password"
-                              inputMode="numeric"
-                              maxLength={1}
-                              value={digit}
-                              onChange={(e) => handlePinChange(index, e.target.value, confirmPinRefs, confirmPin, setConfirmPin)}
-                              onKeyDown={(e) => handlePinKeyDown(e, index, confirmPinRefs, confirmPin)}
-                              className={`w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all focus:outline-none ${
-                                digit ? 'border-emerald-500 bg-emerald-500/10 text-white' : 'border-white/10 bg-white/5 text-white focus:border-emerald-500'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      <AnimatePresence mode="wait">
-                        {error && (
-                          <motion.div
-                            className="flex items-center justify-center gap-2 text-red-400 text-sm bg-red-500/10 py-3 px-4 rounded-xl border border-red-500/20"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                          >
-                            <AlertCircle className="w-4 h-4" />
-                            {error}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      <motion.button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="group relative w-full py-4 rounded-xl font-semibold text-sm overflow-hidden text-white disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg, #72B5E8 0%, #0033A0 100%)' }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <motion.div
-                          className="absolute inset-0"
-                          style={{ background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)' }}
-                          animate={{ x: ['-100%', '200%'] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
-                        />
-                        <span className="relative z-10 flex items-center justify-center gap-2">
-                          {isSubmitting ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              Creating...
-                            </>
-                          ) : (
-                            <>
-                              Create Account
-                              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </>
-                          )}
-                        </span>
-                      </motion.button>
-                    </form>
-                  </div>
-                </motion.div>
-              )}
             </AnimatePresence>
 
             {/* Footer */}

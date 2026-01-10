@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, LogOut, UserPlus, Lock, AlertCircle, X } from 'lucide-react';
+import { ChevronDown, LogOut, Lock, AlertCircle, X } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import {
-  hashPin,
   verifyPin,
   isValidPin,
-  getRandomUserColor,
   getUserInitials,
   isLockedOut,
   incrementLockout,
@@ -21,32 +19,19 @@ interface UserSwitcherProps {
   onUserChange: (user: AuthUser | null) => void;
 }
 
-type ModalState = 'closed' | 'pin' | 'register';
-
-// Only these users can add new users
-const ADMIN_USERS = ['Adrian', 'Derrick'];
+type ModalState = 'closed' | 'pin';
 
 export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcherProps) {
-  // Check if current user can add new users
-  const canAddUsers = ADMIN_USERS.some(
-    admin => currentUser.name.toLowerCase() === admin.toLowerCase()
-  );
-
   const [isOpen, setIsOpen] = useState(false);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [modalState, setModalState] = useState<ModalState>('closed');
   const [selectedUser, setSelectedUser] = useState<AuthUser | null>(null);
   const [pin, setPin] = useState(['', '', '', '']);
-  const [newUserName, setNewUserName] = useState('');
-  const [newUserPin, setNewUserPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
   const [error, setError] = useState('');
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const newPinRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const confirmPinRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -169,60 +154,6 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
     setIsSubmitting(false);
   };
 
-  const handleRegister = async () => {
-    const name = newUserName.trim();
-    if (!name) {
-      setError('Please enter your name');
-      return;
-    }
-
-    const pinString = newUserPin.join('');
-    if (!isValidPin(pinString)) {
-      setError('Please enter a 4-digit PIN');
-      return;
-    }
-
-    const confirmString = confirmPin.join('');
-    if (pinString !== confirmString) {
-      setError('PINs do not match');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const pinHash = await hashPin(pinString);
-      const color = getRandomUserColor();
-
-      const { data, error: insertError } = await supabase
-        .from('users')
-        .insert({ name, pin_hash: pinHash, color, role: 'member' })
-        .select('id, name, color, role, created_at, last_login')
-        .single();
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setError('Name already taken');
-        } else {
-          setError('Failed to create user');
-        }
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (data) {
-        const userData = { ...data, role: data.role || 'member' };
-        onUserChange(userData);
-        setModalState('closed');
-      }
-    } catch {
-      setError('An error occurred.');
-    }
-
-    setIsSubmitting(false);
-  };
-
   useEffect(() => {
     if (modalState === 'pin' && pin.every(d => d !== '') && !isSubmitting) {
       handlePinSubmit();
@@ -298,22 +229,6 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
 
             {/* Actions */}
             <div className="border-t border-[var(--border-subtle)]">
-              {canAddUsers && (
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    setModalState('register');
-                    setNewUserName('');
-                    setNewUserPin(['', '', '', '']);
-                    setConfirmPin(['', '', '', '']);
-                    setError('');
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-3 sm:py-2.5 hover:bg-[var(--accent-light)] active:bg-[var(--accent)]/15 text-[var(--accent)] font-medium transition-colors min-h-[44px] touch-manipulation text-base sm:text-sm"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Add New User
-                </button>
-              )}
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-3 py-3 sm:py-2.5 hover:bg-[var(--danger-light)] active:bg-[var(--danger)]/15 text-[var(--danger)] font-medium transition-colors min-h-[44px] touch-manipulation text-base sm:text-sm"
@@ -339,7 +254,7 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
             {/* Modal header */}
             <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-100">
               <h3 className="text-base sm:text-lg font-semibold text-slate-900">
-                {modalState === 'pin' ? 'Enter PIN' : 'Add New User'}
+                Enter PIN
               </h3>
               <button
                 onClick={closeModal}
@@ -394,78 +309,6 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
               </div>
             )}
 
-            {modalState === 'register' && (
-              <div className="p-4 sm:p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Enter name"
-                    autoFocus
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-[#0033A0] focus:outline-none transition-colors text-slate-900 placeholder-slate-300 text-base min-h-[48px] touch-manipulation"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Choose PIN</label>
-                  <div className="flex justify-center gap-2 sm:gap-3">
-                    {newUserPin.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={(el) => { newPinRefs.current[index] = el; }}
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handlePinChange(index, e.target.value, newPinRefs, newUserPin, setNewUserPin)}
-                        onKeyDown={(e) => handlePinKeyDown(e, index, newPinRefs, newUserPin)}
-                        className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 transition-all focus:outline-none touch-manipulation ${
-                          digit ? 'border-[#0033A0] bg-[#0033A0]/5' : 'border-slate-200 focus:border-[#0033A0]'
-                        } text-slate-900`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Confirm PIN</label>
-                  <div className="flex justify-center gap-2 sm:gap-3">
-                    {confirmPin.map((digit, index) => (
-                      <input
-                        key={index}
-                        ref={(el) => { confirmPinRefs.current[index] = el; }}
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handlePinChange(index, e.target.value, confirmPinRefs, confirmPin, setConfirmPin)}
-                        onKeyDown={(e) => handlePinKeyDown(e, index, confirmPinRefs, confirmPin)}
-                        className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 transition-all focus:outline-none touch-manipulation ${
-                          digit ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 focus:border-[#0033A0]'
-                        } text-slate-900`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="flex items-center justify-center gap-2 text-red-500 text-sm bg-red-50 py-2 px-4 rounded-lg">
-                    <AlertCircle className="w-4 h-4" />
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  onClick={handleRegister}
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 bg-[#0033A0] hover:bg-[#002878] active:bg-[#001d5c] text-white rounded-xl font-semibold transition-colors disabled:opacity-50 shadow-lg shadow-[#0033A0]/30 min-h-[48px] touch-manipulation text-base"
-                >
-                  {isSubmitting ? 'Creating...' : 'Create Account'}
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
