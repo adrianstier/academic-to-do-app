@@ -8,32 +8,37 @@ import { logger } from '@/lib/secureLogger';
  * Used to monitor and debug CSP issues without breaking functionality.
  */
 
+// Old CSP report format
+interface OldCspReport {
+  'document-uri'?: string;
+  'referrer'?: string;
+  'violated-directive'?: string;
+  'effective-directive'?: string;
+  'original-policy'?: string;
+  'blocked-uri'?: string;
+  'status-code'?: number;
+  'source-file'?: string;
+  'line-number'?: number;
+  'column-number'?: number;
+}
+
+// New reporting API format
+interface NewCspReport {
+  documentURL?: string;
+  referrer?: string;
+  violatedDirective?: string;
+  effectiveDirective?: string;
+  originalPolicy?: string;
+  blockedURL?: string;
+  statusCode?: number;
+  sourceFile?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+}
+
 interface CspViolationReport {
-  'csp-report'?: {
-    'document-uri'?: string;
-    'referrer'?: string;
-    'violated-directive'?: string;
-    'effective-directive'?: string;
-    'original-policy'?: string;
-    'blocked-uri'?: string;
-    'status-code'?: number;
-    'source-file'?: string;
-    'line-number'?: number;
-    'column-number'?: number;
-  };
-  // New reporting API format
-  body?: {
-    documentURL?: string;
-    referrer?: string;
-    violatedDirective?: string;
-    effectiveDirective?: string;
-    originalPolicy?: string;
-    blockedURL?: string;
-    statusCode?: number;
-    sourceFile?: string;
-    lineNumber?: number;
-    columnNumber?: number;
-  };
+  'csp-report'?: OldCspReport;
+  body?: NewCspReport;
 }
 
 export async function POST(request: NextRequest) {
@@ -53,17 +58,18 @@ export async function POST(request: NextRequest) {
     const report: CspViolationReport = await request.json();
 
     // Extract report data (handle both old and new formats)
-    const violation = report['csp-report'] || report.body || {};
+    const oldReport = report['csp-report'];
+    const newReport = report.body;
 
     const logData = {
-      documentUri: violation['document-uri'] || violation.documentURL,
-      referrer: violation['referrer'] || violation.referrer,
-      violatedDirective: violation['violated-directive'] || violation.violatedDirective,
-      effectiveDirective: violation['effective-directive'] || violation.effectiveDirective,
-      blockedUri: violation['blocked-uri'] || violation.blockedURL,
-      sourceFile: violation['source-file'] || violation.sourceFile,
-      lineNumber: violation['line-number'] || violation.lineNumber,
-      columnNumber: violation['column-number'] || violation.columnNumber,
+      documentUri: oldReport?.['document-uri'] || newReport?.documentURL,
+      referrer: oldReport?.['referrer'] || newReport?.referrer,
+      violatedDirective: oldReport?.['violated-directive'] || newReport?.violatedDirective,
+      effectiveDirective: oldReport?.['effective-directive'] || newReport?.effectiveDirective,
+      blockedUri: oldReport?.['blocked-uri'] || newReport?.blockedURL,
+      sourceFile: oldReport?.['source-file'] || newReport?.sourceFile,
+      lineNumber: oldReport?.['line-number'] || newReport?.lineNumber,
+      columnNumber: oldReport?.['column-number'] || newReport?.columnNumber,
       userAgent: request.headers.get('user-agent'),
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
     };

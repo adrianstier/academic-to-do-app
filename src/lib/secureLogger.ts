@@ -233,12 +233,7 @@ export const logger = {
    */
   security(
     event: string,
-    data?: {
-      userId?: string;
-      ip?: string;
-      success?: boolean;
-      reason?: string;
-    }
+    data?: Record<string, unknown>
   ): void {
     log('warn', `Security: ${event}`, {
       type: 'security_event',

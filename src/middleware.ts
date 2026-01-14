@@ -183,8 +183,13 @@ export async function middleware(request: NextRequest) {
     if (!pathname.startsWith('/api/')) {
       const existingToken = request.cookies.get('csrf_token')?.value;
       if (!existingToken) {
-        const crypto = await import('crypto');
-        const newToken = crypto.randomBytes(32).toString('base64url');
+        // Use Web Crypto API (Edge Runtime compatible)
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        const newToken = btoa(String.fromCharCode(...array))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
         response.cookies.set('csrf_token', newToken, {
           httpOnly: false,
           secure: process.env.NODE_ENV === 'production',

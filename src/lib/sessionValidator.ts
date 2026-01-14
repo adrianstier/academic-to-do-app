@@ -106,23 +106,23 @@ export async function validateSession(
     // Validate session token against database
     const tokenHash = hashSessionToken(sessionToken!);
 
+    interface SessionRpcResult {
+      user_id: string;
+      user_name: string;
+      user_role: string;
+      valid: boolean;
+    }
+
     const { data, error } = await supabase
       .rpc('validate_session_token', { p_token_hash: tokenHash })
-      .single();
+      .single<SessionRpcResult>();
 
     if (error) {
       // RPC might not exist yet - fall back to direct query
+      // First get the session
       const { data: session, error: sessionError } = await supabase
         .from('user_sessions')
-        .select(`
-          user_id,
-          expires_at,
-          is_valid,
-          users!inner (
-            name,
-            role
-          )
-        `)
+        .select('user_id, expires_at, is_valid')
         .eq('token_hash', tokenHash)
         .single();
 
@@ -141,13 +141,25 @@ export async function validateSession(
         };
       }
 
-      const userData = session.users as { name: string; role: string };
+      // Then get the user details
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('name, role')
+        .eq('id', session.user_id)
+        .single();
+
+      if (userError || !user) {
+        return {
+          valid: false,
+          error: 'User not found',
+        };
+      }
 
       return {
         valid: true,
         userId: session.user_id,
-        userName: userData.name,
-        userRole: userData.role || 'member',
+        userName: user.name,
+        userRole: user.role || 'member',
       };
     }
 
