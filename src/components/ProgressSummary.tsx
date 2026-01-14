@@ -16,7 +16,7 @@ import {
   LucideIcon
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface ProgressSummaryProps {
   show: boolean;

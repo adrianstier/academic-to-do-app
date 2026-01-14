@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, Attachment, OWNER_USERNAME } from '@/types/todo';
 import TodoItem from './TodoItem';
 import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
 import KanbanBoard from './KanbanBoard';
+import { logger } from '@/lib/logger';
 import {
   DndContext,
   closestCenter,
@@ -243,7 +244,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     ]);
 
     if (todosResult.error) {
-      console.error('Error fetching todos:', todosResult.error);
+      logger.error('Error fetching todos', todosResult.error, { component: 'TodoList' });
       setError('Failed to connect to database. Please check your Supabase configuration.');
     } else {
       setTodos(todosResult.data || []);
@@ -368,7 +369,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
     if (insertError) {
-      console.error('Error adding todo:', insertError);
+      logger.error('Error adding todo', insertError, { component: 'TodoList' });
       setTodos((prev) => prev.filter((t) => t.id !== newTodo.id));
     } else {
       // Log activity
@@ -422,10 +423,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               },
             });
           } else {
-            console.error('Failed to auto-attach source file');
+            logger.error('Failed to auto-attach source file', null, { component: 'TodoList' });
           }
         } catch (err) {
-          console.error('Error auto-attaching source file:', err);
+          logger.error('Error auto-attaching source file', err, { component: 'TodoList' });
         }
       }
     }
@@ -505,7 +506,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', existingTodoId);
 
     if (updateError) {
-      console.error('Error updating existing todo:', updateError);
+      logger.error('Error updating existing todo', updateError, { component: 'TodoList' });
       fetchTodos(); // Refresh on error
     } else {
       // Upload source file if present
@@ -529,7 +530,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
             ));
           }
         } catch (err) {
-          console.error('Error attaching file to existing task:', err);
+          logger.error('Error attaching file to existing task', err, { component: 'TodoList' });
         }
       }
 
@@ -589,7 +590,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
     if (insertError) {
-      console.error('Error duplicating todo:', insertError);
+      logger.error('Error duplicating todo', insertError, { component: 'TodoList' });
       setTodos((prev) => prev.filter((t) => t.id !== newTodo.id));
     }
   };
@@ -619,7 +620,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error updating status:', updateError);
+      logger.error('Error updating status', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -722,7 +723,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error updating todo:', updateError);
+      logger.error('Error updating todo', updateError, { component: 'TodoList' });
       setTodos((prev) =>
         prev.map((todo) => (todo.id === id ? { ...todo, completed: !completed } : todo))
       );
@@ -741,7 +742,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     const { error: deleteError } = await supabase.from('todos').delete().eq('id', id);
 
     if (deleteError) {
-      console.error('Error deleting todo:', deleteError);
+      logger.error('Error deleting todo', deleteError, { component: 'TodoList' });
       if (todoToDelete) {
         setTodos((prev) => [...prev, todoToDelete]);
       }
@@ -783,7 +784,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error assigning todo:', updateError);
+      logger.error('Error assigning todo', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -813,7 +814,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error setting due date:', updateError);
+      logger.error('Error setting due date', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -841,7 +842,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error setting priority:', updateError);
+      logger.error('Error setting priority', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -869,7 +870,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error updating notes:', updateError);
+      logger.error('Error updating notes', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -896,7 +897,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error updating text:', updateError);
+      logger.error('Error updating text', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -916,7 +917,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error setting recurrence:', updateError);
+      logger.error('Error setting recurrence', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -936,7 +937,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error updating subtasks:', updateError);
+      logger.error('Error updating subtasks', updateError, { component: 'TodoList' });
       if (oldTodo) {
         setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
       }
@@ -958,7 +959,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         .eq('id', id);
 
       if (updateError) {
-        console.error('Error updating attachments:', updateError);
+        logger.error('Error updating attachments', updateError, { component: 'TodoList' });
         if (oldTodo) {
           setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
         }
@@ -1038,7 +1039,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           .in('id', idsToDelete);
 
         if (error) {
-          console.error('Error bulk deleting:', error);
+          logger.error('Error bulk deleting', error, { component: 'TodoList' });
           setTodos((prev) => [...prev, ...todosToDelete]);
         }
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
@@ -1064,7 +1065,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk assigning:', error);
+      logger.error('Error bulk assigning', error, { component: 'TodoList' });
       // Rollback on failure
       setTodos((prev) => {
         const rollbackMap = new Map(originalTodos.map(t => [t.id, t]));
@@ -1091,7 +1092,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk completing:', error);
+      logger.error('Error bulk completing', error, { component: 'TodoList' });
       // Rollback on failure
       setTodos((prev) => {
         const rollbackMap = new Map(originalTodos.map(t => [t.id, t]));
@@ -1120,7 +1121,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk rescheduling:', error);
+      logger.error('Error bulk rescheduling', error, { component: 'TodoList' });
       // Rollback on failure
       setTodos((prev) => {
         const rollbackMap = new Map(originalTodos.map(t => [t.id, t]));
@@ -1201,7 +1202,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         .eq('id', primaryTodoId);
 
       if (updateError) {
-        console.error('Error updating merged todo:', updateError);
+        logger.error('Error updating merged todo', updateError, { component: 'TodoList' });
         alert('Failed to merge tasks. Please try again.');
         setIsMerging(false);
         return;
@@ -1214,7 +1215,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         .in('id', secondaryTodos.map(t => t.id));
 
       if (deleteError) {
-        console.error('Error deleting merged todos:', deleteError);
+        logger.error('Error deleting merged todos', deleteError, { component: 'TodoList' });
         alert('Merge partially failed. Refreshing...');
         fetchTodos();
         setIsMerging(false);
@@ -1256,7 +1257,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       setMergeTargets([]);
       setSelectedPrimaryId(null);
     } catch (error) {
-      console.error('Error during merge:', error);
+      logger.error('Error during merge', error, { component: 'TodoList' });
       alert('An unexpected error occurred. Please try again.');
       fetchTodos();
     } finally {

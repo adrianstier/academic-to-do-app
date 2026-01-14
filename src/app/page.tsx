@@ -5,7 +5,8 @@ import MainApp from '@/components/MainApp';
 import LoginScreen from '@/components/LoginScreen';
 import { AuthUser } from '@/types/todo';
 import { getStoredSession, setStoredSession, clearStoredSession } from '@/lib/auth';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -41,13 +42,13 @@ export default function Home() {
               clearStoredSession();
             }
           } catch (queryError) {
-            console.error('Session verification failed:', queryError);
+            logger.error('Session verification failed', queryError, { component: 'HomePage' });
             // If query fails, clear session and let user log in again
             clearStoredSession();
           }
         }
       } catch (error) {
-        console.error('Session load error:', error);
+        logger.error('Session load error', error, { component: 'HomePage' });
       } finally {
         setIsLoading(false);
       }

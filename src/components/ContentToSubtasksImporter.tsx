@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Subtask, TodoPriority } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@/lib/logger';
 
 interface ParsedSubtask {
   text: string;
@@ -133,7 +134,7 @@ export default function ContentToSubtasksImporter({
         };
 
         recognition.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
+          logger.error('Speech recognition error', undefined, { component: 'ContentToSubtasksImporter', error: event.error });
           setIsRecording(false);
           setError('Speech recognition error: ' + event.error);
         };

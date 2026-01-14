@@ -6,13 +6,14 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useTodoStore } from '@/store/todoStore';
 import { Todo, TodoPriority, Subtask } from '@/types/todo';
 import { AuthUser } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
 import { logActivity } from '@/lib/activityLogger';
 import { shouldShowWelcomeNotification } from '@/components/WelcomeBackNotification';
+import { logger } from '@/lib/logger';
 
 export function useTodoData(currentUser: AuthUser) {
   const {
@@ -45,7 +46,7 @@ export function useTodoData(currentUser: AuthUser) {
     ]);
 
     if (todosResult.error) {
-      console.error('Error fetching todos:', todosResult.error);
+      logger.error('Error fetching todos', todosResult.error, { component: 'useTodoData' });
       setError('Failed to connect to database. Please check your Supabase configuration.');
     } else {
       setTodos(todosResult.data || []);
@@ -159,7 +160,7 @@ export function useTodoData(currentUser: AuthUser) {
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
     if (insertError) {
-      console.error('Error adding todo:', insertError);
+      logger.error('Error adding todo', insertError, { component: 'useTodoData' });
       // Rollback optimistic update
       deleteTodoFromStore(newTodo.id);
       return null;
@@ -193,7 +194,7 @@ export function useTodoData(currentUser: AuthUser) {
           body: formData,
         });
       } catch (err) {
-        console.error('Failed to attach source file:', err);
+        logger.error('Failed to attach source file', err, { component: 'useTodoData' });
       }
     }
 
@@ -223,7 +224,7 @@ export function useTodoData(currentUser: AuthUser) {
       .eq('id', id);
 
     if (error) {
-      console.error('Error updating todo:', error);
+      logger.error('Error updating todo', error, { component: 'useTodoData' });
       // Rollback
       updateTodoInStore(id, currentTodo);
       return false;
@@ -244,7 +245,7 @@ export function useTodoData(currentUser: AuthUser) {
     const { error } = await supabase.from('todos').delete().eq('id', id);
 
     if (error) {
-      console.error('Error deleting todo:', error);
+      logger.error('Error deleting todo', error, { component: 'useTodoData' });
       // Rollback
       addTodoToStore(currentTodo);
       return false;

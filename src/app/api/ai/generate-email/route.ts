@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '@/lib/logger';
 
 // Customer email generation endpoint
 // Generates professional update emails for internal staff to send to customers
@@ -257,7 +258,7 @@ The warnings array should flag any items that need the agent's review before sen
     });
 
   } catch (error) {
-    console.error('Email generation error:', error);
+    logger.error('Email generation error', error, { component: 'GenerateEmailAPI' });
     return NextResponse.json(
       { success: false, error: 'Failed to generate email. Please try again.' },
       { status: 500 }

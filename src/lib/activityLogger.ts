@@ -1,4 +1,5 @@
 import { ActivityAction } from '@/types/todo';
+import { logger } from '@/lib/logger';
 
 interface LogActivityParams {
   action: ActivityAction;
@@ -23,6 +24,6 @@ export async function logActivity({ action, userName, todoId, todoText, details 
     });
   } catch (error) {
     // Silently fail - activity logging shouldn't break the app
-    console.error('Failed to log activity:', error);
+    logger.error('Failed to log activity', error, { component: 'ActivityLogger' });
   }
 }

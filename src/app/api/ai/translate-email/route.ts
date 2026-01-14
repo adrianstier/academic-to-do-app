@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '@/lib/logger';
 
 // Email translation endpoint
 // Translates existing emails from English to Spanish
@@ -99,7 +100,7 @@ Genera una respuesta JSON con:
     });
 
   } catch (error) {
-    console.error('Translation error:', error);
+    logger.error('Translation error', error, { component: 'TranslateEmailAPI' });
     return NextResponse.json(
       { success: false, error: 'Failed to translate email. Please try again.' },
       { status: 500 }

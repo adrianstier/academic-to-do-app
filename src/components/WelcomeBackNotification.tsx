@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, AlertCircle, Flag, ChevronRight } from 'lucide-react';
 import { Todo, AuthUser, PRIORITY_CONFIG } from '@/types/todo';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface WelcomeBackNotificationProps {
   show: boolean;

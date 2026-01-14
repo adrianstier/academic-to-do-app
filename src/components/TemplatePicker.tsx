@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { FileText, Plus, Trash2, Share2, Lock, X, ChevronDown, Loader2 } from 'lucide-react';
 import { TaskTemplate, TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@/lib/logger';
 
 interface TemplatePickerProps {
   currentUserName: string;
@@ -46,7 +47,7 @@ export default function TemplatePicker({
         setTemplates(data);
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error);
+      logger.error('Failed to fetch templates', error, { component: 'TemplatePicker' });
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +120,7 @@ export default function TemplatePicker({
         fetchTemplates();
       }
     } catch (error) {
-      console.error('Failed to create template:', error);
+      logger.error('Failed to create template', error, { component: 'TemplatePicker' });
     } finally {
       setIsSaving(false);
     }
@@ -135,7 +136,7 @@ export default function TemplatePicker({
       });
       setTemplates((prev) => prev.filter((t) => t.id !== template.id));
     } catch (error) {
-      console.error('Failed to delete template:', error);
+      logger.error('Failed to delete template', error, { component: 'TemplatePicker' });
     }
   };
 

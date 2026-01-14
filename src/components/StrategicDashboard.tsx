@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 import {
   Target,
   Plus,
@@ -121,7 +122,7 @@ export default function StrategicDashboard({
         setGoals(goalsData);
       }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      logger.error('Error fetching dashboard data', error, { component: 'StrategicDashboard' });
     } finally {
       setLoading(false);
     }
@@ -195,7 +196,7 @@ export default function StrategicDashboard({
         setShowAddGoal(false);
       }
     } catch (error) {
-      console.error('Error creating goal:', error);
+      logger.error('Error creating goal', error, { component: 'StrategicDashboard' });
     }
   };
 
@@ -217,7 +218,7 @@ export default function StrategicDashboard({
         setEditingGoal(null);
       }
     } catch (error) {
-      console.error('Error updating goal:', error);
+      logger.error('Error updating goal', error, { component: 'StrategicDashboard' });
     }
   };
 
@@ -233,7 +234,7 @@ export default function StrategicDashboard({
         setGoals(prev => prev.filter(g => g.id !== goalId));
       }
     } catch (error) {
-      console.error('Error deleting goal:', error);
+      logger.error('Error deleting goal', error, { component: 'StrategicDashboard' });
     }
   };
 
@@ -253,7 +254,7 @@ export default function StrategicDashboard({
         fetchData();
       }
     } catch (error) {
-      console.error('Error toggling milestone:', error);
+      logger.error('Error toggling milestone', error, { component: 'StrategicDashboard' });
     }
   };
 
@@ -273,7 +274,7 @@ export default function StrategicDashboard({
         fetchData();
       }
     } catch (error) {
-      console.error('Error adding milestone:', error);
+      logger.error('Error adding milestone', error, { component: 'StrategicDashboard' });
     }
   };
 

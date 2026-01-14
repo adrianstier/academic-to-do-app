@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { ChatMessage, AuthUser, ChatConversation, TapbackType, MessageReaction, PresenceStatus, Todo } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -11,6 +11,7 @@ import {
   AtSign, Plus, Moon, Volume2, VolumeX, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 // Notification sound (short, pleasant chime)
 const NOTIFICATION_SOUND_URL = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleTs1WpbOzq1fMUJFk8zSrGg/V0Bml8jRzaZ4g2pqmaW4zc7Mu7/Fz8q9rZ2WnqWyxdLOv62WiaOxyb6kkXuNqL+2pJZ7cn2ftLaylnuFjJmnq52Xjn5/gI+dn6OZj4KGjJGVl5qakIuIhYaHiYuOkJGQj42Lh4OCgoKEhoeIiIiHhoWDgoGBgYGCg4SEhISDgoGAgICAgIGBgoKCgoKBgYCAgICAgICBgYGBgYGBgICAgICAgICAgYGBgYGBgYCAgICAgA==';
@@ -394,7 +395,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
       .limit(500);
 
     if (error) {
-      console.error('Error fetching messages:', error);
+      logger.error('Error fetching messages', error, { component: 'ChatPanel' });
       if (error.code === '42P01' || error.message?.includes('does not exist')) {
         setTableExists(false);
       }
@@ -712,7 +713,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
     const { error } = await supabase.from('messages').insert([message]);
 
     if (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message', error, { component: 'ChatPanel' });
       setMessages((prev) => prev.filter((m) => m.id !== message.id));
       setNewMessage(text);
     }
@@ -776,7 +777,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
       .eq('id', messageId);
 
     if (error) {
-      console.error('Error updating reaction:', error);
+      logger.error('Error updating reaction', error, { component: 'ChatPanel' });
       setMessages(prev => prev.map(m =>
         m.id === messageId ? { ...m, reactions: currentReactions } : m
       ));
@@ -811,7 +812,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
       .eq('id', editingMessage.id);
 
     if (error) {
-      console.error('Error editing message:', error);
+      logger.error('Error editing message', error, { component: 'ChatPanel' });
     }
   };
 
@@ -828,7 +829,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
       .eq('id', messageId);
 
     if (error) {
-      console.error('Error deleting message:', error);
+      logger.error('Error deleting message', error, { component: 'ChatPanel' });
     }
   };
 
@@ -856,7 +857,7 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
       .eq('id', message.id);
 
     if (error) {
-      console.error('Error pinning message:', error);
+      logger.error('Error pinning message', error, { component: 'ChatPanel' });
     }
   };
 

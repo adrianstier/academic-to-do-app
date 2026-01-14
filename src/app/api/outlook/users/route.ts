@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 // Create Supabase client for server-side operations
 const supabase = createClient(
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
       .order('name');
 
     if (usersError) {
-      console.error('Error fetching users:', usersError);
+      logger.error('Error fetching users', usersError, { component: 'OutlookUsersAPI' });
     }
 
     // Also get unique users from todos (for backwards compatibility)
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       .select('created_by, assigned_to');
 
     if (todosError) {
-      console.error('Error fetching todos:', todosError);
+      logger.error('Error fetching todos', todosError, { component: 'OutlookUsersAPI' });
     }
 
     // Combine all user names
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
       users,
     });
   } catch (error) {
-    console.error('Error fetching users:', error);
+    logger.error('Error fetching users', error, { component: 'OutlookUsersAPI' });
     return NextResponse.json(
       { success: false, error: 'Failed to fetch users' },
       { status: 500 }

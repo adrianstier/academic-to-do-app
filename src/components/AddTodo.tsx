@@ -7,6 +7,7 @@ import VoiceRecordingIndicator from './VoiceRecordingIndicator';
 import FileImporter from './FileImporter';
 import { TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
+import { logger } from '@/lib/logger';
 
 interface AddTodoProps {
   onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => void;
@@ -151,7 +152,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
       });
 
       if (!response.ok) {
-        console.error('Failed to smart parse');
+        logger.error('Failed to smart parse', undefined, { component: 'AddTodo' });
         return null;
       }
 
@@ -161,7 +162,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
       }
       return null;
     } catch (error) {
-      console.error('Error in smart parse:', error);
+      logger.error('Error in smart parse', error, { component: 'AddTodo' });
       return null;
     }
   }, [users]);
@@ -192,7 +193,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         };
 
         recognition.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
+          logger.error('Speech recognition error', undefined, { component: 'AddTodo', error: event.error });
           setIsRecording(false);
         };
 

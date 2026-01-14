@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '@/lib/logger';
 
 // Create Supabase client for server-side operations
 const supabase = createClient(
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       .insert([task]);
 
     if (insertError) {
-      console.error('Error inserting task:', insertError);
+      logger.error('Error inserting task', insertError, { component: 'OutlookCreateTaskAPI' });
       return NextResponse.json(
         { success: false, error: 'Failed to create task in database' },
         { status: 500 }
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
       message: 'Task created successfully',
     });
   } catch (error) {
-    console.error('Error creating task:', error);
+    logger.error('Error creating task', error, { component: 'OutlookCreateTaskAPI' });
     return NextResponse.json(
       { success: false, error: 'Failed to create task' },
       { status: 500 }

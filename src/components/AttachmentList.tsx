@@ -6,6 +6,7 @@ import {
   Download, Trash2, Loader2, ExternalLink, Eye
 } from 'lucide-react';
 import { Attachment, AttachmentCategory } from '@/types/todo';
+import { logger } from '@/lib/logger';
 
 interface AttachmentListProps {
   attachments: Attachment[];
@@ -75,7 +76,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
         document.body.removeChild(link);
       }
     } catch (error) {
-      console.error('Download failed:', error);
+      logger.error('Download failed', error, { component: 'AttachmentList' });
     } finally {
       setDownloading(false);
     }
@@ -96,7 +97,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
         setShowPreview(true);
       }
     } catch (error) {
-      console.error('Preview failed:', error);
+      logger.error('Preview failed', error, { component: 'AttachmentList' });
     }
   };
 
@@ -113,7 +114,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
         onRemove(attachment.id);
       }
     } catch (error) {
-      console.error('Remove failed:', error);
+      logger.error('Remove failed', error, { component: 'AttachmentList' });
     } finally {
       setRemoving(false);
     }

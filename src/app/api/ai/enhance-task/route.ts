@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '@/lib/logger';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -71,7 +72,7 @@ Respond with ONLY the JSON object, no other text.`;
     // Parse the JSON from Claude's response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('Failed to parse AI response:', responseText);
+      logger.error('Failed to parse AI response', undefined, { component: 'EnhanceTaskAPI', responseText });
       return NextResponse.json(
         { success: false, error: 'Failed to parse AI response' },
         { status: 500 }
@@ -97,7 +98,7 @@ Respond with ONLY the JSON object, no other text.`;
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error enhancing task:', errorMessage, error);
+    logger.error('Error enhancing task', error, { component: 'EnhanceTaskAPI', details: errorMessage });
     return NextResponse.json(
       { success: false, error: 'Failed to enhance task', details: errorMessage },
       { status: 500 }

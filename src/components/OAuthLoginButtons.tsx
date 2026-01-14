@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { isFeatureEnabled } from '@/lib/featureFlags';
+import { logger } from '@/lib/logger';
 
 export function OAuthLoginButtons() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -20,7 +21,7 @@ export function OAuthLoginButtons() {
         redirect: true,
       });
     } catch (error) {
-      console.error(`${provider} login failed:`, error);
+      logger.error(`${provider} login failed`, error, { component: 'OAuthLoginButtons', provider });
       alert(`Failed to sign in with ${provider}. Please try again.`);
       setLoading(null);
     }

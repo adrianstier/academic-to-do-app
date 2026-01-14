@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import {
   X,
   Loader2,
@@ -249,7 +250,7 @@ export default function FileImporter({
         await audioRef.current.play();
         setIsPlaying(true);
       } catch (err) {
-        console.error('Failed to play audio:', err);
+        logger.error('Failed to play audio', err, { component: 'FileImporter' });
         setError('Unable to play audio. Please try again.');
       }
     }
@@ -328,7 +329,7 @@ export default function FileImporter({
           }
         } else {
           // Fallback on error - use transcript as main task
-          console.warn('Smart parse failed, using transcript as task');
+          logger.warn('Smart parse failed, using transcript as task', { component: 'FileImporter' });
           setMainTask({
             text: transcript.slice(0, 200),
             priority: 'medium',

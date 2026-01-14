@@ -12,7 +12,7 @@ import {
   clearLockout,
   clearStoredSession,
 } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 
 interface UserSwitcherProps {
   currentUser: AuthUser;

@@ -391,5 +391,100 @@ NEXT_PUBLIC_USE_ZUSTAND=true
 
 ---
 
-**Last Updated**: 2026-01-08
-**Version**: 1.0
+## OAuth Authentication Setup
+
+### Google OAuth Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Google+ API**:
+   - Navigate to "APIs & Services" → "Library"
+   - Search for "Google+ API" → Click "Enable"
+
+4. Create OAuth 2.0 credentials:
+   - Go to "APIs & Services" → "Credentials"
+   - Click "Create Credentials" → "OAuth 2.0 Client ID"
+   - Application type: **Web application**
+   - Name: "Bealer Agency Todo App"
+   - Authorized JavaScript origins:
+     ```
+     https://your-domain.com
+     http://localhost:3000  (for testing)
+     ```
+   - Authorized redirect URIs:
+     ```
+     https://your-domain.com/api/auth/callback/google
+     http://localhost:3000/api/auth/callback/google  (for testing)
+     ```
+   - Click "Create"
+
+5. Copy your Client ID and Client Secret
+
+### Apple OAuth Credentials (Optional)
+
+1. Go to [Apple Developer Portal](https://developer.apple.com/)
+2. Create a **Service ID**:
+   - Navigate to "Certificates, Identifiers & Profiles"
+   - Click "Identifiers" → "+" → "Service IDs"
+   - Description: "Bealer Agency Todo"
+   - Identifier: `com.bealeragency.todo.signin`
+
+3. Configure Sign in with Apple:
+   - Check "Sign in with Apple" → Click "Configure"
+   - Domains: `your-domain.com`
+   - Return URLs: `https://your-domain.com/api/auth/callback/apple`
+
+4. Create a **Key**:
+   - Go to "Keys" → "+"
+   - Key Name: "Bealer Todo Sign in with Apple"
+   - Check "Sign in with Apple"
+   - Save and download the `.p8` file
+
+### OAuth Environment Variables
+
+```bash
+# NextAuth Configuration
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=YOUR_SECRET_HERE  # Generate: openssl rand -base64 32
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Apple OAuth (optional)
+APPLE_ID=com.bealeragency.todo.signin
+APPLE_TEAM_ID=YOUR_TEAM_ID
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+APPLE_KEY_ID=YOUR_KEY_ID
+
+# Feature Flag
+NEXT_PUBLIC_USE_OAUTH=true
+```
+
+### OAuth Email Whitelist
+
+Control who can sign up via OAuth by setting allowed emails:
+
+```bash
+# In Railway/production environment
+ALLOWED_OAUTH_EMAILS=derrick@bealeragency.com,sefra@bealeragency.com
+```
+
+**Behavior:**
+- If whitelist is set: Only listed emails can sign up via OAuth
+- If whitelist is empty: Anyone can sign up (open access)
+- PIN authentication is NOT affected by the whitelist
+
+**Adding new users:**
+1. Edit `ALLOWED_OAUTH_EMAILS` in Railway
+2. Add email to comma-separated list
+3. Save (auto-redeploys)
+
+**Removing access:**
+1. Remove email from the list
+2. To fully remove: Also delete user from Supabase → users table
+
+---
+
+**Last Updated**: 2026-01-13
+**Version**: 1.1

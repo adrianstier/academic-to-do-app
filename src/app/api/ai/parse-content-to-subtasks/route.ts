@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '@/lib/logger';
 
 export interface ParsedSubtask {
   text: string;
@@ -113,7 +114,7 @@ Respond with ONLY the JSON object.`;
     // Parse the JSON from Claude's response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error('Failed to parse AI response:', responseText);
+      logger.error('Failed to parse AI response', undefined, { component: 'ParseContentToSubtasksAPI', responseText });
       return NextResponse.json(
         { success: false, error: 'Failed to parse AI response' },
         { status: 500 }
@@ -150,7 +151,7 @@ Respond with ONLY the JSON object.`;
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error parsing content to subtasks:', errorMessage, error);
+    logger.error('Error parsing content to subtasks', error, { component: 'ParseContentToSubtasksAPI', details: errorMessage });
     return NextResponse.json(
       { success: false, error: 'Failed to parse content', details: errorMessage },
       { status: 500 }

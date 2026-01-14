@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 import {
   DndContext,
   DragOverlay,
@@ -1352,10 +1353,10 @@ export default function KanbanBoard({
     setActiveId(null);
     setOverId(null);
 
-    console.log('Drag ended:', { activeId: active.id, overId: over?.id });
+    logger.debug('Drag ended', { component: 'KanbanBoard', activeId: active.id, overId: over?.id });
 
     if (!over) {
-      console.log('No drop target');
+      logger.debug('No drop target', { component: 'KanbanBoard' });
       return;
     }
 
@@ -1364,22 +1365,22 @@ export default function KanbanBoard({
     const draggedTodo = todos.find((t) => t.id === todoId);
     const previousStatus = draggedTodo?.status || 'todo';
 
-    console.log('Dragged todo:', { todoId, targetId, previousStatus, draggedTodo });
+    logger.debug('Dragged todo', { component: 'KanbanBoard', todoId, targetId, previousStatus });
 
     // Check if dropped on a column
     const column = columns.find((c) => c.id === targetId);
     if (column) {
-      console.log('Dropped on column:', column.id, 'Previous status:', previousStatus);
+      logger.debug('Dropped on column', { component: 'KanbanBoard', columnId: column.id, previousStatus });
       // Only change if different column
       if (previousStatus !== column.id) {
-        console.log('Calling onStatusChange:', todoId, column.id);
+        logger.debug('Calling onStatusChange', { component: 'KanbanBoard', todoId, newStatus: column.id });
         // Celebrate if moving to done column
         if (column.id === 'done') {
           setCelebrating(true);
         }
         onStatusChange(todoId, column.id);
       } else {
-        console.log('Same column, no change needed');
+        logger.debug('Same column, no change needed', { component: 'KanbanBoard' });
       }
       return;
     }
@@ -1388,10 +1389,10 @@ export default function KanbanBoard({
     const overTodo = todos.find((t) => t.id === targetId);
     if (overTodo) {
       const targetStatus = overTodo.status || 'todo';
-      console.log('Dropped on card:', { targetId, targetStatus });
+      logger.debug('Dropped on card', { component: 'KanbanBoard', targetId, targetStatus });
       // Only change if different column
       if (previousStatus !== targetStatus) {
-        console.log('Calling onStatusChange:', todoId, targetStatus);
+        logger.debug('Calling onStatusChange', { component: 'KanbanBoard', todoId, newStatus: targetStatus });
         // Celebrate if moving to done column
         if (targetStatus === 'done') {
           setCelebrating(true);
@@ -1399,7 +1400,7 @@ export default function KanbanBoard({
         onStatusChange(todoId, targetStatus);
       }
     } else {
-      console.log('No matching column or card found for targetId:', targetId);
+      logger.debug('No matching column or card found for targetId', { component: 'KanbanBoard', targetId });
     }
   };
 

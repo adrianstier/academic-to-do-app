@@ -7,6 +7,7 @@ import {
   MAX_ATTACHMENTS_PER_TODO,
   Attachment
 } from '@/types/todo';
+import { logger } from '@/lib/logger';
 
 // Create a Supabase client for storage operations
 // SECURITY: Use anon key by default. Service role key should only be used
@@ -35,7 +36,7 @@ async function ensureBucketExists() {
 
     // If we can't list buckets (RLS blocks it), assume bucket exists and proceed
     if (listError) {
-      console.log('Cannot list buckets (likely RLS), assuming bucket exists');
+      logger.debug('Cannot list buckets (likely RLS), assuming bucket exists', { component: 'AttachmentsAPI' });
       return;
     }
 
@@ -49,12 +50,12 @@ async function ensureBucketExists() {
       });
       if (error && !error.message.includes('already exists')) {
         // Don't throw - bucket might exist but we can't see it due to RLS
-        console.warn('Could not create bucket (may already exist):', error.message);
+        logger.warn('Could not create bucket (may already exist)', { component: 'AttachmentsAPI', error: error.message });
       }
     }
   } catch (err) {
     // Don't fail the upload if bucket check fails - proceed and let the upload attempt tell us
-    console.warn('Bucket check failed, proceeding with upload attempt:', err);
+    logger.warn('Bucket check failed, proceeding with upload attempt', { component: 'AttachmentsAPI', error: err });
   }
 }
 
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (fetchError) {
-      console.error('Error fetching todo:', fetchError);
+      logger.error('Error fetching todo', fetchError, { component: 'AttachmentsAPI' });
       return NextResponse.json(
         { success: false, error: 'Todo not found' },
         { status: 404 }
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('Error uploading file:', uploadError);
+      logger.error('Error uploading file', uploadError, { component: 'AttachmentsAPI' });
       return NextResponse.json(
         { success: false, error: 'Failed to upload file' },
         { status: 500 }
@@ -220,7 +221,7 @@ export async function POST(request: NextRequest) {
 
       if (fallbackError) {
         await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
-        console.error('Error updating todo:', fallbackError);
+        logger.error('Error updating todo', fallbackError, { component: 'AttachmentsAPI' });
         return NextResponse.json(
           { success: false, error: 'Failed to save attachment metadata' },
           { status: 500 }
@@ -229,7 +230,7 @@ export async function POST(request: NextRequest) {
     } else if (updateError) {
       // Rollback: delete uploaded file
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
-      console.error('Error updating todo:', updateError);
+      logger.error('Error updating todo', updateError, { component: 'AttachmentsAPI' });
       return NextResponse.json(
         { success: false, error: 'Failed to save attachment metadata' },
         { status: 500 }
@@ -249,7 +250,7 @@ export async function POST(request: NextRequest) {
       todoText, // Include for activity logging on client
     });
   } catch (error) {
-    console.error('Error handling attachment upload:', error);
+    logger.error('Error handling attachment upload', error, { component: 'AttachmentsAPI' });
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -301,7 +302,7 @@ export async function DELETE(request: NextRequest) {
       .remove([attachmentToRemove.storage_path]);
 
     if (storageError) {
-      console.error('Error removing file from storage:', storageError);
+      logger.error('Error removing file from storage', storageError, { component: 'AttachmentsAPI' });
       // Continue anyway to clean up metadata
     }
 
@@ -313,7 +314,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', todoId);
 
     if (updateError) {
-      console.error('Error updating todo:', updateError);
+      logger.error('Error updating todo', updateError, { component: 'AttachmentsAPI' });
       return NextResponse.json(
         { success: false, error: 'Failed to remove attachment' },
         { status: 500 }
@@ -322,7 +323,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error handling attachment deletion:', error);
+    logger.error('Error handling attachment deletion', error, { component: 'AttachmentsAPI' });
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -349,7 +350,7 @@ export async function GET(request: NextRequest) {
       .createSignedUrl(storagePath, 3600);
 
     if (error) {
-      console.error('Error generating signed URL:', error);
+      logger.error('Error generating signed URL', error, { component: 'AttachmentsAPI' });
       return NextResponse.json(
         { success: false, error: 'Failed to generate download URL' },
         { status: 500 }
@@ -361,7 +362,7 @@ export async function GET(request: NextRequest) {
       url: data.signedUrl,
     });
   } catch (error) {
-    console.error('Error handling download request:', error);
+    logger.error('Error handling download request', error, { component: 'AttachmentsAPI' });
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

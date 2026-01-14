@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Download, ExternalLink, Mail, Zap, CheckCircle, HelpCircle, Monitor, Globe, ChevronDown, Sparkles } from 'lucide-react';
 import { HighlightedText, SafeHtmlLink } from '@/components/HighlightedText';
+import { logger } from '@/lib/logger';
 
 export default function OutlookSetupPage() {
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -32,7 +33,7 @@ export default function OutlookSetupPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Download failed:', error);
+      logger.error('Download failed', error, { component: 'OutlookSetupPage' });
       window.open(manifestUrl, '_blank');
     }
     setDownloading(false);
@@ -52,7 +53,7 @@ export default function OutlookSetupPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Download failed:', error);
+      logger.error('Download failed', error, { component: 'OutlookSetupPage' });
       window.open(desktopManifestUrl, '_blank');
     }
     setDownloadingDesktop(false);

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X, Bell, BellOff, Volume2, VolumeX, Settings, Paperclip, GitMerge } from 'lucide-react';
 import { ActivityLogEntry, ActivityAction, PRIORITY_CONFIG, ActivityNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS } from '@/types/todo';
 import { formatDistanceToNow } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 
 interface ActivityFeedProps {
   currentUserName: string;
@@ -96,9 +97,9 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
 
-      console.log('[ActivityFeed] Played notification sound');
+      logger.debug('Played notification sound', { component: 'ActivityFeed' });
     } catch (e) {
-      console.error('[ActivityFeed] Failed to play notification sound:', e);
+      logger.error('Failed to play notification sound', e, { component: 'ActivityFeed' });
     }
   }, [notificationSettings.soundEnabled]);
 
@@ -149,7 +150,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
         setError('Failed to load activity feed');
       }
     } catch (err) {
-      console.error('Failed to fetch activities:', err);
+      logger.error('Failed to fetch activities', err, { component: 'ActivityFeed' });
       setError('Unable to connect to server');
     } finally {
       setIsLoading(false);
@@ -187,11 +188,11 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
           setActivities((prev) => [newActivity, ...prev]);
 
           // Log for debugging
-          console.log('[ActivityFeed] Received realtime activity:', newActivity.action, 'from:', newActivity.user_name, 'shouldNotify:', shouldNotify);
+          logger.debug('Received realtime activity', { component: 'ActivityFeed', action: newActivity.action, from: newActivity.user_name, shouldNotify });
         }
       )
       .subscribe((status) => {
-        console.log('[ActivityFeed] Realtime subscription status:', status);
+        logger.debug('Realtime subscription status', { component: 'ActivityFeed', status });
       });
 
     return () => {

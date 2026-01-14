@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data || []);
   } catch (error) {
-    console.error('Error fetching activity:', error);
+    logger.error('Error fetching activity', error, { component: 'api/activity', action: 'GET' });
     return NextResponse.json({ error: 'Failed to fetch activity' }, { status: 500 });
   }
 }
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error logging activity:', error);
+    logger.error('Error logging activity', error, { component: 'api/activity', action: 'POST' });
     return NextResponse.json({ error: 'Failed to log activity' }, { status: 500 });
   }
 }

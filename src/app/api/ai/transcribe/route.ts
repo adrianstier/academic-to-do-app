@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 // Audio file transcription endpoint using OpenAI Whisper + Claude for task parsing
 // Supports three modes:
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
         const parsed = JSON.parse(usersJson);
         users = Array.isArray(parsed) ? parsed : [];
       } catch {
-        console.warn('Failed to parse users JSON, using empty array');
+        logger.warn('Failed to parse users JSON, using empty array', { component: 'TranscribeAPI' });
       }
     }
     const modeParam = formData.get('mode') as string | null;
@@ -44,7 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Received audio file:', {
+    logger.debug('Received audio file', {
+      component: 'TranscribeAPI',
       name: audioFile.name,
       type: audioFile.type,
       size: audioFile.size,
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY not configured');
+      logger.error('OPENAI_API_KEY not configured', undefined, { component: 'TranscribeAPI' });
       return NextResponse.json({
         success: false,
         error: 'Audio transcription requires OpenAI API key. Please add OPENAI_API_KEY to your environment variables.',
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Transcribe audio using OpenAI Whisper
-    console.log('Sending to OpenAI Whisper for transcription...');
+    logger.debug('Sending to OpenAI Whisper for transcription...', { component: 'TranscribeAPI' });
 
     const whisperFormData = new FormData();
     whisperFormData.append('file', audioFile);
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (!whisperResponse.ok) {
       const errorData = await whisperResponse.json().catch(() => ({}));
-      console.error('Whisper API error:', whisperResponse.status, errorData);
+      logger.error('Whisper API error', undefined, { component: 'TranscribeAPI', status: whisperResponse.status, errorData });
       return NextResponse.json({
         success: false,
         error: errorData?.error?.message || 'Failed to transcribe audio',
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     const transcription = await whisperResponse.text();
-    console.log('Transcription successful, length:', transcription.length);
+    logger.debug('Transcription successful', { component: 'TranscribeAPI', length: transcription.length });
 
     // For simple transcription mode, return here
     if (mode === 'transcribe') {
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
     // Step 2: Use Claude to extract tasks from the transcription
     if (!process.env.ANTHROPIC_API_KEY) {
       // If no Claude API key, return just the transcription
-      console.log('ANTHROPIC_API_KEY not configured, returning transcription only');
+      logger.debug('ANTHROPIC_API_KEY not configured, returning transcription only', { component: 'TranscribeAPI' });
       return NextResponse.json({
         success: true,
         text: transcription.trim(),
@@ -234,7 +236,7 @@ Rules:
 
     if (!claudeResponse.ok) {
       const errorData = await claudeResponse.json().catch(() => ({}));
-      console.error('Claude API error:', claudeResponse.status, errorData);
+      logger.error('Claude API error', undefined, { component: 'TranscribeAPI', status: claudeResponse.status, errorData });
 
       // Still return the transcription even if Claude fails
       return NextResponse.json({
@@ -277,7 +279,7 @@ Rules:
             assignedTo: task.assignedTo || '',
           }));
 
-          console.log('Task extraction successful:', tasks.length, 'tasks found');
+          logger.debug('Task extraction successful', { component: 'TranscribeAPI', taskCount: tasks.length });
 
           return NextResponse.json({
             success: true,
@@ -286,7 +288,7 @@ Rules:
           });
         }
       } catch (parseError) {
-        console.error('Failed to parse task JSON:', parseError);
+        logger.error('Failed to parse task JSON', parseError, { component: 'TranscribeAPI' });
       }
 
       // Fallback: return transcription as single task
@@ -326,7 +328,7 @@ Rules:
             }))
             .filter((subtask: { text: string }) => subtask.text.length > 0);
 
-          console.log('Subtask extraction successful:', subtasks.length, 'subtasks found');
+          logger.debug('Subtask extraction successful', { component: 'TranscribeAPI', subtaskCount: subtasks.length });
 
           return NextResponse.json({
             success: true,
@@ -336,7 +338,7 @@ Rules:
           });
         }
       } catch (parseError) {
-        console.error('Failed to parse subtask JSON:', parseError);
+        logger.error('Failed to parse subtask JSON', parseError, { component: 'TranscribeAPI' });
       }
 
       // Fallback: return transcription as single subtask
@@ -358,7 +360,7 @@ Rules:
     });
 
   } catch (error) {
-    console.error('Transcription error:', error);
+    logger.error('Transcription error', error, { component: 'TranscribeAPI' });
 
     // Check for specific Claude API errors
     if (error instanceof Error) {

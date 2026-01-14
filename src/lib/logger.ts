@@ -63,12 +63,14 @@ class Logger {
 
   /**
    * Error level logging - critical issues
+   * Accepts Error object or any unknown error value
    */
-  error(message: string, error: Error, context?: LogContext): void {
-    console.error(`[ERROR] ${message}`, error, context);
+  error(message: string, error?: Error | unknown, context?: LogContext): void {
+    const errorObj = error instanceof Error ? error : new Error(String(error ?? message));
+    console.error(`[ERROR] ${message}`, errorObj, context);
 
     // Send to Sentry
-    Sentry.captureException(error, {
+    Sentry.captureException(errorObj, {
       extra: { message, ...context },
       tags: {
         component: context?.component,

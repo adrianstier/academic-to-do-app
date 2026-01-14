@@ -23,6 +23,13 @@ declare module 'next-auth' {
   }
 }
 
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id?: string;
+    role?: string;
+  }
+}
+
 // Email whitelist - only these emails can sign up with OAuth
 const ALLOWED_EMAILS = (process.env.ALLOWED_OAUTH_EMAILS || '')
   .split(',')
@@ -107,7 +114,6 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        // @ts-ignore
         token.role = user.role || 'member';
       }
       return token;

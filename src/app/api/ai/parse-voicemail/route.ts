@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '@/lib/logger';
 
 // Parse voicemail transcription to extract multiple tasks
 export async function POST(request: NextRequest) {
@@ -135,7 +136,7 @@ Leave assignedTo as empty string "" if no person is mentioned.`,
     });
 
   } catch (error) {
-    console.error('Voicemail parsing error:', error);
+    logger.error('Voicemail parsing error', error, { component: 'ParseVoicemailAPI' });
     return NextResponse.json(
       { success: false, error: 'Failed to parse voicemail' },
       { status: 500 }

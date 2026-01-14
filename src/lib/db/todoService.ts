@@ -5,7 +5,7 @@
  * for zero-downtime migration
  */
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { isFeatureEnabled } from '@/lib/featureFlags';
 import { logger } from '@/lib/logger';
 import { Todo, Subtask, Attachment, TodoStatus, TodoPriority } from '@/types/todo';

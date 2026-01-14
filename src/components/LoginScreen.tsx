@@ -15,7 +15,7 @@ import {
   setStoredSession,
   getLockoutState,
 } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { OAuthLoginButtons } from './OAuthLoginButtons';
 
 interface LoginScreenProps {

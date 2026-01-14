@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import TodoList from './TodoList';
 import DashboardModal, { shouldShowDailyDashboard } from './DashboardModal';
 import { AuthUser, Todo, QuickFilter } from '@/types/todo';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { logger } from '@/lib/logger';
 
 interface MainAppProps {
   currentUser: AuthUser;
@@ -45,7 +46,7 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
           setUsers(usersResult.data.map(u => u.name));
         }
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        logger.error('Failed to fetch data', error, { component: 'MainApp' });
       } finally {
         setLoading(false);
       }

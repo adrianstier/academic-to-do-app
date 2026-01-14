@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(data || []);
   } catch (error) {
-    console.error('Error fetching templates:', error);
+    logger.error('Error fetching templates', error, { component: 'api/templates', action: 'GET' });
     return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
   }
 }
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error creating template:', error);
+    logger.error('Error creating template', error, { component: 'api/templates', action: 'POST' });
     return NextResponse.json({ error: 'Failed to create template' }, { status: 500 });
   }
 }
@@ -93,7 +94,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting template:', error);
+    logger.error('Error deleting template', error, { component: 'api/templates', action: 'DELETE' });
     return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 });
   }
 }

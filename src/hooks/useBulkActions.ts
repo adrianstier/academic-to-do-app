@@ -6,10 +6,11 @@
  */
 
 import { useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { useTodoStore } from '@/store/todoStore';
 import { Todo, TodoStatus, TodoPriority } from '@/types/todo';
 import { logActivity } from '@/lib/activityLogger';
+import { logger } from '@/lib/logger';
 
 export function useBulkActions(userName: string) {
   const {
@@ -62,7 +63,7 @@ export function useBulkActions(userName: string) {
         .in('id', idsToDelete);
 
       if (error) {
-        console.error('Error bulk deleting:', error);
+        logger.error('Error bulk deleting', error, { component: 'useBulkActions' });
         // Rollback
         todosToDelete.forEach(todo => addTodoToStore(todo));
       } else {
@@ -98,7 +99,7 @@ export function useBulkActions(userName: string) {
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk assigning:', error);
+      logger.error('Error bulk assigning', error, { component: 'useBulkActions' });
       // Rollback
       originalTodos.forEach(todo => {
         updateTodoInStore(todo.id, { assigned_to: todo.assigned_to });
@@ -135,7 +136,7 @@ export function useBulkActions(userName: string) {
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk completing:', error);
+      logger.error('Error bulk completing', error, { component: 'useBulkActions' });
       // Rollback
       originalTodos.forEach(todo => {
         updateTodoInStore(todo.id, { completed: todo.completed, status: todo.status });
@@ -174,7 +175,7 @@ export function useBulkActions(userName: string) {
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk rescheduling:', error);
+      logger.error('Error bulk rescheduling', error, { component: 'useBulkActions' });
       // Rollback
       originalTodos.forEach(todo => {
         updateTodoInStore(todo.id, { due_date: todo.due_date });
@@ -211,7 +212,7 @@ export function useBulkActions(userName: string) {
       .in('id', idsToUpdate);
 
     if (error) {
-      console.error('Error bulk setting priority:', error);
+      logger.error('Error bulk setting priority', error, { component: 'useBulkActions' });
       // Rollback
       originalTodos.forEach(todo => {
         updateTodoInStore(todo.id, { priority: todo.priority });
@@ -286,7 +287,7 @@ export function useBulkActions(userName: string) {
         .eq('id', primaryTodoId);
 
       if (updateError) {
-        console.error('Error updating merged todo:', updateError);
+        logger.error('Error updating merged todo', updateError, { component: 'useBulkActions' });
         return false;
       }
 
@@ -297,7 +298,7 @@ export function useBulkActions(userName: string) {
         .in('id', secondaryTodos.map(t => t.id));
 
       if (deleteError) {
-        console.error('Error deleting merged todos:', deleteError);
+        logger.error('Error deleting merged todos', deleteError, { component: 'useBulkActions' });
         return false;
       }
 
@@ -330,7 +331,7 @@ export function useBulkActions(userName: string) {
 
       return true;
     } catch (error) {
-      console.error('Error during merge:', error);
+      logger.error('Error during merge', error, { component: 'useBulkActions' });
       return false;
     }
   }, [selectedTodos, todos, userName, updateTodoInStore, deleteTodoFromStore, clearSelection, setShowBulkActions]);

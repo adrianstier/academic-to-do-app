@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { logger } from '@/lib/logger';
 
 const anthropic = new Anthropic();
 
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
         const parsed = JSON.parse(usersJson);
         users = Array.isArray(parsed) ? parsed : [];
       } catch {
-        console.warn('Failed to parse users JSON, using empty array');
+        logger.warn('Failed to parse users JSON, using empty array', { component: 'ParseFileAPI' });
       }
     }
 
@@ -148,7 +149,7 @@ Respond with ONLY the JSON object, no other text.`,
       }
       result = JSON.parse(jsonText.trim());
     } catch {
-      console.error('Failed to parse AI response:', textContent.text);
+      logger.error('Failed to parse AI response', undefined, { component: 'ParseFileAPI', responseText: textContent.text });
       throw new Error('Failed to parse AI response as JSON');
     }
 
@@ -160,7 +161,7 @@ Respond with ONLY the JSON object, no other text.`,
       subtasks: result.subtasks || [],
     });
   } catch (error) {
-    console.error('Error parsing file:', error);
+    logger.error('Error parsing file', error, { component: 'ParseFileAPI' });
     return NextResponse.json(
       {
         success: false,

@@ -1,4 +1,5 @@
 import { TodoPriority } from '@/types/todo';
+import { logger } from '@/lib/logger';
 
 const PREFERENCES_KEY = 'todo_user_preferences';
 
@@ -27,7 +28,7 @@ function saveAllPreferences(prefs: AllUserPreferences): void {
   try {
     localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
   } catch (error) {
-    console.error('Error saving preferences:', error);
+    logger.error('Error saving preferences', error, { component: 'UserPreferences' });
   }
 }
 
