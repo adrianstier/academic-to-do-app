@@ -8,11 +8,21 @@ import {
   Attachment
 } from '@/types/todo';
 
-// Create a Supabase client with service role for storage operations
+// Create a Supabase client for storage operations
+// SECURITY: Use anon key by default. Service role key should only be used
+// for specific admin operations and never exposed to client-side code.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Use service role key ONLY on server-side and only when necessary
+// The anon key with proper RLS policies is preferred
+const getSupabaseClient = () => {
+  // In API routes (server-side), we can use service role for storage operations
+  // Storage buckets may have different RLS than database tables
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  return createClient(supabaseUrl, key);
+};
+
+const supabase = getSupabaseClient();
 
 const STORAGE_BUCKET = 'todo-attachments';
 

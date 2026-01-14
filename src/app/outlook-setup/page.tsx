@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowLeft, Download, ExternalLink, Mail, Zap, CheckCircle, HelpCircle, Monitor, Globe, ChevronDown, Sparkles } from 'lucide-react';
+import { HighlightedText, SafeHtmlLink } from '@/components/HighlightedText';
 
 export default function OutlookSetupPage() {
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -278,7 +279,7 @@ export default function OutlookSetupPage() {
                     <span className="flex-shrink-0 w-6 h-6 rounded-md bg-[var(--accent)]/10 text-[var(--accent)] font-bold text-xs flex items-center justify-center">
                       {letter}
                     </span>
-                    <span dangerouslySetInnerHTML={{ __html: text.replace(/"([^"]+)"/g, '<strong class="text-[var(--foreground)]">"$1"</strong>') }} />
+                    <HighlightedText text={text} />
                   </li>
                 ))}
               </ol>
@@ -310,7 +311,9 @@ export default function OutlookSetupPage() {
                   <div className="w-10 h-10 rounded-full bg-[var(--accent-gold)]/15 flex items-center justify-center mx-auto mb-3">
                     <span className="text-[var(--accent-gold)] font-bold">{item.step}</span>
                   </div>
-                  <p className="text-sm text-[var(--text-muted)]" dangerouslySetInnerHTML={{ __html: item.text.replace(/"([^"]+)"/g, '<strong class="text-[var(--foreground)]">"$1"</strong>') }} />
+                  <p className="text-sm text-[var(--text-muted)]">
+                    <HighlightedText text={item.text} />
+                  </p>
                 </div>
               ))}
             </div>
@@ -333,19 +336,24 @@ export default function OutlookSetupPage() {
               {
                 q: 'Can\'t find "Add a custom add-in"?',
                 a: 'Your organization may have disabled this. Ask IT to enable custom add-ins.',
+                hasLink: false,
               },
               {
                 q: 'Button not showing up?',
                 a: 'Make sure you have an email open (not just selected). Try refreshing Outlook.',
+                hasLink: false,
               },
               {
                 q: 'Need to remove it?',
                 a: 'Go to <a href="https://aka.ms/olksideload" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline">aka.ms/olksideload</a>, find it under Custom Add-ins, and click Remove.',
+                hasLink: true,
               },
             ].map((item, i) => (
               <div key={i} className="p-4 bg-[var(--surface-2)] rounded-xl border border-[var(--border-subtle)]">
                 <p className="font-medium text-[var(--foreground)] text-sm">{item.q}</p>
-                <p className="text-[var(--text-muted)] text-sm mt-1" dangerouslySetInnerHTML={{ __html: item.a }} />
+                <p className="text-[var(--text-muted)] text-sm mt-1">
+                  {item.hasLink ? <SafeHtmlLink text={item.a} /> : item.a}
+                </p>
               </div>
             ))}
           </div>

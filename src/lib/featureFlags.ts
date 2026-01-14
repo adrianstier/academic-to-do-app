@@ -51,8 +51,10 @@ const FEATURE_FLAGS: Record<FeatureFlag, () => FeatureFlagConfig> = {
   }),
 
   server_rate_limiting: () => ({
-    enabled: process.env.ENABLE_RATE_LIMITING === 'true',
-    description: 'Server-side rate limiting with Upstash Redis',
+    // SECURITY: Rate limiting is now ENABLED by default
+    // Set DISABLE_RATE_LIMITING=true to disable (not recommended)
+    enabled: process.env.DISABLE_RATE_LIMITING !== 'true',
+    description: 'Server-side rate limiting with Upstash Redis (enabled by default)',
   }),
 };
 
