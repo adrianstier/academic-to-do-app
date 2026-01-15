@@ -188,7 +188,26 @@ export function addCsrfHeader(headers: HeadersInit = {}): HeadersInit {
 }
 
 /**
- * Fetch wrapper that automatically includes CSRF token
+ * Get current user name from localStorage session
+ */
+function getSessionUserName(): string | null {
+  if (typeof localStorage === 'undefined') {
+    return null;
+  }
+  try {
+    const session = localStorage.getItem('todoSession');
+    if (session) {
+      const parsed = JSON.parse(session);
+      return parsed.userName || null;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+}
+
+/**
+ * Fetch wrapper that automatically includes CSRF token and auth headers
  *
  * Works with both JSON and FormData requests.
  * For FormData, it only adds the CSRF header (doesn't set Content-Type).
@@ -198,6 +217,7 @@ export async function fetchWithCsrf(
   options: RequestInit = {}
 ): Promise<Response> {
   const token = getClientCsrfToken();
+  const userName = getSessionUserName();
   const headers = new Headers(options.headers);
 
   if (token) {
@@ -207,6 +227,11 @@ export async function fetchWithCsrf(
     if (typeof window !== 'undefined') {
       console.warn('[CSRF] No token found in cookies. Available cookies:', document.cookie);
     }
+  }
+
+  // Add auth header for API requests that require authentication
+  if (userName) {
+    headers.set('X-User-Name', userName);
   }
 
   return fetch(url, {

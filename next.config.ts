@@ -18,6 +18,7 @@ const cspDirectives: Record<string, string[]> = {
   "style-src": ["'self'", "'unsafe-inline'"],
   "img-src": ["'self'", "data:", "https:", "blob:"],
   "font-src": ["'self'", "data:"],
+  "media-src": ["'self'", "data:", "blob:"], // Allow audio/video from data URLs and blobs
   "connect-src": [
     "'self'",
     "https://*.supabase.co",
