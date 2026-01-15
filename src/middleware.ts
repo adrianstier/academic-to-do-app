@@ -224,6 +224,25 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Set CSRF cookie on all responses if not present
+  // This ensures the cookie is available for subsequent requests
+  const existingCsrfToken = request.cookies.get('csrf_token')?.value;
+  if (!existingCsrfToken) {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const newToken = btoa(String.fromCharCode(...array))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    response.cookies.set('csrf_token', newToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+  }
+
   return response;
 }
 

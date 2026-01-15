@@ -154,9 +154,20 @@ export function getClientCsrfToken(): string | null {
 
   const cookies = document.cookie.split(';');
   for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
+    const trimmed = cookie.trim();
+    const equalIndex = trimmed.indexOf('=');
+    if (equalIndex === -1) continue;
+
+    const name = trimmed.substring(0, equalIndex);
+    const value = trimmed.substring(equalIndex + 1);
+
     if (name === CSRF_COOKIE_NAME) {
-      return value;
+      // Decode the value in case it was URL-encoded
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return value;
+      }
     }
   }
   return null;
@@ -191,10 +202,16 @@ export async function fetchWithCsrf(
 
   if (token) {
     headers.set(CSRF_HEADER_NAME, token);
+  } else {
+    // Log warning in development to help debug CSRF issues
+    if (typeof window !== 'undefined') {
+      console.warn('[CSRF] No token found in cookies. Available cookies:', document.cookie);
+    }
   }
 
   return fetch(url, {
     ...options,
     headers,
+    credentials: 'same-origin', // Ensure cookies are sent with the request
   });
 }
