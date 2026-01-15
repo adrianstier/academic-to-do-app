@@ -49,7 +49,52 @@ export async function POST(request: NextRequest) {
     const hasNumberedList = /\d+[.)]\s/.test(text);
     const isComplex = wordCount > 15 || hasMultipleLines || hasBulletPoints || hasNumberedList;
 
-    const prompt = `You are a smart task parser for a small business team. Analyze the user's input and extract a clean, actionable task with optional subtasks.
+    // Insurance-specific context for better parsing
+    const insuranceContext = `
+INSURANCE AGENCY CONTEXT:
+You are parsing tasks for an Allstate insurance agency. Common task types and terminology include:
+
+POLICY OPERATIONS:
+- Policy reviews/renewals (usually has customer name, policy number)
+- Endorsements (adding/changing coverage, adjusting limits)
+- Cancellations/non-renewals
+- "Dec page" = declarations page (policy summary document)
+- "Binder" = temporary proof of insurance
+
+VEHICLE OPERATIONS:
+- Adding vehicle to policy (needs VIN, year/make/model)
+- Removing vehicle from policy
+- Vehicle replacement
+- "Add a driver" = adding someone to auto policy
+
+CLIENT OPERATIONS:
+- New client onboarding (gather info, quote, bind)
+- Annual reviews with existing clients
+- Cross-sell opportunities
+- "Pull MVR" = motor vehicle record check
+
+CLAIMS:
+- New claim filing
+- Claim follow-up
+- Adjuster coordination
+
+DOCUMENTATION:
+- "COI" = certificate of insurance
+- "Loss runs" = claims history report
+- "ID cards" = insurance identification cards
+
+PRIORITY HINTS:
+- Claims and time-sensitive requests are usually high/urgent
+- Policy renewals have specific dates - use them as due dates
+- New client onboarding should be high priority
+- Quote requests are typically medium priority
+
+When parsing, detect these patterns and set appropriate priority, subtasks, and due dates.
+`;
+
+    const prompt = `You are a smart task parser for an insurance agency team. Analyze the user's input and extract a clean, actionable task with optional subtasks.
+
+${insuranceContext}
 
 User's input:
 """

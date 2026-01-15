@@ -49,8 +49,13 @@ import ArchivedTaskModal from './ArchivedTaskModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logActivity } from '@/lib/activityLogger';
 import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch, extractPotentialNames } from '@/lib/duplicateDetection';
+import { sendTaskAssignmentNotification, sendTaskCompletionNotification } from '@/lib/taskNotifications';
+import { getNextSuggestedTasks, calculateCompletionStreak, getEncouragementMessage } from '@/lib/taskSuggestions';
 import DuplicateDetectionModal from './DuplicateDetectionModal';
 import CustomerEmailModal from './CustomerEmailModal';
+import { CompletionCelebration } from './CompletionCelebration';
+import { TaskCompletionSummary } from './TaskCompletionSummary';
+import { CelebrationData, ActivityLogEntry } from '@/types/todo';
 
 interface TodoListProps {
   currentUser: AuthUser;
@@ -158,6 +163,13 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTargetTodos, setEmailTargetTodos] = useState<Todo[]>([]);
 
+  // Enhanced celebration state (Features 1 & 3)
+  const [showEnhancedCelebration, setShowEnhancedCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<CelebrationData | null>(null);
+  const [showCompletionSummary, setShowCompletionSummary] = useState(false);
+  const [completedTaskForSummary, setCompletedTaskForSummary] = useState<Todo | null>(null);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+
   // DnD sensors for drag-and-drop reordering
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -238,9 +250,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       return;
     }
 
-    const [todosResult, usersResult] = await Promise.all([
+    const [todosResult, usersResult, activityResult] = await Promise.all([
       supabase.from('todos').select('*').order('created_at', { ascending: false }),
       supabase.from('users').select('name, color').order('name'),
+      supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(100),
     ]);
 
     if (todosResult.error) {
@@ -256,6 +269,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         name: u.name,
         color: u.color || '#0033A0'
       })));
+      // Store activity log for streak calculation
+      if (activityResult.data) {
+        setActivityLog(activityResult.data as ActivityLogEntry[]);
+      }
       setError(null);
     }
     setLoading(false);
@@ -386,6 +403,18 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           has_transcription: !!transcription,
         },
       });
+
+      // Send chat notification if task is assigned to someone else (Feature 2)
+      if (newTodo.assigned_to && newTodo.assigned_to !== userName) {
+        sendTaskAssignmentNotification({
+          taskId: newTodo.id,
+          taskText: newTodo.text,
+          assignedTo: newTodo.assigned_to,
+          assignedBy: userName,
+          dueDate: newTodo.due_date,
+          priority: newTodo.priority,
+        });
+      }
 
       // Auto-attach source file if provided
       if (sourceFile) {
@@ -605,12 +634,37 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     );
 
     if (status === 'done' && oldTodo && !oldTodo.completed) {
+      // Calculate streak and get next tasks for enhanced celebration
+      const streakCount = calculateCompletionStreak(activityLog, userName) + 1;
+      const nextTasks = getNextSuggestedTasks(todos, userName, id);
+      const encouragementMessage = getEncouragementMessage(streakCount);
+
+      const updatedTodo = { ...oldTodo, completed: true, status: 'done' as TodoStatus, updated_at };
+      setCelebrationData({
+        completedTask: updatedTodo,
+        nextTasks,
+        streakCount,
+        encouragementMessage,
+      });
+      setShowEnhancedCelebration(true);
+
+      // Also keep original celebration for confetti
       setCelebrationText(oldTodo.text);
       setShowCelebration(true);
 
       // Handle recurring tasks
       if (oldTodo.recurrence) {
         createNextRecurrence(oldTodo);
+      }
+
+      // Send notification if task was assigned by someone else
+      if (oldTodo.created_by && oldTodo.created_by !== userName) {
+        sendTaskCompletionNotification({
+          taskId: id,
+          taskText: oldTodo.text,
+          completedBy: userName,
+          assignedBy: oldTodo.created_by,
+        });
       }
     }
 
@@ -702,12 +756,29 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const toggleTodo = async (id: string, completed: boolean) => {
     const todoItem = todos.find(t => t.id === id);
     const updated_at = new Date().toISOString();
+    // When completing a task, also set status to 'done'; when uncompleting, set to 'todo'
+    const newStatus: TodoStatus = completed ? 'done' : 'todo';
 
     setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, completed, updated_at } : todo))
+      prev.map((todo) => (todo.id === id ? { ...todo, completed, status: newStatus, updated_at } : todo))
     );
 
     if (completed && todoItem) {
+      // Calculate streak and get next tasks for enhanced celebration
+      const streakCount = calculateCompletionStreak(activityLog, userName) + 1;
+      const nextTasks = getNextSuggestedTasks(todos, userName, id);
+      const encouragementMessage = getEncouragementMessage(streakCount);
+
+      const updatedTodo = { ...todoItem, completed: true, updated_at };
+      setCelebrationData({
+        completedTask: updatedTodo,
+        nextTasks,
+        streakCount,
+        encouragementMessage,
+      });
+      setShowEnhancedCelebration(true);
+
+      // Also keep original celebration for confetti
       setCelebrationText(todoItem.text);
       setShowCelebration(true);
 
@@ -715,18 +786,38 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       if (todoItem.recurrence) {
         createNextRecurrence(todoItem);
       }
+
+      // Send notification if task was assigned by someone else
+      if (todoItem.created_by && todoItem.created_by !== userName) {
+        sendTaskCompletionNotification({
+          taskId: id,
+          taskText: todoItem.text,
+          completedBy: userName,
+          assignedBy: todoItem.created_by,
+        });
+      }
     }
 
     const { error: updateError } = await supabase
       .from('todos')
-      .update({ completed, updated_at })
+      .update({ completed, status: newStatus, updated_at })
       .eq('id', id);
 
     if (updateError) {
       logger.error('Error updating todo', updateError, { component: 'TodoList' });
+      // Revert both completed and status on error
+      const revertStatus: TodoStatus = completed ? (todoItem?.status || 'todo') : 'done';
       setTodos((prev) =>
-        prev.map((todo) => (todo.id === id ? { ...todo, completed: !completed } : todo))
+        prev.map((todo) => (todo.id === id ? { ...todo, completed: !completed, status: revertStatus } : todo))
       );
+    } else if (completed && todoItem) {
+      // Log activity for streak tracking
+      logActivity({
+        action: 'task_completed',
+        userName,
+        todoId: id,
+        todoText: todoItem.text,
+      });
     }
   };
 
@@ -1735,8 +1826,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         </div>
       </header>
 
-      {/* Connection status - floating indicator */}
-      <div className="fixed bottom-4 right-4 z-30">
+      {/* Connection status - floating indicator (positioned above chat button) */}
+      <div className="fixed bottom-24 right-6 z-30">
         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium shadow-[var(--shadow-md)] backdrop-blur-sm ${
           connected
             ? 'bg-[var(--success-light)] text-[var(--success)] border border-[var(--success)]/20'
@@ -1870,14 +1961,14 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               <select
                 value={quickFilter}
                 onChange={(e) => setQuickFilter(e.target.value as QuickFilter)}
-                className="input-refined appearance-none pl-8 pr-8 py-2 text-sm font-medium cursor-pointer min-w-[130px]"
+                className="input-refined appearance-none pl-9 pr-8 py-2 text-sm font-medium cursor-pointer min-w-[140px]"
               >
                 <option value="all">All Tasks</option>
                 <option value="my_tasks">My Tasks</option>
                 <option value="due_today">Due Today</option>
                 <option value="overdue">Overdue</option>
               </select>
-              <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
             </div>
 
@@ -2565,6 +2656,46 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         />
       )}
 
+      {/* Enhanced Celebration Modal (Feature 3) */}
+      {showEnhancedCelebration && celebrationData && (
+        <CompletionCelebration
+          celebrationData={celebrationData}
+          onDismiss={() => {
+            setShowEnhancedCelebration(false);
+            setCelebrationData(null);
+          }}
+          onNextTaskClick={(taskId) => {
+            setShowEnhancedCelebration(false);
+            setCelebrationData(null);
+            // Scroll to task - highlight it briefly
+            const taskElement = document.getElementById(`todo-${taskId}`);
+            if (taskElement) {
+              taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              taskElement.classList.add('ring-2', 'ring-blue-500');
+              setTimeout(() => {
+                taskElement.classList.remove('ring-2', 'ring-blue-500');
+              }, 2000);
+            }
+          }}
+          onShowSummary={() => {
+            setCompletedTaskForSummary(celebrationData.completedTask);
+            setShowCompletionSummary(true);
+          }}
+        />
+      )}
+
+      {/* Task Completion Summary Modal (Feature 1) */}
+      {showCompletionSummary && completedTaskForSummary && (
+        <TaskCompletionSummary
+          todo={completedTaskForSummary}
+          completedBy={userName}
+          onClose={() => {
+            setShowCompletionSummary(false);
+            setCompletedTaskForSummary(null);
+          }}
+        />
+      )}
+
       {/* Floating Bulk Action Bar - Sticky at bottom */}
       {showBulkActions && selectedTodos.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
@@ -2658,7 +2789,21 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         </div>
       )}
 
-      <ChatPanel currentUser={currentUser} users={usersWithColors} />
+      <ChatPanel
+        currentUser={currentUser}
+        users={usersWithColors}
+        onTaskLinkClick={(taskId) => {
+          // Navigate to task from chat link (Feature 2)
+          const taskElement = document.getElementById(`todo-${taskId}`);
+          if (taskElement) {
+            taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            taskElement.classList.add('ring-2', 'ring-blue-500');
+            setTimeout(() => {
+              taskElement.classList.remove('ring-2', 'ring-blue-500');
+            }, 2000);
+          }
+        }}
+      />
       </div>
     </PullToRefresh>
   );

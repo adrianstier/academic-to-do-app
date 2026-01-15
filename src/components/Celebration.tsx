@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, PartyPopper, Star, Zap, Award, LucideIcon } from 'lucide-react';
 
+import { CelebrationIntensity } from '@/types/todo';
+
 interface CelebrationProps {
   trigger: boolean;
   onComplete?: () => void;
+  intensity?: CelebrationIntensity;
 }
 
 interface Particle {
@@ -30,25 +33,34 @@ const ICONS: { Icon: LucideIcon; color: string }[] = [
   { Icon: Award, color: '#0033A0' },
 ];
 
-export default function Celebration({ trigger, onComplete }: CelebrationProps) {
+// Intensity configuration
+const INTENSITY_CONFIG: Record<CelebrationIntensity, { particleCount: number; velocityMultiplier: number; duration: number }> = {
+  light: { particleCount: 12, velocityMultiplier: 0.8, duration: 800 },
+  medium: { particleCount: 20, velocityMultiplier: 1.0, duration: 1000 },
+  high: { particleCount: 35, velocityMultiplier: 1.3, duration: 1200 },
+};
+
+export function Celebration({ trigger, onComplete, intensity = 'medium' }: CelebrationProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [celebrationIcon, setCelebrationIcon] = useState<{ Icon: LucideIcon; color: string } | null>(null);
 
   useEffect(() => {
     if (trigger) {
-      // Generate confetti particles
+      const config = INTENSITY_CONFIG[intensity];
+
+      // Generate confetti particles based on intensity
       const newParticles: Particle[] = [];
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < config.particleCount; i++) {
         newParticles.push({
           id: i,
-          x: 50 + (Math.random() - 0.5) * 20,
+          x: 50 + (Math.random() - 0.5) * 30,
           y: 50,
           color: COLORS[Math.floor(Math.random() * COLORS.length)],
-          size: 4 + Math.random() * 6,
+          size: (4 + Math.random() * 6) * (intensity === 'high' ? 1.2 : 1),
           rotation: Math.random() * 360,
-          velocityX: (Math.random() - 0.5) * 150,
-          velocityY: -80 - Math.random() * 60,
+          velocityX: (Math.random() - 0.5) * 150 * config.velocityMultiplier,
+          velocityY: (-80 - Math.random() * 60) * config.velocityMultiplier,
           isCircle: Math.random() > 0.5,
         });
       }
@@ -56,13 +68,13 @@ export default function Celebration({ trigger, onComplete }: CelebrationProps) {
       setShowCheckmark(true);
       setCelebrationIcon(ICONS[Math.floor(Math.random() * ICONS.length)]);
 
-      // Clean up after animation
+      // Clean up after animation (duration based on intensity)
       const timer = setTimeout(() => {
         setParticles([]);
         setShowCheckmark(false);
         setCelebrationIcon(null);
         onComplete?.();
-      }, 1000);
+      }, config.duration);
 
       return () => clearTimeout(timer);
     }
@@ -175,3 +187,6 @@ export function useCelebration() {
 
   return { celebrating, celebrate, onCelebrationComplete };
 }
+
+// Default export for backward compatibility
+export default Celebration;

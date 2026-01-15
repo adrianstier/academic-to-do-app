@@ -5,7 +5,8 @@ import { Plus, Calendar, Flag, User, Sparkles, Loader2, Mic, MicOff, ChevronDown
 import SmartParseModal from './SmartParseModal';
 import VoiceRecordingIndicator from './VoiceRecordingIndicator';
 import FileImporter from './FileImporter';
-import { TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
+import { QuickTaskButtons, useTaskPatterns } from './QuickTaskButtons';
+import { TodoPriority, Subtask, PRIORITY_CONFIG, QuickTaskTemplate } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
 import { logger } from '@/lib/logger';
 
@@ -112,6 +113,10 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
   // File importer state
   const [showFileImporter, setShowFileImporter] = useState(false);
+
+  // Quick task template state (Feature 4)
+  const { patterns } = useTaskPatterns();
+  const [suggestedSubtasks, setSuggestedSubtasks] = useState<string[]>([]);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -232,12 +237,24 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
   const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined);
+
+    // Convert suggested subtasks to proper Subtask objects
+    const subtasks: Subtask[] = suggestedSubtasks.length > 0
+      ? suggestedSubtasks.map((text, index) => ({
+          id: `subtask-${Date.now()}-${index}`,
+          text,
+          completed: false,
+          priority: 'medium' as TodoPriority,
+        }))
+      : undefined as unknown as Subtask[];
+
+    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks || undefined);
     // Save preferences for next time
     if (currentUserId) {
       updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);
     }
     resetForm();
+    setSuggestedSubtasks([]); // Clear suggested subtasks after creating
   };
 
   // Check if input might benefit from AI parsing
@@ -371,8 +388,35 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
   const priorityConfig = PRIORITY_CONFIG[priority];
 
+  // Handle quick task template selection (Feature 4)
+  const handleQuickTaskSelect = (template: QuickTaskTemplate) => {
+    setText(template.text);
+    setPriority(template.defaultPriority);
+    setSuggestedSubtasks(template.suggestedSubtasks);
+    setShowOptions(true);
+    // Focus the textarea so user can edit the placeholder
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      // Select the [customer] placeholder if present
+      const placeholderMatch = template.text.match(/\[[\w\s]+\]/);
+      if (placeholderMatch) {
+        const start = template.text.indexOf(placeholderMatch[0]);
+        const end = start + placeholderMatch[0].length;
+        setTimeout(() => {
+          textareaRef.current?.setSelectionRange(start, end);
+        }, 0);
+      }
+    }
+  };
+
   return (
     <>
+      {/* Quick Task Buttons (Feature 4) */}
+      <QuickTaskButtons
+        onSelectTemplate={handleQuickTaskSelect}
+        patterns={patterns}
+      />
+
       <form
         onSubmit={handleQuickAdd}
         onDragOver={handleDragOver}
@@ -543,6 +587,40 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                   <option key={user} value={user} className="text-[var(--foreground)] bg-[var(--surface)]">{user}</option>
                 ))}
               </select>
+            </div>
+          </div>
+        )}
+
+        {/* Suggested Subtasks (Feature 4) */}
+        {suggestedSubtasks.length > 0 && (
+          <div className="px-4 pb-4 border-t border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between mb-2 pt-3">
+              <span className="text-xs font-medium text-[var(--text-muted)]">
+                Suggested Subtasks
+              </span>
+              <button
+                type="button"
+                onClick={() => setSuggestedSubtasks([])}
+                className="text-xs text-[var(--text-light)] hover:text-[var(--text-muted)] transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {suggestedSubtasks.map((subtask, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 text-sm text-[var(--text-muted)] px-2 py-1.5 rounded-lg bg-[var(--surface-2)]"
+                >
+                  <span className="w-4 h-4 rounded border border-[var(--border)] flex items-center justify-center text-xs">
+                    {index + 1}
+                  </span>
+                  <span className="flex-1">{subtask}</span>
+                </div>
+              ))}
+              <p className="text-xs text-[var(--text-light)] mt-2">
+                These subtasks will be added when you create the task
+              </p>
             </div>
           </div>
         )}

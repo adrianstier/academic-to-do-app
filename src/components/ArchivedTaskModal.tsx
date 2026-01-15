@@ -1,15 +1,66 @@
 'use client';
 
-import { X, User, Calendar, Flag, Repeat, FileText, Paperclip, Clock, MessageSquare, Mic, Circle, Loader2, CheckCircle } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { X, User, Calendar, Flag, Repeat, FileText, Paperclip, Clock, MessageSquare, Mic, Circle, Loader2, CheckCircle, Copy, Check, AlertCircle } from 'lucide-react';
 import { Todo, PRIORITY_CONFIG, STATUS_CONFIG, Subtask } from '@/types/todo';
 import AttachmentList from './AttachmentList';
+import { generateSummary, copyToClipboard } from '@/lib/summaryGenerator';
 
 interface ArchivedTaskModalProps {
   todo: Todo;
   onClose: () => void;
 }
 
+// Copy button states
+type CopyState = 'idle' | 'success' | 'error';
+
 export default function ArchivedTaskModal({ todo, onClose }: ArchivedTaskModalProps) {
+  const [copyState, setCopyState] = useState<CopyState>('idle');
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle copy to clipboard
+  const handleCopy = useCallback(async () => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    try {
+      // Generate summary - use the assigned_to or created_by as completedBy
+      const completedBy = todo.assigned_to || todo.created_by;
+      const summaryText = generateSummary(todo, completedBy, 'text');
+      const success = await copyToClipboard(summaryText);
+
+      if (success) {
+        setCopyState('success');
+        // Auto-clear success state after 2 seconds
+        timeoutRef.current = setTimeout(() => {
+          setCopyState('idle');
+          timeoutRef.current = null;
+        }, 2000);
+      } else {
+        throw new Error('Copy operation failed');
+      }
+    } catch {
+      setCopyState('error');
+      // Auto-clear error state after 4 seconds
+      timeoutRef.current = setTimeout(() => {
+        setCopyState('idle');
+        timeoutRef.current = null;
+      }, 4000);
+    }
+  }, [todo]);
+
   const getCompletedAtMs = (t: Todo): number | null => {
     // Try updated_at first if task is completed
     if (t.completed && t.updated_at) {
@@ -266,6 +317,34 @@ export default function ArchivedTaskModal({ todo, onClose }: ArchivedTaskModalPr
 
         {/* Footer */}
         <div className="sticky bottom-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)] bg-[var(--surface)]">
+          <button
+            onClick={handleCopy}
+            disabled={copyState === 'success'}
+            className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${
+              copyState === 'success'
+                ? 'bg-green-500 text-white cursor-default'
+                : copyState === 'error'
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white'
+            }`}
+          >
+            {copyState === 'success' ? (
+              <>
+                <Check className="w-4 h-4" />
+                Copied!
+              </>
+            ) : copyState === 'error' ? (
+              <>
+                <AlertCircle className="w-4 h-4" />
+                Try Again
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Copy Summary
+              </>
+            )}
+          </button>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors text-sm font-medium"

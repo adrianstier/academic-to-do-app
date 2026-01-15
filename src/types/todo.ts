@@ -311,3 +311,147 @@ export const GOAL_PRIORITY_CONFIG: Record<GoalPriority, { label: string; color: 
 
 // Owner username for dashboard access
 export const OWNER_USERNAME = 'Derrick';
+
+// ============================================
+// Task Completion & Celebration Types
+// ============================================
+
+// Task category for pattern analysis (Feature 4)
+export type TaskCategory =
+  | 'policy_review'
+  | 'vehicle_add'
+  | 'new_client'
+  | 'claim'
+  | 'payment'
+  | 'quote'
+  | 'documentation'
+  | 'follow_up'
+  | 'other';
+
+// Task pattern learned from historical data
+export interface TaskPattern {
+  id: string;
+  pattern_text: string;
+  category: TaskCategory;
+  occurrence_count: number;
+  avg_priority: TodoPriority;
+  common_subtasks: string[];
+  last_occurrence: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+// Quick task template for common insurance tasks
+export interface QuickTaskTemplate {
+  text: string;
+  category: TaskCategory;
+  defaultPriority: TodoPriority;
+  suggestedSubtasks: string[];
+  icon?: string;
+}
+
+// Celebration data for enhanced completion feedback
+export interface CelebrationData {
+  completedTask: Todo;
+  nextTasks: Todo[];
+  streakCount: number;
+  encouragementMessage: string;
+}
+
+// Celebration intensity levels
+export type CelebrationIntensity = 'light' | 'medium' | 'high';
+
+// Task completion summary for copying to external systems
+export interface TaskCompletionSummaryData {
+  taskText: string;
+  completedBy: string;
+  completedAt: string;
+  priority: TodoPriority;
+  assignedTo?: string;
+  dueDate?: string;
+  subtasksCompleted: number;
+  subtasksTotal: number;
+  subtaskDetails: Array<{ text: string; completed: boolean }>;
+  notes?: string;
+  attachments: string[];
+  transcription?: string;
+}
+
+// Insurance-specific quick task definitions
+export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
+  {
+    text: 'Policy review for [customer]',
+    category: 'policy_review',
+    defaultPriority: 'medium',
+    icon: '📋',
+    suggestedSubtasks: [
+      'Review current coverage limits',
+      'Check for discount opportunities',
+      'Verify contact information',
+      'Prepare renewal quote',
+    ],
+  },
+  {
+    text: 'Add vehicle to policy - [customer]',
+    category: 'vehicle_add',
+    defaultPriority: 'high',
+    icon: '🚗',
+    suggestedSubtasks: [
+      'Collect VIN and vehicle information',
+      'Verify registration',
+      'Calculate premium change',
+      'Update policy and send new dec page',
+    ],
+  },
+  {
+    text: 'New client onboarding - [customer]',
+    category: 'new_client',
+    defaultPriority: 'high',
+    icon: '👤',
+    suggestedSubtasks: [
+      'Gather customer information',
+      'Pull MVR for all drivers',
+      'Run quotes with multiple carriers',
+      'Present options and bind coverage',
+      'Set up account in management system',
+      'Send welcome packet',
+    ],
+  },
+  {
+    text: 'Process claim for [customer]',
+    category: 'claim',
+    defaultPriority: 'urgent',
+    icon: '⚠️',
+    suggestedSubtasks: [
+      'File claim with carrier',
+      'Document incident details',
+      'Coordinate with adjuster',
+      'Follow up on claim status',
+      'Update customer on progress',
+    ],
+  },
+  {
+    text: 'Quote request - [customer]',
+    category: 'quote',
+    defaultPriority: 'medium',
+    icon: '💰',
+    suggestedSubtasks: [
+      'Gather customer information',
+      'Run quotes with carriers',
+      'Compare coverage options',
+      'Prepare and send proposal',
+    ],
+  },
+  {
+    text: 'Payment/billing issue - [customer]',
+    category: 'payment',
+    defaultPriority: 'high',
+    icon: '💳',
+    suggestedSubtasks: [
+      'Review account status',
+      'Contact carrier if needed',
+      'Resolve payment issue',
+      'Confirm with customer',
+    ],
+  },
+];

@@ -8,7 +8,7 @@ import {
   MessageSquare, Send, X, Minimize2, Maximize2, ChevronDown,
   Users, ChevronLeft, User, Smile, Check, CheckCheck, Wifi, WifiOff,
   Bell, BellOff, Search, Reply, MoreHorizontal, Edit3, Trash2, Pin,
-  AtSign, Plus, Moon, Volume2, VolumeX, Sparkles
+  AtSign, Plus, Moon, Volume2, VolumeX, Sparkles, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logger } from '@/lib/logger';
@@ -89,6 +89,7 @@ interface ChatPanelProps {
   users: { name: string; color: string }[];
   todos?: Todo[];
   onCreateTask?: (text: string, assignedTo?: string) => void;
+  onTaskLinkClick?: (todoId: string) => void;
 }
 
 // Typing indicator component
@@ -194,7 +195,7 @@ function ReactionsSummary({ reactions, users }: { reactions: MessageReaction[]; 
   );
 }
 
-export default function ChatPanel({ currentUser, users, todos = [], onCreateTask }: ChatPanelProps) {
+export default function ChatPanel({ currentUser, users, todos = [], onCreateTask, onTaskLinkClick }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -1599,6 +1600,24 @@ export default function ChatPanel({ currentUser, users, todos = [], onCreateTask
                                             whileHover={{ scale: 1.01 }}
                                           >
                                             {renderMessageText(msg.text)}
+
+                                            {/* Task link button (Feature 2) */}
+                                            {msg.related_todo_id && onTaskLinkClick && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  onTaskLinkClick(msg.related_todo_id!);
+                                                }}
+                                                className={`mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                                  isOwn
+                                                    ? 'bg-[#00205B]/20 text-[#00205B] hover:bg-[#00205B]/30'
+                                                    : 'bg-white/[0.1] text-white/80 hover:bg-white/[0.15]'
+                                                }`}
+                                              >
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                View Task
+                                              </button>
+                                            )}
                                           </motion.div>
 
                                           {/* Action buttons on hover */}
