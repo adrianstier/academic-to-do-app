@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Loader2, AlertCircle } from 'lucide-react';
 import { ALLOWED_ATTACHMENT_TYPES, MAX_ATTACHMENT_SIZE } from '@/types/todo';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface AttachmentUploadProps {
   todoId: string;
@@ -64,7 +65,7 @@ export default function AttachmentUpload({
 
       setProgress(30);
 
-      const response = await fetch('/api/attachments', {
+      const response = await fetchWithCsrf('/api/attachments', {
         method: 'POST',
         body: formData,
       });

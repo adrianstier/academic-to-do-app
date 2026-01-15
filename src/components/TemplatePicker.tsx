@@ -5,6 +5,7 @@ import { FileText, Plus, Trash2, Share2, Lock, X, ChevronDown, Loader2 } from 'l
 import { TaskTemplate, TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface TemplatePickerProps {
   currentUserName: string;
@@ -77,7 +78,7 @@ export default function TemplatePicker({
     );
 
     // Log template usage
-    fetch('/api/activity', {
+    fetchWithCsrf('/api/activity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -96,7 +97,7 @@ export default function TemplatePicker({
 
     setIsSaving(true);
     try {
-      const response = await fetch('/api/templates', {
+      const response = await fetchWithCsrf('/api/templates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

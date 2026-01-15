@@ -1,5 +1,6 @@
 import { ActivityAction } from '@/types/todo';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface LogActivityParams {
   action: ActivityAction;
@@ -11,7 +12,7 @@ interface LogActivityParams {
 
 export async function logActivity({ action, userName, todoId, todoText, details }: LogActivityParams): Promise<void> {
   try {
-    await fetch('/api/activity', {
+    await fetchWithCsrf('/api/activity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

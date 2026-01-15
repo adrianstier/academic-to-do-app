@@ -50,6 +50,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { logActivity } from '@/lib/activityLogger';
 import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch, extractPotentialNames } from '@/lib/duplicateDetection';
 import { sendTaskAssignmentNotification, sendTaskCompletionNotification } from '@/lib/taskNotifications';
+import { fetchWithCsrf } from '@/lib/csrf';
 import { getNextSuggestedTasks, calculateCompletionStreak, getEncouragementMessage } from '@/lib/taskSuggestions';
 import DuplicateDetectionModal from './DuplicateDetectionModal';
 import CustomerEmailModal from './CustomerEmailModal';
@@ -426,7 +427,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           formData.append('todoId', newTodo.id);
           formData.append('userName', userName);
 
-          const response = await fetch('/api/attachments', {
+          const response = await fetchWithCsrf('/api/attachments', {
             method: 'POST',
             body: formData,
           });
@@ -548,7 +549,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           formData.append('todoId', existingTodoId);
           formData.append('userName', userName);
 
-          const response = await fetch('/api/attachments', {
+          const response = await fetchWithCsrf('/api/attachments', {
             method: 'POST',
             body: formData,
           });
@@ -1088,7 +1089,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const saveAsTemplate = async (name: string, isShared: boolean) => {
     if (!templateTodo) return;
 
-    const response = await fetch('/api/templates', {
+    const response = await fetchWithCsrf('/api/templates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

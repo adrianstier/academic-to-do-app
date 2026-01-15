@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { logActivity } from '@/lib/activityLogger';
 import { shouldShowWelcomeNotification } from '@/components/WelcomeBackNotification';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 export function useTodoData(currentUser: AuthUser) {
   const {
@@ -189,7 +190,7 @@ export function useTodoData(currentUser: AuthUser) {
         formData.append('todoId', newTodo.id);
         formData.append('userName', userName);
 
-        await fetch('/api/attachments', {
+        await fetchWithCsrf('/api/attachments', {
           method: 'POST',
           body: formData,
         });

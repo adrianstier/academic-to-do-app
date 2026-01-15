@@ -1,0 +1,147 @@
+{
+  "generated_at": "2026-01-15T19:37:05.108Z",
+  "summary": {
+    "total_tasks": 76,
+    "completed_tasks": 56,
+    "completion_rate": 73.68421052631578
+  },
+  "categories": [
+    {
+      "name": "Policy Review/Renewal",
+      "count": 32,
+      "percentage": 42.10526315789473,
+      "completion_rate": 71.875,
+      "priority_distribution": {
+        "medium": 25,
+        "high": 7
+      }
+    },
+    {
+      "name": "Follow-up/Communication",
+      "count": 30,
+      "percentage": 39.473684210526315,
+      "completion_rate": 73.33333333333333,
+      "priority_distribution": {
+        "high": 2,
+        "medium": 26,
+        "urgent": 2
+      }
+    },
+    {
+      "name": "Vehicle/Auto Changes",
+      "count": 19,
+      "percentage": 25,
+      "completion_rate": 84.21052631578947,
+      "priority_distribution": {
+        "medium": 16,
+        "high": 3
+      }
+    },
+    {
+      "name": "Payment/Billing",
+      "count": 14,
+      "percentage": 18.421052631578945,
+      "completion_rate": 100,
+      "priority_distribution": {
+        "medium": 11,
+        "urgent": 1,
+        "high": 2
+      }
+    },
+    {
+      "name": "Endorsement/Change",
+      "count": 14,
+      "percentage": 18.421052631578945,
+      "completion_rate": 78.57142857142857,
+      "priority_distribution": {
+        "medium": 10,
+        "high": 4
+      }
+    },
+    {
+      "name": "Documentation",
+      "count": 9,
+      "percentage": 11.842105263157894,
+      "completion_rate": 66.66666666666666,
+      "priority_distribution": {
+        "medium": 5,
+        "high": 4
+      }
+    },
+    {
+      "name": "Claims",
+      "count": 8,
+      "percentage": 10.526315789473683,
+      "completion_rate": 87.5,
+      "priority_distribution": {
+        "medium": 4,
+        "high": 3,
+        "urgent": 1
+      }
+    },
+    {
+      "name": "Quotes/Proposals",
+      "count": 8,
+      "percentage": 10.526315789473683,
+      "completion_rate": 50,
+      "priority_distribution": {
+        "medium": 7,
+        "urgent": 1
+      }
+    },
+    {
+      "name": "Cancellation",
+      "count": 5,
+      "percentage": 6.578947368421052,
+      "completion_rate": 80,
+      "priority_distribution": {
+        "medium": 4,
+        "high": 1
+      }
+    },
+    {
+      "name": "Other/Uncategorized",
+      "count": 3,
+      "percentage": 3.9473684210526314,
+      "completion_rate": 33.33333333333333,
+      "priority_distribution": {
+        "medium": 3
+      }
+    },
+    {
+      "name": "New Client/Onboarding",
+      "count": 2,
+      "percentage": 2.631578947368421,
+      "completion_rate": 100,
+      "priority_distribution": {
+        "medium": 2
+      }
+    }
+  ],
+  "priority_distribution": {
+    "medium": 60,
+    "high": 14,
+    "urgent": 2
+  },
+  "tasks_by_user": {
+    "Derrick": 73,
+    "Sefra": 3
+  },
+  "tasks_by_assignee": {
+    "Derrick": 47,
+    "Sefra": 24
+  },
+  "temporal": {
+    "byMonth": {
+      "2026-01": 48,
+      "2025-12": 28
+    },
+    "byDayOfWeek": {
+      "Thursday": 6,
+      "Wednesday": 4,
+      "Tuesday": 12,
+      "Monday": 28,
+      "Sunday": 26
+    }
+  }
+}

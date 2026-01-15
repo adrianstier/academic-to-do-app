@@ -175,3 +175,26 @@ export function addCsrfHeader(headers: HeadersInit = {}): HeadersInit {
   }
   return headers;
 }
+
+/**
+ * Fetch wrapper that automatically includes CSRF token
+ *
+ * Works with both JSON and FormData requests.
+ * For FormData, it only adds the CSRF header (doesn't set Content-Type).
+ */
+export async function fetchWithCsrf(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const token = getClientCsrfToken();
+  const headers = new Headers(options.headers);
+
+  if (token) {
+    headers.set(CSRF_HEADER_NAME, token);
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+}

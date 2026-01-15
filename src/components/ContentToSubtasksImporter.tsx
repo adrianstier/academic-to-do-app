@@ -19,6 +19,7 @@ import {
 import { Subtask, TodoPriority } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface ParsedSubtask {
   text: string;
@@ -183,7 +184,7 @@ export default function ContentToSubtasksImporter({
     setTranscription(liveTranscript);
 
     try {
-      const response = await fetch('/api/ai/parse-content-to-subtasks', {
+      const response = await fetchWithCsrf('/api/ai/parse-content-to-subtasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -228,7 +229,7 @@ export default function ContentToSubtasksImporter({
     setError('');
 
     try {
-      const response = await fetch('/api/ai/parse-content-to-subtasks', {
+      const response = await fetchWithCsrf('/api/ai/parse-content-to-subtasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -289,7 +290,7 @@ export default function ContentToSubtasksImporter({
       formData.append('mode', 'subtasks');
       formData.append('parentTaskText', parentTaskText);
 
-      const response = await fetch('/api/ai/transcribe', {
+      const response = await fetchWithCsrf('/api/ai/transcribe', {
         method: 'POST',
         body: formData,
       });

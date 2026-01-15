@@ -1,0 +1,700 @@
+{
+  "todos": [
+    {
+      "id": "f4eb7d1d-21d3-4c83-a4c4-6faa5ce945c6",
+      "text": "Quote Alfredo Plasencia on Home and Rental properties",
+      "created_at": "2026-01-15T17:52:40.327+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "c0a4dbb6-89e3-4564-b0f1-ef0dd1222a7c",
+      "text": "Requote Jeff Calvin Auto",
+      "created_at": "2026-01-15T17:51:36.104+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "76b5e4ce-a5d5-4af3-92eb-5beb80b78663",
+      "text": "Create insurance quote for Melinda Rogers with current policy expiring in February",
+      "created_at": "2026-01-13T22:23:14.705+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "df957fdb-d109-4b14-819c-f8daaa436db7",
+      "text": "Upload homeowners policy declarations page for Gregory M Hindsdale CFP",
+      "created_at": "2026-01-13T21:56:02.154+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "63d706bc-b9bd-4848-9e0b-c817807e5877",
+      "text": "Call back Suzanne Gillingham at 805-687-5990",
+      "created_at": "2026-01-12T22:18:18.397+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "638047af-3544-4fcd-a6ce-77805df544f6",
+      "text": "Call Joan Gray back about mileage questionnaire consultation",
+      "created_at": "2026-01-12T22:17:14.506+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "3cafed35-2a5d-48c6-ae9d-979ab27dfbb3",
+      "text": "Cancel Brian Dell's Arundel insurance policies after house sale",
+      "created_at": "2026-01-12T13:31:07.611+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b23c8051-094e-4268-a157-e58f1a74f68f",
+      "text": "Call Kelly Hildner back about insurance and route discussion",
+      "created_at": "2026-01-12T13:29:11.15+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "66471d75-06ac-4e75-a4d1-2287b1963b03",
+      "text": "Process Good Student Discount verification for customer Mingtai Han",
+      "created_at": "2026-01-12T13:28:02.926+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "b1fad630-93ed-47b5-852f-bcc8e9e464ea",
+      "text": "Review mileage usage statement and advise on Allstate submission requirements",
+      "created_at": "2026-01-12T13:25:52.226+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b782a17f-986f-4dcf-af3d-7fb7367d0334",
+      "text": "Provide backup documentation for payment transaction #27913877",
+      "created_at": "2026-01-12T13:23:46.813+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "f1b5e7db-35ce-4703-97f6-9e11eb4e4f9f",
+      "text": "Update Silvana Gabriades' home address in system records",
+      "created_at": "2026-01-12T13:20:05.784+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "2b1e1e70-b889-42bb-b3b8-9cc4ae4db5d8",
+      "text": "Address William Sosa's concerns about auto insurance mileage charges",
+      "created_at": "2026-01-12T13:16:35.507+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "0bb0036f-feb4-4948-a878-0f31bd761184",
+      "text": "Email copy of insurance policy to Kathryn Byrne",
+      "created_at": "2026-01-12T13:13:38.136+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "ecd253c0-1582-43d7-a5f3-c538c4276913",
+      "text": "Help customer add new car to policy and remove old vehicle",
+      "created_at": "2026-01-12T13:11:09.281+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "59b0df6d-f079-4cbc-b5d3-bb93a90e4130",
+      "text": "Contact new auto insurance customer Josue Hernandez to welcome and offer services",
+      "created_at": "2026-01-08T16:46:06.652+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "61b7804e-e094-40ae-89ea-efb335eee61f",
+      "text": "Review vehicle assignment switch request for Tesla vehicles",
+      "created_at": "2026-01-07T22:42:53.952+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "19b163c0-d5a8-4186-8aef-27845a6cd007",
+      "text": "Contact new customer Cherise Dunham for service and coverage needs",
+      "created_at": "2026-01-07T22:39:38.258+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b481a39c-a2e2-41ec-8f89-b7385abda0b9",
+      "text": "Alina Moran - Surety Bond she has 5 days left to get it renewed. 805-895-5455",
+      "created_at": "2026-01-06T00:46:16.828+00:00",
+      "created_by": "Sefra",
+      "completed": true
+    },
+    {
+      "id": "5df35fb3-9bb3-4ebc-9be2-d698dd6749b6",
+      "text": "Contact Chat about Craig Droesse's umbrella policy removal and non-renewal lift",
+      "created_at": "2026-01-05T22:17:15.052+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "384e47c1-3a74-4a61-bb1a-861a6401df56",
+      "text": "Resolve overdue invoice for policy BSNH3-2021-000631-01 - METCALF",
+      "created_at": "2026-01-05T16:53:14.734+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "3dd39f21-af46-4ea6-9d25-75399a81189f",
+      "text": "Provide updated mailing address for rental property insurance policy",
+      "created_at": "2026-01-04T14:54:13.237+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "7045dc5f-f52f-4f57-a10f-a712e0b440c7",
+      "text": "Call Tracy Shriver about Carol Sue Bruns' unsuccessful payment",
+      "created_at": "2026-01-04T14:45:32.124+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "06370bb9-a95c-4b1d-b26d-d8bc8a178fb0",
+      "text": "Update insurance policy with lender information and loan number",
+      "created_at": "2026-01-04T14:42:23.2+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "9927df58-4378-4905-afa6-4db6fed79f1d",
+      "text": "Call Paul Buvik about homeowner's insurance quote [+1 merged]",
+      "created_at": "2026-01-04T14:39:37.374+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "fc109660-e339-4991-a15e-919d5c15ad70",
+      "text": "Complete HO Policy review project work and obtain pending quotes",
+      "created_at": "2026-01-04T14:35:22.62+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "03bdfb4b-1ee3-4a85-8487-1802f33a5855",
+      "text": "Correct policy effective date discrepancy on application",
+      "created_at": "2026-01-04T14:33:40.464+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b4eaf260-8d4b-40fc-8676-5a19062bd17a",
+      "text": "Follow up on Emile Nelson spark arrestor installation status and collect required documentation",
+      "created_at": "2026-01-04T14:31:51.395+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "b0599e38-bb1f-44cb-8cbb-b452acfb8dcf",
+      "text": "Handle client communication regarding denied rodent damage claim",
+      "created_at": "2026-01-04T14:28:40.987+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "098cf4ee-49ea-4f2e-8809-5dece55f2fcd",
+      "text": "Process jewelry coverage removal from Beatrice Gross's insurance policy",
+      "created_at": "2026-01-04T14:24:02.149+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "ac631535-d883-44ed-a889-49038561835c",
+      "text": "Call Cynthia Nicholson about liability insurance and online backdating issue",
+      "created_at": "2026-01-04T14:20:28.853+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "f09ef0ac-cdea-4234-9a9f-416a56464518",
+      "text": "Follow up with Jay Lee about insurance coverage for two properties",
+      "created_at": "2026-01-04T14:18:48.558+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "55b0f44d-5b52-4b38-9197-e07a381ea330",
+      "text": "Call Joan Gray to discuss mileage questionnaire before she fills it out",
+      "created_at": "2026-01-04T14:16:53.466+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "f73016f4-9ffc-420c-b797-bd388db706e5",
+      "text": "Process payment for Jose Yanez using credit card ending in 5111",
+      "created_at": "2026-01-04T14:14:44.945+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "41ef288e-24e9-483e-8b95-7c7e4123f3bf",
+      "text": "Handle Allstate insurance claim for housing and car situation",
+      "created_at": "2026-01-04T14:12:19.151+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "cc99360c-39ef-4904-86cb-0441cc1f89de",
+      "text": "Follow up on NetFinancial marketing lead generation inquiry",
+      "created_at": "2026-01-04T14:06:29.258+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "fd5d8edb-e56e-4755-abe0-6194eff28495",
+      "text": "Call Sylvia Law back about claim results and February policy",
+      "created_at": "2026-01-04T13:51:33.166+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "1bf377af-271c-4638-a1f8-cd9b3265a044",
+      "text": "Review renewal documents and investigate potential insurance discounts",
+      "created_at": "2026-01-04T13:49:15.868+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "803d727a-15da-4bdb-ba93-5f30e37b0256",
+      "text": "Process payment for condo and earthquake insurance",
+      "created_at": "2026-01-04T13:45:49.445+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "c57337c6-f7c1-4887-9b89-821502f1c034",
+      "text": "Call Skyler Davin back about Carol George's condo insurance policy [+1 merged]",
+      "created_at": "2026-01-04T13:43:47.455+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "f3847710-46a3-4843-977f-52e7bccf61ab",
+      "text": "Provide premium quotes matching Wendy's current home and auto insurance coverage",
+      "created_at": "2026-01-04T13:41:41.435+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "9d73e7a1-07cf-4d4b-8656-32277704c95f",
+      "text": "Contact Derek Chiovaccaro to answer his mom's question",
+      "created_at": "2026-01-04T13:34:43.152+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "1870c952-fa8b-4655-9ac3-33727bbe7f52",
+      "text": "Contact Dawn Lara about her monthly payment setup and debit card security issue",
+      "created_at": "2026-01-04T13:32:41.233+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "ef8c758f-7937-4f8d-9af6-2f3d9e3cda00",
+      "text": "Review and process forwarded towing receipt from Juan Gonzalez",
+      "created_at": "2026-01-04T13:30:04.835+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "33bed512-0f81-4235-b162-a740c04bc09c",
+      "text": "Resolve MyClaims account registration error for Joe Vaccaro at 662 Puente Plaza",
+      "created_at": "2026-01-04T13:27:19.046+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "8b11d971-e095-4bf1-99f6-ae7c77df3a17",
+      "text": "Process water damage claim inquiry for Mary Ann Lund policy 014 459 626",
+      "created_at": "2026-01-04T13:25:28.968+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "3ae5cb8b-e26b-442f-8089-a912f0edad77",
+      "text": "Process insurance claim for Mike and Leanne Speshock - tree damage to property",
+      "created_at": "2026-01-04T13:21:42.36+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "64c025b7-aa2d-4ac0-9c4d-437ce5c3153e",
+      "text": "Process Maria Moreau PUP policy documents to update underwriting records",
+      "created_at": "2025-12-30T19:09:58.349+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "cd304a54-7d1f-461a-8762-0e25ff86aeb0",
+      "text": "Follow up with Wendy Eno on overdue insurance quotes",
+      "created_at": "2025-12-30T18:14:40.876+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b39033a9-53e9-4bd5-9798-e23b0e07591e",
+      "text": "Update customer addresses for failed insurance policy deliveries",
+      "created_at": "2025-12-30T18:10:09.584+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "151dbc4a-7e99-4a0c-b0f5-f3929163e010",
+      "text": "Process Richie Colbert's double payment arrangement and confirm receipt",
+      "created_at": "2025-12-29T16:51:57.08+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "638795e0-4254-42b7-a4cd-37bb10cd74e3",
+      "text": "Return call to Jay Lee about changed CEA earthquake insurance requirements",
+      "created_at": "2025-12-29T16:48:59.063+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "5ae29189-d383-4182-bafb-3b3dfa5fcf82",
+      "text": "Contact Katherine Byrne regarding house fire damage and next steps",
+      "created_at": "2025-12-29T16:26:37.78+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "9778b81c-12a7-4c1e-885e-6eaebf67e510",
+      "text": "Process towing reimbursement claim for Beatriz Ramirez - $150.00",
+      "created_at": "2025-12-23T17:19:05.878+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "46ed876b-285a-4a16-bda2-2a314876b554",
+      "text": "Arrange insurance policy card mailing for Teresa Galvez",
+      "created_at": "2025-12-22T17:25:46.506+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "30058f28-5bc1-4959-a68a-9e083af2fde7",
+      "text": "Call 949-636-4419 to answer question",
+      "created_at": "2025-12-22T17:15:21.806+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b1e053d8-a63f-47b5-8427-b22294a49d9f",
+      "text": "Call Nick Altieri about auto insurance policy updates",
+      "created_at": "2025-12-22T17:14:02.74+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "57150e55-f055-433f-bd46-80dd251f8fb2",
+      "text": "Call Monica Nungaray to explain home insurance details for her parents",
+      "created_at": "2025-12-22T17:10:14.61+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "ac162970-998d-4cc1-bd0d-ba746fa26ad7",
+      "text": "Call Derek Wheeler back at 805-705-6043",
+      "created_at": "2025-12-22T17:05:35.98+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "c67db869-1c8e-4bff-a8b5-70cec3ecef15",
+      "text": "Process payment request from Leo Manzanares",
+      "created_at": "2025-12-22T17:01:54.731+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "378cb650-4c48-4c42-b07c-dea205040803",
+      "text": "Follow up on 55 & Retired campaign customer responses for coverage review",
+      "created_at": "2025-12-22T16:59:57.735+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "c3d764e1-b46c-4757-8d27-93bded6b0782",
+      "text": "Call Nick Alteri back to add new car to existing auto policy",
+      "created_at": "2025-12-22T16:57:44.575+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "c318d642-66c1-4ebc-be40-81808a1425ef",
+      "text": "Call back Larry Rockerpo regarding insurance policy cancellation",
+      "created_at": "2025-12-22T16:54:45.258+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "ffcec628-a544-4bdc-acc7-63dd13df96f0",
+      "text": "Call customer to verify monthly payment amount and explain changes OLGA ZAITCEVA",
+      "created_at": "2025-12-22T16:52:21.493+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "3931a166-e4e7-40b7-8b8b-41cdb804b74e",
+      "text": "Call customer to verify monthly payment amount of $600- 858-323-0616",
+      "created_at": "2025-12-22T16:49:46.086+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "804573bb-3a36-4de1-bcaa-9caaff6af035",
+      "text": "Cancel policy under. Julia Perez. The bamboo policy. Effective 12/28 but cancel it post date. Cancel it today. And remove automatic payments so they don't get charged again.",
+      "created_at": "2025-12-18T22:59:19.686+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "e31b7c2a-e70d-4635-a332-735753c93de5",
+      "text": "Set up RCC recurring payment for Maryori Chiquillo Cruz",
+      "created_at": "2025-12-18T22:21:59.342+00:00",
+      "created_by": "Sefra",
+      "completed": true
+    },
+    {
+      "id": "63090906-aa61-434b-a3b7-0aeef6374a97",
+      "text": "Cancel insurance and adjust umbrella policy for Michael and Betty Jack account",
+      "created_at": "2025-12-18T21:50:55.673+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "69dfa06f-6904-44c2-8ffd-e80e04e888c2",
+      "text": "Confirm policy coverage details and obtain current RCE for Quinn policy (copy) (copy) (copy)",
+      "created_at": "2025-12-17T20:44:20.34+00:00",
+      "created_by": "Sefra",
+      "completed": true
+    },
+    {
+      "id": "5accd839-2e29-44d5-bf06-c48f9e685118",
+      "text": "Reach out to Thomas Lemus for pictures for California Fair Plan.",
+      "created_at": "2025-12-17T00:29:52.852+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "b393713a-1041-4313-b466-8687c207eb56",
+      "text": "Send Julie an e-mail in regards to tax paperwork for Allstate lawsuit.",
+      "created_at": "2025-12-17T00:28:54.223+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "c0036fb0-4ad3-4bad-ab12-f09193c07301",
+      "text": "Send Gavin an intro e-mail with Carrie Hahn and Marisela Marquez.",
+      "created_at": "2025-12-17T00:28:26.504+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "40d16de0-b83e-436c-9413-95a422c277f2",
+      "text": "Request updated RCE (not older than 120 days) from Lindsay for case 481088585R1-10959268",
+      "created_at": "2025-12-17T00:12:30.587+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "f53e2e93-ef88-4482-9170-078109dfea57",
+      "text": "Reply to Carla Reeves regarding homeowner's insurance quote request",
+      "created_at": "2025-12-17T00:09:50.329+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    },
+    {
+      "id": "e18a3c55-791f-49cd-80e0-5e5d73bdb896",
+      "text": "use the to do list",
+      "created_at": "2025-12-16T23:45:29.685+00:00",
+      "created_by": "Derrick",
+      "completed": true
+    }
+  ],
+  "todaysTodos": [
+    {
+      "id": "f4eb7d1d-21d3-4c83-a4c4-6faa5ce945c6",
+      "text": "Quote Alfredo Plasencia on Home and Rental properties",
+      "created_at": "2026-01-15T17:52:40.327+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    },
+    {
+      "id": "c0a4dbb6-89e3-4564-b0f1-ef0dd1222a7c",
+      "text": "Requote Jeff Calvin Auto",
+      "created_at": "2026-01-15T17:51:36.104+00:00",
+      "created_by": "Derrick",
+      "completed": false
+    }
+  ],
+  "deletedActivities": [
+    {
+      "id": "e3fcf8f5-4df8-4be1-86a0-8e217ad680ad",
+      "action": "task_deleted",
+      "todo_id": "ff3bde58-9da1-4934-ba03-5b272ee0f5e9",
+      "todo_text": "Complete home renovation project for Melinda Rogers including roof, kitchen, and bathrooms",
+      "user_name": "Derrick",
+      "details": {},
+      "created_at": "2026-01-14T00:48:56.286876+00:00"
+    },
+    {
+      "id": "ce3fabea-8370-468b-8fdd-ad614f9ae5a9",
+      "action": "task_deleted",
+      "todo_id": "64fac6ec-08ad-4f6f-8ff3-4ed104bbe1b6",
+      "todo_text": "Complete home renovation project for Melinda Rogers including roof, kitchen, and bathrooms (copy)",
+      "user_name": "Derrick",
+      "details": {},
+      "created_at": "2026-01-13T22:23:56.74139+00:00"
+    },
+    {
+      "id": "57999ed9-8dec-4b86-9b42-18724aef7849",
+      "action": "task_deleted",
+      "todo_id": "35caba17-ca79-4e22-81d4-e1f40c928e88",
+      "todo_text": "Contact Adian Pezacki about his dad's terminated auto policy",
+      "user_name": "Derrick",
+      "details": {},
+      "created_at": "2026-01-12T18:14:41.567839+00:00"
+    },
+    {
+      "id": "40deec8c-a2e2-4216-891d-c0d7280de5ae",
+      "action": "task_deleted",
+      "todo_id": "6ea1532d-eb22-4fc9-87b5-b0661dbabb7a",
+      "todo_text": "paul",
+      "user_name": "Derrick",
+      "details": {},
+      "created_at": "2026-01-12T18:14:34.392101+00:00"
+    },
+    {
+      "id": "884baafb-a2b6-4496-9192-7bbfdedce747",
+      "action": "task_deleted",
+      "todo_id": "8724a015-9a59-4f85-85d1-ac509719528b",
+      "todo_text": "Merge Test A - urgent priority",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2026-01-05T22:56:00.697271+00:00"
+    },
+    {
+      "id": "6d79d107-0df6-4c2a-8614-715f262e9dc3",
+      "action": "task_deleted",
+      "todo_id": "1998836b-aef2-4e2c-a048-01c8571dabf2",
+      "todo_text": "test2 [+1 merged]",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2026-01-05T22:41:23.132141+00:00"
+    },
+    {
+      "id": "e00c0071-6959-4daf-a89f-c5ae3c991d55",
+      "action": "task_deleted",
+      "todo_id": "305ed717-e3e3-4a95-9d93-f8a4a9bbae3d",
+      "todo_text": "test1",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2026-01-05T22:25:50.129198+00:00"
+    },
+    {
+      "id": "66832dfc-5003-438f-94a8-5a10736c4d89",
+      "action": "task_deleted",
+      "todo_id": "fbf062ef-cda3-4fa9-a7a3-558bcfd0df90",
+      "todo_text": "test2",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2026-01-05T22:25:48.631213+00:00"
+    },
+    {
+      "id": "24c6f28a-643e-4840-9138-777c8ce75662",
+      "action": "task_deleted",
+      "todo_id": "36564c8a-2735-4829-b4d1-af0049f533f2",
+      "todo_text": "File insurance claim for car accident",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2026-01-05T22:13:21.228654+00:00"
+    },
+    {
+      "id": "f6a91d9d-02f1-43b7-be87-c3ea5503b6ea",
+      "action": "task_deleted",
+      "todo_id": "bba9a4a4-16f4-4730-828c-4f4a35491725",
+      "todo_text": "File insurance claim for car accident",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2026-01-05T19:45:59.683075+00:00"
+    },
+    {
+      "id": "d2988135-7bd5-44fc-9be0-13ee6bb5f1e2",
+      "action": "task_deleted",
+      "todo_id": "7a9584b4-dbbd-444d-806d-8bebe4c81718",
+      "todo_text": "paul buvik",
+      "user_name": "Sefra",
+      "details": {},
+      "created_at": "2026-01-05T17:38:50.650909+00:00"
+    },
+    {
+      "id": "083c6530-b418-4b73-90fa-d007cbb5aa8e",
+      "action": "task_deleted",
+      "todo_id": "28c11ed2-611e-4944-9365-a08ff28e1118",
+      "todo_text": "Thank you.",
+      "user_name": "Derrick",
+      "details": {},
+      "created_at": "2025-12-30T18:15:54.653693+00:00"
+    },
+    {
+      "id": "b752c14d-3521-40b6-bb24-51d1186ac00c",
+      "action": "task_deleted",
+      "todo_id": "16469b01-1b80-4a5b-9409-633325474d40",
+      "todo_text": "test2",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2025-12-29T23:49:37.288738+00:00"
+    },
+    {
+      "id": "6a2ca6f5-1eb7-4e4c-bc9a-c99ff327d241",
+      "action": "task_deleted",
+      "todo_id": "37e2fde7-52a2-442c-be5f-7fbad6a84e8c",
+      "todo_text": "test",
+      "user_name": "Admin",
+      "details": {},
+      "created_at": "2025-12-29T23:46:51.632662+00:00"
+    },
+    {
+      "id": "a73f8f59-5922-4bc0-ae8a-0bfbadfdc233",
+      "action": "task_deleted",
+      "todo_id": "708f0435-ed12-4d5a-a71f-b422124df424",
+      "todo_text": "Thank you. (copy)",
+      "user_name": "Adrian",
+      "details": {},
+      "created_at": "2025-12-29T23:45:25.922+00:00"
+    },
+    {
+      "id": "a775a7da-c956-4ce8-9f44-afb1923d5190",
+      "action": "task_deleted",
+      "todo_id": "1d3a5eb7-42b0-4214-a4d3-7efbb33f509e",
+      "todo_text": "test notification board",
+      "user_name": "Admin",
+      "details": {},
+      "created_at": "2025-12-29T23:39:11.268042+00:00"
+    },
+    {
+      "id": "e96ebc1a-822a-4b20-93aa-8c2c3c1065a0",
+      "action": "task_deleted",
+      "todo_id": "ed1401c0-0a98-4ea8-832c-e1ac89ab72ec",
+      "todo_text": "test task",
+      "user_name": "Admin",
+      "details": {},
+      "created_at": "2025-12-22T18:47:14.533527+00:00"
+    }
+  ]
+}

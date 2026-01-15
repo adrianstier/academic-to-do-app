@@ -28,6 +28,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Subtask, TodoPriority, PRIORITY_CONFIG } from '@/types/todo';
+import { fetchWithCsrf } from '@/lib/csrf';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ParsedSubtask {
@@ -282,7 +283,7 @@ export default function FileImporter({
         // Move to transcribe step
         advanceToStep('transcribe');
 
-        const response = await fetch('/api/ai/transcribe', {
+        const response = await fetchWithCsrf('/api/ai/transcribe', {
           method: 'POST',
           body: formData,
         });
@@ -308,7 +309,7 @@ export default function FileImporter({
         setStatus('parsing');
         advanceToStep('extract');
 
-        const parseResponse = await fetch('/api/ai/smart-parse', {
+        const parseResponse = await fetchWithCsrf('/api/ai/smart-parse', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: transcript, users }),
@@ -346,7 +347,7 @@ export default function FileImporter({
         // Move to read step
         advanceToStep('read');
 
-        const response = await fetch('/api/ai/parse-file', {
+        const response = await fetchWithCsrf('/api/ai/parse-file', {
           method: 'POST',
           body: formData,
         });

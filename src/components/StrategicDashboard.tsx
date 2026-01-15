@@ -44,6 +44,7 @@ import {
   GOAL_STATUS_CONFIG,
   GOAL_PRIORITY_CONFIG,
 } from '@/types/todo';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface StrategicDashboardProps {
   userName: string;
@@ -172,7 +173,7 @@ export default function StrategicDashboard({
     if (!newGoal.title.trim()) return;
 
     try {
-      const res = await fetch('/api/goals', {
+      const res = await fetchWithCsrf('/api/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -202,7 +203,7 @@ export default function StrategicDashboard({
 
   const handleUpdateGoal = async (goalId: string, updates: Partial<StrategicGoal>) => {
     try {
-      const res = await fetch('/api/goals', {
+      const res = await fetchWithCsrf('/api/goals', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,7 +227,7 @@ export default function StrategicDashboard({
     if (!confirm('Are you sure you want to delete this goal?')) return;
 
     try {
-      const res = await fetch(`/api/goals?id=${goalId}&userName=${encodeURIComponent(userName)}`, {
+      const res = await fetchWithCsrf(`/api/goals?id=${goalId}&userName=${encodeURIComponent(userName)}`, {
         method: 'DELETE',
       });
 
@@ -240,7 +241,7 @@ export default function StrategicDashboard({
 
   const handleToggleMilestone = async (milestone: GoalMilestone) => {
     try {
-      const res = await fetch('/api/goals/milestones', {
+      const res = await fetchWithCsrf('/api/goals/milestones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,7 +261,7 @@ export default function StrategicDashboard({
 
   const handleAddMilestone = async (goalId: string, title: string) => {
     try {
-      const res = await fetch('/api/goals/milestones', {
+      const res = await fetchWithCsrf('/api/goals/milestones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

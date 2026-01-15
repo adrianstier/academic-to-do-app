@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Plus, Calendar, Flag, User, Sparkles, Loader2, Mic, MicOff, ChevronDown, Upload } from 'lucide-react';
+import { Plus, Calendar, Flag, User, Sparkles, Loader2, Mic, MicOff, ChevronDown, Upload, X } from 'lucide-react';
 import SmartParseModal from './SmartParseModal';
 import VoiceRecordingIndicator from './VoiceRecordingIndicator';
 import FileImporter from './FileImporter';
 import { QuickTaskButtons, useTaskPatterns } from './QuickTaskButtons';
+import { CategoryConfidenceIndicator } from './CategoryConfidenceIndicator';
 import { TodoPriority, Subtask, PRIORITY_CONFIG, QuickTaskTemplate } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
+import { analyzeTaskPattern, TaskPatternMatch } from '@/lib/insurancePatterns';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface AddTodoProps {
   onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => void;
@@ -118,6 +121,9 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
   const { patterns } = useTaskPatterns();
   const [suggestedSubtasks, setSuggestedSubtasks] = useState<string[]>([]);
 
+  // AI Pattern detection state (Feature 4 - CategoryConfidenceIndicator)
+  const [patternMatch, setPatternMatch] = useState<TaskPatternMatch | null>(null);
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -147,10 +153,38 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     }
   }, [autoFocus]);
 
+  // Analyze task pattern as user types (Feature 4 - AI Confidence Indicator)
+  useEffect(() => {
+    // Only analyze if text is longer than 10 characters and no template subtasks are already set
+    if (text.length > 10 && suggestedSubtasks.length === 0) {
+      const match = analyzeTaskPattern(text);
+      setPatternMatch(match);
+    } else if (text.length <= 10) {
+      setPatternMatch(null);
+    }
+  }, [text, suggestedSubtasks.length]);
+
+  // Handle accepting AI suggestions
+  const handleAcceptSuggestions = useCallback(() => {
+    if (patternMatch) {
+      setPriority(patternMatch.suggestedPriority);
+      // Only add subtasks if none are currently set
+      if (patternMatch.suggestedSubtasks.length > 0 && suggestedSubtasks.length === 0) {
+        setSuggestedSubtasks(patternMatch.suggestedSubtasks);
+      }
+    }
+    setPatternMatch(null);
+  }, [patternMatch, suggestedSubtasks.length]);
+
+  // Handle dismissing AI suggestions
+  const handleDismissSuggestions = useCallback(() => {
+    setPatternMatch(null);
+  }, []);
+
   // Smart parse API call
   const smartParse = useCallback(async (inputText: string): Promise<SmartParseResult | null> => {
     try {
-      const response = await fetch('/api/ai/smart-parse', {
+      const response = await fetchWithCsrf('/api/ai/smart-parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: inputText, users }),
@@ -322,6 +356,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     setAssignedTo('');
     setShowOptions(false);
     setParsedResult(null);
+    setSuggestedSubtasks([]);
+    setPatternMatch(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -417,6 +453,13 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         patterns={patterns}
       />
 
+      {/* AI Pattern Detection Indicator (Feature 4) */}
+      <CategoryConfidenceIndicator
+        patternMatch={patternMatch}
+        onDismiss={handleDismissSuggestions}
+        onAcceptSuggestions={handleAcceptSuggestions}
+      />
+
       <form
         onSubmit={handleQuickAdd}
         onDragOver={handleDragOver}
@@ -455,11 +498,23 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                 rows={1}
                 disabled={isProcessing}
                 aria-label="New task description"
-                className={`input-refined w-full px-4 py-3 resize-none text-sm min-h-[48px] text-[var(--foreground)] placeholder-[var(--text-light)] ${
+                className={`input-refined w-full px-4 py-3 pr-10 resize-none text-sm min-h-[48px] text-[var(--foreground)] placeholder-[var(--text-light)] ${
                   isRecording ? 'border-[var(--danger)] ring-2 ring-[var(--danger-light)]' : ''
                 }`}
                 style={{ maxHeight: '120px' }}
               />
+              {/* Clear button - appears when there's text */}
+              {text.trim() && !isProcessing && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition-all"
+                  aria-label="Clear form"
+                  title="Clear form"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Action buttons */}

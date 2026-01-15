@@ -317,15 +317,18 @@ export const OWNER_USERNAME = 'Derrick';
 // ============================================
 
 // Task category for pattern analysis (Feature 4)
+// Based on data analysis: Policy (42%), Follow-up (40%), Vehicle (25%), Payment (18%), Endorsement (18%), Claims (10.5%), Quotes (10.5%)
 export type TaskCategory =
-  | 'policy_review'
-  | 'vehicle_add'
-  | 'new_client'
-  | 'claim'
-  | 'payment'
-  | 'quote'
-  | 'documentation'
-  | 'follow_up'
+  | 'policy_review'    // 42% - Policy reviews, renewals, coverage checks
+  | 'follow_up'        // 40% - Calls, callbacks, customer communication
+  | 'vehicle_add'      // 25% - Adding/removing vehicles, auto changes
+  | 'payment'          // 18% - Payment processing, billing issues (100% completion rate!)
+  | 'endorsement'      // 18% - Policy changes, endorsements
+  | 'claim'            // 10.5% - Claims processing (87.5% completion rate)
+  | 'quote'            // 10.5% - New quotes, proposals (50% completion rate - needs improvement)
+  | 'documentation'    // 12% - Sending docs, dec pages
+  | 'new_client'       // 2.6% - New client onboarding (100% completion rate)
+  | 'cancellation'     // 6.6% - Policy cancellations
   | 'other';
 
 // Task pattern learned from historical data
@@ -378,7 +381,9 @@ export interface TaskCompletionSummaryData {
 }
 
 // Insurance-specific quick task definitions
+// Based on task analysis: Policy (42%), Follow-up (40%), Vehicle (25%), Payment (18%), Claims (10.5%), Quotes (10.5%)
 export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
+  // TOP CATEGORY: Policy Review/Renewal (42% of all tasks)
   {
     text: 'Policy review for [customer]',
     category: 'policy_review',
@@ -387,9 +392,24 @@ export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
       'Review current coverage limits',
       'Check for discount opportunities',
       'Verify contact information',
-      'Prepare renewal quote',
+      'Prepare renewal quote if applicable',
     ],
+    icon: '📋',
   },
+  // TOP CATEGORY: Follow-up/Communication (40% of all tasks - HIGHEST URGENCY)
+  {
+    text: 'Follow up call - [customer]',
+    category: 'follow_up',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Review account notes before call',
+      'Make call or leave voicemail',
+      'Document conversation details',
+      'Schedule next follow-up if needed',
+    ],
+    icon: '📞',
+  },
+  // TOP CATEGORY: Vehicle/Auto Changes (25% of all tasks - 84% completion rate)
   {
     text: 'Add vehicle to policy - [customer]',
     category: 'vehicle_add',
@@ -400,7 +420,64 @@ export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
       'Calculate premium change',
       'Update policy and send new dec page',
     ],
+    icon: '🚗',
   },
+  // Payment/Billing (18% - 100% completion rate, best performing)
+  {
+    text: 'Payment/billing issue - [customer]',
+    category: 'payment',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Review account status',
+      'Contact carrier if needed',
+      'Process payment or resolve issue',
+      'Confirm resolution with customer',
+    ],
+    icon: '💳',
+  },
+  // NEW: Endorsement/Policy Change (18% of all tasks)
+  {
+    text: 'Policy endorsement - [customer]',
+    category: 'documentation',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Review requested change details',
+      'Calculate premium impact',
+      'Process endorsement with carrier',
+      'Send updated declarations page',
+    ],
+    icon: '📝',
+  },
+  // Claims (10.5% - 87.5% completion rate)
+  {
+    text: 'Process claim for [customer]',
+    category: 'claim',
+    defaultPriority: 'urgent',
+    suggestedSubtasks: [
+      'File claim with carrier',
+      'Document incident details',
+      'Coordinate with adjuster',
+      'Follow up on claim status',
+      'Update customer on progress',
+    ],
+    icon: '🚨',
+  },
+  // Quotes/Proposals (10.5% - LOWEST completion rate at 50%, needs better breakdown)
+  {
+    text: 'Quote request - [customer]',
+    category: 'quote',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Collect all required customer information',
+      'Pull MVR and claims history',
+      'Run quotes with multiple carriers',
+      'Compare coverage options and pricing',
+      'Prepare proposal document',
+      'Send quote and schedule follow-up',
+    ],
+    icon: '📊',
+  },
+  // New Client (2.6% but 100% completion rate - keep it)
   {
     text: 'New client onboarding - [customer]',
     category: 'new_client',
@@ -413,39 +490,33 @@ export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
       'Set up account in management system',
       'Send welcome packet',
     ],
+    icon: '👋',
   },
+  // NEW: Documentation (12% of all tasks - 67% completion rate)
   {
-    text: 'Process claim for [customer]',
-    category: 'claim',
-    defaultPriority: 'urgent',
-    suggestedSubtasks: [
-      'File claim with carrier',
-      'Document incident details',
-      'Coordinate with adjuster',
-      'Follow up on claim status',
-      'Update customer on progress',
-    ],
-  },
-  {
-    text: 'Quote request - [customer]',
-    category: 'quote',
+    text: 'Send documents to [customer]',
+    category: 'documentation',
     defaultPriority: 'medium',
     suggestedSubtasks: [
-      'Gather customer information',
-      'Run quotes with carriers',
-      'Compare coverage options',
-      'Prepare and send proposal',
+      'Locate requested documents',
+      'Verify document accuracy',
+      'Email documents to customer',
+      'Confirm receipt with customer',
     ],
+    icon: '📄',
   },
+  // NEW: Cancellation (6.6% - important to track)
   {
-    text: 'Payment/billing issue - [customer]',
-    category: 'payment',
+    text: 'Process cancellation - [customer]',
+    category: 'other',
     defaultPriority: 'high',
     suggestedSubtasks: [
-      'Review account status',
-      'Contact carrier if needed',
-      'Resolve payment issue',
-      'Confirm with customer',
+      'Verify cancellation request',
+      'Offer retention options if applicable',
+      'Process cancellation with carrier',
+      'Send confirmation to customer',
+      'Update account records',
     ],
+    icon: '❌',
   },
 ];

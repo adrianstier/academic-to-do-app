@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
+import { analyzeTaskPattern, getAllPatternDefinitions, getCompletionRateWarning } from '@/lib/insurancePatterns';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -26,20 +27,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Analyze task pattern for insurance-specific context
+    const patternMatch = analyzeTaskPattern(text);
+    const insuranceContext = patternMatch
+      ? `\nDetected task category: ${patternMatch.category.toUpperCase()} (${Math.round(patternMatch.confidence * 100)}% confidence)
+Suggested subtasks for this category:
+${patternMatch.suggestedSubtasks.map((s, i) => `- ${s} (~${patternMatch.estimatedMinutes[i]} min)`).join('\n')}
+${patternMatch.tips ? `\nTip: ${patternMatch.tips}` : ''}`
+      : '';
+
     const userList = Array.isArray(users) && users.length > 0
       ? users.join(', ')
       : 'no team members registered';
 
-    const prompt = `You are a task breakdown assistant for a small business team. Take a task and break it down into actionable subtasks.
+    // Get completion rate warning if applicable
+    const completionWarning = patternMatch ? getCompletionRateWarning(patternMatch.category) : null;
+
+    const prompt = `You are a task breakdown assistant for Bealer Agency, an Allstate insurance agency. Take a task and break it down into actionable subtasks.
 
 Main task: "${text}"
+${insuranceContext}
 
 Team members: ${userList}
+
+INSURANCE AGENCY CONTEXT:
+You're helping an insurance agency team. Common task types and their typical subtasks:
+
+${getAllPatternDefinitions()}
 
 Analyze the task and break it down into 2-6 specific, actionable subtasks. Each subtask should be:
 - A single, concrete action
 - Completable in one sitting
 - Starting with an action verb
+- Relevant to insurance agency workflows
 
 Respond ONLY with valid JSON (no markdown, no code blocks):
 {
@@ -50,11 +70,13 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
       "estimatedMinutes": estimated time in minutes (5, 10, 15, 30, 60, etc.)
     }
   ],
-  "summary": "Brief 1-sentence summary of what completing these subtasks accomplishes"
+  "summary": "Brief 1-sentence summary of what completing these subtasks accomplishes",
+  "category": "detected category name or null"
 }
 
 Rules:
 - Create 2-6 subtasks depending on task complexity
+- Use the detected category's suggested subtasks as a starting point, but customize for the specific task
 - Simple tasks might only need 2-3 subtasks
 - Complex tasks can have up to 6 subtasks
 - Each subtask should be independently completable
@@ -62,30 +84,32 @@ Rules:
 - Inherit urgency from the main task context
 - Keep subtask text under 80 characters
 - Don't add unnecessary steps - focus on essential actions
+- For insurance tasks, include documentation and customer communication steps
 
-Examples:
+Insurance-specific examples:
 
-Task: "Prepare quarterly report"
+Task: "Policy review for John Smith"
 {
   "subtasks": [
-    { "text": "Gather Q4 sales data from CRM", "priority": "high", "estimatedMinutes": 30 },
-    { "text": "Calculate revenue and expense totals", "priority": "high", "estimatedMinutes": 20 },
-    { "text": "Create summary charts and graphs", "priority": "medium", "estimatedMinutes": 45 },
-    { "text": "Write executive summary section", "priority": "high", "estimatedMinutes": 30 },
-    { "text": "Review and proofread final document", "priority": "medium", "estimatedMinutes": 15 }
+    { "text": "Review current coverage limits and deductibles", "priority": "high", "estimatedMinutes": 15 },
+    { "text": "Check for available discounts (multi-policy, good driver)", "priority": "medium", "estimatedMinutes": 10 },
+    { "text": "Verify customer contact information is current", "priority": "medium", "estimatedMinutes": 5 },
+    { "text": "Prepare renewal quote if expiring within 30 days", "priority": "medium", "estimatedMinutes": 20 }
   ],
-  "summary": "Complete quarterly business report ready for stakeholder review"
+  "summary": "Complete policy review ensuring John Smith has optimal coverage and pricing",
+  "category": "policy_review"
 }
 
-Task: "Call client about project"
+Task: "Call back customer about auto claim"
 {
   "subtasks": [
-    { "text": "Review project status and recent updates", "priority": "medium", "estimatedMinutes": 10 },
-    { "text": "Prepare list of discussion points", "priority": "medium", "estimatedMinutes": 5 },
-    { "text": "Call client and discuss project updates", "priority": "high", "estimatedMinutes": 20 },
-    { "text": "Send follow-up email with action items", "priority": "medium", "estimatedMinutes": 10 }
+    { "text": "Review claim status and recent notes", "priority": "high", "estimatedMinutes": 5 },
+    { "text": "Check for any adjuster updates", "priority": "high", "estimatedMinutes": 5 },
+    { "text": "Call customer to provide status update", "priority": "high", "estimatedMinutes": 15 },
+    { "text": "Document conversation and next steps in notes", "priority": "medium", "estimatedMinutes": 5 }
   ],
-  "summary": "Client fully updated on project with clear next steps documented"
+  "summary": "Customer updated on claim progress with clear expectations set",
+  "category": "follow_up"
 }
 
 Respond with ONLY the JSON object, no other text.`;
@@ -133,11 +157,36 @@ Respond with ONLY the JSON object, no other text.`;
       );
     }
 
-    return NextResponse.json({
+    // Build response with pattern analysis info
+    const response: {
+      success: boolean;
+      subtasks: Subtask[];
+      summary: string;
+      category?: string;
+      confidence?: number;
+      tips?: string;
+      completionWarning?: string;
+    } = {
       success: true,
       subtasks: validatedSubtasks,
       summary: String(result.summary || '').slice(0, 200),
-    });
+    };
+
+    // Add pattern analysis info if available
+    if (patternMatch) {
+      response.category = patternMatch.category;
+      response.confidence = Math.round(patternMatch.confidence * 100);
+      if (patternMatch.tips) {
+        response.tips = patternMatch.tips;
+      }
+      if (completionWarning) {
+        response.completionWarning = completionWarning;
+      }
+    } else if (result.category) {
+      response.category = String(result.category);
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Error breaking down task', error, { component: 'BreakdownTaskAPI', details: errorMessage });

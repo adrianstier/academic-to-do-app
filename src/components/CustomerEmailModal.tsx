@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
 import { extractPhoneNumbers, extractEmails, extractPotentialNames } from '@/lib/duplicateDetection';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface CustomerEmailModalProps {
   todos: Todo[];
@@ -112,7 +113,7 @@ export default function CustomerEmailModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/ai/generate-email', {
+      const response = await fetchWithCsrf('/api/ai/generate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,7 +169,7 @@ export default function CustomerEmailModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/ai/translate-email', {
+      const response = await fetchWithCsrf('/api/ai/translate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
