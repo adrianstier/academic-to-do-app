@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useEscapeKey } from '@/hooks';
 import { FileText, Plus, Trash2, Share2, Lock, X, ChevronDown, Loader2 } from 'lucide-react';
 import { TaskTemplate, TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,7 +43,7 @@ export default function TemplatePicker({
     if (!currentUserName) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/templates?userName=${encodeURIComponent(currentUserName)}`);
+      const response = await fetchWithCsrf(`/api/templates?userName=${encodeURIComponent(currentUserName)}`);
       if (response.ok) {
         const data = await response.json();
         setTemplates(data);
@@ -132,7 +133,7 @@ export default function TemplatePicker({
     if (!confirm(`Delete template "${template.name}"?`)) return;
 
     try {
-      await fetch(`/api/templates?id=${template.id}&userName=${encodeURIComponent(currentUserName)}`, {
+      await fetchWithCsrf(`/api/templates?id=${template.id}&userName=${encodeURIComponent(currentUserName)}`, {
         method: 'DELETE',
       });
       setTemplates((prev) => prev.filter((t) => t.id !== template.id));
@@ -140,6 +141,9 @@ export default function TemplatePicker({
       logger.error('Failed to delete template', error, { component: 'TemplatePicker' });
     }
   };
+
+  // Close dropdown on Escape key
+  useEscapeKey(() => setIsOpen(false), { enabled: isOpen });
 
   const myTemplates = templates.filter((t) => t.created_by === currentUserName);
   const sharedTemplates = templates.filter((t) => t.is_shared && t.created_by !== currentUserName);

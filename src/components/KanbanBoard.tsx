@@ -542,7 +542,6 @@ function TaskDetailModal({
   const [text, setText] = useState(todo.text);
   const [notes, setNotes] = useState(todo.notes || '');
   const [newSubtaskText, setNewSubtaskText] = useState('');
-  const [showRecurrenceMenu, setShowRecurrenceMenu] = useState(false);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showContentImporter, setShowContentImporter] = useState(false);
@@ -1235,7 +1234,7 @@ function TaskDetailModal({
             onClick={onClose}
             className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors text-sm font-medium"
           >
-            Done
+            Close
           </button>
         </div>
       </motion.div>

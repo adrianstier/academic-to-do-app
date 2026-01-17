@@ -213,11 +213,72 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--brand-navy);
 }
 
-/* ─── Focus States ─── */
+/* ─── Focus States for Keyboard Navigation ─── */
+/* Base focus-visible styles for keyboard navigation */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: var(--radius-sm);
+}
+
+/* Enhanced focus ring for buttons */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--accent-light);
+}
+
+/* Focus ring for inputs and textareas */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+/* Focus ring for links */
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Focus ring for checkboxes and radio buttons */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+/* Focus ring for interactive cards and list items */
+[role="listitem"]:focus-visible,
+[role="option"]:focus-visible,
+[role="menuitem"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px var(--accent-light);
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 1.5rem;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  z-index: 9999;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
 }
 
 /* ─── Custom Scrollbar ─── */
@@ -397,7 +458,7 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--border-hover);
 }
 
-.input-refined:focus {
+.input-refined:focus-visible {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-light);
   outline: none;
