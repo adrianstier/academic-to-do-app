@@ -484,3 +484,278 @@ describe('useTodoData Error Handling', () => {
     });
   });
 });
+
+describe('useTodoData Edge Cases', () => {
+  const mockUser = {
+    id: 'user-1',
+    name: 'TestUser',
+    color: '#0033A0',
+  };
+
+  beforeEach(() => {
+    const store = useTodoStore.getState();
+    store.setTodos([]);
+    store.setError(null);
+    store.setLoading(true);
+    vi.clearAllMocks();
+  });
+
+  it('should create todo without optional parameters', async () => {
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    await waitFor(() => {
+      expect(useTodoStore.getState().loading).toBe(false);
+    });
+
+    await act(async () => {
+      const todo = await result.current.createTodo('Simple task', 'low');
+      expect(todo).toBeDefined();
+      expect(todo?.text).toBe('Simple task');
+      expect(todo?.priority).toBe('low');
+    });
+
+    // Should insert without optional fields
+    expect(mockInsert).toHaveBeenCalledWith(
+      'todos',
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: 'Simple task',
+          priority: 'low',
+        }),
+      ])
+    );
+  });
+
+  it('should create todo with default priority medium (not included in insert)', async () => {
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    await waitFor(() => {
+      expect(useTodoStore.getState().loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.createTodo('Default priority task', 'medium');
+    });
+
+    // Priority 'medium' is default so should NOT be included in insert
+    const insertCall = mockInsert.mock.calls.find((c: unknown[]) => c[0] === 'todos');
+    expect(insertCall).toBeDefined();
+    const insertData = insertCall[1][0];
+    expect(insertData.priority).toBeUndefined();
+  });
+});
+
+describe('useTodoData Rollback on Error', () => {
+  const mockUser = {
+    id: 'user-1',
+    name: 'TestUser',
+    color: '#0033A0',
+  };
+
+  beforeEach(() => {
+    const store = useTodoStore.getState();
+    store.setTodos([createMockTodo({ id: 'todo-1', text: 'Original task' })]);
+    store.setError(null);
+    store.setLoading(false);
+    vi.clearAllMocks();
+  });
+
+  it('should return false when toggleComplete called with non-existent todo', async () => {
+    act(() => {
+      useTodoStore.getState().setTodos([
+        createMockTodo({ id: 'existing-todo', text: 'Existing task' }),
+      ]);
+      useTodoStore.getState().setLoading(false);
+    });
+
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current.toggleComplete).toBeDefined();
+    });
+
+    let toggleResult: boolean = true;
+    await act(async () => {
+      toggleResult = await result.current.toggleComplete('non-existent-id');
+    });
+
+    expect(toggleResult).toBe(false);
+  });
+
+  it('should return false when deleteTodo called with non-existent todo', async () => {
+    act(() => {
+      useTodoStore.getState().setTodos([
+        createMockTodo({ id: 'existing-todo', text: 'Existing task' }),
+      ]);
+      useTodoStore.getState().setLoading(false);
+    });
+
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current.deleteTodo).toBeDefined();
+    });
+
+    let deleteResult: boolean = true;
+    await act(async () => {
+      deleteResult = await result.current.deleteTodo('non-existent-id');
+    });
+
+    expect(deleteResult).toBe(false);
+  });
+
+  it('should return false when updateTodo called with non-existent todo', async () => {
+    act(() => {
+      useTodoStore.getState().setTodos([
+        createMockTodo({ id: 'existing-todo', text: 'Existing task' }),
+      ]);
+      useTodoStore.getState().setLoading(false);
+    });
+
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current.updateTodo).toBeDefined();
+    });
+
+    let updateResult: boolean = true;
+    await act(async () => {
+      updateResult = await result.current.updateTodo('non-existent-id', { text: 'updated' });
+    });
+
+    expect(updateResult).toBe(false);
+  });
+});
+
+describe('useTodoData Create with Transcription', () => {
+  const mockUser = {
+    id: 'user-1',
+    name: 'TestUser',
+    color: '#0033A0',
+  };
+
+  beforeEach(() => {
+    const store = useTodoStore.getState();
+    store.setTodos([]);
+    store.setError(null);
+    vi.clearAllMocks();
+  });
+
+  it('should include transcription in create todo', async () => {
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    await waitFor(() => {
+      expect(useTodoStore.getState().loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.createTodo(
+        'Task from voicemail',
+        'high',
+        undefined,
+        undefined,
+        undefined,
+        'This is a transcription from voicemail'
+      );
+    });
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      'todos',
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: 'Task from voicemail',
+          transcription: 'This is a transcription from voicemail',
+        }),
+      ])
+    );
+  });
+
+  it('should create todo with due date', async () => {
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    await waitFor(() => {
+      expect(useTodoStore.getState().loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.createTodo(
+        'Task with due date',
+        'high',
+        '2025-01-20'
+      );
+    });
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      'todos',
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: 'Task with due date',
+          due_date: '2025-01-20',
+        }),
+      ])
+    );
+  });
+
+  it('should create todo with assigned user', async () => {
+    const { result } = renderHook(() => useTodoData(mockUser));
+
+    await waitFor(() => {
+      expect(useTodoStore.getState().loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.createTodo(
+        'Assigned task',
+        'urgent',
+        undefined,
+        'Derrick'
+      );
+    });
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      'todos',
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: 'Assigned task',
+          assigned_to: 'Derrick',
+        }),
+      ])
+    );
+  });
+});
+
+describe('useTodoData Real-time Events', () => {
+  const mockUser = {
+    id: 'user-1',
+    name: 'TestUser',
+    color: '#0033A0',
+  };
+
+  beforeEach(() => {
+    const store = useTodoStore.getState();
+    store.setTodos([]);
+    store.setError(null);
+    vi.clearAllMocks();
+  });
+
+  it('should not add duplicate todo on INSERT event', async () => {
+    // Pre-add a todo that will be "inserted" via real-time
+    const existingTodo = createMockTodo({ id: 'dupe-id', text: 'Already exists' });
+    act(() => {
+      useTodoStore.getState().setTodos([existingTodo]);
+    });
+
+    // The real-time handler should check for duplicates
+    renderHook(() => useTodoData(mockUser));
+
+    await waitFor(() => {
+      const todos = useTodoStore.getState().todos;
+      // Should still have only one todo with this ID
+      const matching = todos.filter(t => t.id === 'dupe-id');
+      expect(matching.length).toBe(1);
+    });
+  });
+});

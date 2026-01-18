@@ -218,6 +218,7 @@ test('returns subtasks for claim', () => {
 });
 
 test('returns empty array for unknown category', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subtasks = getCategorySubtasks('unknown_category' as any);
   expect(subtasks).toBeDefined();
 });

@@ -141,7 +141,6 @@ export default function FileImporter({
   const [extractedText, setExtractedText] = useState('');
   const [showFullText, setShowFullText] = useState(false);
   const [processingSteps, setProcessingSteps] = useState<ProcessingStep[]>([]);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
   // Helper to update a specific step's status
   const updateStepStatus = (stepId: string, stepStatus: ProcessingStep['status']) => {
@@ -159,11 +158,6 @@ export default function FileImporter({
         if (i === stepIndex) return { ...step, status: 'active' as const };
         return step;
       });
-    });
-    setCurrentStepIndex(prev => {
-      const steps = processingSteps;
-      const newIndex = steps.findIndex(s => s.id === stepId);
-      return newIndex >= 0 ? newIndex : prev;
     });
   };
 
@@ -264,7 +258,6 @@ export default function FileImporter({
     // Initialize processing steps
     const steps = getProcessingSteps(fileType);
     setProcessingSteps(steps);
-    setCurrentStepIndex(0);
     setStatus('processing');
     setError('');
 
@@ -513,13 +506,6 @@ export default function FileImporter({
   const totalSelected = subtasks.filter(st => st.selected).length;
   const priorityConfig = PRIORITY_CONFIG[mainTask.priority];
   const FileIcon = getFileIcon(fileType);
-
-  const getProcessingText = () => {
-    if (fileType === 'audio') {
-      return status === 'processing' ? 'Transcribing audio...' : 'Extracting tasks...';
-    }
-    return status === 'processing' ? 'Reading document...' : 'Extracting tasks...';
-  };
 
   const getButtonText = () => {
     if (fileType === 'audio') {

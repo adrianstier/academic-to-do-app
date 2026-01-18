@@ -36,7 +36,9 @@ interface MigrationProgress {
 
 interface Todo {
   id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subtasks?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attachments?: any[];
   assigned_to?: string;
   created_by: string;

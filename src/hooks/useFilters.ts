@@ -6,8 +6,8 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { useTodoStore, selectFilteredTodos, isDueToday, isOverdue, priorityOrder } from '@/store/todoStore';
-import { Todo, TodoStatus, TodoPriority, SortOption, QuickFilter } from '@/types/todo';
+import { useTodoStore, isDueToday, isOverdue, priorityOrder } from '@/store/todoStore';
+import { TodoStatus, SortOption, QuickFilter } from '@/types/todo';
 import { extractPotentialNames } from '@/lib/duplicateDetection';
 
 export interface FilterState {
@@ -40,6 +40,7 @@ export function useFilters(userName: string) {
 
   // Get archived todos (completed > 48 hours ago)
   const archivedTodos = useMemo(() => {
+    // Using Date.now() here is intentional - we want current time when todos change
     const cutoff = Date.now() - 48 * 60 * 60 * 1000;
     return todos
       .filter((todo) => {

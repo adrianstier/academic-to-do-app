@@ -3,13 +3,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, Mail, Copy, ExternalLink, Sparkles, Check,
+  X, Mail, Copy, Sparkles, Check,
   User, Phone, AtSign, FileText, ChevronDown, ChevronUp,
   RefreshCw, Send, AlertTriangle, Shield, Calendar, DollarSign, Info, Languages
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
 import { extractPhoneNumbers, extractEmails, extractPotentialNames } from '@/lib/duplicateDetection';
 import { fetchWithCsrf } from '@/lib/csrf';
+import { useEscapeKey } from '@/hooks';
 
 interface CustomerEmailModalProps {
   todos: Todo[];
@@ -71,6 +72,9 @@ export default function CustomerEmailModal({
   const [showTaskDetails, setShowTaskDetails] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // Handle Escape key to close modal
+  useEscapeKey(onClose);
 
   // Detect customer from tasks on mount
   useEffect(() => {

@@ -5,6 +5,7 @@ import { X, User, Calendar, Flag, Repeat, FileText, Paperclip, Clock, MessageSqu
 import { Todo, PRIORITY_CONFIG, STATUS_CONFIG, Subtask } from '@/types/todo';
 import AttachmentList from './AttachmentList';
 import { generateSummary, copyToClipboard } from '@/lib/summaryGenerator';
+import { useEscapeKey } from '@/hooks';
 
 interface ArchivedTaskModalProps {
   todo: Todo;
@@ -17,6 +18,9 @@ type CopyState = 'idle' | 'success' | 'error';
 export default function ArchivedTaskModal({ todo, onClose }: ArchivedTaskModalProps) {
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Handle Escape key to close modal
+  useEscapeKey(onClose);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -51,7 +55,8 @@ export default function ArchivedTaskModal({ todo, onClose }: ArchivedTaskModalPr
       } else {
         throw new Error('Copy operation failed');
       }
-    } catch {
+    } catch (error) {
+      console.error('Failed to copy summary:', error);
       setCopyState('error');
       // Auto-clear error state after 4 seconds
       timeoutRef.current = setTimeout(() => {

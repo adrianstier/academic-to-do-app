@@ -14,8 +14,9 @@ import { createHash, randomBytes } from 'crypto';
 /**
  * Argon2 parameters (server-side only)
  * These values are tuned for security vs performance balance
+ * Note: Reserved for future Argon2 implementation
  */
-const ARGON2_CONFIG = {
+export const ARGON2_CONFIG = {
   memoryCost: 65536, // 64 MB
   timeCost: 3,
   parallelism: 4,

@@ -7,14 +7,14 @@
 
 import { test, expect, Page } from '@playwright/test';
 
-// Test user credentials
-const TEST_USER = {
+// Test user credentials - available for tests that need unique users
+const _TEST_USER = {
   name: `TestUser${Date.now()}`,
   pin: '1234',
 };
 
-// Helper to register and login a test user
-async function registerAndLogin(page: Page, userName: string, pin: string) {
+// Helper to register and login a test user - available for tests
+async function _registerAndLogin(page: Page, userName: string, pin: string) {
   await page.goto('/');
 
   // Wait for login screen
@@ -49,8 +49,8 @@ async function registerAndLogin(page: Page, userName: string, pin: string) {
   await expect(todoInput).toBeVisible({ timeout: 15000 });
 }
 
-// Helper to create and complete a task
-async function createAndCompleteTask(page: Page, taskName: string) {
+// Helper to create and complete a task - available for tests
+async function _createAndCompleteTask(page: Page, taskName: string) {
   const todoInput = page.locator('textarea[placeholder="What needs to be done?"]');
   await todoInput.click();
   await todoInput.fill(taskName);

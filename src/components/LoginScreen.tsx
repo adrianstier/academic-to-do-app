@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, ChevronLeft, Lock, CheckSquare, Search, Shield, Sparkles, ArrowRight, Users, Zap } from 'lucide-react';
+import { AlertCircle, ChevronLeft, Lock, CheckSquare, Search, Shield, Sparkles, Users, Zap } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import {
-  hashPin,
   verifyPin,
   isValidPin,
   getUserInitials,
@@ -312,13 +311,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const groupedUsers = filteredUsers.reduce((acc, user) => {
-    const firstLetter = user.name[0].toUpperCase();
-    if (!acc[firstLetter]) acc[firstLetter] = [];
-    acc[firstLetter].push(user);
-    return acc;
-  }, {} as Record<string, AuthUser[]>);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -804,42 +796,52 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                       )}
                     </div>
 
-                    <div className="flex justify-center gap-3 mb-6">
-                      {pin.map((digit, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 + index * 0.05 }}
-                          className="relative"
-                        >
-                          {digit && (
-                            <motion.div
-                              className="absolute inset-0 rounded-xl bg-[var(--brand-sky)]/30 blur-md"
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1.1 }}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handlePinSubmit();
+                      }}
+                      aria-label="PIN entry form"
+                    >
+                      <div className="flex justify-center gap-3 mb-6" role="group" aria-label="Enter your 4-digit PIN">
+                        {pin.map((digit, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 + index * 0.05 }}
+                            className="relative"
+                          >
+                            {digit && (
+                              <motion.div
+                                className="absolute inset-0 rounded-xl bg-[var(--brand-sky)]/30 blur-md"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1.1 }}
+                              />
+                            )}
+                            <input
+                              ref={(el) => { pinRefs.current[index] = el; }}
+                              type="password"
+                              inputMode="numeric"
+                              maxLength={1}
+                              value={digit}
+                              onChange={(e) => handlePinChange(index, e.target.value, pinRefs, pin, setPin)}
+                              onKeyDown={(e) => handlePinKeyDown(e, index, pinRefs, pin)}
+                              disabled={lockoutSeconds > 0 || isSubmitting}
+                              aria-label={`PIN digit ${index + 1} of 4`}
+                              autoComplete="one-time-code"
+                              className={`relative w-14 h-16 text-center text-2xl font-bold rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--brand-sky)]/50 focus:ring-offset-2 focus:ring-offset-transparent ${
+                                lockoutSeconds > 0
+                                  ? 'border-red-500/50 bg-red-500/10 text-red-400'
+                                  : digit
+                                    ? 'border-[var(--brand-sky)] bg-[var(--brand-sky)]/10 text-white'
+                                    : 'border-white/10 bg-white/5 text-white focus:border-[var(--brand-sky)] focus:bg-white/10'
+                              }`}
                             />
-                          )}
-                          <input
-                            ref={(el) => { pinRefs.current[index] = el; }}
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => handlePinChange(index, e.target.value, pinRefs, pin, setPin)}
-                            onKeyDown={(e) => handlePinKeyDown(e, index, pinRefs, pin)}
-                            disabled={lockoutSeconds > 0 || isSubmitting}
-                            className={`relative w-14 h-16 text-center text-2xl font-bold rounded-xl border-2 transition-all focus:outline-none ${
-                              lockoutSeconds > 0
-                                ? 'border-red-500/50 bg-red-500/10 text-red-400'
-                                : digit
-                                  ? 'border-[var(--brand-sky)] bg-[var(--brand-sky)]/10 text-white'
-                                  : 'border-white/10 bg-white/5 text-white focus:border-[var(--brand-sky)] focus:bg-white/10'
-                            }`}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </form>
 
                     <AnimatePresence mode="wait">
                       {(error || lockoutSeconds > 0) && (

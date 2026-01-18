@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Script to create simple PNG icons for Office Add-in
 // Office Add-ins require PNG format, not SVG
 

@@ -1,23 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ArrowLeft, Download, ExternalLink, Mail, Zap, CheckCircle, HelpCircle, Monitor, Globe, ChevronDown, Sparkles } from 'lucide-react';
 import { HighlightedText, SafeHtmlLink } from '@/components/HighlightedText';
 import { logger } from '@/lib/logger';
 
 export default function OutlookSetupPage() {
-  const [copiedUrl, setCopiedUrl] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadingDesktop, setDownloadingDesktop] = useState(false);
   const [outlookVersion, setOutlookVersion] = useState<'new' | 'classic' | null>(null);
   const manifestUrl = 'https://shared-todo-list-production.up.railway.app/outlook/manifest.xml';
   const desktopManifestUrl = 'https://shared-todo-list-production.up.railway.app/outlook/manifest-desktop.xml';
-
-  const copyManifestUrl = () => {
-    navigator.clipboard.writeText(manifestUrl);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 2000);
-  };
 
   const downloadManifest = async () => {
     setDownloading(true);
@@ -77,13 +71,13 @@ export default function OutlookSetupPage() {
       <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="mb-10">
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors mb-6 group text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Back to Tasks
-          </a>
+          </Link>
 
           <div className="flex items-start gap-5">
             <div className="relative flex-shrink-0">

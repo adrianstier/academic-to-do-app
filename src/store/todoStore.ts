@@ -11,7 +11,7 @@
 
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
-import { Todo, TodoStatus, TodoPriority, QuickFilter, SortOption, ViewMode, Subtask } from '@/types/todo';
+import { Todo, TodoStatus, TodoPriority, QuickFilter, SortOption, ViewMode } from '@/types/todo';
 
 // Helper functions
 const isDueToday = (dueDate?: string) => {
@@ -185,7 +185,7 @@ const defaultUI: UIState = {
 
 export const useTodoStore = create<TodoState>()(
   devtools(
-    subscribeWithSelector((set, get) => ({
+    subscribeWithSelector((set, _get) => ({
       // Initial state
       todos: [],
       users: [],

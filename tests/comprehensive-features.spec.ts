@@ -59,7 +59,7 @@ async function loginAsExistingUser(page: Page, userName: string = 'Derrick', pin
   return todoInput;
 }
 
-// Alias for backward compatibility
+// Alias for backward compatibility - userName parameter kept for API compatibility
 async function setupUser(page: Page, _userName?: string) {
   // Always use existing user Derrick for tests
   return loginAsExistingUser(page, 'Derrick', '8008');
@@ -989,7 +989,7 @@ test.describe('Comprehensive Feature Tests', () => {
 
   test.describe('Empty States', () => {
     // This test is flaky because other tests create tasks - skip it
-    test.skip('should show empty state when no tasks exist', async ({ page }) => {
+    test.skip('should show empty state when no tasks exist', async ({ /* page */ }) => {
       // This would require a fresh database or user to test properly
     });
 

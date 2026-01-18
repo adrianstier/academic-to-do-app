@@ -35,8 +35,8 @@ async function registerAndLogin(page: Page, userName: string = 'Test User', pin:
   await expect(page.locator('textarea[placeholder="What needs to be done?"]')).toBeVisible({ timeout: 10000 });
 }
 
-// Helper to login with existing user
-async function loginExistingUser(page: Page, userName: string, pin: string = '1234') {
+// Helper to login with existing user - available for new tests
+async function _loginExistingUser(page: Page, userName: string, pin: string = '1234') {
   await page.goto('/');
 
   // Wait for login screen

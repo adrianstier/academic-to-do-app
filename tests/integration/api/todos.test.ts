@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { createMockTodo } from '../../factories/todoFactory';
+// import { createMockTodo } from '../../factories/todoFactory';
 
 // Note: These tests would run against a test database
 // For now, they're examples of what integration tests should look like
@@ -20,7 +20,7 @@ describe('Todos API Integration', () => {
 
   describe('POST /api/todos', () => {
     it('should create a new todo', async () => {
-      const newTodo = {
+      const _newTodo = {
         text: 'Test task',
         priority: 'high',
         created_by: 'TestUser',
@@ -40,7 +40,7 @@ describe('Todos API Integration', () => {
     });
 
     it('should validate required fields', async () => {
-      const invalidTodo = {
+      const _invalidTodo = {
         // Missing text and created_by
         priority: 'high',
       };

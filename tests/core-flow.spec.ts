@@ -42,7 +42,6 @@ async function loginAsExistingUser(page: Page, userName: string = 'Derrick', pin
   // Close welcome modal if present (click outside, X button, or View Tasks button)
   const viewTasksBtn = page.locator('button').filter({ hasText: 'View Tasks' });
   const closeModalBtn = page.locator('button[aria-label*="close"]').or(page.locator('button svg.lucide-x').locator('..'));
-  const modalBackdrop = page.locator('[data-testid="modal-backdrop"]').or(page.locator('.fixed.inset-0').first());
 
   // Try clicking View Tasks first (most reliable)
   if (await viewTasksBtn.isVisible({ timeout: 2000 }).catch(() => false)) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import TodoList from './TodoList';
-import DashboardModal, { shouldShowDailyDashboard } from './DashboardModal';
+import DashboardModal, { shouldShowDailyDashboard, markDailyDashboardShown } from './DashboardModal';
 import { AuthUser, Todo, QuickFilter } from '@/types/todo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
@@ -14,7 +14,6 @@ interface MainAppProps {
 
 export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [users, setUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialFilter, setInitialFilter] = useState<QuickFilter | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -29,21 +28,13 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
       }
 
       try {
-        const [todosResult, usersResult] = await Promise.all([
-          supabase
-            .from('todos')
-            .select('*')
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('users')
-            .select('name')
-        ]);
+        const todosResult = await supabase
+          .from('todos')
+          .select('*')
+          .order('created_at', { ascending: false });
 
         if (todosResult.data) {
           setTodos(todosResult.data);
-        }
-        if (usersResult.data) {
-          setUsers(usersResult.data.map(u => u.name));
         }
       } catch (error) {
         logger.error('Failed to fetch data', error, { component: 'MainApp' });
@@ -73,9 +64,11 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
     };
   }, []);
 
-  // Check if we should show daily dashboard on mount
+  // Check if we should show daily dashboard on first login of the day
+  // Mark as shown IMMEDIATELY to prevent re-showing on refresh/navigation
   useEffect(() => {
     if (!loading && shouldShowDailyDashboard()) {
+      markDailyDashboardShown(); // Mark BEFORE showing to prevent duplicates
       setShowDashboard(true);
     }
   }, [loading]);

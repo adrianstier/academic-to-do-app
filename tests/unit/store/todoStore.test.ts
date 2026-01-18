@@ -4,9 +4,9 @@
  * Tests for the centralized Zustand store
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { useTodoStore, selectFilteredTodos, selectTodoStats, isDueToday, isOverdue, priorityOrder } from '@/store/todoStore';
-import { Todo, TodoPriority } from '@/types/todo';
+import { Todo } from '@/types/todo';
 import { act } from '@testing-library/react';
 
 // Helper to create a mock todo

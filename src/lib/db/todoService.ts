@@ -8,7 +8,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { isFeatureEnabled } from '@/lib/featureFlags';
 import { logger } from '@/lib/logger';
-import { Todo, Subtask, Attachment, TodoStatus, TodoPriority } from '@/types/todo';
+import { Todo, TodoStatus, TodoPriority } from '@/types/todo';
 
 export class TodoService {
   /**

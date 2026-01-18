@@ -8,7 +8,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useTodoStore } from '@/store/todoStore';
-import { Todo, TodoStatus, TodoPriority } from '@/types/todo';
+import { TodoStatus, TodoPriority } from '@/types/todo';
 import { logActivity } from '@/lib/activityLogger';
 import { logger } from '@/lib/logger';
 
@@ -16,7 +16,6 @@ export function useBulkActions(userName: string) {
   const {
     todos,
     bulkActions,
-    setSelectedTodos,
     toggleTodoSelection,
     selectAllTodos,
     clearSelection,
@@ -34,7 +33,7 @@ export function useBulkActions(userName: string) {
   }, [todos, selectedTodos]);
 
   // Select/deselect individual todo
-  const handleSelectTodo = useCallback((id: string, selected: boolean) => {
+  const handleSelectTodo = useCallback((id: string, _selected: boolean) => {
     toggleTodoSelection(id);
   }, [toggleTodoSelection]);
 

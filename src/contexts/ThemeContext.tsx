@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark');
   const [mounted, setMounted] = useState(false);
 
-  // Load theme from localStorage on mount
+  // Load theme from localStorage on mount - this is the correct pattern for initialization
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem(THEME_KEY) as Theme | null;

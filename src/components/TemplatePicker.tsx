@@ -371,12 +371,14 @@ function TemplateItem({
   return (
     <button
       onClick={onSelect}
-      className={`w-full px-4 py-3 text-left transition-colors flex items-start gap-3 group ${
-        darkMode ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
+      className={`w-full px-4 py-3 text-left transition-all flex items-start gap-3 group border border-dashed rounded-lg opacity-75 hover:opacity-100 ${
+        darkMode
+          ? 'border-slate-600/60 hover:bg-slate-700/30 hover:border-slate-500'
+          : 'border-slate-300/80 hover:bg-slate-50 hover:border-slate-400'
       }`}
     >
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 opacity-80"
         style={{ backgroundColor: priorityConfig.bgColor }}
       >
         <FileText className="w-4 h-4" style={{ color: priorityConfig.color }} />
@@ -385,6 +387,11 @@ function TemplateItem({
         <div className="flex items-center gap-2">
           <span className={`font-medium truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             {template.name}
+          </span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+            darkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-200 text-slate-500'
+          }`}>
+            Template
           </span>
           {template.is_shared ? (
             <Share2 className="w-3 h-3 text-blue-500 flex-shrink-0" />

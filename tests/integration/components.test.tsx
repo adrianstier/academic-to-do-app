@@ -5,10 +5,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { act } from 'react';
-import { useTodoStore } from '@/store/todoStore';
-import { TodoStatsCards } from '@/components/todo/TodoStatsCards';
+import { useTodoStore, selectTodoStats } from '@/store/todoStore';
+import TodoStatsCards from '@/components/todo/TodoStatsCards';
 import BulkActionBar from '@/components/todo/BulkActionBar';
 import ConnectionStatus from '@/components/todo/ConnectionStatus';
 import { createMockTodo } from '../factories/todoFactory';
@@ -49,8 +49,16 @@ describe('Component Integration Tests', () => {
 
   describe('TodoStatsCards + Store', () => {
     it('should display correct stats from store', () => {
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      // Create a due date for today at noon (to avoid timezone issues)
+      const todayDate = new Date();
+      todayDate.setHours(12, 0, 0, 0);
+      const today = todayDate.toISOString();
+
+      // Create a due date for yesterday (clearly in the past)
+      const yesterdayDate = new Date();
+      yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+      yesterdayDate.setHours(12, 0, 0, 0);
+      const yesterday = yesterdayDate.toISOString();
 
       const todos = [
         createMockTodo({ id: '1', completed: true, status: 'done' }),
@@ -64,37 +72,63 @@ describe('Component Integration Tests', () => {
         useTodoStore.getState().setTodos(todos);
       });
 
-      const stats = useTodoStore.getState().selectTodoStats();
-      const handleFilterClick = vi.fn();
+      const storeStats = selectTodoStats(useTodoStore.getState().todos);
+      // Convert store stats to component-expected stats format
+      const stats = {
+        active: storeStats.total - storeStats.completed,
+        completed: storeStats.completed,
+        dueToday: storeStats.dueToday,
+        overdue: storeStats.overdue,
+      };
+      const setQuickFilter = vi.fn();
+      const setShowCompleted = vi.fn();
 
       render(
         <TodoStatsCards
           stats={stats}
-          activeFilter="all"
-          onFilterClick={handleFilterClick}
+          quickFilter="all"
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
-      expect(screen.getByText('5')).toBeInTheDocument(); // Total
-      expect(screen.getByText('3')).toBeInTheDocument(); // Active
-      expect(screen.getByText('2')).toBeInTheDocument(); // Completed (checking all occurrences)
+      expect(screen.getByText('3')).toBeInTheDocument(); // Active (5 total - 2 completed = 3)
+      // Due today shows 1, Overdue shows 1 (yesterday is overdue)
+      // The component shows: To Do (3), Due Today, Overdue
+      expect(stats.dueToday).toBe(1);
+      expect(stats.overdue).toBe(1);
     });
 
     it('should update stats when todos change', () => {
-      const handleFilterClick = vi.fn();
+      const setQuickFilter = vi.fn();
+      const setShowCompleted = vi.fn();
+
+      // Helper to convert store stats to component format
+      const toComponentStats = () => {
+        const storeStats = selectTodoStats(useTodoStore.getState().todos);
+        return {
+          active: storeStats.total - storeStats.completed,
+          completed: storeStats.completed,
+          dueToday: storeStats.dueToday,
+          overdue: storeStats.overdue,
+        };
+      };
 
       // Initial render with no todos
       act(() => {
         useTodoStore.getState().setTodos([]);
       });
 
-      let stats = useTodoStore.getState().selectTodoStats();
+      let stats = toComponentStats();
 
       const { rerender } = render(
         <TodoStatsCards
           stats={stats}
-          activeFilter="all"
-          onFilterClick={handleFilterClick}
+          quickFilter="all"
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
@@ -106,17 +140,19 @@ describe('Component Integration Tests', () => {
         ]);
       });
 
-      stats = useTodoStore.getState().selectTodoStats();
+      stats = toComponentStats();
 
       rerender(
         <TodoStatsCards
           stats={stats}
-          activeFilter="all"
-          onFilterClick={handleFilterClick}
+          quickFilter="all"
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
-      expect(screen.getByText('2')).toBeInTheDocument(); // Total/Active
+      expect(screen.getByText('2')).toBeInTheDocument(); // Active
     });
 
     it('should trigger filter change via callback', () => {
@@ -126,22 +162,32 @@ describe('Component Integration Tests', () => {
         ]);
       });
 
-      const handleFilterClick = vi.fn();
-      const stats = useTodoStore.getState().selectTodoStats();
+      const setQuickFilter = vi.fn();
+      const setShowCompleted = vi.fn();
+      const storeStats = selectTodoStats(useTodoStore.getState().todos);
+      const stats = {
+        active: storeStats.total - storeStats.completed,
+        completed: storeStats.completed,
+        dueToday: storeStats.dueToday,
+        overdue: storeStats.overdue,
+      };
 
       render(
         <TodoStatsCards
           stats={stats}
-          activeFilter="all"
-          onFilterClick={handleFilterClick}
+          quickFilter="all"
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
-      // Click on "Active" card
-      const activeCard = screen.getByText('Active').closest('button');
-      if (activeCard) {
-        fireEvent.click(activeCard);
-        expect(handleFilterClick).toHaveBeenCalledWith('active');
+      // Click on "To Do" card (the first stat card)
+      const todoCard = screen.getByText('To Do').closest('button');
+      if (todoCard) {
+        fireEvent.click(todoCard);
+        expect(setQuickFilter).toHaveBeenCalledWith('all');
+        expect(setShowCompleted).toHaveBeenCalledWith(false);
       }
     });
   });
@@ -169,7 +215,7 @@ describe('Component Integration Tests', () => {
         useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
       });
 
-      const selectedCount = useTodoStore.getState().selectedTodos.size;
+      const selectedCount = useTodoStore.getState().bulkActions.selectedTodos.size;
 
       render(<BulkActionBar {...defaultProps} selectedCount={selectedCount} />);
 
@@ -265,9 +311,10 @@ describe('Component Integration Tests', () => {
         ]);
       });
 
-      // Get initial stats
-      let stats = useTodoStore.getState().selectTodoStats();
-      expect(stats.active).toBe(2);
+      // Get initial stats - selectTodoStats returns total, not active
+      let stats = selectTodoStats(useTodoStore.getState().todos);
+      const active = stats.total - stats.completed;
+      expect(active).toBe(2);
       expect(stats.completed).toBe(1);
 
       // Simulate selecting todos
@@ -275,7 +322,7 @@ describe('Component Integration Tests', () => {
         useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
       });
 
-      expect(useTodoStore.getState().selectedTodos.size).toBe(2);
+      expect(useTodoStore.getState().bulkActions.selectedTodos.size).toBe(2);
 
       // Simulate bulk complete (would normally go through useBulkActions)
       act(() => {
@@ -285,14 +332,18 @@ describe('Component Integration Tests', () => {
       });
 
       // Verify stats updated
-      stats = useTodoStore.getState().selectTodoStats();
-      expect(stats.active).toBe(0);
+      stats = selectTodoStats(useTodoStore.getState().todos);
+      const updatedActive = stats.total - stats.completed;
+      expect(updatedActive).toBe(0);
       expect(stats.completed).toBe(3);
-      expect(useTodoStore.getState().selectedTodos.size).toBe(0);
+      expect(useTodoStore.getState().bulkActions.selectedTodos.size).toBe(0);
     });
 
     it('should filter stats reflect filtered todos', () => {
-      const today = new Date().toISOString().split('T')[0];
+      // Create a due date for today at noon (to avoid timezone issues)
+      const todayDate = new Date();
+      todayDate.setHours(12, 0, 0, 0);
+      const today = todayDate.toISOString();
 
       act(() => {
         useTodoStore.getState().setTodos([
@@ -310,21 +361,30 @@ describe('Component Integration Tests', () => {
         ]);
       });
 
-      // Get stats
-      const stats = useTodoStore.getState().selectTodoStats();
+      // Get stats from store and convert to component format
+      const storeStats = selectTodoStats(useTodoStore.getState().todos);
+      const componentStats = {
+        active: storeStats.total - storeStats.completed,
+        completed: storeStats.completed,
+        dueToday: storeStats.dueToday,
+        overdue: storeStats.overdue,
+      };
 
-      const handleFilterClick = vi.fn();
+      const setQuickFilter = vi.fn();
+      const setShowCompleted = vi.fn();
 
       render(
         <TodoStatsCards
-          stats={stats}
-          activeFilter="all"
-          onFilterClick={handleFilterClick}
+          stats={componentStats}
+          quickFilter="all"
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
       // Should show due today count
-      expect(stats.dueToday).toBe(1);
+      expect(componentStats.dueToday).toBe(1);
     });
   });
 
@@ -335,38 +395,53 @@ describe('Component Integration Tests', () => {
           createMockTodo({ id: '1', completed: false }),
           createMockTodo({ id: '2', completed: false }),
         ]);
-        useTodoStore.getState().setQuickFilter('active');
+        useTodoStore.getState().setQuickFilter('my_tasks'); // Use a valid QuickFilter value
         useTodoStore.getState().toggleTodoSelection('1');
       });
 
+      // Helper to convert store stats to component format
+      const toComponentStats = () => {
+        const storeStats = selectTodoStats(useTodoStore.getState().todos);
+        return {
+          active: storeStats.total - storeStats.completed,
+          completed: storeStats.completed,
+          dueToday: storeStats.dueToday,
+          overdue: storeStats.overdue,
+        };
+      };
+
       // First render
-      const stats = useTodoStore.getState().selectTodoStats();
-      const handleFilterClick = vi.fn();
+      const setQuickFilter = vi.fn();
+      const setShowCompleted = vi.fn();
 
       const { rerender } = render(
         <TodoStatsCards
-          stats={stats}
-          activeFilter={useTodoStore.getState().quickFilter}
-          onFilterClick={handleFilterClick}
+          stats={toComponentStats()}
+          quickFilter={useTodoStore.getState().filters.quickFilter}
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
       // Verify state persists
-      expect(useTodoStore.getState().quickFilter).toBe('active');
-      expect(useTodoStore.getState().selectedTodos.size).toBe(1);
+      expect(useTodoStore.getState().filters.quickFilter).toBe('my_tasks');
+      expect(useTodoStore.getState().bulkActions.selectedTodos.size).toBe(1);
 
       // Rerender
       rerender(
         <TodoStatsCards
-          stats={useTodoStore.getState().selectTodoStats()}
-          activeFilter={useTodoStore.getState().quickFilter}
-          onFilterClick={handleFilterClick}
+          stats={toComponentStats()}
+          quickFilter={useTodoStore.getState().filters.quickFilter}
+          showCompleted={false}
+          setQuickFilter={setQuickFilter}
+          setShowCompleted={setShowCompleted}
         />
       );
 
       // State should persist
-      expect(useTodoStore.getState().quickFilter).toBe('active');
-      expect(useTodoStore.getState().selectedTodos.size).toBe(1);
+      expect(useTodoStore.getState().filters.quickFilter).toBe('my_tasks');
+      expect(useTodoStore.getState().bulkActions.selectedTodos.size).toBe(1);
     });
   });
 });

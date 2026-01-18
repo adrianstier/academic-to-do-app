@@ -179,6 +179,7 @@ async function sendToDevice(
 
 // Get device tokens for users
 async function getDeviceTokens(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userIds: string[]
 ): Promise<string[]> {
@@ -198,6 +199,7 @@ async function getDeviceTokens(
 
 // Remove invalid device tokens
 async function removeInvalidTokens(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   tokens: string[]
 ): Promise<void> {

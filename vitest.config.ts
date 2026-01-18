@@ -8,7 +8,7 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: ['./tests/setup.ts'],
     // Only run unit and integration tests, exclude Playwright E2E tests
-    include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts'],
+    include: ['tests/unit/**/*.test.{ts,tsx}', 'tests/integration/**/*.test.{ts,tsx}'],
     exclude: ['tests/**/*.spec.ts', 'node_modules/**'],
     coverage: {
       provider: 'v8',

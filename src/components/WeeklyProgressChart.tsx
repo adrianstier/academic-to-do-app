@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, X } from 'lucide-react';
 import { Todo } from '@/types/todo';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface WeeklyProgressChartProps {
   todos: Todo[];
@@ -26,6 +27,9 @@ export default function WeeklyProgressChart({
   show,
   onClose,
 }: WeeklyProgressChartProps) {
+  // Close on Escape key press
+  useEscapeKey(onClose, { enabled: show });
+
   const weekData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

@@ -2,6 +2,8 @@
 
 This document provides comprehensive context for AI assistants (like Claude Code) working on the Bealer Agency Todo List codebase.
 
+> **For Multi-Agent Orchestrators**: See [ORCHESTRATOR.md](./ORCHESTRATOR.md) for a structured, quick-reference guide optimized for orchestrator agents.
+
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
@@ -18,6 +20,7 @@ This document provides comprehensive context for AI assistants (like Claude Code
 12. [Testing Strategy](#testing-strategy)
 13. [Deployment](#deployment)
 14. [**🚀 Refactoring Plan**](#refactoring-plan) ⭐ **NEW**
+15. [**🤖 Orchestrator Agent Guide**](#orchestrator-agent-guide) ⭐ **NEW**
 
 ---
 
@@ -1537,8 +1540,93 @@ A **detailed 12-week plan** to address technical debt and architectural issues h
 
 ---
 
-**Last Updated:** 2026-01-08
-**Version:** 2.1
+## Orchestrator Agent Guide
+
+This section provides guidance for multi-agent orchestrator systems working on this codebase.
+
+### Agent Roles & Responsibilities
+
+| Agent Type | Primary Focus | Key Files |
+|------------|---------------|-----------|
+| **Backend Engineer** | API routes, database operations, server logic | `src/app/api/`, `src/lib/db/`, `supabase/migrations/` |
+| **Frontend Engineer** | React components, UI/UX, state management | `src/components/`, `src/hooks/`, `src/store/` |
+| **Code Reviewer** | Code quality, patterns, security review | All source files |
+| **Security Reviewer** | Auth, validation, data protection | `src/lib/auth.ts`, `src/lib/fileValidator.ts`, `src/middleware.ts` |
+| **Tech Lead** | Architecture decisions, refactoring, integration | `ORCHESTRATOR.md`, `REFACTORING_PLAN.md` |
+| **Business Analyst** | Requirements, user workflows, feature specs | `PRD.md`, `docs/` |
+
+### Critical Constraints
+
+1. **Real-Time Sync is Critical**: Always clean up subscriptions in `useEffect` returns
+2. **Activity Logging Required**: All mutations must call `logActivity()`
+3. **Owner-Only Features**: Check `currentUser?.name === 'Derrick'` for restricted features
+4. **Optimistic Updates**: Update UI first, persist async, rollback on error
+5. **TypeScript Strict**: All types defined in `src/types/todo.ts`
+6. **Tailwind Only**: No inline styles, use utility classes
+
+### Before Making Changes
+
+1. Read the relevant component/file first
+2. Check for real-time subscription patterns
+3. Understand the data flow (component → store → API → database → real-time → all clients)
+4. Review related tests in `tests/`
+5. Check if feature flags apply (`src/lib/featureFlags.ts`)
+
+### Common Pitfalls to Avoid
+
+| Pitfall | Why It's Bad | Correct Approach |
+|---------|--------------|------------------|
+| Forgetting activity logging | Audit trail is business requirement | Always call `logActivity()` after mutations |
+| Not cleaning up subscriptions | Memory leaks, duplicate events | Return cleanup function in `useEffect` |
+| Using anon key server-side | RLS blocks operations | Use `SUPABASE_SERVICE_ROLE_KEY` |
+| Skipping optimistic updates | Poor UX, feels slow | Update local state first |
+| Breaking TypeScript types | Runtime errors | Extend types in `src/types/todo.ts` |
+| Ignoring mobile | 40% of users on mobile | Test with Chrome DevTools mobile view |
+
+### Quick Reference: Key Patterns
+
+```typescript
+// Real-time subscription pattern
+useEffect(() => {
+  const channel = supabase.channel('name').on(...).subscribe();
+  return () => supabase.removeChannel(channel);  // REQUIRED cleanup
+}, []);
+
+// Optimistic update pattern
+const handleAction = async () => {
+  setLocalState(newValue);           // Instant UI
+  try {
+    await supabase.from(...).update(...);
+  } catch {
+    setLocalState(oldValue);         // Rollback
+  }
+};
+
+// Activity logging pattern
+await logActivity({
+  action: 'task_updated',
+  todo_id: id,
+  todo_text: text,
+  user_name: currentUser.name,
+  details: { from: old, to: new }
+});
+```
+
+### Documentation Files
+
+| File | Purpose | When to Read |
+|------|---------|--------------|
+| [ORCHESTRATOR.md](./ORCHESTRATOR.md) | Quick reference for orchestrator agents | First, for context |
+| [CLAUDE.md](./CLAUDE.md) | Detailed developer guide | For deep implementation details |
+| [PRD.md](./PRD.md) | Product requirements | For business context |
+| [REFACTORING_PLAN.md](./REFACTORING_PLAN.md) | Improvement roadmap | Before major changes |
+| [SETUP.md](./SETUP.md) | Installation guide | For environment setup |
+| [docs/](./docs/) | Architecture documents | For feature-specific context |
+
+---
+
+**Last Updated:** 2026-01-18
+**Version:** 2.2
 **Maintained by:** Development Team
 
 For questions or issues, refer to this document first, then check:
@@ -1546,3 +1634,4 @@ For questions or issues, refer to this document first, then check:
 - SETUP.md for installation instructions
 - tests/ directory for testing documentation
 - **[REFACTORING_PLAN.md](./REFACTORING_PLAN.md)** for improvement roadmap ⭐
+- **[ORCHESTRATOR.md](./ORCHESTRATOR.md)** for multi-agent orchestrator context ⭐

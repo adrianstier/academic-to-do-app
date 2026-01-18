@@ -22,7 +22,9 @@ describe('ConnectionStatus', () => {
   it('should have success styling when connected', () => {
     render(<ConnectionStatus connected={true} />);
 
-    const statusElement = screen.getByText('Live').parentElement;
+    // The text is inside the styled div (not on parent wrapper)
+    // Find the inner div with the status indicator by checking for the flex class
+    const statusElement = screen.getByText('Live').closest('.flex');
     expect(statusElement).toHaveClass('bg-[var(--success-light)]');
     expect(statusElement).toHaveClass('text-[var(--success)]');
   });
@@ -30,7 +32,8 @@ describe('ConnectionStatus', () => {
   it('should have danger styling when not connected', () => {
     render(<ConnectionStatus connected={false} />);
 
-    const statusElement = screen.getByText('Offline').parentElement;
+    // The text is inside the styled div (not on parent wrapper)
+    const statusElement = screen.getByText('Offline').closest('.flex');
     expect(statusElement).toHaveClass('bg-[var(--danger-light)]');
     expect(statusElement).toHaveClass('text-[var(--danger)]');
   });

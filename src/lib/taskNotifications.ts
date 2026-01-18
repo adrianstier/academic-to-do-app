@@ -7,8 +7,10 @@
  */
 
 import { supabase } from './supabaseClient';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, startOfDay } from 'date-fns';
 import { TodoPriority, Subtask } from '@/types/todo';
+
+const SYSTEM_SENDER = 'System';
 
 export interface TaskAssignmentNotification {
   taskId: string;
@@ -45,6 +47,14 @@ export async function sendTaskAssignmentNotification(
 ): Promise<{ success: boolean; error?: string }> {
   const { taskId, taskText, assignedTo, assignedBy, dueDate, priority, subtasks, notes } = options;
 
+  // Input validation
+  if (!taskId || !taskId.trim()) {
+    return { success: false, error: 'taskId is required' };
+  }
+  if (!taskText || !taskText.trim()) {
+    return { success: false, error: 'taskText is required' };
+  }
+
   // Don't notify if self-assigned
   if (assignedTo === assignedBy) {
     return { success: true };
@@ -64,7 +74,7 @@ export async function sendTaskAssignmentNotification(
   try {
     const { error } = await supabase.from('messages').insert({
       text: message,
-      created_by: 'System',
+      created_by: SYSTEM_SENDER,
       related_todo_id: taskId,
       recipient: assignedTo,
       mentions: [assignedTo],
@@ -100,7 +110,7 @@ interface TaskCardMessageOptions {
 }
 
 function buildTaskCardMessage(options: TaskCardMessageOptions): string {
-  const { taskText, assignedBy, completedBy, reassignedBy, previousAssignee, newAssignee, priority, dueDate, subtasks, notes, type } = options;
+  const { taskText, assignedBy, completedBy, reassignedBy, newAssignee, priority, dueDate, subtasks, notes, type } = options;
 
   const lines: string[] = [];
 
@@ -135,7 +145,7 @@ function buildTaskCardMessage(options: TaskCardMessageOptions): string {
   // Due date
   if (dueDate) {
     const dueFormatted = formatDueDate(dueDate);
-    const isOverdue = new Date(dueDate) < new Date();
+    const isOverdue = startOfDay(new Date(dueDate)) < startOfDay(new Date());
     const dueLine = isOverdue ? `⚠️ Due: ${dueFormatted}` : `📅 Due: ${dueFormatted}`;
     lines.push(dueLine);
   }
@@ -179,6 +189,14 @@ export async function sendTaskCompletionNotification(
 ): Promise<{ success: boolean; error?: string }> {
   const { taskId, taskText, completedBy, assignedBy } = options;
 
+  // Input validation
+  if (!taskId || !taskId.trim()) {
+    return { success: false, error: 'taskId is required' };
+  }
+  if (!taskText || !taskText.trim()) {
+    return { success: false, error: 'taskText is required' };
+  }
+
   // Don't notify if the completer is also the assigner
   if (completedBy === assignedBy) {
     return { success: true };
@@ -193,7 +211,7 @@ export async function sendTaskCompletionNotification(
   try {
     const { error } = await supabase.from('messages').insert({
       text: message,
-      created_by: 'System',
+      created_by: SYSTEM_SENDER,
       related_todo_id: taskId,
       recipient: assignedBy,
       mentions: [assignedBy],
@@ -223,55 +241,90 @@ export async function sendTaskReassignmentNotification(
   priority?: TodoPriority,
   dueDate?: string
 ): Promise<{ success: boolean; error?: string }> {
-  // Notify new assignee (skip if self-assigning)
-  if (newAssignee !== reassignedBy) {
-    const newAssigneeMessage = buildTaskCardMessage({
-      taskText,
-      reassignedBy,
-      priority,
-      dueDate,
-      type: 'reassignment_new',
-    });
-
-    await supabase.from('messages').insert({
-      text: newAssigneeMessage,
-      created_by: 'System',
-      related_todo_id: taskId,
-      recipient: newAssignee,
-      mentions: [newAssignee],
-    });
+  // Input validation
+  if (!taskId || !taskId.trim()) {
+    return { success: false, error: 'taskId is required' };
+  }
+  if (!taskText || !taskText.trim()) {
+    return { success: false, error: 'taskText is required' };
   }
 
-  // Notify previous assignee (skip if they did the reassignment)
-  if (previousAssignee && previousAssignee !== reassignedBy) {
-    const prevAssigneeMessage = buildTaskCardMessage({
-      taskText,
-      reassignedBy,
-      newAssignee,
-      priority,
-      dueDate,
-      type: 'reassignment_old',
-    });
-
-    await supabase.from('messages').insert({
-      text: prevAssigneeMessage,
-      created_by: 'System',
-      related_todo_id: taskId,
-      recipient: previousAssignee,
-      mentions: [previousAssignee],
-    });
+  // Early return if same assignee
+  if (previousAssignee === newAssignee) {
+    return { success: true };
   }
 
-  return { success: true };
+  try {
+    // Notify new assignee (skip if self-assigning)
+    if (newAssignee !== reassignedBy) {
+      const newAssigneeMessage = buildTaskCardMessage({
+        taskText,
+        reassignedBy,
+        priority,
+        dueDate,
+        type: 'reassignment_new',
+      });
+
+      const { error: newAssigneeError } = await supabase.from('messages').insert({
+        text: newAssigneeMessage,
+        created_by: SYSTEM_SENDER,
+        related_todo_id: taskId,
+        recipient: newAssignee,
+        mentions: [newAssignee],
+      });
+
+      if (newAssigneeError) {
+        console.error('Failed to send reassignment notification to new assignee:', newAssigneeError);
+        return { success: false, error: newAssigneeError.message };
+      }
+    }
+
+    // Notify previous assignee (skip if they did the reassignment)
+    if (previousAssignee && previousAssignee !== reassignedBy) {
+      const prevAssigneeMessage = buildTaskCardMessage({
+        taskText,
+        reassignedBy,
+        newAssignee,
+        priority,
+        dueDate,
+        type: 'reassignment_old',
+      });
+
+      const { error: prevAssigneeError } = await supabase.from('messages').insert({
+        text: prevAssigneeMessage,
+        created_by: SYSTEM_SENDER,
+        related_todo_id: taskId,
+        recipient: previousAssignee,
+        mentions: [previousAssignee],
+      });
+
+      if (prevAssigneeError) {
+        console.error('Failed to send reassignment notification to previous assignee:', prevAssigneeError);
+        return { success: false, error: prevAssigneeError.message };
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error sending task reassignment notification:', err);
+    return { success: false, error: 'Unknown error occurred' };
+  }
 }
 
 /**
  * Formats a due date for display in notifications
  */
-function formatDueDate(dueDate: string): string {
-  const date = new Date(dueDate);
-  const now = new Date();
-  const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+function formatDueDate(dateString: string): string {
+  const date = new Date(dateString);
+
+  // Validate date
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+
+  const todayStart = startOfDay(new Date());
+  const dateStart = startOfDay(date);
+  const diffDays = Math.ceil((dateStart.getTime() - todayStart.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
     return `Overdue (${format(date, 'MMM d')})`;

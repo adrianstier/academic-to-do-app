@@ -107,6 +107,7 @@ export const logger = new Logger();
 /**
  * Decorator for async functions to automatically log errors
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withErrorLogging<T extends (...args: any[]) => Promise<any>>(
   fn: T,
   context: { component: string; action: string }

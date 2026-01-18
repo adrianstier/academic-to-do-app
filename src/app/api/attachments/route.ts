@@ -8,6 +8,12 @@ import {
   Attachment
 } from '@/types/todo';
 import { logger } from '@/lib/logger';
+import {
+  extractUserName,
+  validateUserName,
+  verifyTodoAccess,
+  extractTodoIdFromPath
+} from '@/lib/apiAuth';
 
 // Create a Supabase client for storage operations
 // SECURITY: Use anon key by default. Service role key should only be used
@@ -272,18 +278,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get current todo
-    const { data: todo, error: fetchError } = await supabase
-      .from('todos')
-      .select('attachments')
-      .eq('id', todoId)
-      .single();
+    // Extract and validate userName for authorization
+    const userName = extractUserName(request);
+    const authError = validateUserName(userName);
+    if (authError) {
+      return authError;
+    }
 
-    if (fetchError) {
-      return NextResponse.json(
-        { success: false, error: 'Todo not found' },
-        { status: 404 }
-      );
+    // Verify user has access to this todo before allowing deletion
+    const { todo, error: accessError } = await verifyTodoAccess(todoId, userName!);
+    if (accessError) {
+      return accessError;
     }
 
     const currentAttachments = (todo.attachments || []) as Attachment[];
@@ -342,6 +347,28 @@ export async function GET(request: NextRequest) {
         { success: false, error: 'Storage path is required' },
         { status: 400 }
       );
+    }
+
+    // Extract and validate userName for authorization
+    const userName = extractUserName(request);
+    const authError = validateUserName(userName);
+    if (authError) {
+      return authError;
+    }
+
+    // Extract todoId from storage path and verify access
+    const todoId = extractTodoIdFromPath(storagePath);
+    if (!todoId) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid storage path format' },
+        { status: 400 }
+      );
+    }
+
+    // Verify user has access to this todo before generating signed URL
+    const { error: accessError } = await verifyTodoAccess(todoId, userName!);
+    if (accessError) {
+      return accessError;
     }
 
     // Generate a signed URL (valid for 1 hour)

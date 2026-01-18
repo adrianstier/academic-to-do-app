@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Flame, ChevronRight, Copy, X } from 'lucide-react';
-import { Todo, CelebrationData, CelebrationIntensity, PRIORITY_CONFIG } from '@/types/todo';
+import { CelebrationData, CelebrationIntensity, PRIORITY_CONFIG } from '@/types/todo';
 import { getStreakBadge, getDismissButtonText } from '@/lib/taskSuggestions';
 import { Celebration } from './Celebration';
-import { format, formatDistanceToNow, isPast, isToday, isTomorrow } from 'date-fns';
+import { formatDistanceToNow, isPast, isToday, isTomorrow } from 'date-fns';
 
 interface CompletionCelebrationProps {
   celebrationData: CelebrationData;

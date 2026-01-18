@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plus, Search, CheckCircle2, Calendar, AlertTriangle, Sparkles, Rocket, Trophy, ClipboardList } from 'lucide-react';
+import { Search, CheckCircle2, Calendar, Rocket, Trophy, ClipboardList } from 'lucide-react';
 
 type EmptyStateVariant = 'no-tasks' | 'no-results' | 'all-done' | 'no-due-today' | 'no-overdue' | 'first-time';
 
@@ -449,7 +449,6 @@ function CalendarIllustration({ color }: { color: string }) {
 
 export default function EmptyState({
   variant,
-  darkMode = true,
   searchQuery,
   onAddTask,
   onClearSearch,

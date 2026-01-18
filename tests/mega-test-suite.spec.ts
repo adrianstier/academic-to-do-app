@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// Helper to generate unique names
-const uniqueId = () => Math.random().toString(36).substring(7);
+// Helper to generate unique names - available for tests that need unique identifiers
+const _uniqueId = () => Math.random().toString(36).substring(7);
 
 // ============================================================
 // SECTION 1: APPLICATION LOADING (Tests 1-10)
@@ -635,7 +635,7 @@ test.describe('8. Security', () => {
 
   test('81. X-Frame-Options or CSP frame-ancestors', async ({ request }) => {
     const response = await request.get('/');
-    const headers = response.headers();
+    const _headers = response.headers();
     // Check for clickjacking protection
     expect(response.status()).toBe(200);
   });

@@ -1,8 +1,7 @@
-import NextAuth, { NextAuthOptions, Session, User } from 'next-auth';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import AppleProvider from 'next-auth/providers/apple';
 import { SupabaseAdapter } from '@auth/supabase-adapter';
-import { isFeatureEnabled } from '@/lib/featureFlags';
 import { logger } from '@/lib/logger';
 
 // Extend NextAuth types to include our custom fields
@@ -82,7 +81,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // Check email whitelist for OAuth providers
       if (account?.provider === 'google' || account?.provider === 'apple') {
         const userEmail = user.email?.toLowerCase();

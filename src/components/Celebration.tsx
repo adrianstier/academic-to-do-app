@@ -45,6 +45,8 @@ export function Celebration({ trigger, onComplete, intensity = 'medium' }: Celeb
   const [showCheckmark, setShowCheckmark] = useState(false);
   const [celebrationIcon, setCelebrationIcon] = useState<{ Icon: LucideIcon; color: string } | null>(null);
 
+  // This effect intentionally sets state in response to trigger prop changes
+  // to start the celebration animation - this is the correct pattern for animations
   useEffect(() => {
     if (trigger) {
       const config = INTENSITY_CONFIG[intensity];
@@ -78,7 +80,7 @@ export function Celebration({ trigger, onComplete, intensity = 'medium' }: Celeb
 
       return () => clearTimeout(timer);
     }
-  }, [trigger, onComplete]);
+  }, [trigger, onComplete, intensity]);
 
   if (!trigger && particles.length === 0) return null;
 

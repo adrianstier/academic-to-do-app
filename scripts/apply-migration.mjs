@@ -20,7 +20,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Test connection
 console.log('🧪 Testing connection...');
-const { data, error } = await supabase.from('users').select('count').limit(1);
+const { error } = await supabase.from('users').select('count').limit(1);
 
 if (error) {
   console.error('❌ Connection failed:', error.message);

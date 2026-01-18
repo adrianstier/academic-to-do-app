@@ -356,7 +356,7 @@ test.describe('useKeyboardShortcuts Hook', () => {
 
       const triggered = await page.evaluate(() => {
         return new Promise<boolean>((resolve) => {
-          let enabled = false; // Simulating disabled state
+          const enabled = false; // Simulating disabled state
           let triggered = false;
 
           const handleKeyDown = (e: KeyboardEvent) => {
@@ -390,7 +390,7 @@ test.describe('useKeyboardShortcuts Hook', () => {
 
       const triggered = await page.evaluate(() => {
         return new Promise<boolean>((resolve) => {
-          let enabled = true; // Simulating enabled state
+          const enabled = true; // Simulating enabled state
           let triggered = false;
 
           const handleKeyDown = (e: KeyboardEvent) => {

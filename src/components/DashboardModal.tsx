@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
+import { useEscapeKey } from '@/hooks';
 
 interface DashboardModalProps {
   isOpen: boolean;
@@ -76,17 +77,17 @@ export default function DashboardModal({
 }: DashboardModalProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Handle Escape key to close modal
+  useEscapeKey(onClose, { enabled: isOpen });
+
   useEffect(() => {
+    if (!isOpen) return;
     const interval = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(interval);
-  }, []);
-
-  // Mark as shown when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      markDailyDashboardShown();
-    }
   }, [isOpen]);
+
+  // Note: markDailyDashboardShown() is now called in MainApp.tsx BEFORE opening
+  // This ensures it's marked even if the modal doesn't fully render
 
   const stats = useMemo(() => {
     const today = new Date();
@@ -119,13 +120,13 @@ export default function DashboardModal({
         const dueDate = new Date(t.due_date);
         return dueDate > todayEnd && dueDate <= nextWeek;
       })
-      .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime());
+      .sort((a, b) => new Date(a.due_date || '').getTime() - new Date(b.due_date || '').getTime());
 
-    const nextTask: UpcomingTask | null = upcoming.length > 0
+    const nextTask: UpcomingTask | null = upcoming.length > 0 && upcoming[0].due_date
       ? {
           id: upcoming[0].id,
           text: upcoming[0].text,
-          due_date: upcoming[0].due_date!,
+          due_date: upcoming[0].due_date,
           priority: upcoming[0].priority || 'medium',
         }
       : null;
@@ -147,6 +148,7 @@ export default function DashboardModal({
 
       const completed = completedTodos.filter(t => {
         if (!t.completed) return false;
+        if (!t.updated_at && !t.created_at) return false;
         const updatedAt = t.updated_at ? new Date(t.updated_at) : new Date(t.created_at);
         return updatedAt >= date && updatedAt <= dateEnd;
       }).length;
@@ -189,6 +191,9 @@ export default function DashboardModal({
 
   const formatDueDate = (dateStr: string) => {
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -221,6 +226,9 @@ export default function DashboardModal({
 
           {/* Modal */}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-modal-title"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -243,6 +251,7 @@ export default function DashboardModal({
                   {/* Close button */}
                   <button
                     onClick={onClose}
+                    aria-label="Close dashboard"
                     className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
                   >
                     <X className="w-5 h-5" />
@@ -254,7 +263,7 @@ export default function DashboardModal({
                     <span className="text-white/60 text-sm font-medium">{greeting.text}</span>
                   </div>
 
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-2">
+                  <h1 id="dashboard-modal-title" className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-2">
                     {currentUser.name}
                   </h1>
 

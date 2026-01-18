@@ -269,6 +269,11 @@ const TASK_PATTERNS: PatternDefinition[] = [
  * Analyzes task text and returns the best matching pattern with suggestions
  */
 export function analyzeTaskPattern(taskText: string): TaskPatternMatch | null {
+  // Validate input - protect against empty or excessively long strings
+  if (!taskText || typeof taskText !== 'string' || taskText.length > 1000) {
+    return null;
+  }
+
   const normalizedText = taskText.toLowerCase();
   let bestMatch: { pattern: PatternDefinition; score: number } | null = null;
 

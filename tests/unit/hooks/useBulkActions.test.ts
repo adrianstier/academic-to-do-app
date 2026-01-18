@@ -8,17 +8,17 @@ import { useBulkActions } from '@/hooks/useBulkActions';
 import { useTodoStore } from '@/store/todoStore';
 import { Todo } from '@/types/todo';
 
-// Mock Supabase
-vi.mock('@/lib/supabase', () => ({
+// Mock Supabase - using supabaseClient path which is the actual import
+vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn(() => ({
       delete: vi.fn(() => ({
-        in: vi.fn(() => ({ error: null })),
-        eq: vi.fn(() => ({ error: null })),
+        in: vi.fn(() => Promise.resolve({ error: null })),
+        eq: vi.fn(() => Promise.resolve({ error: null })),
       })),
       update: vi.fn(() => ({
-        in: vi.fn(() => ({ error: null })),
-        eq: vi.fn(() => ({ error: null })),
+        in: vi.fn(() => Promise.resolve({ error: null })),
+        eq: vi.fn(() => Promise.resolve({ error: null })),
       })),
     })),
   },
@@ -373,6 +373,160 @@ describe('useBulkActions', () => {
     });
   });
 
+  describe('Error Rollback', () => {
+    it('should rollback bulkAssign on error', async () => {
+      // Mock supabase to return error
+      const { supabase } = await import('@/lib/supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        update: vi.fn(() => ({
+          in: vi.fn(() => Promise.resolve({ error: new Error('DB error') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'todo-1', assigned_to: 'OldUser' }),
+        createMockTodo({ id: 'todo-2', assigned_to: 'OldUser' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.bulkAssign('NewUser');
+      });
+
+      // Should rollback to original assigned_to
+      const storeTodos = useTodoStore.getState().todos;
+      expect(storeTodos.every(t => t.assigned_to === 'OldUser')).toBe(true);
+    });
+
+    it('should rollback bulkComplete on error', async () => {
+      const { supabase } = await import('@/lib/supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        update: vi.fn(() => ({
+          in: vi.fn(() => Promise.resolve({ error: new Error('DB error') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'todo-1', completed: false, status: 'todo' }),
+        createMockTodo({ id: 'todo-2', completed: false, status: 'in_progress' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.bulkComplete();
+      });
+
+      // Should rollback to original completed/status
+      const storeTodos = useTodoStore.getState().todos;
+      expect(storeTodos.find(t => t.id === 'todo-1')?.completed).toBe(false);
+      expect(storeTodos.find(t => t.id === 'todo-1')?.status).toBe('todo');
+      expect(storeTodos.find(t => t.id === 'todo-2')?.status).toBe('in_progress');
+    });
+
+    it('should rollback bulkReschedule on error', async () => {
+      const { supabase } = await import('@/lib/supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        update: vi.fn(() => ({
+          in: vi.fn(() => Promise.resolve({ error: new Error('DB error') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'todo-1', due_date: '2025-01-01' }),
+        createMockTodo({ id: 'todo-2', due_date: '2025-02-01' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.bulkReschedule('2025-06-15');
+      });
+
+      // Should rollback to original due_date
+      const storeTodos = useTodoStore.getState().todos;
+      expect(storeTodos.find(t => t.id === 'todo-1')?.due_date).toBe('2025-01-01');
+      expect(storeTodos.find(t => t.id === 'todo-2')?.due_date).toBe('2025-02-01');
+    });
+
+    it('should rollback bulkSetPriority on error', async () => {
+      const { supabase } = await import('@/lib/supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        update: vi.fn(() => ({
+          in: vi.fn(() => Promise.resolve({ error: new Error('DB error') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'todo-1', priority: 'low' }),
+        createMockTodo({ id: 'todo-2', priority: 'medium' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.bulkSetPriority('urgent');
+      });
+
+      // Should rollback to original priority
+      const storeTodos = useTodoStore.getState().todos;
+      expect(storeTodos.find(t => t.id === 'todo-1')?.priority).toBe('low');
+      expect(storeTodos.find(t => t.id === 'todo-2')?.priority).toBe('medium');
+    });
+
+    it('should rollback bulkDelete on error', async () => {
+      const { supabase } = await import('@/lib/supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        delete: vi.fn(() => ({
+          in: vi.fn(() => Promise.resolve({ error: new Error('DB error') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'todo-1', text: 'First' }),
+        createMockTodo({ id: 'todo-2', text: 'Second' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['todo-1', 'todo-2']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.bulkDelete(async (_count, action) => {
+          await action();
+        });
+      });
+
+      // Should rollback - todos should be restored
+      const storeTodos = useTodoStore.getState().todos;
+      expect(storeTodos).toHaveLength(2);
+    });
+  });
+
   describe('Merge Todos', () => {
     it('should merge multiple todos into one', async () => {
       const todos = [
@@ -450,6 +604,119 @@ describe('useBulkActions', () => {
       });
 
       expect(mergeResult).toBe(false);
+    });
+
+    it('should return false when merge update fails', async () => {
+      const { supabase } = await import('@/lib/supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: vi.fn(() => Promise.resolve({ error: new Error('Update failed') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'primary', text: 'Primary' }),
+        createMockTodo({ id: 'secondary', text: 'Secondary' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['primary', 'secondary']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      let mergeResult: boolean = true;
+      await act(async () => {
+        mergeResult = await result.current.mergeTodos('primary');
+      });
+
+      expect(mergeResult).toBe(false);
+    });
+
+    it('should return false when merge delete fails', async () => {
+      const { supabase } = await import('@/lib/supabaseClient');
+      // First call for update succeeds
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: vi.fn(() => Promise.resolve({ error: null })),
+        })),
+      } as any);
+      // Second call for delete fails
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        delete: vi.fn(() => ({
+          in: vi.fn(() => Promise.resolve({ error: new Error('Delete failed') })),
+        })),
+      } as any);
+
+      const todos = [
+        createMockTodo({ id: 'primary', text: 'Primary' }),
+        createMockTodo({ id: 'secondary', text: 'Secondary' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['primary', 'secondary']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      let mergeResult: boolean = true;
+      await act(async () => {
+        mergeResult = await result.current.mergeTodos('primary');
+      });
+
+      expect(mergeResult).toBe(false);
+    });
+
+    it('should combine attachments from all todos', async () => {
+      const todos = [
+        createMockTodo({
+          id: 'primary',
+          text: 'Primary',
+          attachments: [{ id: 'a1', file_name: 'file1.pdf' }],
+        }),
+        createMockTodo({
+          id: 'secondary',
+          text: 'Secondary',
+          attachments: [{ id: 'a2', file_name: 'file2.pdf' }],
+        }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['primary', 'secondary']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.mergeTodos('primary');
+      });
+
+      const mergedTodo = useTodoStore.getState().todos.find(t => t.id === 'primary');
+      expect(mergedTodo?.attachments).toHaveLength(2);
+    });
+
+    it('should keep urgent priority over lower priorities', async () => {
+      const todos = [
+        createMockTodo({ id: 'primary', priority: 'low' }),
+        createMockTodo({ id: 'secondary', priority: 'urgent' }),
+      ];
+
+      act(() => {
+        useTodoStore.getState().setTodos(todos);
+        useTodoStore.getState().selectAllTodos(['primary', 'secondary']);
+      });
+
+      const { result } = renderHook(() => useBulkActions('TestUser'));
+
+      await act(async () => {
+        await result.current.mergeTodos('primary');
+      });
+
+      const mergedTodo = useTodoStore.getState().todos.find(t => t.id === 'primary');
+      expect(mergedTodo?.priority).toBe('urgent');
     });
   });
 });

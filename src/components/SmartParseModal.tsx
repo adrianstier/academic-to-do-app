@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Sparkles, Check, Clock, Flag, Calendar, User, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { TodoPriority, Subtask } from '@/types/todo';
+import { useEscapeKey } from '@/hooks';
 
 interface ParsedSubtask {
   text: string;
@@ -53,6 +54,9 @@ export default function SmartParseModal({
     parsedResult.subtasks.map(st => ({ ...st, included: true }))
   );
   const [showSubtasks, setShowSubtasks] = useState(true);
+
+  // Handle Escape key to close modal
+  useEscapeKey(onClose, { enabled: isOpen });
 
   if (!isOpen) return null;
 

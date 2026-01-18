@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { extractUserName, validateUserName } from '@/lib/apiAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -42,13 +43,29 @@ export async function GET(request: Request) {
 }
 
 // POST - Log an activity (called internally when tasks are modified)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Extract and validate userName from request
+    const authUserName = extractUserName(request);
+    const authError = validateUserName(authUserName);
+    if (authError) {
+      return authError;
+    }
+
     const body = await request.json();
     const { action, todo_id, todo_text, user_name, details } = body;
 
     if (!action || !user_name) {
       return NextResponse.json({ error: 'action and user_name are required' }, { status: 400 });
+    }
+
+    // Verify that the authenticated user matches the user_name in the body
+    // This prevents users from logging activities as other users
+    if (authUserName !== user_name) {
+      return NextResponse.json(
+        { error: 'Authenticated user does not match user_name in request body' },
+        { status: 403 }
+      );
     }
 
     const { data, error } = await supabase

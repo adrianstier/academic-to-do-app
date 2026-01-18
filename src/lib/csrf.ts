@@ -39,7 +39,7 @@ export function validateCsrfToken(request: NextRequest): boolean {
   }
 
   // Get token from header
-  let headerToken = request.headers.get(CSRF_HEADER_NAME);
+  const headerToken = request.headers.get(CSRF_HEADER_NAME);
 
   // If not in header, try form data (for form submissions)
   // Note: We can't easily read form data in middleware, so header is preferred
@@ -223,8 +223,8 @@ export async function fetchWithCsrf(
   if (token) {
     headers.set(CSRF_HEADER_NAME, token);
   } else {
-    // Log warning in development to help debug CSRF issues
-    if (typeof window !== 'undefined') {
+    // Log warning in development only to help debug CSRF issues
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       console.warn('[CSRF] No token found in cookies. Available cookies:', document.cookie);
     }
   }

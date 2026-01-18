@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Keyboard } from 'lucide-react';
+import { useEscapeKey } from '@/hooks';
 
 interface KeyboardShortcutsModalProps {
   show: boolean;
@@ -46,6 +47,9 @@ export default function KeyboardShortcutsModal({
   onClose,
   darkMode = true,
 }: KeyboardShortcutsModalProps) {
+  // Handle Escape key to close modal
+  useEscapeKey(onClose, { enabled: show });
+
   return (
     <AnimatePresence>
       {show && (

@@ -125,6 +125,7 @@ async function verifyMigration(): Promise<VerificationResult> {
         );
       } else {
         // Verify file names match
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const oldFileNames = todo.attachments.map((a: any) => a.file_name).sort();
         const newFileNames = migratedAttachments.map((a) => a.file_name).sort();
 

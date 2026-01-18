@@ -30,7 +30,6 @@ async function main() {
   // Get today's date at midnight
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayISO = today.toISOString();
 
   // 1. Get current todos count
   console.log('\n📋 Current Todos:');

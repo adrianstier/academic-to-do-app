@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Attachment, AttachmentCategory } from '@/types/todo';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 interface AttachmentListProps {
   attachments: Attachment[];
@@ -62,7 +63,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const response = await fetch(`/api/attachments?path=${encodeURIComponent(attachment.storage_path)}`);
+      const response = await fetchWithCsrf(`/api/attachments?path=${encodeURIComponent(attachment.storage_path)}`);
       const result = await response.json();
 
       if (result.success && result.url) {
@@ -89,7 +90,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
     }
 
     try {
-      const response = await fetch(`/api/attachments?path=${encodeURIComponent(attachment.storage_path)}`);
+      const response = await fetchWithCsrf(`/api/attachments?path=${encodeURIComponent(attachment.storage_path)}`);
       const result = await response.json();
 
       if (result.success && result.url) {
@@ -105,7 +106,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
     if (removing) return;
     setRemoving(true);
     try {
-      const response = await fetch(
+      const response = await fetchWithCsrf(
         `/api/attachments?todoId=${todoId}&attachmentId=${attachment.id}`,
         { method: 'DELETE' }
       );
@@ -215,6 +216,8 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
             {/* Content */}
             <div className="max-h-[calc(90vh-60px)] overflow-auto">
               {category === 'image' ? (
+                // Using native img for blob URLs - Next.js Image doesn't support blob:// protocol
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={previewUrl}
                   alt={attachment.file_name}

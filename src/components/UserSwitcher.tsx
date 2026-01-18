@@ -154,10 +154,13 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
     setIsSubmitting(false);
   };
 
+  // Auto-submit PIN when all digits entered - intentional async trigger pattern
+  // We intentionally omit handlePinSubmit and isSubmitting to avoid re-triggering on their changes
   useEffect(() => {
     if (modalState === 'pin' && pin.every(d => d !== '') && !isSubmitting) {
       handlePinSubmit();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pin, modalState]);
 
   const closeModal = () => {

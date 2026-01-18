@@ -31,7 +31,9 @@ const limit = pLimit(CONCURRENCY);
 
 interface Todo {
   id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subtasks?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   attachments?: any[];
   assigned_to?: string;
   created_at: string;
@@ -149,6 +151,7 @@ async function migrateSingleTodo(todo: Todo): Promise<void> {
   try {
     // Migrate subtasks from JSONB to table
     if (todo.subtasks && Array.isArray(todo.subtasks) && todo.subtasks.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const subtasksToInsert = todo.subtasks.map((st: any, index: number) => ({
         id: st.id,
         todo_id: todo.id,
@@ -171,6 +174,7 @@ async function migrateSingleTodo(todo: Todo): Promise<void> {
 
     // Migrate attachments from JSONB to table
     if (todo.attachments && Array.isArray(todo.attachments) && todo.attachments.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const attachmentsToInsert = todo.attachments.map((att: any) => ({
         id: att.id,
         todo_id: todo.id,
@@ -252,6 +256,7 @@ async function verifyMigration() {
       .select('*')
       .eq('todo_id', todo.id);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jsonbCount = (todo.subtasks as any[] || []).length;
     const normalizedCount = normalizedSubtasks?.length || 0;
 
@@ -268,6 +273,7 @@ async function verifyMigration() {
       .select('*')
       .eq('todo_id', todo.id);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jsonbAttCount = (todo.attachments as any[] || []).length;
     const normalizedAttCount = normalizedAttachments?.length || 0;
 

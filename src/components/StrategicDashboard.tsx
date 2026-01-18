@@ -45,6 +45,7 @@ import {
   GOAL_PRIORITY_CONFIG,
 } from '@/types/todo';
 import { fetchWithCsrf } from '@/lib/csrf';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface StrategicDashboardProps {
   userName: string;
@@ -105,12 +106,15 @@ export default function StrategicDashboard({
 
   const greeting = getGreeting();
 
+  // Close on Escape key press
+  useEscapeKey(onClose);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [categoriesRes, goalsRes] = await Promise.all([
-        fetch(`/api/goals/categories?userName=${encodeURIComponent(userName)}`),
-        fetch(`/api/goals?userName=${encodeURIComponent(userName)}`),
+        fetchWithCsrf(`/api/goals/categories?userName=${encodeURIComponent(userName)}`),
+        fetchWithCsrf(`/api/goals?userName=${encodeURIComponent(userName)}`),
       ]);
 
       if (categoriesRes.ok) {

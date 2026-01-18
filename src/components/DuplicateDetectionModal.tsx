@@ -1,8 +1,9 @@
 'use client';
 
 import { AlertTriangle, Plus, GitMerge, X, Calendar, Flag, Paperclip, ListChecks } from 'lucide-react';
-import { Todo, TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
+import { TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
 import { DuplicateMatch } from '@/lib/duplicateDetection';
+import { useEscapeKey } from '@/hooks';
 
 interface DuplicateDetectionModalProps {
   isOpen: boolean;
@@ -34,6 +35,9 @@ export default function DuplicateDetectionModal({
   onAddToExisting,
   onCancel,
 }: DuplicateDetectionModalProps) {
+  // Handle Escape key to close modal
+  useEscapeKey(onCancel, { enabled: isOpen });
+
   if (!isOpen) return null;
 
   const priorityConfig = PRIORITY_CONFIG[newTaskPriority];
@@ -119,7 +123,7 @@ export default function DuplicateDetectionModal({
             Existing Similar Tasks
           </p>
           <div className="space-y-3">
-            {duplicates.map(({ todo, score, matchReasons }) => {
+            {duplicates.map(({ todo, matchReasons }) => {
               const todoPriorityConfig = PRIORITY_CONFIG[todo.priority || 'medium'];
               return (
                 <button

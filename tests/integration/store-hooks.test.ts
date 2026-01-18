@@ -5,15 +5,14 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useTodoStore, selectTodoStats } from '@/store/todoStore';
 import { useFilters } from '@/hooks/useFilters';
 import { useBulkActions } from '@/hooks/useBulkActions';
-import { createMockTodo, createMockTodoList } from '../factories/todoFactory';
-import { Todo } from '@/types/todo';
+import { createMockTodo } from '../factories/todoFactory';
 
-// Mock Supabase
-vi.mock('@/lib/supabase', () => ({
+// Mock Supabase - using supabaseClient path which is the actual import
+vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
