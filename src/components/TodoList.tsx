@@ -3,11 +3,12 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, Attachment, OWNER_USERNAME } from '@/types/todo';
-import TodoItem from './TodoItem';
 import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
 import KanbanBoard from './KanbanBoard';
 import { logger } from '@/lib/logger';
+import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder } from '@/store/todoStore';
+import { useTodoData, useFilters, useBulkActions } from '@/hooks';
 import {
   DndContext,
   closestCenter,
@@ -25,18 +26,21 @@ import {
 } from '@dnd-kit/sortable';
 import CelebrationEffect from './CelebrationEffect';
 import ProgressSummary from './ProgressSummary';
-import WelcomeBackNotification, { shouldShowWelcomeNotification } from './WelcomeBackNotification';
+import WelcomeBackNotification from './WelcomeBackNotification';
 import ConfirmDialog from './ConfirmDialog';
 import EmptyState from './EmptyState';
 import WeeklyProgressChart from './WeeklyProgressChart';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import PullToRefresh from './PullToRefresh';
+import AppMenu from './AppMenu';
+import StatusLine from './StatusLine';
+import BottomTabs from './BottomTabs';
 import { v4 as uuidv4 } from 'uuid';
 import {
   LayoutList, LayoutGrid, Wifi, WifiOff, Search,
-  ArrowUpDown, User, Calendar, AlertTriangle, CheckSquare,
-  Trash2, X, Sun, Moon, ChevronDown, BarChart2, Activity, Target, GitMerge,
-  Paperclip, Filter, RotateCcw, Mail, Check, Clock, Zap, ChevronLeft, Home, Archive
+  ArrowUpDown, User, AlertTriangle, CheckSquare,
+  Trash2, X, ChevronDown, GitMerge,
+  Paperclip, Filter, RotateCcw, Check, Home
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import UserSwitcher from './UserSwitcher';
@@ -48,7 +52,7 @@ import SaveTemplateModal from './SaveTemplateModal';
 import ArchivedTaskModal from './ArchivedTaskModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { logActivity } from '@/lib/activityLogger';
-import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch, extractPotentialNames } from '@/lib/duplicateDetection';
+import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch } from '@/lib/duplicateDetection';
 import { sendTaskAssignmentNotification, sendTaskCompletionNotification } from '@/lib/taskNotifications';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { getNextSuggestedTasks, calculateCompletionStreak, getEncouragementMessage } from '@/lib/taskSuggestions';
@@ -66,66 +70,109 @@ interface TodoListProps {
   autoFocusAddTask?: boolean;
 }
 
-// Helper to check if due today
-const isDueToday = (dueDate?: string) => {
-  if (!dueDate) return false;
-  const d = new Date(dueDate);
-  const today = new Date();
-  d.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return d.getTime() === today.getTime();
-};
-
-// Helper to check if overdue
-const isOverdue = (dueDate?: string, completed?: boolean) => {
-  if (!dueDate || completed) return false;
-  const d = new Date(dueDate);
-  const today = new Date();
-  d.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return d < today;
-};
-
-// Priority sort order
-const priorityOrder: Record<TodoPriority, number> = {
-  urgent: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
+// Helper to get completion timestamp in ms
+const getCompletedAtMs = (todo: Todo): number | null => {
+  // Try updated_at first if task is completed
+  if (todo.completed && todo.updated_at) {
+    const updatedMs = new Date(todo.updated_at).getTime();
+    if (!isNaN(updatedMs)) return updatedMs;
+  }
+  // Fallback to created_at
+  if (todo.created_at) {
+    const createdMs = new Date(todo.created_at).getTime();
+    if (!isNaN(createdMs)) return createdMs;
+  }
+  return null;
 };
 
 export default function TodoList({ currentUser, onUserChange, onOpenDashboard, initialFilter, autoFocusAddTask }: TodoListProps) {
   const userName = currentUser.name;
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const darkMode = theme === 'dark';
   const canViewArchive = currentUser.role === 'admin' || ['derrick', 'adrian'].includes(userName.toLowerCase());
 
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Core data from Zustand store (managed by useTodoData hook)
+  const {
+    todos,
+    users,
+    usersWithColors,
+    loading,
+    connected,
+    error,
+    // Store actions for direct state manipulation (used by component handlers)
+    addTodo: addTodoToStore,
+    updateTodo: updateTodoInStore,
+    deleteTodo: deleteTodoFromStore,
+    // Bulk action helpers from store
+    toggleTodoSelection,
+  } = useTodoStore();
+
+  void _priorityOrder; // Re-exported for external use
+
+  // useTodoData handles fetching, real-time subscriptions, and basic CRUD
+  // We use the store state above but keep local handlers for enhanced features
+  const { refresh: refreshTodos } = useTodoData(currentUser);
+
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [users, setUsers] = useState<string[]>([]);
-  const [usersWithColors, setUsersWithColors] = useState<{ name: string; color: string }[]>([]);
 
-  // Search, sort, and filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState<SortOption>('urgency');
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>(initialFilter || 'all');
-  const [showCompleted, setShowCompleted] = useState(false);
-  const [highPriorityOnly, setHighPriorityOnly] = useState(false);
+  // Filter state from useFilters hook (manages search, sort, quick filters, and advanced filters)
+  const {
+    filters,
+    visibleTodos,
+    filteredAndSortedTodos: hookFilteredTodos,
+    archivedTodos,
+    uniqueCustomers,
+    setSearchQuery,
+    setQuickFilter,
+    setSortOption,
+    setShowCompleted,
+    setHighPriorityOnly,
+    setShowAdvancedFilters,
+    setStatusFilter,
+    setAssignedToFilter,
+    setCustomerFilter,
+    setHasAttachmentsFilter,
+    setDateRangeFilter,
+    filterArchivedTodos,
+  } = useFilters(userName);
 
-  // Advanced filter state
-  const [statusFilter, setStatusFilter] = useState<TodoStatus | 'all'>('all');
-  const [assignedToFilter, setAssignedToFilter] = useState<string>('all');
-  const [customerFilter, setCustomerFilter] = useState<string>('all');
-  const [hasAttachmentsFilter, setHasAttachmentsFilter] = useState<boolean | null>(null);
-  const [dateRangeFilter, setDateRangeFilter] = useState<{ start: string; end: string }>({ start: '', end: '' });
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  // Destructure filter values for easier access (backwards compatibility with existing code)
+  const {
+    searchQuery,
+    sortOption,
+    quickFilter,
+    showCompleted,
+    highPriorityOnly,
+    statusFilter,
+    assignedToFilter,
+    customerFilter,
+    hasAttachmentsFilter,
+    dateRangeFilter,
+  } = filters;
 
-  // Bulk actions state
-  const [selectedTodos, setSelectedTodos] = useState<Set<string>>(new Set());
-  const [showBulkActions, setShowBulkActions] = useState(false);
+  // Get showAdvancedFilters from UI state (not part of filters in store)
+  const { showAdvancedFilters } = useTodoStore((state) => state.ui);
+
+  // Apply initial filter from props
+  useEffect(() => {
+    if (initialFilter) {
+      setQuickFilter(initialFilter);
+    }
+  }, [initialFilter, setQuickFilter]);
+
+  // Bulk actions from hook
+  const {
+    selectedTodos,
+    showBulkActions,
+    handleSelectTodo: hookHandleSelectTodo,
+    clearSelection,
+    setShowBulkActions,
+    bulkDelete: hookBulkDelete,
+    bulkAssign: hookBulkAssign,
+    bulkComplete: hookBulkComplete,
+    bulkReschedule: hookBulkReschedule,
+    getDateOffset,
+  } = useBulkActions(userName);
 
   // Celebration and notifications
   const [showCelebration, setShowCelebration] = useState(false);
@@ -140,7 +187,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const [showArchiveView, setShowArchiveView] = useState(false);
   const [selectedArchivedTodo, setSelectedArchivedTodo] = useState<Todo | null>(null);
   const [archiveQuery, setArchiveQuery] = useState('');
-  const [archiveTick, setArchiveTick] = useState(0);
+  const [, setArchiveTick] = useState(0); // tick value unused, only setter needed for refresh
   const [customOrder, setCustomOrder] = useState<string[]>([]);
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [mergeTargets, setMergeTargets] = useState<Todo[]>([]);
@@ -215,7 +262,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
       // 'Escape' - clear selection
       if (e.key === 'Escape') {
-        setSelectedTodos(new Set());
+        clearSelection();
         setSearchQuery('');
         setShowBulkActions(false);
       }
@@ -235,6 +282,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // These functions are stable (from hooks/stores) - we only want to register listener once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -244,94 +293,25 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     return () => clearInterval(interval);
   }, []);
 
-  const fetchTodos = useCallback(async () => {
-    if (!isSupabaseConfigured()) {
-      setError('Supabase is not configured. Please check your environment variables.');
-      setLoading(false);
-      return;
-    }
+  // Fetch activity log for streak calculation (useTodoData handles todos/users/real-time)
+  const fetchActivityLog = useCallback(async () => {
+    if (!isSupabaseConfigured()) return;
 
-    const [todosResult, usersResult, activityResult] = await Promise.all([
-      supabase.from('todos').select('*').order('created_at', { ascending: false }),
-      supabase.from('users').select('name, color').order('name'),
-      supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(100),
-    ]);
+    const { data } = await supabase
+      .from('activity_log')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
 
-    if (todosResult.error) {
-      logger.error('Error fetching todos', todosResult.error, { component: 'TodoList' });
-      setError('Failed to connect to database. Please check your Supabase configuration.');
-    } else {
-      setTodos(todosResult.data || []);
-      const registeredUsers = (usersResult.data || []).map((u: { name: string }) => u.name);
-      const todoUsers = [...new Set((todosResult.data || []).map((t: Todo) => t.created_by).filter(Boolean))];
-      setUsers([...new Set([...registeredUsers, ...todoUsers])]);
-      // Store users with colors for chat
-      setUsersWithColors((usersResult.data || []).map((u: { name: string; color: string }) => ({
-        name: u.name,
-        color: u.color || '#0033A0'
-      })));
-      // Store activity log for streak calculation
-      if (activityResult.data) {
-        setActivityLog(activityResult.data as ActivityLogEntry[]);
-      }
-      setError(null);
+    if (data) {
+      setActivityLog(data as ActivityLogEntry[]);
     }
-    setLoading(false);
   }, []);
 
+  // Fetch activity log on mount
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      setError('Supabase is not configured. Please check your environment variables.');
-      setLoading(false);
-      return;
-    }
-
-    let isMounted = true;
-
-    const init = async () => {
-      await fetchTodos();
-      if (isMounted) {
-        if (shouldShowWelcomeNotification(currentUser)) {
-          setShowWelcomeBack(true);
-        }
-      }
-    };
-
-    init();
-
-    const channel = supabase
-      .channel('todos-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'todos' },
-        (payload) => {
-          if (!isMounted) return;
-          if (payload.eventType === 'INSERT') {
-            setTodos((prev) => {
-              const exists = prev.some((t) => t.id === (payload.new as Todo).id);
-              if (exists) return prev;
-              return [payload.new as Todo, ...prev];
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setTodos((prev) =>
-              prev.map((todo) =>
-                todo.id === payload.new.id ? (payload.new as Todo) : todo
-              )
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setTodos((prev) => prev.filter((todo) => todo.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (isMounted) setConnected(status === 'SUBSCRIBED');
-      });
-
-    return () => {
-      isMounted = false;
-      supabase.removeChannel(channel);
-    };
-  }, [fetchTodos, userName, currentUser]);
+    fetchActivityLog();
+  }, [fetchActivityLog]);
 
   // Check for duplicates and either show modal or create task directly
   const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => {
@@ -367,7 +347,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       transcription: transcription,
     };
 
-    setTodos((prev) => [newTodo, ...prev]);
+    // Optimistic update using store action
+    addTodoToStore(newTodo);
 
     const insertData: Record<string, unknown> = {
       id: newTodo.id,
@@ -388,7 +369,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
     if (insertError) {
       logger.error('Error adding todo', insertError, { component: 'TodoList' });
-      setTodos((prev) => prev.filter((t) => t.id !== newTodo.id));
+      // Rollback optimistic update
+      deleteTodoFromStore(newTodo.id);
     } else {
       // Log activity
       logActivity({
@@ -434,14 +416,13 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
           if (response.ok) {
             const { attachment } = await response.json();
-            // Update local state with the attachment
-            setTodos((prev) =>
-              prev.map((t) =>
-                t.id === newTodo.id
-                  ? { ...t, attachments: [...(t.attachments || []), attachment] }
-                  : t
-              )
-            );
+            // Update store with the attachment
+            const currentTodo = useTodoStore.getState().todos.find(t => t.id === newTodo.id);
+            if (currentTodo) {
+              updateTodoInStore(newTodo.id, {
+                attachments: [...(currentTodo.attachments || []), attachment]
+              });
+            }
             // Log attachment activity
             logActivity({
               action: 'attachment_added',
@@ -517,14 +498,13 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       }
     }
 
-    // Optimistically update UI
-    setTodos(prev => prev.map(t => t.id === existingTodoId ? {
-      ...t,
+    // Optimistically update UI using store action
+    updateTodoInStore(existingTodoId, {
       notes: combinedNotes,
       subtasks: combinedSubtasks,
       priority: higherPriority,
       due_date: finalDueDate,
-    } : t));
+    });
 
     // Update in database
     const { error: updateError } = await supabase
@@ -539,7 +519,13 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
     if (updateError) {
       logger.error('Error updating existing todo', updateError, { component: 'TodoList' });
-      fetchTodos(); // Refresh on error
+      // Rollback by restoring original values
+      updateTodoInStore(existingTodoId, {
+        notes: existingTodo.notes,
+        subtasks: existingTodo.subtasks,
+        priority: existingTodo.priority,
+        due_date: existingTodo.due_date,
+      });
     } else {
       // Upload source file if present
       if (pendingTask.sourceFile) {
@@ -556,10 +542,12 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
           if (response.ok) {
             const { attachment } = await response.json();
-            setTodos(prev => prev.map(t => t.id === existingTodoId
-              ? { ...t, attachments: [...(t.attachments || []), attachment] }
-              : t
-            ));
+            const currentTodo = useTodoStore.getState().todos.find(t => t.id === existingTodoId);
+            if (currentTodo) {
+              updateTodoInStore(existingTodoId, {
+                attachments: [...(currentTodo.attachments || []), attachment]
+              });
+            }
           }
         } catch (err) {
           logger.error('Error attaching file to existing task', err, { component: 'TodoList' });
@@ -603,7 +591,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       created_by: userName,
     };
 
-    setTodos((prev) => [newTodo, ...prev]);
+    // Optimistic update using store action
+    addTodoToStore(newTodo);
 
     const insertData: Record<string, unknown> = {
       id: newTodo.id,
@@ -623,7 +612,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
     if (insertError) {
       logger.error('Error duplicating todo', insertError, { component: 'TodoList' });
-      setTodos((prev) => prev.filter((t) => t.id !== newTodo.id));
+      // Rollback optimistic update
+      deleteTodoFromStore(newTodo.id);
     }
   };
 
@@ -632,9 +622,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     const completed = status === 'done';
     const updated_at = new Date().toISOString();
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, status, completed, updated_at } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { status, completed, updated_at });
 
     if (status === 'done' && oldTodo && !oldTodo.completed) {
       // Calculate streak and get next tasks for enhanced celebration
@@ -679,7 +668,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error updating status', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, oldTodo);
       }
     } else if (oldTodo) {
       // Log activity
@@ -736,7 +726,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       created_at: new Date().toISOString(),
     };
 
-    setTodos((prev) => [newTodo, ...prev]);
+    // Optimistic update using store action
+    addTodoToStore(newTodo);
 
     const insertData: Record<string, unknown> = {
       id: newTodo.id,
@@ -762,9 +753,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     // When completing a task, also set status to 'done'; when uncompleting, set to 'todo'
     const newStatus: TodoStatus = completed ? 'done' : 'todo';
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, completed, status: newStatus, updated_at } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { completed, status: newStatus, updated_at });
 
     if (completed && todoItem) {
       // Calculate streak and get next tasks for enhanced celebration
@@ -810,9 +800,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       logger.error('Error updating todo', updateError, { component: 'TodoList' });
       // Revert both completed and status on error
       const revertStatus: TodoStatus = completed ? (todoItem?.status || 'todo') : 'done';
-      setTodos((prev) =>
-        prev.map((todo) => (todo.id === id ? { ...todo, completed: !completed, status: revertStatus } : todo))
-      );
+      updateTodoInStore(id, { completed: !completed, status: revertStatus });
     } else if (completed && todoItem) {
       // Log activity for streak tracking
       logActivity({
@@ -826,19 +814,20 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
   const deleteTodo = async (id: string) => {
     const todoToDelete = todos.find((t) => t.id === id);
-    setTodos((prev) => prev.filter((todo) => todo.id !== id));
-    setSelectedTodos((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+    // Optimistic delete using store action
+    deleteTodoFromStore(id);
+    // Remove from selection if selected
+    if (selectedTodos.has(id)) {
+      toggleTodoSelection(id);
+    }
 
     const { error: deleteError } = await supabase.from('todos').delete().eq('id', id);
 
     if (deleteError) {
       logger.error('Error deleting todo', deleteError, { component: 'TodoList' });
       if (todoToDelete) {
-        setTodos((prev) => [...prev, todoToDelete]);
+        // Rollback optimistic delete
+        addTodoToStore(todoToDelete);
       }
     } else if (todoToDelete) {
       logActivity({
@@ -866,11 +855,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const assignTodo = async (id: string, assignedTo: string | null) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, assigned_to: assignedTo || undefined } : todo
-      )
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { assigned_to: assignedTo || undefined });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -880,7 +866,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error assigning todo', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { assigned_to: oldTodo.assigned_to });
       }
     } else if (oldTodo && oldTodo.assigned_to !== assignedTo) {
       logActivity({
@@ -896,11 +883,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const setDueDate = async (id: string, dueDate: string | null) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, due_date: dueDate || undefined } : todo
-      )
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { due_date: dueDate || undefined });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -910,7 +894,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error setting due date', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { due_date: oldTodo.due_date });
       }
     } else if (oldTodo && oldTodo.due_date !== dueDate) {
       logActivity({
@@ -926,9 +911,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const setPriority = async (id: string, priority: TodoPriority) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, priority } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { priority });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -938,7 +922,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error setting priority', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { priority: oldTodo.priority });
       }
     } else if (oldTodo && oldTodo.priority !== priority) {
       logActivity({
@@ -954,9 +939,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const updateNotes = async (id: string, notes: string) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, notes } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { notes });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -966,7 +950,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error updating notes', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { notes: oldTodo.notes });
       }
     } else if (oldTodo) {
       logActivity({
@@ -981,9 +966,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const updateText = async (id: string, text: string) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, text } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { text });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -993,7 +977,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error updating text', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { text: oldTodo.text });
       }
     }
   };
@@ -1001,9 +986,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const setRecurrence = async (id: string, recurrence: RecurrencePattern) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, recurrence } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { recurrence });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -1013,7 +997,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error setting recurrence', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { recurrence: oldTodo.recurrence });
       }
     }
   };
@@ -1021,9 +1006,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const updateSubtasks = async (id: string, subtasks: Subtask[]) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, subtasks } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { subtasks });
 
     const { error: updateError } = await supabase
       .from('todos')
@@ -1033,7 +1017,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error updating subtasks', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+        // Rollback optimistic update
+        updateTodoInStore(id, { subtasks: oldTodo.subtasks });
       }
     }
   };
@@ -1041,9 +1026,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const updateAttachments = async (id: string, attachments: Attachment[], skipDbUpdate = false) => {
     const oldTodo = todos.find((t) => t.id === id);
 
-    setTodos((prev) =>
-      prev.map((todo) => (todo.id === id ? { ...todo, attachments } : todo))
-    );
+    // Optimistic update using store action
+    updateTodoInStore(id, { attachments });
 
     // Skip database update if the API already handled it (e.g., after delete or upload)
     if (!skipDbUpdate) {
@@ -1055,7 +1039,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       if (updateError) {
         logger.error('Error updating attachments', updateError, { component: 'TodoList' });
         if (oldTodo) {
-          setTodos((prev) => prev.map((todo) => (todo.id === id ? oldTodo : todo)));
+          // Rollback optimistic update
+          updateTodoInStore(id, { attachments: oldTodo.attachments });
         }
         return; // Don't log activity if update failed
       }
@@ -1112,124 +1097,25 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     }
   };
 
-  // Bulk actions with confirmation
-  const bulkDelete = async () => {
-    const count = selectedTodos.size;
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Delete Tasks',
-      message: `Are you sure you want to delete ${count} task${count > 1 ? 's' : ''}? This cannot be undone.`,
-      onConfirm: async () => {
-        const idsToDelete = Array.from(selectedTodos);
-        const todosToDelete = todos.filter(t => selectedTodos.has(t.id));
-
-        setTodos((prev) => prev.filter((todo) => !selectedTodos.has(todo.id)));
-        setSelectedTodos(new Set());
-        setShowBulkActions(false);
-
-        const { error } = await supabase
-          .from('todos')
-          .delete()
-          .in('id', idsToDelete);
-
-        if (error) {
-          logger.error('Error bulk deleting', error, { component: 'TodoList' });
-          setTodos((prev) => [...prev, ...todosToDelete]);
-        }
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-      },
+  // Bulk action wrappers (use hook functions with confirmation dialog integration)
+  const bulkDelete = () => {
+    hookBulkDelete((count, action) => {
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Delete Tasks',
+        message: `Are you sure you want to delete ${count} task${count > 1 ? 's' : ''}? This cannot be undone.`,
+        onConfirm: async () => {
+          await action();
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        },
+      });
     });
   };
 
-  const bulkAssign = async (assignedTo: string) => {
-    const idsToUpdate = Array.from(selectedTodos);
-    const originalTodos = todos.filter(t => selectedTodos.has(t.id));
-
-    setTodos((prev) =>
-      prev.map((todo) =>
-        selectedTodos.has(todo.id) ? { ...todo, assigned_to: assignedTo } : todo
-      )
-    );
-    setSelectedTodos(new Set());
-    setShowBulkActions(false);
-
-    const { error } = await supabase
-      .from('todos')
-      .update({ assigned_to: assignedTo })
-      .in('id', idsToUpdate);
-
-    if (error) {
-      logger.error('Error bulk assigning', error, { component: 'TodoList' });
-      // Rollback on failure
-      setTodos((prev) => {
-        const rollbackMap = new Map(originalTodos.map(t => [t.id, t]));
-        return prev.map((todo) => rollbackMap.get(todo.id) || todo);
-      });
-    }
-  };
-
-  const bulkComplete = async () => {
-    const idsToUpdate = Array.from(selectedTodos);
-    const originalTodos = todos.filter(t => selectedTodos.has(t.id));
-
-    setTodos((prev) =>
-      prev.map((todo) =>
-        selectedTodos.has(todo.id) ? { ...todo, completed: true, status: 'done' as TodoStatus } : todo
-      )
-    );
-    setSelectedTodos(new Set());
-    setShowBulkActions(false);
-
-    const { error } = await supabase
-      .from('todos')
-      .update({ completed: true, status: 'done' })
-      .in('id', idsToUpdate);
-
-    if (error) {
-      logger.error('Error bulk completing', error, { component: 'TodoList' });
-      // Rollback on failure
-      setTodos((prev) => {
-        const rollbackMap = new Map(originalTodos.map(t => [t.id, t]));
-        return prev.map((todo) => rollbackMap.get(todo.id) || todo);
-      });
-    }
-  };
-
-  // Bulk reschedule - set new due date for selected tasks
-  const bulkReschedule = async (newDueDate: string) => {
-    const idsToUpdate = Array.from(selectedTodos);
-    const originalTodos = todos.filter(t => selectedTodos.has(t.id));
-
-    // Optimistic update
-    setTodos((prev) =>
-      prev.map((todo) =>
-        selectedTodos.has(todo.id) ? { ...todo, due_date: newDueDate } : todo
-      )
-    );
-    setSelectedTodos(new Set());
-    setShowBulkActions(false);
-
-    const { error } = await supabase
-      .from('todos')
-      .update({ due_date: newDueDate })
-      .in('id', idsToUpdate);
-
-    if (error) {
-      logger.error('Error bulk rescheduling', error, { component: 'TodoList' });
-      // Rollback on failure
-      setTodos((prev) => {
-        const rollbackMap = new Map(originalTodos.map(t => [t.id, t]));
-        return prev.map((todo) => rollbackMap.get(todo.id) || todo);
-      });
-    }
-  };
-
-  // Helper to get date offset
-  const getDateOffset = (days: number) => {
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    return date.toISOString().split('T')[0];
-  };
+  // Direct wrappers for hook bulk actions
+  const bulkAssign = hookBulkAssign;
+  const bulkComplete = hookBulkComplete;
+  const bulkReschedule = hookBulkReschedule;
 
   // Merge selected todos into one
   const initiateMerge = () => {
@@ -1311,26 +1197,22 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       if (deleteError) {
         logger.error('Error deleting merged todos', deleteError, { component: 'TodoList' });
         alert('Merge partially failed. Refreshing...');
-        fetchTodos();
+        refreshTodos();
         setIsMerging(false);
         return;
       }
 
-      // Update primary todo with merged data in UI
-      const updatedTodo = {
-        ...primaryTodo,
+      // Update UI after successful DB operations using store actions
+      // First update the primary todo
+      updateTodoInStore(primaryTodoId, {
         text: combinedText,
         notes: combinedNotes,
         attachments: combinedAttachments,
         subtasks: combinedSubtasks,
         priority: highestPriority,
-      };
-
-      // Update UI after successful DB operations
-      setTodos(prev => {
-        const filtered = prev.filter(t => !secondaryTodos.some(st => st.id === t.id));
-        return filtered.map(t => t.id === primaryTodoId ? updatedTodo : t);
       });
+      // Then delete the secondary todos
+      secondaryTodos.forEach(t => deleteTodoFromStore(t.id));
 
       // Log activity
       logActivity({
@@ -1345,7 +1227,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       });
 
       // Clear selection and close modal
-      setSelectedTodos(new Set());
+      clearSelection();
       setShowBulkActions(false);
       setShowMergeModal(false);
       setMergeTargets([]);
@@ -1353,233 +1235,38 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     } catch (error) {
       logger.error('Error during merge', error, { component: 'TodoList' });
       alert('An unexpected error occurred. Please try again.');
-      fetchTodos();
+      refreshTodos();
     } finally {
       setIsMerging(false);
     }
   };
 
-  const handleSelectTodo = (id: string, selected: boolean) => {
-    setSelectedTodos((prev) => {
-      const next = new Set(prev);
-      if (selected) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  };
+  // Selection handlers that adapt hook functions to component usage
+  const handleSelectTodo = hookHandleSelectTodo;
 
-  const selectAll = () => {
-    setSelectedTodos(new Set(filteredAndSortedTodos.map(t => t.id)));
-  };
-
-  const clearSelection = () => {
-    setSelectedTodos(new Set());
-  };
-
-  const getCompletedAtMs = (todo: Todo) => {
-    const raw = todo.updated_at || todo.created_at;
-    if (!raw) return null;
-    const time = new Date(raw).getTime();
-    return Number.isNaN(time) ? null : time;
-  };
-
-  const archivedTodos = useMemo(() => {
-    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
-    return todos
-      .filter((todo) => {
-        if (!todo.completed) return false;
-        const completedAt = getCompletedAtMs(todo);
-        return completedAt !== null && completedAt <= cutoff;
-      })
-      .sort((a, b) => (getCompletedAtMs(b) || 0) - (getCompletedAtMs(a) || 0));
-  }, [todos, archiveTick]);
-
-  const archivedIds = useMemo(() => new Set(archivedTodos.map((todo) => todo.id)), [archivedTodos]);
-
-  // All users can now see all tasks, excluding archived
-  const visibleTodos = useMemo(() => {
-    return todos.filter((todo) => !archivedIds.has(todo.id));
-  }, [todos, archivedIds]);
-
-  // Extract unique customer names from todos for filtering
-  const uniqueCustomers = useMemo(() => {
-    const customers = new Set<string>();
-    visibleTodos.forEach(todo => {
-      const names = extractPotentialNames(`${todo.text} ${todo.notes || ''}`);
-      names.forEach(name => customers.add(name));
-    });
-    return Array.from(customers).sort();
-  }, [visibleTodos]);
-
+  // Archived todos filtering (uses filterArchivedTodos from useFilters hook)
   const filteredArchivedTodos = useMemo(() => {
-    const query = archiveQuery.trim().toLowerCase();
-    if (!query) return archivedTodos;
-    return archivedTodos.filter((todo) =>
-      todo.text.toLowerCase().includes(query) ||
-      todo.created_by.toLowerCase().includes(query) ||
-      (todo.assigned_to && todo.assigned_to.toLowerCase().includes(query)) ||
-      (todo.notes && todo.notes.toLowerCase().includes(query)) ||
-      (todo.transcription && todo.transcription.toLowerCase().includes(query))
-    );
-  }, [archivedTodos, archiveQuery]);
+    return filterArchivedTodos(archiveQuery);
+  }, [filterArchivedTodos, archiveQuery]);
 
-  // Filter and sort todos
+  // Final filtered and sorted todos (uses hook result, applies custom order if needed)
   const filteredAndSortedTodos = useMemo(() => {
-    let result = [...visibleTodos];
-
-    // Apply search filter (comprehensive search including transcription)
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (todo) =>
-          todo.text.toLowerCase().includes(query) ||
-          todo.created_by.toLowerCase().includes(query) ||
-          (todo.assigned_to && todo.assigned_to.toLowerCase().includes(query)) ||
-          (todo.notes && todo.notes.toLowerCase().includes(query)) ||
-          (todo.transcription && todo.transcription.toLowerCase().includes(query)) ||
-          // Search phone numbers in text/notes/transcription
-          (query.match(/^\d+$/) && (
-            todo.text.includes(query) ||
-            (todo.notes && todo.notes.includes(query)) ||
-            (todo.transcription && todo.transcription.includes(query))
-          ))
-      );
-    }
-
-    // Apply quick filter
-    switch (quickFilter) {
-      case 'my_tasks':
-        result = result.filter((todo) => todo.assigned_to === userName || todo.created_by === userName);
-        break;
-      case 'due_today':
-        result = result.filter((todo) => isDueToday(todo.due_date) && !todo.completed);
-        break;
-      case 'overdue':
-        result = result.filter((todo) => isOverdue(todo.due_date, todo.completed));
-        break;
-    }
-
-    // Apply high priority filter
-    if (highPriorityOnly) {
-      result = result.filter((todo) => todo.priority === 'urgent' || todo.priority === 'high');
-    }
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      result = result.filter((todo) => todo.status === statusFilter);
-    }
-
-    // Apply assigned to filter
-    if (assignedToFilter !== 'all') {
-      if (assignedToFilter === 'unassigned') {
-        result = result.filter((todo) => !todo.assigned_to);
-      } else {
-        result = result.filter((todo) => todo.assigned_to === assignedToFilter);
-      }
-    }
-
-    // Apply has attachments filter
-    if (hasAttachmentsFilter !== null) {
-      if (hasAttachmentsFilter) {
-        result = result.filter((todo) => todo.attachments && todo.attachments.length > 0);
-      } else {
-        result = result.filter((todo) => !todo.attachments || todo.attachments.length === 0);
-      }
-    }
-
-    // Apply customer filter
-    if (customerFilter !== 'all') {
-      result = result.filter((todo) => {
-        const names = extractPotentialNames(`${todo.text} ${todo.notes || ''}`);
-        return names.includes(customerFilter);
+    // Custom order sorting is handled separately since it's component-specific state
+    if (sortOption === 'custom' && customOrder.length > 0) {
+      const result = [...hookFilteredTodos];
+      result.sort((a, b) => {
+        const aIndex = customOrder.indexOf(a.id);
+        const bIndex = customOrder.indexOf(b.id);
+        // Items not in custom order go to the end
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
       });
+      return result;
     }
-
-    // Apply date range filter (on due_date)
-    if (dateRangeFilter.start) {
-      const startDate = new Date(dateRangeFilter.start);
-      startDate.setHours(0, 0, 0, 0);
-      result = result.filter((todo) => {
-        if (!todo.due_date) return false;
-        const dueDate = new Date(todo.due_date);
-        dueDate.setHours(0, 0, 0, 0);
-        return dueDate >= startDate;
-      });
-    }
-    if (dateRangeFilter.end) {
-      const endDate = new Date(dateRangeFilter.end);
-      endDate.setHours(23, 59, 59, 999);
-      result = result.filter((todo) => {
-        if (!todo.due_date) return false;
-        const dueDate = new Date(todo.due_date);
-        return dueDate <= endDate;
-      });
-    }
-
-    // Apply completed filter
-    if (!showCompleted) {
-      result = result.filter((todo) => !todo.completed);
-    }
-
-    // Apply sort
-    switch (sortOption) {
-      case 'due_date':
-        result.sort((a, b) => {
-          if (!a.due_date && !b.due_date) return 0;
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-        });
-        break;
-      case 'priority':
-        result.sort((a, b) => priorityOrder[a.priority || 'medium'] - priorityOrder[b.priority || 'medium']);
-        break;
-      case 'alphabetical':
-        result.sort((a, b) => a.text.localeCompare(b.text));
-        break;
-      case 'urgency':
-        // Smart urgency sort: combines days overdue with priority
-        result.sort((a, b) => {
-          const getUrgencyScore = (todo: Todo) => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            let daysOverdue = 0;
-            if (todo.due_date && !todo.completed) {
-              const dueDate = new Date(todo.due_date);
-              dueDate.setHours(0, 0, 0, 0);
-              daysOverdue = Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / 86400000));
-            }
-            const priorityWeight = { urgent: 100, high: 50, medium: 25, low: 0 }[todo.priority || 'medium'];
-            return (daysOverdue * 10) + priorityWeight;
-          };
-          return getUrgencyScore(b) - getUrgencyScore(a);
-        });
-        break;
-      case 'custom':
-        // Sort by custom order if available
-        if (customOrder.length > 0) {
-          result.sort((a, b) => {
-            const aIndex = customOrder.indexOf(a.id);
-            const bIndex = customOrder.indexOf(b.id);
-            // Items not in custom order go to the end
-            if (aIndex === -1 && bIndex === -1) return 0;
-            if (aIndex === -1) return 1;
-            if (bIndex === -1) return -1;
-            return aIndex - bIndex;
-          });
-        }
-        break;
-      case 'created':
-      default:
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-    }
-
-    return result;
-  }, [visibleTodos, searchQuery, quickFilter, showCompleted, sortOption, userName, customOrder, statusFilter, assignedToFilter, customerFilter, hasAttachmentsFilter, dateRangeFilter, highPriorityOnly]);
+    return hookFilteredTodos;
+  }, [hookFilteredTodos, sortOption, customOrder]);
 
   // Stats - calculate based on filter context for dynamic counts
   const stats = useMemo(() => {
@@ -1671,7 +1358,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   }
 
   return (
-    <PullToRefresh onRefresh={fetchTodos} darkMode={darkMode}>
+    <PullToRefresh onRefresh={refreshTodos} darkMode={darkMode}>
       <div className="min-h-screen transition-colors bg-[var(--background)]">
         {/* Skip link for accessibility */}
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:z-50">
@@ -1753,77 +1440,31 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 </button>
               </div>
 
-              {/* Activity Feed - accessible to all users */}
-              <button
-                onClick={() => setShowActivityFeed(true)}
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  darkMode
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                }`}
-                aria-label="View activity feed"
-              >
-                <Activity className="w-4 h-4" />
-              </button>
-
-              {canViewArchive && (
-                <button
-                  onClick={() => setShowArchiveView(true)}
-                  className={`p-2 rounded-xl transition-all duration-200 ${
-                    darkMode
-                      ? 'text-white/60 hover:text-white hover:bg-white/10'
-                      : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                  }`}
-                  aria-label="View archive"
-                  title="Archived tasks"
-                >
-                  <Archive className="w-4 h-4" />
-                </button>
-              )}
-
-              {/* Strategic Dashboard - Owner only */}
-              {userName === OWNER_USERNAME && (
-                <button
-                  onClick={() => setShowStrategicDashboard(true)}
-                  className={`p-2 rounded-xl transition-all duration-200 ${
-                    darkMode
-                      ? 'text-white/60 hover:text-white hover:bg-white/10'
-                      : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                  }`}
-                  aria-label="Strategic Goals Dashboard"
-                  title="Strategic Goals"
-                >
-                  <Target className="w-4 h-4" />
-                </button>
-              )}
-
-              {/* Weekly progress chart */}
-              <button
-                onClick={() => setShowWeeklyChart(true)}
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  darkMode
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                }`}
-                aria-label="View weekly progress"
-              >
-                <BarChart2 className="w-4 h-4" />
-              </button>
-
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  darkMode
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                }`}
-                aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-              >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-
               <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
+
+              {/* Hamburger Menu - contains Activity, Archive, Goals, Chart, Theme, Shortcuts */}
+              <AppMenu
+                userName={userName}
+                canViewArchive={canViewArchive}
+                onShowActivityFeed={() => setShowActivityFeed(true)}
+                onShowWeeklyChart={() => setShowWeeklyChart(true)}
+                onShowStrategicDashboard={() => setShowStrategicDashboard(true)}
+                onShowArchive={() => setShowArchiveView(true)}
+                onShowShortcuts={() => setShowShortcuts(true)}
+                onShowAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                onResetFilters={() => {
+                  setQuickFilter('all');
+                  setShowCompleted(false);
+                  setHighPriorityOnly(false);
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setAssignedToFilter('all');
+                  setCustomerFilter('all');
+                  setHasAttachmentsFilter(false);
+                  setDateRangeFilter({ start: '', end: '' });
+                }}
+                showAdvancedFilters={showAdvancedFilters}
+              />
             </div>
           </div>
         </div>
@@ -1855,47 +1496,17 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           </div>
         )}
 
-        {/* Actionable Stats Cards - Dynamic counts based on filter context */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <button
-            type="button"
-            onClick={() => { setQuickFilter('all'); setShowCompleted(false); }}
-            className={`group relative rounded-[var(--radius-lg)] p-4 border text-left transition-all duration-300 hover:shadow-[var(--shadow-md)] overflow-hidden ${
-              quickFilter === 'all' && !showCompleted
-                ? 'ring-2 ring-[var(--accent)] border-[var(--accent)] bg-[var(--accent-light)]'
-                : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-hover)]'
-            }`}
-          >
-            <div className="absolute top-0 right-0 w-20 h-20 bg-[var(--accent)]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
-            <p className="text-2xl sm:text-3xl font-bold text-[var(--accent)] relative">{stats.active}</p>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)] font-medium mt-0.5 relative">To Do</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setQuickFilter('due_today')}
-            className={`group relative rounded-[var(--radius-lg)] p-4 border text-left transition-all duration-300 hover:shadow-[var(--shadow-md)] overflow-hidden ${
-              quickFilter === 'due_today'
-                ? 'ring-2 ring-[var(--warning)] border-[var(--warning)] bg-[var(--warning-light)]'
-                : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-hover)]'
-            }`}
-          >
-            <div className="absolute top-0 right-0 w-20 h-20 bg-[var(--warning)]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
-            <p className="text-2xl sm:text-3xl font-bold text-[var(--warning)] relative">{stats.dueToday}</p>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)] font-medium mt-0.5 relative">Due Today</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setQuickFilter('overdue')}
-            className={`group relative rounded-[var(--radius-lg)] p-4 border text-left transition-all duration-300 hover:shadow-[var(--shadow-md)] overflow-hidden ${
-              quickFilter === 'overdue'
-                ? 'ring-2 ring-[var(--danger)] border-[var(--danger)] bg-[var(--danger-light)]'
-                : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--border-hover)]'
-            }`}
-          >
-            <div className="absolute top-0 right-0 w-20 h-20 bg-[var(--danger)]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
-            <p className="text-2xl sm:text-3xl font-bold text-[var(--danger)] relative">{stats.overdue}</p>
-            <p className="text-xs sm:text-sm text-[var(--text-muted)] font-medium mt-0.5 relative">Overdue</p>
-          </button>
+        {/* Compact Status Line - Replaces large stats cards */}
+        <div className="mb-4">
+          <StatusLine
+            stats={stats}
+            quickFilter={quickFilter}
+            highPriorityOnly={highPriorityOnly}
+            showCompleted={showCompleted}
+            onFilterAll={() => { setQuickFilter('all'); setShowCompleted(false); }}
+            onFilterDueToday={() => setQuickFilter('due_today')}
+            onFilterOverdue={() => setQuickFilter('overdue')}
+          />
         </div>
 
         {/* Add todo with template picker */}
@@ -1975,11 +1586,11 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
             </div>
 
-            {/* High Priority toggle */}
+            {/* High Priority toggle - more compact */}
             <button
               type="button"
               onClick={() => setHighPriorityOnly(!highPriorityOnly)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
                 highPriorityOnly
                   ? 'bg-[var(--danger)] text-white shadow-sm'
                   : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
@@ -1987,14 +1598,15 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               aria-pressed={highPriorityOnly}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
-              High Priority
+              <span className="hidden sm:inline">High Priority</span>
+              <span className="sm:hidden">Urgent</span>
             </button>
 
-            {/* Show completed toggle */}
+            {/* Show completed toggle - more compact */}
             <button
               type="button"
               onClick={() => setShowCompleted(!showCompleted)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
                 showCompleted
                   ? 'bg-[var(--success)] text-white shadow-sm'
                   : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
@@ -2002,16 +1614,17 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               aria-pressed={showCompleted}
             >
               <CheckSquare className="w-3.5 h-3.5" />
-              Show Completed
+              <span className="hidden sm:inline">Show Completed</span>
+              <span className="sm:hidden">Done</span>
             </button>
 
-            <div className="w-px h-5 bg-[var(--border)] mx-1" />
+            <div className="w-px h-4 bg-[var(--border)] mx-0.5" />
 
-            {/* Advanced filters toggle */}
+            {/* Advanced filters toggle - more compact */}
             <button
               type="button"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
                 showAdvancedFilters || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end
                   ? 'bg-[var(--brand-blue)] text-white shadow-sm'
                   : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
@@ -2019,7 +1632,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               aria-expanded={showAdvancedFilters}
             >
               <Filter className="w-3.5 h-3.5" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
               {(statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
                 <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
                   {[statusFilter !== 'all', assignedToFilter !== 'all', customerFilter !== 'all', hasAttachmentsFilter !== null, dateRangeFilter.start || dateRangeFilter.end].filter(Boolean).length}
@@ -2122,14 +1735,14 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                   <input
                     type="date"
                     value={dateRangeFilter.start}
-                    onChange={(e) => setDateRangeFilter(prev => ({ ...prev, start: e.target.value }))}
+                    onChange={(e) => setDateRangeFilter({ ...dateRangeFilter, start: e.target.value })}
                     className="input-refined flex-1 text-xs py-2"
                     placeholder="From"
                   />
                   <input
                     type="date"
                     value={dateRangeFilter.end}
-                    onChange={(e) => setDateRangeFilter(prev => ({ ...prev, end: e.target.value }))}
+                    onChange={(e) => setDateRangeFilter({ ...dateRangeFilter, end: e.target.value })}
                     className="input-refined flex-1 text-xs py-2"
                     placeholder="To"
                   />
@@ -2207,7 +1820,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                       todo={todo}
                       users={users}
                       currentUserName={userName}
-                      darkMode={darkMode}
                       selected={selectedTodos.has(todo.id)}
                       onSelect={showBulkActions ? handleSelectTodo : undefined}
                       onToggle={toggleTodo}
@@ -2471,7 +2083,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       {templateTodo && (
         <SaveTemplateModal
           todo={templateTodo}
-          currentUserName={userName}
           darkMode={darkMode}
           onClose={() => setTemplateTodo(null)}
           onSave={saveAsTemplate}
@@ -2807,6 +2418,18 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           }
         }}
       />
+
+      {/* Bottom Tabs for Mobile Navigation */}
+      <BottomTabs
+        stats={stats}
+        quickFilter={quickFilter}
+        showCompleted={showCompleted}
+        onFilterChange={setQuickFilter}
+        onShowCompletedChange={setShowCompleted}
+      />
+
+      {/* Spacer for bottom tabs on mobile */}
+      <div className="h-16 md:hidden" />
       </div>
     </PullToRefresh>
   );
