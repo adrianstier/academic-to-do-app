@@ -1,0 +1,411 @@
+'use client';
+
+import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@/contexts/ThemeContext';
+import { AuthUser } from '@/types/todo';
+import NavigationSidebar from './NavigationSidebar';
+import CommandPalette from './CommandPalette';
+import EnhancedBottomNav from './EnhancedBottomNav';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// APP SHELL - CORE LAYOUT ARCHITECTURE
+// A sophisticated three-column layout with persistent navigation and panels
+// Designed for the Bealer Agency insurance task management workflow
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type ActiveView =
+  | 'tasks'
+  | 'dashboard'
+  | 'activity'
+  | 'chat'
+  | 'goals'
+  | 'archive'
+  | 'settings';
+
+export type RightPanelContent =
+  | { type: 'chat' }
+  | { type: 'task-detail'; taskId: string }
+  | { type: 'activity' }
+  | null;
+
+interface AppShellContextType {
+  // Navigation
+  activeView: ActiveView;
+  setActiveView: (view: ActiveView) => void;
+
+  // Sidebar state
+  sidebarCollapsed: boolean;
+  toggleSidebar: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
+  // Right panel
+  rightPanel: RightPanelContent;
+  openRightPanel: (content: RightPanelContent) => void;
+  closeRightPanel: () => void;
+
+  // Command palette
+  commandPaletteOpen: boolean;
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
+
+  // Mobile sheet
+  mobileSheetOpen: boolean;
+  mobileSheetContent: 'menu' | 'filters' | 'chat' | null;
+  openMobileSheet: (content: 'menu' | 'filters' | 'chat') => void;
+  closeMobileSheet: () => void;
+
+  // User info
+  currentUser: AuthUser | null;
+}
+
+const AppShellContext = createContext<AppShellContextType | null>(null);
+
+export function useAppShell() {
+  const context = useContext(AppShellContext);
+  if (!context) {
+    throw new Error('useAppShell must be used within AppShellProvider');
+  }
+  return context;
+}
+
+interface AppShellProps {
+  children: ReactNode;
+  currentUser: AuthUser;
+  rightPanelContent?: ReactNode;
+  onUserChange?: (user: AuthUser | null) => void;
+}
+
+export default function AppShell({
+  children,
+  currentUser,
+  rightPanelContent,
+  onUserChange
+}: AppShellProps) {
+  const { theme } = useTheme();
+  const darkMode = theme === 'dark';
+
+  // Navigation state
+  const [activeView, setActiveView] = useState<ActiveView>('tasks');
+
+  // Sidebar state - collapsed by default on tablet, expanded on desktop
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Right panel state
+  const [rightPanel, setRightPanel] = useState<RightPanelContent>(null);
+
+  // Command palette state
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  // Mobile sheet state
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [mobileSheetContent, setMobileSheetContent] = useState<'menu' | 'filters' | 'chat' | null>(null);
+
+  // Handle responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Command palette: Cmd/Ctrl + K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen(prev => !prev);
+      }
+
+      // Toggle sidebar: Cmd/Ctrl + B
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setSidebarCollapsed(prev => !prev);
+      }
+
+      // Close panels on Escape
+      if (e.key === 'Escape') {
+        if (commandPaletteOpen) {
+          setCommandPaletteOpen(false);
+        } else if (rightPanel) {
+          setRightPanel(null);
+        } else if (mobileSheetOpen) {
+          setMobileSheetOpen(false);
+          setMobileSheetContent(null);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [commandPaletteOpen, rightPanel, mobileSheetOpen]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
+  const openRightPanel = useCallback((content: RightPanelContent) => {
+    setRightPanel(content);
+  }, []);
+
+  const closeRightPanel = useCallback(() => {
+    setRightPanel(null);
+  }, []);
+
+  const openCommandPalette = useCallback(() => {
+    setCommandPaletteOpen(true);
+  }, []);
+
+  const closeCommandPalette = useCallback(() => {
+    setCommandPaletteOpen(false);
+  }, []);
+
+  const openMobileSheet = useCallback((content: 'menu' | 'filters' | 'chat') => {
+    setMobileSheetContent(content);
+    setMobileSheetOpen(true);
+  }, []);
+
+  const closeMobileSheet = useCallback(() => {
+    setMobileSheetOpen(false);
+    setMobileSheetContent(null);
+  }, []);
+
+  const contextValue: AppShellContextType = {
+    activeView,
+    setActiveView,
+    sidebarCollapsed,
+    toggleSidebar,
+    setSidebarCollapsed,
+    rightPanel,
+    openRightPanel,
+    closeRightPanel,
+    commandPaletteOpen,
+    openCommandPalette,
+    closeCommandPalette,
+    mobileSheetOpen,
+    mobileSheetContent,
+    openMobileSheet,
+    closeMobileSheet,
+    currentUser,
+  };
+
+  return (
+    <AppShellContext.Provider value={contextValue}>
+      <div
+        className={`
+          min-h-screen min-h-[100dvh] flex flex-col
+          transition-colors duration-200
+          ${darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]'}
+        `}
+      >
+        {/* Skip link for accessibility */}
+        <a
+          href="#main-content"
+          className="skip-link"
+        >
+          Skip to main content
+        </a>
+
+        <div className="flex-1 flex overflow-hidden">
+          {/* ═══ LEFT SIDEBAR ═══ */}
+          <NavigationSidebar
+            currentUser={currentUser}
+            onUserChange={onUserChange}
+          />
+
+          {/* ═══ MAIN CONTENT AREA ═══ */}
+          <main
+            id="main-content"
+            className={`
+              flex-1 flex flex-col min-w-0 overflow-hidden
+              transition-all duration-300 ease-out
+            `}
+          >
+            {/* Main content with proper overflow handling */}
+            <div className="flex-1 overflow-auto">
+              {children}
+            </div>
+          </main>
+
+          {/* ═══ RIGHT PANEL (Desktop) ═══ */}
+          <AnimatePresence mode="wait">
+            {rightPanel && rightPanelContent && (
+              <motion.aside
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 380, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                className={`
+                  hidden lg:flex flex-col overflow-hidden
+                  border-l
+                  ${darkMode
+                    ? 'bg-[var(--surface)] border-white/10'
+                    : 'bg-white border-[var(--border)]'
+                  }
+                `}
+              >
+                {rightPanelContent}
+              </motion.aside>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ═══ MOBILE BOTTOM NAVIGATION ═══ */}
+        <EnhancedBottomNav />
+
+        {/* ═══ COMMAND PALETTE ═══ */}
+        <CommandPalette
+          isOpen={commandPaletteOpen}
+          onClose={closeCommandPalette}
+          currentUser={currentUser}
+        />
+
+        {/* ═══ MOBILE SHEET OVERLAY ═══ */}
+        <AnimatePresence>
+          {mobileSheetOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeMobileSheet}
+                className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
+              />
+
+              {/* Sheet */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className={`
+                  fixed inset-x-0 bottom-0 z-50 lg:hidden
+                  max-h-[85vh] rounded-t-3xl overflow-hidden
+                  ${darkMode
+                    ? 'bg-[var(--surface)]'
+                    : 'bg-white'
+                  }
+                `}
+              >
+                {/* Drag handle */}
+                <div className="flex justify-center py-3">
+                  <div
+                    className={`
+                      w-10 h-1 rounded-full
+                      ${darkMode ? 'bg-white/20' : 'bg-[var(--border)]'}
+                    `}
+                  />
+                </div>
+
+                {/* Sheet content would be rendered here based on mobileSheetContent */}
+                <div className="px-4 pb-safe overflow-auto max-h-[calc(85vh-44px)]">
+                  {mobileSheetContent === 'menu' && (
+                    <MobileMenuContent onClose={closeMobileSheet} />
+                  )}
+                  {mobileSheetContent === 'filters' && (
+                    <MobileFiltersContent onClose={closeMobileSheet} />
+                  )}
+                  {mobileSheetContent === 'chat' && (
+                    <div className="text-center py-8 text-[var(--text-muted)]">
+                      Chat panel content
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    </AppShellContext.Provider>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MOBILE SHEET CONTENT COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function MobileMenuContent({ onClose }: { onClose: () => void }) {
+  const { theme } = useTheme();
+  const darkMode = theme === 'dark';
+  const { setActiveView, currentUser } = useAppShell();
+
+  const menuItems = [
+    { id: 'tasks', label: 'Tasks', icon: '📋' },
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'activity', label: 'Activity', icon: '⚡' },
+    { id: 'chat', label: 'Messages', icon: '💬' },
+  ];
+
+  const handleItemClick = (viewId: string) => {
+    setActiveView(viewId as ActiveView);
+    onClose();
+  };
+
+  return (
+    <div className="space-y-2 pb-4">
+      <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+        Navigation
+      </h2>
+      {menuItems.map(item => (
+        <button
+          key={item.id}
+          onClick={() => handleItemClick(item.id)}
+          className={`
+            w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
+            transition-colors
+            ${darkMode
+              ? 'text-white/80 hover:bg-white/10'
+              : 'text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+            }
+          `}
+        >
+          <span className="text-xl">{item.icon}</span>
+          <span className="font-medium">{item.label}</span>
+        </button>
+      ))}
+
+      {currentUser?.name === 'Derrick' && (
+        <>
+          <div className={`border-t my-4 ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}`} />
+          <button
+            onClick={() => handleItemClick('goals')}
+            className={`
+              w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left
+              transition-colors
+              ${darkMode
+                ? 'text-white/80 hover:bg-white/10'
+                : 'text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+              }
+            `}
+          >
+            <span className="text-xl">🎯</span>
+            <span className="font-medium">Strategic Goals</span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function MobileFiltersContent({ onClose }: { onClose: () => void }) {
+  const { theme } = useTheme();
+  const darkMode = theme === 'dark';
+
+  return (
+    <div className="space-y-4 pb-4">
+      <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+        Filters
+      </h2>
+      <p className={`text-sm ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>
+        Filter controls will be rendered here
+      </p>
+    </div>
+  );
+}
