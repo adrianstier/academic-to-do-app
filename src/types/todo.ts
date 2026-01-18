@@ -83,7 +83,107 @@ export interface Todo {
   attachments?: Attachment[];
   transcription?: string;
   merged_from?: string[]; // IDs of tasks that were merged into this one
+  reminder_at?: string; // Simple single reminder timestamp
+  reminder_sent?: boolean; // Whether simple reminder has been sent
+  reminders?: TaskReminder[]; // Multiple reminders (from task_reminders table)
 }
+
+// ============================================
+// Reminder Types
+// ============================================
+
+export type ReminderType = 'push_notification' | 'chat_message' | 'both';
+export type ReminderStatus = 'pending' | 'sent' | 'failed' | 'cancelled';
+
+export interface TaskReminder {
+  id: string;
+  todo_id: string;
+  user_id?: string; // User to remind (null = assigned user)
+  reminder_time: string;
+  reminder_type: ReminderType;
+  status: ReminderStatus;
+  message?: string; // Custom reminder message
+  sent_at?: string;
+  error_message?: string;
+  retry_count: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Preset reminder options for UI
+export type ReminderPreset =
+  | 'at_time'        // At specific time
+  | '5_min_before'   // 5 minutes before due date
+  | '15_min_before'  // 15 minutes before due date
+  | '30_min_before'  // 30 minutes before due date
+  | '1_hour_before'  // 1 hour before due date
+  | '1_day_before'   // 1 day before due date
+  | 'morning_of'     // 9 AM on due date
+  | 'custom';        // Custom time selection
+
+export interface ReminderPresetConfig {
+  label: string;
+  description: string;
+  icon: string;
+  calculateTime: (dueDate?: Date) => Date | null;
+}
+
+export const REMINDER_PRESETS: Record<ReminderPreset, ReminderPresetConfig> = {
+  at_time: {
+    label: 'At time',
+    description: 'Remind at a specific time',
+    icon: '⏰',
+    calculateTime: () => null, // User selects time
+  },
+  '5_min_before': {
+    label: '5 min before',
+    description: '5 minutes before due time',
+    icon: '⚡',
+    calculateTime: (dueDate) => dueDate ? new Date(dueDate.getTime() - 5 * 60 * 1000) : null,
+  },
+  '15_min_before': {
+    label: '15 min before',
+    description: '15 minutes before due time',
+    icon: '🔔',
+    calculateTime: (dueDate) => dueDate ? new Date(dueDate.getTime() - 15 * 60 * 1000) : null,
+  },
+  '30_min_before': {
+    label: '30 min before',
+    description: '30 minutes before due time',
+    icon: '⏱️',
+    calculateTime: (dueDate) => dueDate ? new Date(dueDate.getTime() - 30 * 60 * 1000) : null,
+  },
+  '1_hour_before': {
+    label: '1 hour before',
+    description: '1 hour before due time',
+    icon: '🕐',
+    calculateTime: (dueDate) => dueDate ? new Date(dueDate.getTime() - 60 * 60 * 1000) : null,
+  },
+  '1_day_before': {
+    label: '1 day before',
+    description: '24 hours before due time',
+    icon: '📅',
+    calculateTime: (dueDate) => dueDate ? new Date(dueDate.getTime() - 24 * 60 * 60 * 1000) : null,
+  },
+  morning_of: {
+    label: 'Morning of',
+    description: '9 AM on the due date',
+    icon: '🌅',
+    calculateTime: (dueDate) => {
+      if (!dueDate) return null;
+      const morning = new Date(dueDate);
+      morning.setHours(9, 0, 0, 0);
+      return morning;
+    },
+  },
+  custom: {
+    label: 'Custom',
+    description: 'Choose a specific date and time',
+    icon: '📝',
+    calculateTime: () => null, // User selects time
+  },
+};
 
 export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical' | 'custom' | 'urgency';
 export type QuickFilter = 'all' | 'my_tasks' | 'due_today' | 'overdue';
@@ -216,7 +316,10 @@ export type ActivityAction =
   | 'template_used'
   | 'attachment_added'
   | 'attachment_removed'
-  | 'tasks_merged';
+  | 'tasks_merged'
+  | 'reminder_added'
+  | 'reminder_removed'
+  | 'reminder_sent';
 
 export interface ActivityLogEntry {
   id: string;

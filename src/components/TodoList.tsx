@@ -205,6 +205,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     subtasks?: Subtask[];
     transcription?: string;
     sourceFile?: File;
+    reminderAt?: string;
   } | null>(null);
 
   // Customer email modal state
@@ -314,25 +315,25 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   }, [fetchActivityLog]);
 
   // Check for duplicates and either show modal or create task directly
-  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => {
+  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string) => {
     // Check if we should look for duplicates
     const combinedText = `${text} ${transcription || ''}`;
     if (shouldCheckForDuplicates(combinedText)) {
       const duplicates = findPotentialDuplicates(combinedText, todos);
       if (duplicates.length > 0) {
         // Store pending task and show modal
-        setPendingTask({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile });
+        setPendingTask({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt });
         setDuplicateMatches(duplicates);
         setShowDuplicateModal(true);
         return;
       }
     }
     // No duplicates found, create directly
-    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile);
+    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt);
   };
 
   // Actually create the todo (called after duplicate check or when user confirms)
-  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => {
+  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string) => {
     const newTodo: Todo = {
       id: uuidv4(),
       text,
@@ -345,6 +346,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       assigned_to: assignedTo,
       subtasks: subtasks,
       transcription: transcription,
+      reminder_at: reminderAt,
+      reminder_sent: false,
     };
 
     // Optimistic update using store action
@@ -364,6 +367,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (newTodo.assigned_to) insertData.assigned_to = newTodo.assigned_to;
     if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;
     if (newTodo.transcription) insertData.transcription = newTodo.transcription;
+    if (newTodo.reminder_at) {
+      insertData.reminder_at = newTodo.reminder_at;
+      insertData.reminder_sent = false;
+    }
 
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
@@ -455,7 +462,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         pendingTask.assignedTo,
         pendingTask.subtasks,
         pendingTask.transcription,
-        pendingTask.sourceFile
+        pendingTask.sourceFile,
+        pendingTask.reminderAt
       );
     }
     setShowDuplicateModal(false);
@@ -904,6 +912,34 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         todoId: id,
         todoText: oldTodo.text,
         details: { from: oldTodo.due_date || null, to: dueDate },
+      });
+    }
+  };
+
+  const setReminder = async (id: string, reminderAt: string | null) => {
+    const oldTodo = todos.find((t) => t.id === id);
+
+    // Optimistic update using store action
+    updateTodoInStore(id, { reminder_at: reminderAt || undefined, reminder_sent: false });
+
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({ reminder_at: reminderAt, reminder_sent: false })
+      .eq('id', id);
+
+    if (updateError) {
+      logger.error('Error setting reminder', updateError, { component: 'TodoList' });
+      if (oldTodo) {
+        // Rollback optimistic update
+        updateTodoInStore(id, { reminder_at: oldTodo.reminder_at, reminder_sent: oldTodo.reminder_sent });
+      }
+    } else if (oldTodo && oldTodo.reminder_at !== reminderAt) {
+      logActivity({
+        action: reminderAt ? 'reminder_added' : 'reminder_removed',
+        userName,
+        todoId: id,
+        todoText: oldTodo.text,
+        details: { from: oldTodo.reminder_at || null, to: reminderAt },
       });
     }
   };
@@ -1826,6 +1862,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                       onDelete={confirmDeleteTodo}
                       onAssign={assignTodo}
                       onSetDueDate={setDueDate}
+                      onSetReminder={setReminder}
                       onSetPriority={setPriority}
                       onStatusChange={updateStatus}
                       onUpdateText={updateText}
@@ -1855,6 +1892,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
             onDelete={confirmDeleteTodo}
             onAssign={assignTodo}
             onSetDueDate={setDueDate}
+                      onSetReminder={setReminder}
             onSetPriority={setPriority}
             onUpdateNotes={updateNotes}
             onUpdateText={updateText}

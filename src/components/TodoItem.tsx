@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, Bell, BellOff } from 'lucide-react';
 import { Todo, TodoPriority, TodoStatus, PRIORITY_CONFIG, RecurrencePattern, Subtask, Attachment, MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
 import { Badge, Button, IconButton } from '@/components/ui';
 import AttachmentList from './AttachmentList';
 import AttachmentUpload from './AttachmentUpload';
 import Celebration from './Celebration';
+import ReminderPicker from './ReminderPicker';
 import ContentToSubtasksImporter from './ContentToSubtasksImporter';
 
 // Map priority levels to Badge variants
@@ -134,6 +135,7 @@ interface TodoItemProps {
   onSaveAsTemplate?: (todo: Todo) => void;
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
   onEmailCustomer?: (todo: Todo) => void;
+  onSetReminder?: (id: string, reminderAt: string | null) => void;
 }
 
 const formatDueDate = (date: string, includeYear = false) => {
@@ -202,6 +204,7 @@ export default function TodoItem({
   onSaveAsTemplate,
   onUpdateAttachments,
   onEmailCustomer,
+  onSetReminder,
 }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
@@ -460,6 +463,33 @@ export default function TodoItem({
                   icon={<Repeat className="w-3 h-3" />}
                 >
                   {todo.recurrence}
+                </Badge>
+              )}
+
+              {/* Reminder indicator */}
+              {todo.reminder_at && !todo.reminder_sent && !todo.completed && (
+                <Badge
+                  variant="info"
+                  size="sm"
+                  icon={<Bell className="w-3 h-3" />}
+                >
+                  {(() => {
+                    const reminderDate = new Date(todo.reminder_at);
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const reminderDay = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+                    const diffDays = Math.round((reminderDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 0) {
+                      return `Today ${reminderDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                    } else if (diffDays === 1) {
+                      return `Tomorrow ${reminderDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                    } else if (diffDays < 0) {
+                      return 'Past';
+                    } else {
+                      return reminderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+                  })()}
                 </Badge>
               )}
             </div>
@@ -960,6 +990,19 @@ export default function TodoItem({
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
                 </select>
+              </div>
+            )}
+
+            {/* Reminder */}
+            {onSetReminder && !todo.completed && (
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">Reminder</label>
+                <ReminderPicker
+                  value={todo.reminder_at || undefined}
+                  dueDate={todo.due_date || undefined}
+                  onChange={(time) => onSetReminder(todo.id, time)}
+                  compact
+                />
               </div>
             )}
           </div>

@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Plus, Calendar, Flag, User, Sparkles, Loader2, Mic, MicOff, ChevronDown, Upload, X } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { Plus, Calendar, Flag, User, Sparkles, Loader2, Mic, MicOff, Upload, X, Bell } from 'lucide-react';
 import SmartParseModal from './SmartParseModal';
+import ReminderPicker from './ReminderPicker';
 import VoiceRecordingIndicator from './VoiceRecordingIndicator';
 import FileImporter from './FileImporter';
 import { QuickTaskButtons, useTaskPatterns } from './QuickTaskButtons';
 import { CategoryConfidenceIndicator } from './CategoryConfidenceIndicator';
 import { TodoPriority, Subtask, PRIORITY_CONFIG, QuickTaskTemplate } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
-import { analyzeTaskPattern, TaskPatternMatch } from '@/lib/insurancePatterns';
+import { analyzeTaskPattern } from '@/lib/insurancePatterns';
 import { logger } from '@/lib/logger';
 import { fetchWithCsrf } from '@/lib/csrf';
 
 interface AddTodoProps {
-  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File) => void;
+  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string) => void;
   users: string[];
   darkMode?: boolean;
   currentUserId?: string;
@@ -88,26 +89,30 @@ declare global {
 }
 
 export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, autoFocus }: AddTodoProps) {
+  // Initialize priority and assignedTo from user preferences (lazy initial state)
   const [text, setText] = useState('');
-  const [priority, setPriority] = useState<TodoPriority>('medium');
+  const [priority, setPriority] = useState<TodoPriority>(() => {
+    if (typeof window !== 'undefined' && currentUserId) {
+      const prefs = getUserPreferences(currentUserId);
+      return prefs.lastPriority || 'medium';
+    }
+    return 'medium';
+  });
   const [dueDate, setDueDate] = useState('');
-  const [assignedTo, setAssignedTo] = useState('');
+  const [reminderAt, setReminderAt] = useState<string | null>(null);
+  const [assignedTo, setAssignedTo] = useState(() => {
+    if (typeof window !== 'undefined' && currentUserId) {
+      const prefs = getUserPreferences(currentUserId);
+      if (prefs.lastAssignedTo && users.includes(prefs.lastAssignedTo)) {
+        return prefs.lastAssignedTo;
+      }
+    }
+    return '';
+  });
   const [showOptions, setShowOptions] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [draggedFile, setDraggedFile] = useState<File | null>(null);
 
-  // Load user preferences on mount
-  useEffect(() => {
-    if (currentUserId) {
-      const prefs = getUserPreferences(currentUserId);
-      if (prefs.lastPriority) {
-        setPriority(prefs.lastPriority);
-      }
-      if (prefs.lastAssignedTo && users.includes(prefs.lastAssignedTo)) {
-        setAssignedTo(prefs.lastAssignedTo);
-      }
-    }
-  }, [currentUserId, users]);
 
   // AI modal state
   const [isProcessing, setIsProcessing] = useState(false);
@@ -122,20 +127,29 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
   const [suggestedSubtasks, setSuggestedSubtasks] = useState<string[]>([]);
 
   // AI Pattern detection state (Feature 4 - CategoryConfidenceIndicator)
-  const [patternMatch, setPatternMatch] = useState<TaskPatternMatch | null>(null);
+  const [patternDismissed, setPatternDismissed] = useState(false);
+
+  // Compute pattern match using useMemo instead of useEffect + setState
+  const computedPatternMatch = useMemo(() => {
+    if (text.length > 10 && suggestedSubtasks.length === 0) {
+      return analyzeTaskPattern(text);
+    }
+    return null;
+  }, [text, suggestedSubtasks.length]);
+
+  // patternMatch is null if dismissed, otherwise use computed value
+  const patternMatch = patternDismissed ? null : computedPatternMatch;
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechSupported] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+    }
+    return false;
+  });
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  // Check speech support on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSpeechSupported('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
-    }
-  }, []);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -153,17 +167,6 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     }
   }, [autoFocus]);
 
-  // Analyze task pattern as user types (Feature 4 - AI Confidence Indicator)
-  useEffect(() => {
-    // Only analyze if text is longer than 10 characters and no template subtasks are already set
-    if (text.length > 10 && suggestedSubtasks.length === 0) {
-      const match = analyzeTaskPattern(text);
-      setPatternMatch(match);
-    } else if (text.length <= 10) {
-      setPatternMatch(null);
-    }
-  }, [text, suggestedSubtasks.length]);
-
   // Handle accepting AI suggestions
   const handleAcceptSuggestions = useCallback(() => {
     if (patternMatch) {
@@ -173,12 +176,12 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         setSuggestedSubtasks(patternMatch.suggestedSubtasks);
       }
     }
-    setPatternMatch(null);
+    setPatternDismissed(true);
   }, [patternMatch, suggestedSubtasks.length]);
 
   // Handle dismissing AI suggestions
   const handleDismissSuggestions = useCallback(() => {
-    setPatternMatch(null);
+    setPatternDismissed(true);
   }, []);
 
   // Smart parse API call
@@ -282,7 +285,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         }))
       : undefined as unknown as Subtask[];
 
-    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks || undefined);
+    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks || undefined, undefined, undefined, reminderAt || undefined);
     // Save preferences for next time
     if (currentUserId) {
       updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);
@@ -353,11 +356,12 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     setText('');
     setPriority('medium');
     setDueDate('');
+    setReminderAt(null);
     setAssignedTo('');
     setShowOptions(false);
     setParsedResult(null);
     setSuggestedSubtasks([]);
-    setPatternMatch(null);
+    setPatternDismissed(false); // Reset so new pattern can be detected on next input
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -465,8 +469,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`rounded-[var(--radius-xl)] border shadow-[var(--shadow-sm)] overflow-hidden transition-all duration-300 relative bg-[var(--surface)] border-[var(--border)] ${
-          isDraggingFile ? 'ring-2 ring-[var(--accent)] border-[var(--accent)]' : 'hover:shadow-[var(--shadow-md)] hover:border-[var(--border-hover)]'
+        className={`rounded-[var(--radius-xl)] border-2 shadow-[var(--shadow-md)] overflow-hidden transition-all duration-300 relative bg-[var(--surface)] border-[var(--accent)]/25 ${
+          isDraggingFile ? 'ring-2 ring-[var(--accent)] border-[var(--accent)]' : 'hover:shadow-[var(--shadow-lg)] hover:border-[var(--accent)]/40 focus-within:border-[var(--accent)]/60 focus-within:shadow-[var(--shadow-lg)]'
         }`}
       >
         {/* File drop overlay */}
@@ -498,7 +502,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                 rows={1}
                 disabled={isProcessing}
                 aria-label="New task description"
-                className={`input-refined w-full px-4 py-3 pr-10 resize-none text-sm min-h-[48px] text-[var(--foreground)] placeholder-[var(--text-light)] ${
+                className={`input-refined w-full px-4 py-4 pr-10 resize-none text-base min-h-[56px] text-[var(--foreground)] placeholder-[var(--text-muted)] font-medium ${
                   isRecording ? 'border-[var(--danger)] ring-2 ring-[var(--danger-light)]' : ''
                 }`}
                 style={{ maxHeight: '120px' }}
@@ -643,6 +647,14 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                 ))}
               </select>
             </div>
+
+            {/* Reminder */}
+            <ReminderPicker
+              value={reminderAt || undefined}
+              dueDate={dueDate || undefined}
+              onChange={(time) => setReminderAt(time)}
+              compact
+            />
           </div>
         )}
 

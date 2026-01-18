@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X, Bell, BellOff, Volume2, VolumeX, Settings, Paperclip, GitMerge } from 'lucide-react';
+import { Activity, Clock, User, FileText, CheckCircle2, Circle, ArrowRight, Flag, Calendar, StickyNote, ListTodo, Trash2, RefreshCw, X, Bell, BellOff, BellRing, Volume2, VolumeX, Settings, Paperclip, GitMerge } from 'lucide-react';
 import { ActivityLogEntry, ActivityAction, PRIORITY_CONFIG, ActivityNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS } from '@/types/todo';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { fetchWithCsrf } from '@/lib/csrf';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface ActivityFeedProps {
   currentUserName: string;
@@ -55,11 +57,10 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
   attachment_added: { icon: Paperclip, label: 'added attachment', color: '#10b981' },
   attachment_removed: { icon: Paperclip, label: 'removed attachment', color: '#ef4444' },
   tasks_merged: { icon: GitMerge, label: 'merged tasks', color: '#0033A0' },
+  reminder_added: { icon: Bell, label: 'added reminder', color: '#8b5cf6' },
+  reminder_removed: { icon: BellOff, label: 'removed reminder', color: '#ef4444' },
+  reminder_sent: { icon: BellRing, label: 'sent reminder', color: '#10b981' },
 };
-
-// Allstate brand colors
-const ALLSTATE_BLUE = '#0033A0';
-const ALLSTATE_SKY = '#72B5E8';
 
 export default function ActivityFeed({ currentUserName, darkMode = true, onClose }: ActivityFeedProps) {
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
@@ -68,6 +69,9 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
   const [notificationSettings, setNotificationSettings] = useState<ActivityNotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [showSettings, setShowSettings] = useState(false);
   const lastActivityIdRef = useRef<string | null>(null);
+
+  // Close on Escape key press
+  useEscapeKey(() => onClose?.(), { enabled: !!onClose });
 
   // Load notification settings on mount
   useEffect(() => {
@@ -139,7 +143,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
     setError(null);
 
     try {
-      const response = await fetch(`/api/activity?userName=${encodeURIComponent(currentUserName)}&limit=100`);
+      const response = await fetchWithCsrf(`/api/activity?userName=${encodeURIComponent(currentUserName)}&limit=100`);
       if (response.ok) {
         const data = await response.json();
         setActivities(data);
@@ -198,7 +202,7 @@ export default function ActivityFeed({ currentUserName, darkMode = true, onClose
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserName, notificationSettings.enabled, playNotificationSound, showBrowserNotification]);
+  }, [currentUserName, notificationSettings.enabled, notificationSettings.notifyOwnActions, playNotificationSound, showBrowserNotification]);
 
   // Group activities by date
   const groupedActivities = activities.reduce((groups, activity) => {
