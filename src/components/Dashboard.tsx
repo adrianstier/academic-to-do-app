@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import {
   CheckCircle2,
   AlertTriangle,
-  Calendar,
   ArrowRight,
   Plus,
   ChevronRight,
@@ -15,6 +14,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
+import { Card, Badge, Button, ProgressRing } from '@/components/ui';
 
 interface DashboardProps {
   todos: Todo[];
@@ -110,8 +110,6 @@ export default function Dashboard({
     monday.setDate(today.getDate() - daysFromMonday);
     monday.setHours(0, 0, 0, 0);
 
-    let totalCreatedThisWeek = 0;
-
     for (let i = 0; i < 5; i++) {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
@@ -124,13 +122,6 @@ export default function Dashboard({
         const updatedAt = t.updated_at ? new Date(t.updated_at) : new Date(t.created_at);
         return updatedAt >= date && updatedAt <= dateEnd;
       }).length;
-
-      // Count tasks created this week (for context)
-      const createdThisDay = todos.filter(t => {
-        const createdAt = new Date(t.created_at);
-        return createdAt >= date && createdAt <= dateEnd;
-      }).length;
-      totalCreatedThisWeek += createdThisDay;
 
       weekData.push({
         date,
@@ -220,32 +211,30 @@ export default function Dashboard({
       <div className="max-w-4xl mx-auto px-5 sm:px-6 py-6 space-y-5">
         {/* Overdue Alert - Primary CTA when there are overdue tasks */}
         {stats.overdue > 0 && (
-          <motion.button
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            onClick={onFilterOverdue}
-            className="w-full flex items-center gap-4 px-5 py-4 rounded-xl bg-[#0033A0] text-white hover:bg-[#002580] transition-colors group shadow-lg shadow-[#0033A0]/20"
           >
-            <AlertTriangle className="w-5 h-5" />
-            <div className="flex-1 text-left">
-              <span className="font-semibold">{stats.overdue} overdue task{stats.overdue !== 1 ? 's' : ''}</span>
-              <span className="text-white/70 text-sm ml-2">need attention</span>
-            </div>
-            <span className="text-sm font-medium group-hover:underline flex items-center gap-1">
-              View overdue <ArrowRight className="w-4 h-4" />
-            </span>
-          </motion.button>
+            <Button
+              variant="brand"
+              size="lg"
+              fullWidth
+              onClick={onFilterOverdue}
+              leftIcon={<AlertTriangle className="w-5 h-5" />}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
+              className="justify-between"
+            >
+              <div className="flex-1 text-left">
+                <span className="font-semibold">{stats.overdue} overdue task{stats.overdue !== 1 ? 's' : ''}</span>
+                <span className="text-white/70 text-sm ml-2">need attention</span>
+              </div>
+            </Button>
+          </motion.div>
         )}
 
         {/* Today's Tasks */}
-        <div className={`rounded-2xl p-5 ${
-          darkMode
-            ? 'bg-[#1E293B] border border-[#334155]'
-            : 'bg-white border border-slate-200'
-        }`}>
-          <h3 className={`text-sm font-semibold uppercase tracking-wide mb-4 ${
-            darkMode ? 'text-slate-400' : 'text-slate-500'
-          }`}>
+        <Card variant="default" padding="lg" radius="2xl">
+          <h3 className="text-sm font-semibold uppercase tracking-wide mb-4 text-[var(--text-muted)]">
             Today
           </h3>
 
@@ -255,31 +244,27 @@ export default function Dashboard({
                 <button
                   key={task.id}
                   onClick={onFilterDueToday}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
-                    darkMode
-                      ? 'hover:bg-slate-700/50'
-                      : 'hover:bg-slate-50'
-                  }`}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-[var(--surface-2)]"
                 >
-                  <div className={`w-2 h-2 rounded-full ${
-                    task.priority === 'urgent' ? 'bg-red-500' :
-                    task.priority === 'high' ? 'bg-orange-500' :
-                    'bg-[#0033A0]'
-                  }`} />
-                  <span className={`flex-1 text-sm font-medium truncate ${
-                    darkMode ? 'text-white' : 'text-slate-900'
-                  }`}>
+                  <Badge
+                    variant={
+                      task.priority === 'urgent' ? 'danger' :
+                      task.priority === 'high' ? 'warning' :
+                      'primary'
+                    }
+                    size="sm"
+                    dot
+                  />
+                  <span className="flex-1 text-sm font-medium truncate text-[var(--foreground)]">
                     {task.text}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                 </button>
               ))}
               {stats.dueToday > 3 && (
                 <button
                   onClick={onFilterDueToday}
-                  className={`w-full text-center py-2 text-sm font-medium ${
-                    darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'
-                  } hover:underline`}
+                  className="w-full text-center py-2 text-sm font-medium text-[var(--accent)] hover:underline"
                 >
                   +{stats.dueToday - 3} more due today
                 </button>
@@ -287,93 +272,80 @@ export default function Dashboard({
             </div>
           ) : (
             <div className="flex items-center gap-3 py-2">
-              <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
-              <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              <CheckCircle2 className="w-5 h-5 text-[var(--success)]" />
+              <span className="text-sm text-[var(--text-secondary)]">
                 No tasks due today
               </span>
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Next Up - only show if there's something coming */}
         {stats.nextTask && (
-          <div className={`rounded-2xl p-5 ${
-            darkMode
-              ? 'bg-[#1E293B] border border-[#334155]'
-              : 'bg-white border border-slate-200'
-          }`}>
-            <h3 className={`text-sm font-semibold uppercase tracking-wide mb-4 ${
-              darkMode ? 'text-slate-400' : 'text-slate-500'
-            }`}>
+          <Card variant="default" padding="lg" radius="2xl">
+            <h3 className="text-sm font-semibold uppercase tracking-wide mb-4 text-[var(--text-muted)]">
               Next Up
             </h3>
 
             <button
               onClick={onNavigateToTasks}
-              className={`w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
-                darkMode
-                  ? 'hover:bg-slate-700/50'
-                  : 'hover:bg-slate-50'
-              }`}
+              className="w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-[var(--surface-2)]"
             >
-              <div className={`w-2 h-2 mt-2 rounded-full ${
-                stats.nextTask.priority === 'urgent' ? 'bg-red-500' :
-                stats.nextTask.priority === 'high' ? 'bg-orange-500' :
-                'bg-[#0033A0]'
-              }`} />
+              <div className="mt-1">
+                <Badge
+                  variant={
+                    stats.nextTask.priority === 'urgent' ? 'danger' :
+                    stats.nextTask.priority === 'high' ? 'warning' :
+                    'primary'
+                  }
+                  size="sm"
+                  dot
+                />
+              </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium truncate ${
-                  darkMode ? 'text-white' : 'text-slate-900'
-                }`}>
+                <p className="text-sm font-medium truncate text-[var(--foreground)]">
                   {stats.nextTask.text}
                 </p>
                 <div className="flex items-center gap-1.5 mt-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <Clock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                  <span className="text-xs text-[var(--text-muted)]">
                     {formatDueDate(stats.nextTask.due_date)}
                   </span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 mt-1" />
+              <ChevronRight className="w-4 h-4 text-[var(--text-muted)] mt-1" />
             </button>
-          </div>
+          </Card>
         )}
 
         {/* Weekly Progress */}
-        <div className={`rounded-2xl p-5 ${
-          darkMode
-            ? 'bg-[#1E293B] border border-[#334155]'
-            : 'bg-white border border-slate-200'
-        }`}>
+        <Card variant="default" padding="lg" radius="2xl">
           <div className="flex items-start justify-between mb-5">
-            <div>
-              <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            <div className="flex-1">
+              <h3 className="font-semibold text-[var(--foreground)]">
                 Weekly Progress
               </h3>
-              <p className={`text-sm mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                {stats.weeklyCompleted} of {stats.weeklyTotal} tasks completed ({stats.weeklyRatio}%)
+              <p className="text-sm mt-1 text-[var(--text-muted)]">
+                {stats.weeklyCompleted} of {stats.weeklyTotal} tasks completed
               </p>
             </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className={`h-2 rounded-full mb-5 ${darkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${stats.weeklyRatio}%` }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className={`h-full rounded-full ${
-                stats.weeklyRatio >= 50 ? 'bg-[#10B981]' :
-                stats.weeklyRatio >= 25 ? 'bg-[#F59E0B]' :
-                'bg-[#0033A0]'
-              }`}
+            <ProgressRing
+              progress={stats.weeklyRatio}
+              size={56}
+              strokeWidth={5}
+              color={
+                stats.weeklyRatio >= 50 ? 'var(--success)' :
+                stats.weeklyRatio >= 25 ? 'var(--warning)' :
+                'var(--brand-blue)'
+              }
+              trackColor="var(--surface-3)"
+              showPercentage
+              animationDuration={0.6}
             />
           </div>
 
           {/* Daily breakdown */}
-          <p className={`text-xs font-medium uppercase tracking-wide mb-3 ${
-            darkMode ? 'text-slate-500' : 'text-slate-400'
-          }`}>
+          <p className="text-xs font-medium uppercase tracking-wide mb-3 text-[var(--text-muted)]">
             Tasks completed each day
           </p>
 
@@ -390,8 +362,8 @@ export default function Dashboard({
                 >
                   <span className={`text-xs font-semibold ${
                     day.completed > 0
-                      ? darkMode ? 'text-white' : 'text-slate-700'
-                      : darkMode ? 'text-slate-600' : 'text-slate-300'
+                      ? 'text-[var(--foreground)]'
+                      : 'text-[var(--text-muted)]'
                   }`}>
                     {day.completed}
                   </span>
@@ -403,18 +375,18 @@ export default function Dashboard({
                       transition={{ delay: 0.2 + index * 0.05, duration: 0.4 }}
                       className={`w-full rounded-sm ${
                         day.isToday
-                          ? 'bg-[#0033A0]'
+                          ? 'bg-[var(--brand-blue)]'
                           : day.completed > 0
-                            ? darkMode ? 'bg-[#0033A0]/40' : 'bg-[#0033A0]/20'
-                            : darkMode ? 'bg-slate-700' : 'bg-slate-100'
+                            ? 'bg-[var(--brand-blue)]/30'
+                            : 'bg-[var(--surface-3)]'
                       }`}
                     />
                   </div>
 
                   <span className={`text-xs ${
                     day.isToday
-                      ? 'text-[#0033A0] font-semibold'
-                      : darkMode ? 'text-slate-500' : 'text-slate-400'
+                      ? 'text-[var(--brand-blue)] font-semibold'
+                      : 'text-[var(--text-muted)]'
                   }`}>
                     {day.dayName}
                   </span>
@@ -422,67 +394,51 @@ export default function Dashboard({
               );
             })}
           </div>
-        </div>
+        </Card>
 
         {/* Action Buttons - Priority based on context */}
         <div className="grid grid-cols-2 gap-4">
           {stats.overdue > 0 ? (
             <>
               {/* When overdue exists, View All is secondary */}
-              <motion.button
+              <Button
+                variant="secondary"
+                size="lg"
                 onClick={onNavigateToTasks}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex items-center justify-center gap-2 p-4 rounded-xl font-semibold transition-colors ${
-                  darkMode
-                    ? 'bg-slate-700 text-white hover:bg-slate-600'
-                    : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-50'
-                }`}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                <span>View All Tasks</span>
-                <ArrowRight className="w-4 h-4" />
-              </motion.button>
+                View All Tasks
+              </Button>
 
-              <motion.button
+              <Button
+                variant="secondary"
+                size="lg"
                 onClick={onAddTask}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex items-center justify-center gap-2 p-4 rounded-xl font-semibold transition-colors ${
-                  darkMode
-                    ? 'bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
+                leftIcon={<Plus className="w-5 h-5" />}
               >
-                <Plus className="w-5 h-5" />
-                <span>Add Task</span>
-              </motion.button>
+                Add Task
+              </Button>
             </>
           ) : (
             <>
               {/* No overdue - Add Task can be more prominent */}
-              <motion.button
+              <Button
+                variant="brand"
+                size="lg"
                 onClick={onAddTask}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex items-center justify-center gap-2 p-4 rounded-xl bg-[#0033A0] text-white font-semibold shadow-lg shadow-[#0033A0]/20 hover:bg-[#0028A0] transition-colors"
+                leftIcon={<Plus className="w-5 h-5" />}
               >
-                <Plus className="w-5 h-5" />
-                <span>Add Task</span>
-              </motion.button>
+                Add Task
+              </Button>
 
-              <motion.button
+              <Button
+                variant="secondary"
+                size="lg"
                 onClick={onNavigateToTasks}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex items-center justify-center gap-2 p-4 rounded-xl font-semibold transition-colors ${
-                  darkMode
-                    ? 'bg-slate-700 text-white hover:bg-slate-600'
-                    : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-50'
-                }`}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
               >
-                <span>View All Tasks</span>
-                <ArrowRight className="w-4 h-4" />
-              </motion.button>
+                View All Tasks
+              </Button>
             </>
           )}
         </div>

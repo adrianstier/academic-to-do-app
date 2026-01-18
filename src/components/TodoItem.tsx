@@ -1,12 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, X } from 'lucide-react';
-import { Todo, TodoPriority, TodoStatus, PRIORITY_CONFIG, STATUS_CONFIG, RecurrencePattern, Subtask, Attachment, MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Todo, TodoPriority, TodoStatus, PRIORITY_CONFIG, RecurrencePattern, Subtask, Attachment, MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
+import { Badge, Button, IconButton } from '@/components/ui';
 import AttachmentList from './AttachmentList';
 import AttachmentUpload from './AttachmentUpload';
 import Celebration from './Celebration';
 import ContentToSubtasksImporter from './ContentToSubtasksImporter';
+
+// Map priority levels to Badge variants
+const PRIORITY_TO_BADGE_VARIANT: Record<TodoPriority, 'danger' | 'warning' | 'info' | 'default'> = {
+  urgent: 'danger',
+  high: 'warning',
+  medium: 'info',
+  low: 'default',
+};
 
 // Subtask item component with inline editing
 interface SubtaskItemProps {
@@ -109,7 +118,6 @@ interface TodoItemProps {
   todo: Todo;
   users: string[];
   currentUserName: string;
-  darkMode?: boolean;
   selected?: boolean;
   onSelect?: (id: string, selected: boolean) => void;
   onToggle: (id: string, completed: boolean) => void;
@@ -174,18 +182,10 @@ const getDueDateStatus = (date: string, completed: boolean): 'overdue' | 'today'
   return 'future';
 };
 
-const dueDateStyles = {
-  overdue: 'bg-[var(--danger-light)] text-[var(--danger)] border border-[var(--danger)]/20',
-  today: 'bg-[var(--warning-light)] text-[var(--warning)] border border-[var(--warning)]/20',
-  upcoming: 'bg-[var(--accent-gold-light)] text-[var(--accent-gold)] border border-[var(--accent-gold)]/20',
-  future: 'bg-[var(--surface-2)] text-[var(--text-muted)]',
-};
-
 export default function TodoItem({
   todo,
   users,
   currentUserName,
-  darkMode = true,
   selected,
   onSelect,
   onToggle,
@@ -220,7 +220,7 @@ export default function TodoItem({
   const [text, setText] = useState(todo.text);
   const priority = todo.priority || 'medium';
   const status = todo.status || 'todo';
-  const statusConfig = STATUS_CONFIG[status];
+  void status; // Used for status-based logic elsewhere
 
   // Helper to get date offset for snooze
   const getSnoozeDate = (days: number) => {
@@ -304,37 +304,48 @@ export default function TodoItem({
     setShowContentImporter(false);
   };
 
+  // Sync local text state with todo.text when not editing - correct sync pattern
   useEffect(() => {
     if (!editingText) {
       setText(todo.text);
     }
   }, [todo.text, editingText]);
 
+  // Priority-based left border color - always visible for quick scanning
+  const getPriorityBorderClass = () => {
+    switch (priority) {
+      case 'urgent': return 'border-l-4 border-l-red-500';
+      case 'high': return 'border-l-4 border-l-orange-500';
+      case 'medium': return 'border-l-4 border-l-yellow-500';
+      case 'low': return 'border-l-4 border-l-blue-400';
+      default: return 'border-l-4 border-l-slate-300 dark:border-l-slate-600';
+    }
+  };
+
   // Card styling based on priority × overdue status
   const getCardStyle = () => {
-    // Completed tasks
+    const priorityBorder = getPriorityBorderClass();
+
+    // Completed tasks - keep priority bar but fade overall
     if (todo.completed) {
-      return 'bg-[var(--surface)] border-[var(--border-subtle)] opacity-60';
+      return `bg-[var(--surface)] border-[var(--border-subtle)] opacity-60 ${priorityBorder}`;
     }
     // Selected state
     if (selected) {
-      return 'border-[var(--accent)] bg-[var(--accent-light)]';
+      return `border-[var(--accent)] bg-[var(--accent-light)] ${priorityBorder}`;
     }
     // Overdue severity hierarchy
     if (dueDateStatus === 'overdue') {
       const isHighPriority = priority === 'urgent' || priority === 'high';
-      const isMediumPriority = priority === 'medium';
       if (isHighPriority) {
         // CRITICAL: Full red background for high-priority overdue
-        return 'bg-red-500/15 dark:bg-red-500/20 border-red-500/40';
-      } else if (isMediumPriority) {
-        // MODERATE: Red left accent only for medium-priority overdue
-        return 'bg-[var(--surface)] border-[var(--border)] border-l-[3px] border-l-red-500';
+        return `bg-red-500/10 dark:bg-red-500/15 border-red-500/30 ${priorityBorder}`;
       }
-      // LOW: Normal card, date badge shows urgency
+      // Medium/Low overdue - priority bar + subtle styling
+      return `bg-[var(--surface)] border-[var(--border)] hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)] ${priorityBorder}`;
     }
-    // Default card
-    return 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)]';
+    // Default card with priority border
+    return `bg-[var(--surface)] border-[var(--border)] hover:border-[var(--accent)]/40 hover:shadow-[var(--shadow-md)] ${priorityBorder}`;
   };
 
   return (
@@ -387,7 +398,7 @@ export default function TodoItem({
             />
           ) : (
             <p
-              className={`font-medium cursor-pointer line-clamp-2 ${
+              className={`font-semibold cursor-pointer line-clamp-2 ${
                 todo.completed
                   ? 'text-[var(--text-light)] line-through'
                   : 'text-[var(--foreground)]'
@@ -402,49 +413,54 @@ export default function TodoItem({
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             {/* Priority + Date group */}
             <div className="flex items-center gap-2">
-              <span
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium"
-                style={{ backgroundColor: priorityConfig.bgColor, color: priorityConfig.color }}
+              <Badge
+                variant={PRIORITY_TO_BADGE_VARIANT[priority]}
+                size="sm"
+                icon={<Flag className="w-3 h-3" />}
               >
-                <Flag className="w-3 h-3" />
                 {priorityConfig.label}
-              </span>
+              </Badge>
 
               {/* Due date - improved color coding with days overdue */}
               {todo.due_date && dueDateStatus && (() => {
                 const daysOverdue = dueDateStatus === 'overdue' ? getDaysOverdue(todo.due_date) : 0;
+                // Map due date status to Badge variant
+                const dueDateVariant = todo.completed
+                  ? 'default'
+                  : dueDateStatus === 'overdue'
+                    ? 'danger'
+                    : dueDateStatus === 'today'
+                      ? 'warning'
+                      : dueDateStatus === 'upcoming'
+                        ? 'warning'
+                        : 'default';
+                const dueDateIcon = dueDateStatus === 'overdue' && !todo.completed
+                  ? <AlertTriangle className="w-3 h-3" />
+                  : <Calendar className="w-3 h-3" />;
+                const overdueText = dueDateStatus === 'overdue' && !todo.completed
+                  ? ` (${daysOverdue === 1 ? '1 day' : `${daysOverdue} days`})`
+                  : '';
                 return (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium ${
-                    todo.completed
-                      ? 'bg-slate-100 dark:bg-slate-700 text-slate-400'
-                      : dueDateStatus === 'overdue'
-                        ? 'bg-red-500 text-white'
-                        : dueDateStatus === 'today'
-                          ? 'bg-orange-500 text-white'
-                          : dueDateStatus === 'upcoming'
-                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                            : 'text-[var(--text-muted)]'
-                  }`}>
-                    {dueDateStatus === 'overdue' && !todo.completed && (
-                      <AlertTriangle className="w-3 h-3" />
-                    )}
-                    {dueDateStatus !== 'overdue' && <Calendar className="w-3 h-3" />}
-                    {formatDueDate(todo.due_date)}
-                    {dueDateStatus === 'overdue' && !todo.completed && (
-                      <span className="font-semibold">
-                        {daysOverdue === 1 ? '(1 day)' : `(${daysOverdue} days)`}
-                      </span>
-                    )}
-                  </span>
+                  <Badge
+                    variant={dueDateVariant}
+                    size="sm"
+                    icon={dueDateIcon}
+                    pulse={dueDateStatus === 'overdue' && !todo.completed}
+                  >
+                    {formatDueDate(todo.due_date)}{overdueText}
+                  </Badge>
                 );
               })()}
 
               {/* Recurrence indicator */}
               {todo.recurrence && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-                  <Repeat className="w-3 h-3" />
+                <Badge
+                  variant="primary"
+                  size="sm"
+                  icon={<Repeat className="w-3 h-3" />}
+                >
                   {todo.recurrence}
-                </span>
+                </Badge>
               )}
             </div>
 
@@ -457,21 +473,30 @@ export default function TodoItem({
             <div className="flex items-center gap-2">
               {/* Assigned to */}
               {todo.assigned_to && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[var(--radius-sm)] text-xs font-medium bg-[var(--accent-gold-light)] text-[var(--accent-gold)]">
-                  <User className="w-3 h-3" />
+                <Badge
+                  variant="brand"
+                  size="sm"
+                  icon={<User className="w-3 h-3" />}
+                >
                   {todo.assigned_to}
-                </span>
+                </Badge>
               )}
 
               {/* Subtasks indicator */}
               {subtasks.length > 0 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowSubtasks(!showSubtasks); }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-[var(--radius-sm)] text-xs font-medium bg-[var(--accent-light)] text-[var(--accent)] hover:bg-[var(--accent)]/15 active:bg-[var(--accent)]/20 touch-manipulation"
+                  className="inline-flex items-center gap-1.5 touch-manipulation"
                 >
-                  <ListTree className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                  {completedSubtasks}/{subtasks.length}
-                  {subtaskProgress === 100 && <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3 ml-0.5" />}
+                  <Badge
+                    variant={subtaskProgress === 100 ? 'success' : 'primary'}
+                    size="sm"
+                    icon={<ListTree className="w-3 h-3" />}
+                    interactive
+                  >
+                    {completedSubtasks}/{subtasks.length}
+                    {subtaskProgress === 100 && <Check className="w-3 h-3 ml-0.5" />}
+                  </Badge>
                 </button>
               )}
 
@@ -479,10 +504,16 @@ export default function TodoItem({
               {todo.notes && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowNotes(!showNotes); }}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[var(--radius-sm)] text-xs font-medium bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)]"
+                  className="touch-manipulation"
                 >
-                  <MessageSquare className="w-3 h-3" />
-                  Note
+                  <Badge
+                    variant="default"
+                    size="sm"
+                    icon={<MessageSquare className="w-3 h-3" />}
+                    interactive
+                  >
+                    Note
+                  </Badge>
                 </button>
               )}
 
@@ -490,10 +521,16 @@ export default function TodoItem({
               {todo.transcription && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowTranscription(!showTranscription); }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-[var(--radius-sm)] text-xs font-medium bg-purple-500/10 text-purple-500 hover:bg-purple-500/15 active:bg-purple-500/20 touch-manipulation"
+                  className="touch-manipulation"
                 >
-                  <Mic className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                  Voicemail
+                  <Badge
+                    variant="info"
+                    size="sm"
+                    icon={<Mic className="w-3 h-3" />}
+                    interactive
+                  >
+                    Voicemail
+                  </Badge>
                 </button>
               )}
 
@@ -501,14 +538,19 @@ export default function TodoItem({
               {todo.attachments && todo.attachments.length > 0 && (() => {
                 const hasAudio = todo.attachments.some(a => a.file_type === 'audio');
                 const AttachmentIcon = hasAudio ? Music : Paperclip;
-                const iconColor = hasAudio ? 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/15 active:bg-purple-500/20' : 'bg-[var(--accent-gold-light)] text-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/15 active:bg-[var(--accent-gold)]/20';
                 return (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowAttachments(!showAttachments); }}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 sm:px-2 sm:py-0.5 rounded-[var(--radius-sm)] text-xs font-medium touch-manipulation ${iconColor}`}
+                    className="inline-flex items-center gap-1.5 touch-manipulation"
                   >
-                    <AttachmentIcon className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                    {todo.attachments.length}
+                    <Badge
+                      variant={hasAudio ? 'info' : 'warning'}
+                      size="sm"
+                      icon={<AttachmentIcon className="w-3 h-3" />}
+                      interactive
+                    >
+                      {todo.attachments.length}
+                    </Badge>
                   </button>
                 );
               })()}
@@ -558,26 +600,28 @@ export default function TodoItem({
         {/* Action buttons - expand and three-dot menu */}
         <div className="flex items-center gap-1">
           {/* Expand/collapse */}
-          <button
+          <IconButton
+            variant="ghost"
+            size="md"
+            icon={expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             onClick={() => setExpanded(!expanded)}
-            className="p-2 rounded-[var(--radius-md)] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
             aria-expanded={expanded}
             aria-label={expanded ? 'Collapse task details' : 'Expand task details'}
-          >
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+          />
 
           {/* Three-dot menu */}
           <div className="relative">
-            <button
+            <IconButton
+              variant="ghost"
+              size="md"
+              icon={<MoreVertical className="w-4 h-4" />}
               onClick={(e) => { e.stopPropagation(); setShowActionsMenu(!showActionsMenu); }}
-              className="p-2 rounded-[var(--radius-md)] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
               aria-label="Task actions"
               aria-haspopup="true"
               aria-expanded={showActionsMenu}
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
+              className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+            />
 
             {showActionsMenu && (
               <div
@@ -688,18 +732,22 @@ export default function TodoItem({
               &ldquo;{todo.text}&rdquo;
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2.5 rounded-[var(--radius-lg)] border border-[var(--border)] text-[var(--foreground)] font-medium hover:bg-[var(--surface-2)] transition-colors"
+                fullWidth
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
                 onClick={() => { onDelete(todo.id); setShowDeleteConfirm(false); }}
-                className="flex-1 px-4 py-2.5 rounded-[var(--radius-lg)] bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
+                fullWidth
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -786,46 +834,43 @@ export default function TodoItem({
 
           {/* PRIMARY ACTION - Mark Done/Reopen prominently displayed */}
           <div className="flex items-center justify-between mb-4">
-            <button
+            <Button
+              variant={todo.completed ? 'secondary' : 'success'}
+              size="md"
+              leftIcon={<Check className="w-4 h-4" />}
               onClick={handleToggle}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-lg)] font-medium text-sm transition-all ${
-                todo.completed
-                  ? 'bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--foreground)] border border-[var(--border)]'
-                  : 'bg-[var(--success)] hover:bg-[var(--success)]/90 text-white shadow-sm'
-              }`}
             >
-              <Check className="w-4 h-4" />
               {todo.completed ? 'Reopen Task' : 'Mark Done'}
-            </button>
+            </Button>
 
             {/* Secondary actions: Duplicate, Save Template */}
             <div className="flex items-center gap-2">
               {onDuplicate && (
-                <button
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  icon={<Copy className="w-4 h-4" />}
                   onClick={() => onDuplicate(todo)}
-                  className="p-2 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
-                  title="Duplicate task"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
+                  aria-label="Duplicate task"
+                />
               )}
               {onSaveAsTemplate && (
-                <button
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  icon={<FileText className="w-4 h-4" />}
                   onClick={() => onSaveAsTemplate(todo)}
-                  className="p-2 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
-                  title="Save as template"
-                >
-                  <FileText className="w-4 h-4" />
-                </button>
+                  aria-label="Save as template"
+                />
               )}
               {onEmailCustomer && (
-                <button
+                <IconButton
+                  variant="ghost"
+                  size="sm"
+                  icon={<Mail className="w-4 h-4" />}
                   onClick={() => onEmailCustomer(todo)}
-                  className="p-2 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
-                  title="Email summary"
-                >
-                  <Mail className="w-4 h-4" />
-                </button>
+                  aria-label="Email summary"
+                />
               )}
             </div>
           </div>
@@ -1061,12 +1106,24 @@ export default function TodoItem({
                 <span className="hidden sm:inline">• Updated by {todo.updated_by}</span>
               )}
             </div>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="text-[var(--danger)] hover:text-[var(--danger)] hover:underline"
-            >
-              Delete
-            </button>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-[var(--danger)] hover:text-[var(--danger)] hover:bg-[var(--danger-light)]"
+              >
+                Delete
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setExpanded(false)}
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       )}

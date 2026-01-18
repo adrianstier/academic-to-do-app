@@ -12,11 +12,11 @@ import {
   Flame,
   Dumbbell,
   Star,
-  Sparkles,
   LucideIcon
 } from 'lucide-react';
 import { Todo, AuthUser } from '@/types/todo';
 import { supabase } from '@/lib/supabaseClient';
+import { ProgressRing, GoalProgressRing, Badge } from '@/components/ui';
 
 interface ProgressSummaryProps {
   show: boolean;
@@ -191,38 +191,68 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
             {/* Stats Grid */}
             <div className="p-6">
               <div className="grid grid-cols-2 gap-3 mb-6">
-                {/* Completed Today */}
+                {/* Completed / Total - Goal Progress Ring */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-[var(--success-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--success)]/10"
+                  className="bg-[var(--success-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--success)]/10 col-span-1"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="w-5 h-5 text-[var(--success)]" />
-                    <span className="text-sm font-medium text-[var(--success)]">Completed</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="success" size="sm" icon={<CheckCircle2 className="w-3 h-3" />}>
+                      Completed
+                    </Badge>
                   </div>
-                  <p className="text-3xl font-bold text-[var(--success)]">
-                    {stats.totalCompleted}
-                  </p>
-                  <p className="text-xs text-[var(--success)]/70">tasks done</p>
+                  <div className="flex items-center gap-3">
+                    <GoalProgressRing
+                      current={stats.totalCompleted}
+                      goal={todos.length}
+                      size={56}
+                      strokeWidth={5}
+                      showFraction
+                      color="var(--success)"
+                      completedColor="var(--success)"
+                    />
+                    <div>
+                      <p className="text-2xl font-bold text-[var(--success)]">
+                        {stats.totalCompleted}
+                      </p>
+                      <p className="text-xs text-[var(--success)]/70">of {todos.length} tasks</p>
+                    </div>
+                  </div>
                 </motion.div>
 
-                {/* Total Tasks */}
+                {/* Productivity - Progress Ring */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-[var(--accent-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--accent)]/10"
+                  className="bg-[var(--accent-gold-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--accent-gold)]/10 col-span-1"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-5 h-5 text-[var(--accent)]" />
-                    <span className="text-sm font-medium text-[var(--accent)]">Total</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="warning" size="sm" icon={<TrendingUp className="w-3 h-3" />}>
+                      Completion Rate
+                    </Badge>
                   </div>
-                  <p className="text-3xl font-bold text-[var(--accent)]">
-                    {todos.length}
-                  </p>
-                  <p className="text-xs text-[var(--accent)]/70">all tasks</p>
+                  <div className="flex items-center gap-3">
+                    <ProgressRing
+                      progress={stats.productivity}
+                      size={56}
+                      strokeWidth={5}
+                      color="var(--accent-gold)"
+                      showPercentage={false}
+                    >
+                      <span className="text-sm font-bold text-[var(--accent-gold)]">
+                        {stats.productivity}%
+                      </span>
+                    </ProgressRing>
+                    <div>
+                      <p className="text-2xl font-bold text-[var(--accent-gold)]">
+                        {stats.productivity}%
+                      </p>
+                      <p className="text-xs text-[var(--accent-gold)]/70">productivity</p>
+                    </div>
+                  </div>
                 </motion.div>
 
                 {/* Streak */}
@@ -232,31 +262,47 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
                   transition={{ delay: 0.3 }}
                   className="bg-[var(--warning-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--warning)]/10"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Flame className="w-5 h-5 text-[var(--warning)]" />
-                    <span className="text-sm font-medium text-[var(--warning)]">Streak</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="warning" size="sm" icon={<Flame className="w-3 h-3" />} pulse={stats.streak >= 3}>
+                      Streak
+                    </Badge>
                   </div>
-                  <p className="text-3xl font-bold text-[var(--warning)]">
-                    {stats.streak}
-                  </p>
-                  <p className="text-xs text-[var(--warning)]/70">days active</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-[var(--warning)]/20 flex items-center justify-center">
+                      <Flame className="w-7 h-7 text-[var(--warning)]" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-[var(--warning)]">
+                        {stats.streak}
+                      </p>
+                      <p className="text-xs text-[var(--warning)]/70">days active</p>
+                    </div>
+                  </div>
                 </motion.div>
 
-                {/* Productivity */}
+                {/* Total Tasks */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-[var(--accent-gold-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--accent-gold)]/10"
+                  className="bg-[var(--accent-light)] rounded-[var(--radius-lg)] p-4 border border-[var(--accent)]/10"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-5 h-5 text-[var(--accent-gold)]" />
-                    <span className="text-sm font-medium text-[var(--accent-gold)]">Done</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge variant="primary" size="sm" icon={<Target className="w-3 h-3" />}>
+                      Total
+                    </Badge>
                   </div>
-                  <p className="text-3xl font-bold text-[var(--accent-gold)]">
-                    {stats.productivity}%
-                  </p>
-                  <p className="text-xs text-[var(--accent-gold)]/70">completion rate</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/20 flex items-center justify-center">
+                      <Target className="w-7 h-7 text-[var(--accent)]" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-[var(--accent)]">
+                        {todos.length}
+                      </p>
+                      <p className="text-xs text-[var(--accent)]/70">all tasks</p>
+                    </div>
+                  </div>
                 </motion.div>
               </div>
 

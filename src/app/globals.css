@@ -894,3 +894,589 @@ input[type="radio"]:focus-visible {
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-xl), 0 0 0 1px var(--border-subtle);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENHANCED DESIGN SYSTEM - 2026 Update
+   Additional tokens for improved visual hierarchy and micro-interactions
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Elevation System ─── */
+  --elevation-0: none;
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --elevation-3: 0 12px 32px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --elevation-4: 0 24px 48px rgba(0, 0, 0, 0.16), 0 12px 24px rgba(0, 0, 0, 0.1);
+
+  /* ─── Interaction Transforms ─── */
+  --hover-lift: translateY(-2px);
+  --hover-lift-sm: translateY(-1px);
+  --press-scale: scale(0.98);
+  --press-scale-sm: scale(0.99);
+
+  /* ─── Enhanced Focus Ring ─── */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: var(--accent-light);
+
+  /* ─── Priority Glows ─── */
+  --priority-urgent-glow: 0 0 20px rgba(220, 38, 38, 0.25), 0 0 6px rgba(220, 38, 38, 0.3);
+  --priority-high-glow: 0 0 16px rgba(217, 119, 6, 0.2), 0 0 4px rgba(217, 119, 6, 0.25);
+  --priority-medium-glow: 0 0 12px rgba(0, 51, 160, 0.15);
+
+  /* ─── Micro-interaction Timing ─── */
+  --duration-micro: 100ms;
+  --duration-quick: 150ms;
+  --duration-moderate: 200ms;
+  --duration-standard: 250ms;
+  --duration-relaxed: 350ms;
+  --duration-slow: 500ms;
+
+  /* ─── Spring Animations ─── */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-smooth-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-dramatic: cubic-bezier(0.6, -0.05, 0.01, 0.99);
+
+  /* ─── Overlay Opacity Levels ─── */
+  --overlay-subtle: 0.05;
+  --overlay-light: 0.1;
+  --overlay-medium: 0.2;
+  --overlay-heavy: 0.4;
+  --overlay-modal: 0.5;
+}
+
+:root.dark {
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --elevation-2: 0 4px 12px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+  --elevation-3: 0 12px 32px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --elevation-4: 0 24px 48px rgba(0, 0, 0, 0.35), 0 12px 24px rgba(0, 0, 0, 0.25);
+
+  --priority-urgent-glow: 0 0 20px rgba(248, 113, 113, 0.3), 0 0 6px rgba(248, 113, 113, 0.35);
+  --priority-high-glow: 0 0 16px rgba(251, 191, 36, 0.25), 0 0 4px rgba(251, 191, 36, 0.3);
+  --priority-medium-glow: 0 0 12px rgba(114, 181, 232, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENHANCED COMPONENT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Enhanced Card System ─── */
+.card-base {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-quick) var(--ease-smooth-in-out);
+}
+
+.card-hoverable {
+  cursor: pointer;
+}
+
+.card-hoverable:hover {
+  transform: var(--hover-lift-sm);
+  box-shadow: var(--elevation-2);
+  border-color: var(--border);
+}
+
+.card-hoverable:active {
+  transform: var(--press-scale-sm);
+}
+
+.card-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+/* ─── Enhanced Button Styles ─── */
+.btn-brand {
+  background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-light) 100%);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+  border: none;
+  box-shadow: var(--elevation-2), var(--shadow-blue);
+  transition: all var(--duration-quick) var(--ease-smooth-out);
+}
+
+.btn-brand:hover {
+  transform: var(--hover-lift-sm);
+  box-shadow: var(--elevation-3), var(--shadow-blue);
+  filter: brightness(1.05);
+}
+
+.btn-brand:active {
+  transform: var(--press-scale);
+  box-shadow: var(--elevation-1), var(--shadow-blue);
+}
+
+.btn-brand:focus-visible {
+  outline: none;
+  box-shadow: var(--elevation-2), var(--shadow-blue), 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-vivid) 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  border: none;
+  box-shadow: var(--elevation-1), 0 4px 12px rgba(5, 150, 105, 0.2);
+  transition: all var(--duration-quick) var(--ease-smooth-out);
+}
+
+.btn-success:hover {
+  transform: var(--hover-lift-sm);
+  filter: brightness(1.05);
+}
+
+.btn-success:active {
+  transform: var(--press-scale);
+}
+
+/* ─── Enhanced Checkbox Animation ─── */
+.checkbox-enhanced {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--duration-quick) var(--ease-smooth-out);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-enhanced:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.checkbox-enhanced.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox-enhanced .checkmark {
+  width: 12px;
+  height: 12px;
+  stroke: white;
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  transition: stroke-dashoffset var(--duration-moderate) var(--ease-bounce);
+}
+
+.checkbox-enhanced.checked .checkmark {
+  stroke-dashoffset: 0;
+}
+
+/* ─── Enhanced Task Priority Styles ─── */
+.task-priority-urgent-enhanced {
+  border-left: 4px solid var(--danger);
+  background: linear-gradient(135deg, var(--danger-light) 0%, transparent 60%);
+  box-shadow: var(--priority-urgent-glow);
+  position: relative;
+}
+
+.task-priority-urgent-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 20px 20px 0;
+  border-color: transparent var(--danger) transparent transparent;
+  border-radius: 0 var(--radius-md) 0 0;
+}
+
+.task-priority-high-enhanced {
+  border-left: 3px solid var(--warning);
+  background: linear-gradient(135deg, var(--warning-light) 0%, transparent 60%);
+}
+
+.task-priority-high-enhanced:hover {
+  box-shadow: var(--priority-high-glow);
+}
+
+/* ─── Input Enhancement ─── */
+.input-enhanced {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1rem;
+  font-size: var(--font-size-base);
+  color: var(--foreground);
+  transition: all var(--duration-quick) var(--ease-smooth-out);
+}
+
+.input-enhanced::placeholder {
+  color: var(--text-light);
+}
+
+.input-enhanced:hover:not(:focus) {
+  border-color: var(--border-hover);
+}
+
+.input-enhanced:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+/* ─── Status Dot Indicators ─── */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.status-dot.online {
+  background: var(--success-vivid);
+}
+
+.status-dot.online::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: var(--success-vivid);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-dot.away {
+  background: var(--warning);
+}
+
+.status-dot.busy {
+  background: var(--danger);
+}
+
+.status-dot.offline {
+  background: var(--text-light);
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.8);
+  }
+}
+
+/* ─── Progress Bar Enhanced ─── */
+.progress-bar {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-vivid) 100%);
+  border-radius: var(--radius-sm);
+  transition: width var(--duration-standard) var(--ease-smooth-out);
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  animation: progress-shine 2s ease-in-out infinite;
+}
+
+@keyframes progress-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ─── Skeleton Loading Enhanced ─── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    var(--surface-3) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ─── Tooltip Styles ─── */
+.tooltip {
+  position: relative;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--duration-quick) var(--ease-smooth-out);
+  margin-bottom: 8px;
+  z-index: 50;
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--foreground);
+}
+
+.tooltip:hover .tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ─── Divider Styles ─── */
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--space-4) 0;
+}
+
+.divider-with-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.divider-with-text::before,
+.divider-with-text::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ─── Avatar Stack ─── */
+.avatar-stack {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.avatar-stack > * {
+  margin-left: -8px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+}
+
+.avatar-stack > *:last-child {
+  margin-left: 0;
+}
+
+/* ─── Glow Effects ─── */
+.glow-brand {
+  box-shadow: 0 0 20px rgba(0, 51, 160, 0.3), 0 0 60px rgba(0, 51, 160, 0.1);
+}
+
+.glow-success {
+  box-shadow: 0 0 20px rgba(5, 150, 105, 0.3), 0 0 60px rgba(5, 150, 105, 0.1);
+}
+
+.glow-warning {
+  box-shadow: 0 0 20px rgba(217, 119, 6, 0.3), 0 0 60px rgba(217, 119, 6, 0.1);
+}
+
+.glow-danger {
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.3), 0 0 60px rgba(220, 38, 38, 0.1);
+}
+
+/* ─── Backdrop Blur Variants ─── */
+.backdrop-subtle {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-medium {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.backdrop-heavy {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* ─── Ring Focus Variants ─── */
+.ring-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+.ring-focus-inset:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MICRO-INTERACTION UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Lift on hover */
+.hover-lift {
+  transition: transform var(--duration-quick) var(--ease-smooth-out),
+              box-shadow var(--duration-quick) var(--ease-smooth-out);
+}
+
+.hover-lift:hover {
+  transform: var(--hover-lift);
+  box-shadow: var(--elevation-3);
+}
+
+/* Scale on press */
+.press-scale:active {
+  transform: var(--press-scale);
+}
+
+/* Pulse attention */
+.pulse-attention {
+  animation: pulse-attention 2s ease-in-out infinite;
+}
+
+@keyframes pulse-attention {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--accent-light);
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* Wiggle for errors */
+.wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* Success bounce */
+.bounce-success {
+  animation: bounce-success 0.6s ease-out;
+}
+
+@keyframes bounce-success {
+  0% { transform: scale(0.9); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Fade slide up */
+.fade-slide-up {
+  animation: fade-slide-up var(--duration-standard) var(--ease-smooth-out);
+}
+
+@keyframes fade-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger children animation helper */
+.stagger-children > * {
+  opacity: 0;
+  animation: fade-slide-up var(--duration-standard) var(--ease-smooth-out) forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Touch-friendly sizing on mobile */
+@media (max-width: 640px) {
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  .touch-padding {
+    padding: var(--space-3);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .hover-lift:hover,
+  .press-scale:active {
+    transform: none;
+  }
+
+  .pulse-attention,
+  .wiggle,
+  .bounce-success,
+  .status-dot.online::after {
+    animation: none;
+  }
+
+  .skeleton {
+    animation: none;
+    background: var(--surface-2);
+  }
+
+  .progress-bar-fill::after {
+    animation: none;
+    display: none;
+  }
+}
