@@ -45,11 +45,12 @@ import {
   LayoutList, LayoutGrid, Wifi, WifiOff, Search,
   ArrowUpDown, User, AlertTriangle, CheckSquare,
   Trash2, X, ChevronDown, GitMerge, Layers,
-  Paperclip, Filter, RotateCcw, Check, Home
+  Paperclip, Filter, RotateCcw, Check, Home, FileText
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
 import UserSwitcher from './UserSwitcher';
 import SaveTemplateModal from './SaveTemplateModal';
+import TemplatePicker from './TemplatePicker';
 import ArchivedTaskModal from './ArchivedTaskModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppShell } from './layout/AppShell';
@@ -1695,9 +1696,20 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
         {/* Add todo input */}
         <div className="mb-6 space-y-3">
-          {/* Toggle between simplified and advanced input - hidden in focus mode */}
+          {/* Input mode toggle and template picker - hidden in focus mode */}
           {!focusMode && (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
+              {/* Subtle template picker - icon only */}
+              <TemplatePicker
+                currentUserName={userName}
+                users={users}
+                darkMode={darkMode}
+                onSelectTemplate={(text, priority, assignedTo, subtasks) => {
+                  addTodo(text, priority, undefined, assignedTo, subtasks);
+                }}
+                compact={true}
+              />
+              {/* Simple/Advanced toggle */}
               <button
                 type="button"
                 onClick={() => setUseSimplifiedInput(!useSimplifiedInput)}

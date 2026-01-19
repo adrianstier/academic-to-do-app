@@ -12,6 +12,7 @@ interface TemplatePickerProps {
   currentUserName: string;
   users: string[];
   darkMode?: boolean;
+  compact?: boolean; // Show as subtle icon button instead of full dropdown button
   onSelectTemplate: (
     text: string,
     priority: TodoPriority,
@@ -24,6 +25,7 @@ export default function TemplatePicker({
   currentUserName,
   users,
   darkMode = true,
+  compact = false,
   onSelectTemplate,
 }: TemplatePickerProps) {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
@@ -155,15 +157,28 @@ export default function TemplatePicker({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
-          darkMode
-            ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-        }`}
+        aria-label={compact ? 'My Templates' : undefined}
+        title={compact ? 'My Templates - Create and use custom task templates' : undefined}
+        className={compact
+          ? `flex items-center justify-center p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] touch-manipulation ${
+              darkMode
+                ? 'text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)]'
+                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            }`
+          : `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
+              darkMode
+                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`
+        }
       >
-        <FileText className="w-4 h-4" />
-        <span>Templates</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <FileText className={compact ? 'w-4 h-4' : 'w-4 h-4'} />
+        {!compact && (
+          <>
+            <span>Templates</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </>
+        )}
       </button>
 
       {isOpen && (
