@@ -100,7 +100,7 @@ function isLowCompletionQuote(category: TaskCategory): boolean {
 export function QuickTaskButtons({
   onSelectTemplate,
   patterns = [],
-  collapsed: initialCollapsed = true,
+  collapsed: initialCollapsed = false,
 }: QuickTaskButtonsProps) {
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [showQuoteWarning, setShowQuoteWarning] = useState(false);
