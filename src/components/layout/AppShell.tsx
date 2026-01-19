@@ -21,6 +21,7 @@ export type ActiveView =
   | 'chat'
   | 'goals'
   | 'archive'
+  | 'ai_inbox'
   | 'settings';
 
 export type RightPanelContent =

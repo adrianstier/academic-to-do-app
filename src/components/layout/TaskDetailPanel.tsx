@@ -29,10 +29,16 @@ import {
   Archive,
   Copy,
   Share2,
+  Sparkles,
+  Wand2,
+  GitMerge,
+  Loader2,
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Todo, TodoPriority, TodoStatus, Subtask, User as UserType, PRIORITY_CONFIG, STATUS_CONFIG } from '@/types/todo';
+import { fetchWithCsrf } from '@/lib/csrf';
+import { logger } from '@/lib/logger';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TASK DETAIL PANEL
@@ -78,6 +84,12 @@ export default function TaskDetailPanel({
   const [showAttachments, setShowAttachments] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // AI Action states
+  const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
+  const [aiSubtasksPreview, setAiSubtasksPreview] = useState<Subtask[] | null>(null);
+  const [aiEnhancedText, setAiEnhancedText] = useState<string | null>(null);
+  const [showAiActions, setShowAiActions] = useState(true);
 
   // Update local state when task changes
   useEffect(() => {
@@ -146,6 +158,100 @@ export default function TaskDetailPanel({
     const updatedSubtasks = task.subtasks?.filter(s => s.id !== subtaskId);
     await onUpdate(task.id, { subtasks: updatedSubtasks });
   }, [task.id, task.subtasks, onUpdate]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AI ACTION HANDLERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const handleBreakIntoSubtasks = useCallback(async () => {
+    if (aiActionLoading) return;
+    setAiActionLoading('subtasks');
+    setAiSubtasksPreview(null);
+
+    try {
+      const response = await fetchWithCsrf('/api/ai/breakdown-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskText: task.text,
+          taskContext: task.notes || '',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate subtasks');
+      }
+
+      const data = await response.json();
+      if (data.subtasks && data.subtasks.length > 0) {
+        // Convert to proper Subtask format with IDs
+        const previewSubtasks: Subtask[] = data.subtasks.map((st: { text: string; priority?: string; estimatedMinutes?: number }, index: number) => ({
+          id: `preview-${Date.now()}-${index}`,
+          text: st.text,
+          completed: false,
+          priority: st.priority || 'medium',
+          estimatedMinutes: st.estimatedMinutes,
+        }));
+        setAiSubtasksPreview(previewSubtasks);
+      }
+    } catch (error) {
+      logger.error('Failed to break task into subtasks', error, { component: 'TaskDetailPanel' });
+    } finally {
+      setAiActionLoading(null);
+    }
+  }, [task.text, task.notes, aiActionLoading]);
+
+  const handleApplySubtasks = useCallback(async () => {
+    if (!aiSubtasksPreview) return;
+
+    // Generate proper IDs for the subtasks
+    const newSubtasks: Subtask[] = aiSubtasksPreview.map((st, index) => ({
+      ...st,
+      id: crypto.randomUUID(),
+    }));
+
+    await onUpdate(task.id, {
+      subtasks: [...(task.subtasks || []), ...newSubtasks],
+    });
+    setAiSubtasksPreview(null);
+  }, [task.id, task.subtasks, aiSubtasksPreview, onUpdate]);
+
+  const handleImproveDescription = useCallback(async () => {
+    if (aiActionLoading) return;
+    setAiActionLoading('enhance');
+    setAiEnhancedText(null);
+
+    try {
+      const response = await fetchWithCsrf('/api/ai/enhance-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: task.text,
+          users: users.map(u => u.name),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to enhance task');
+      }
+
+      const data = await response.json();
+      if (data.enhancedText) {
+        setAiEnhancedText(data.enhancedText);
+      }
+    } catch (error) {
+      logger.error('Failed to enhance task description', error, { component: 'TaskDetailPanel' });
+    } finally {
+      setAiActionLoading(null);
+    }
+  }, [task.text, users, aiActionLoading]);
+
+  const handleApplyEnhancedText = useCallback(async () => {
+    if (!aiEnhancedText) return;
+    await onUpdate(task.id, { text: aiEnhancedText });
+    setAiEnhancedText(null);
+    setEditedText(aiEnhancedText);
+  }, [task.id, aiEnhancedText, onUpdate]);
 
   // Due date info
   const dueDateInfo = task.due_date ? (() => {
@@ -687,6 +793,232 @@ export default function TaskDetailPanel({
               <p>Updated by {task.updated_by} {formatDistanceToNow(new Date(task.updated_at), { addSuffix: true })}</p>
             )}
           </section>
+
+          {/* ═══════════════════════════════════════════════════════════════════════════
+              AI ACTIONS SECTION
+              Contextual AI-powered actions for the current task
+              ═══════════════════════════════════════════════════════════════════════════ */}
+          <CollapsibleSection
+            title="AI Actions"
+            icon={<Sparkles className="w-4 h-4 text-[var(--accent)]" />}
+            isOpen={showAiActions}
+            onToggle={() => setShowAiActions(!showAiActions)}
+            darkMode={darkMode}
+          >
+            <div className="space-y-3">
+              {/* AI Action Buttons */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Break into subtasks */}
+                <button
+                  onClick={handleBreakIntoSubtasks}
+                  disabled={aiActionLoading !== null}
+                  className={`
+                    flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium
+                    transition-all
+                    ${darkMode
+                      ? 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10'
+                      : 'bg-[var(--surface-2)] text-[var(--foreground)] hover:bg-[var(--surface-3)] border border-[var(--border)]'
+                    }
+                    ${aiActionLoading === 'subtasks' ? 'opacity-70' : ''}
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                  `}
+                >
+                  {aiActionLoading === 'subtasks' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ListChecks className="w-4 h-4 text-[var(--accent)]" />
+                  )}
+                  <span className="truncate">Break into subtasks</span>
+                </button>
+
+                {/* Improve description */}
+                <button
+                  onClick={handleImproveDescription}
+                  disabled={aiActionLoading !== null}
+                  className={`
+                    flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium
+                    transition-all
+                    ${darkMode
+                      ? 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10'
+                      : 'bg-[var(--surface-2)] text-[var(--foreground)] hover:bg-[var(--surface-3)] border border-[var(--border)]'
+                    }
+                    ${aiActionLoading === 'enhance' ? 'opacity-70' : ''}
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                  `}
+                >
+                  {aiActionLoading === 'enhance' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4 text-[var(--accent)]" />
+                  )}
+                  <span className="truncate">Improve description</span>
+                </button>
+
+                {/* Draft email */}
+                {onGenerateEmail && (
+                  <button
+                    onClick={() => onGenerateEmail(task)}
+                    disabled={aiActionLoading !== null}
+                    className={`
+                      flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium
+                      transition-all
+                      ${darkMode
+                        ? 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10'
+                        : 'bg-[var(--surface-2)] text-[var(--foreground)] hover:bg-[var(--surface-3)] border border-[var(--border)]'
+                      }
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                    `}
+                  >
+                    <Mail className="w-4 h-4 text-[var(--accent)]" />
+                    <span className="truncate">Draft customer email</span>
+                  </button>
+                )}
+
+                {/* Find duplicates (placeholder - would need duplicate detection logic) */}
+                <button
+                  disabled={true}
+                  className={`
+                    flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium
+                    transition-all
+                    ${darkMode
+                      ? 'bg-white/5 text-white/80 border border-white/10'
+                      : 'bg-[var(--surface-2)] text-[var(--foreground)] border border-[var(--border)]'
+                    }
+                    opacity-50 cursor-not-allowed
+                  `}
+                  title="Coming soon"
+                >
+                  <GitMerge className="w-4 h-4 text-[var(--text-muted)]" />
+                  <span className="truncate">Find duplicates</span>
+                </button>
+              </div>
+
+              {/* AI Subtasks Preview */}
+              <AnimatePresence>
+                {aiSubtasksPreview && aiSubtasksPreview.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`
+                      rounded-lg border overflow-hidden
+                      ${darkMode
+                        ? 'bg-[var(--accent)]/10 border-[var(--accent)]/30'
+                        : 'bg-[var(--accent)]/5 border-[var(--accent)]/20'
+                      }
+                    `}
+                  >
+                    <div className="px-3 py-2 border-b border-[var(--accent)]/20">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[var(--accent)]" />
+                        <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+                          AI suggests {aiSubtasksPreview.length} subtask{aiSubtasksPreview.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      {aiSubtasksPreview.map((subtask, index) => (
+                        <div
+                          key={subtask.id}
+                          className={`
+                            flex items-center gap-2 text-sm
+                            ${darkMode ? 'text-white/80' : 'text-[var(--foreground)]'}
+                          `}
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
+                          <span>{subtask.text}</span>
+                          {subtask.estimatedMinutes && (
+                            <span className={`text-xs ml-auto ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
+                              ~{subtask.estimatedMinutes}m
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-3 py-2 border-t border-[var(--accent)]/20 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setAiSubtasksPreview(null)}
+                        className={`
+                          px-3 py-1.5 rounded-lg text-sm font-medium
+                          ${darkMode
+                            ? 'text-white/60 hover:text-white hover:bg-white/10'
+                            : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                          }
+                        `}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleApplySubtasks}
+                        className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-[var(--accent)] hover:brightness-110"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* AI Enhanced Text Preview */}
+              <AnimatePresence>
+                {aiEnhancedText && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={`
+                      rounded-lg border overflow-hidden
+                      ${darkMode
+                        ? 'bg-[var(--accent)]/10 border-[var(--accent)]/30'
+                        : 'bg-[var(--accent)]/5 border-[var(--accent)]/20'
+                      }
+                    `}
+                  >
+                    <div className="px-3 py-2 border-b border-[var(--accent)]/20">
+                      <div className="flex items-center gap-2">
+                        <Wand2 className="w-4 h-4 text-[var(--accent)]" />
+                        <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+                          Improved description
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className={`text-sm ${darkMode ? 'text-white/80' : 'text-[var(--foreground)]'}`}>
+                        {aiEnhancedText}
+                      </p>
+                      <div className="mt-2 pt-2 border-t border-[var(--accent)]/10">
+                        <p className={`text-xs ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
+                          Original: {task.text}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2 border-t border-[var(--accent)]/20 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setAiEnhancedText(null)}
+                        className={`
+                          px-3 py-1.5 rounded-lg text-sm font-medium
+                          ${darkMode
+                            ? 'text-white/60 hover:text-white hover:bg-white/10'
+                            : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                          }
+                        `}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleApplyEnhancedText}
+                        className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white bg-[var(--accent)] hover:brightness-110"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </CollapsibleSection>
         </div>
       </div>
 

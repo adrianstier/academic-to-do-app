@@ -20,6 +20,7 @@ import {
   Users,
   Plus,
   Command,
+  Inbox,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, OWNER_USERNAME } from '@/types/todo';
@@ -47,6 +48,7 @@ interface NavItem {
 
 const primaryNavItems: NavItem[] = [
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { id: 'ai_inbox', label: 'AI Inbox', icon: Inbox },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'activity', label: 'Activity', icon: Activity },
   { id: 'chat', label: 'Messages', icon: MessageCircle },

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import TodoList from './TodoList';
 import { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
-import { DashboardModalSkeleton } from './LoadingSkeletons';
+import { DashboardModalSkeleton, ChatPanelSkeleton } from './LoadingSkeletons';
 import { AuthUser, Todo, QuickFilter } from '@/types/todo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { AppShell, useAppShell, ActiveView } from './layout';
+import { useTodoStore } from '@/store/todoStore';
 
 // Lazy load DashboardModal for better initial load performance
 const DashboardModal = dynamic(() => import('./DashboardModal'), {
@@ -15,12 +17,30 @@ const DashboardModal = dynamic(() => import('./DashboardModal'), {
   loading: () => <DashboardModalSkeleton />,
 });
 
+// Lazy load ChatView for the dedicated messages view
+const ChatView = dynamic(() => import('./views/ChatView'), {
+  ssr: false,
+  loading: () => <ChatPanelSkeleton />,
+});
+
+// Lazy load AIInbox for the AI-derived items review
+const AIInbox = dynamic(() => import('./views/AIInbox'), {
+  ssr: false,
+  loading: () => <ChatPanelSkeleton />,
+});
+
 interface MainAppProps {
   currentUser: AuthUser;
   onUserChange: (user: AuthUser | null) => void;
 }
 
-export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
+/**
+ * MainAppContent - Inner component that uses AppShell context
+ */
+function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
+  const { activeView, setActiveView } = useAppShell();
+  const usersWithColors = useTodoStore((state) => state.usersWithColors);
+
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialFilter, setInitialFilter] = useState<QuickFilter | null>(null);
@@ -86,16 +106,34 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
       setInitialFilter(filter);
     }
     setShowDashboard(false);
-  }, []);
+    setActiveView('tasks');
+  }, [setActiveView]);
 
   const handleAddTask = useCallback(() => {
     setShowAddTask(true);
     setShowDashboard(false);
-  }, []);
+    setActiveView('tasks');
+  }, [setActiveView]);
 
   const handleOpenDashboard = useCallback(() => {
     setShowDashboard(true);
   }, []);
+
+  // Handle task link click from chat (navigate to tasks view and scroll to task)
+  const handleTaskLinkClick = useCallback((taskId: string) => {
+    setActiveView('tasks');
+    // Small delay to allow view switch
+    setTimeout(() => {
+      const taskElement = document.getElementById(`todo-${taskId}`);
+      if (taskElement) {
+        taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        taskElement.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => {
+          taskElement.classList.remove('ring-2', 'ring-blue-500');
+        }, 2000);
+      }
+    }, 100);
+  }, [setActiveView]);
 
   if (loading) {
     return (
@@ -109,15 +147,100 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
     );
   }
 
+  // Render different views based on activeView from AppShell context
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'chat':
+        return (
+          <ChatView
+            currentUser={currentUser}
+            users={usersWithColors}
+            onBack={() => setActiveView('tasks')}
+            onTaskLinkClick={handleTaskLinkClick}
+          />
+        );
+
+      case 'dashboard':
+        // Dashboard is still a modal overlay, not a separate view
+        setShowDashboard(true);
+        setActiveView('tasks');
+        return null;
+
+      case 'activity':
+        // Activity feed is handled by TodoList internally
+        // Just switch to tasks view for now
+        return (
+          <TodoList
+            currentUser={currentUser}
+            onUserChange={onUserChange}
+            initialFilter={initialFilter}
+            autoFocusAddTask={showAddTask}
+            onOpenDashboard={handleOpenDashboard}
+          />
+        );
+
+      case 'goals':
+        // Strategic goals is handled by TodoList internally
+        return (
+          <TodoList
+            currentUser={currentUser}
+            onUserChange={onUserChange}
+            initialFilter={initialFilter}
+            autoFocusAddTask={showAddTask}
+            onOpenDashboard={handleOpenDashboard}
+          />
+        );
+
+      case 'archive':
+        // Archive is handled by TodoList internally
+        return (
+          <TodoList
+            currentUser={currentUser}
+            onUserChange={onUserChange}
+            initialFilter={initialFilter}
+            autoFocusAddTask={showAddTask}
+            onOpenDashboard={handleOpenDashboard}
+          />
+        );
+
+      case 'ai_inbox':
+        // AI Inbox view for reviewing AI-derived tasks
+        return (
+          <AIInbox
+            items={[]} // TODO: Connect to actual AI inbox state from store
+            users={usersWithColors.map(u => u.name)}
+            onAccept={async (item, editedTask) => {
+              // TODO: Implement accept logic - create task from AI suggestion
+              console.log('Accept AI item:', item, editedTask);
+            }}
+            onDismiss={async (itemId) => {
+              // TODO: Implement dismiss logic
+              console.log('Dismiss AI item:', itemId);
+            }}
+            onRefresh={async () => {
+              // TODO: Implement refresh logic - fetch new AI items
+              console.log('Refresh AI inbox');
+            }}
+          />
+        );
+
+      case 'tasks':
+      default:
+        return (
+          <TodoList
+            currentUser={currentUser}
+            onUserChange={onUserChange}
+            initialFilter={initialFilter}
+            autoFocusAddTask={showAddTask}
+            onOpenDashboard={handleOpenDashboard}
+          />
+        );
+    }
+  };
+
   return (
     <>
-      <TodoList
-        currentUser={currentUser}
-        onUserChange={onUserChange}
-        initialFilter={initialFilter}
-        autoFocusAddTask={showAddTask}
-        onOpenDashboard={handleOpenDashboard}
-      />
+      {renderActiveView()}
 
       <DashboardModal
         isOpen={showDashboard}
@@ -130,5 +253,16 @@ export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
         onFilterDueToday={() => handleNavigateToTasks('due_today')}
       />
     </>
+  );
+}
+
+/**
+ * MainApp - Wraps the app content in AppShell context provider
+ */
+export default function MainApp({ currentUser, onUserChange }: MainAppProps) {
+  return (
+    <AppShell currentUser={currentUser} onUserChange={onUserChange}>
+      <MainAppContent currentUser={currentUser} onUserChange={onUserChange} />
+    </AppShell>
   );
 }

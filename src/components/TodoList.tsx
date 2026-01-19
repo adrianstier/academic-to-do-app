@@ -8,6 +8,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, Attachment, OWNER_USERNAME } from '@/types/todo';
 import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
+import InlineAddTask from './InlineAddTask';
 import KanbanBoard from './KanbanBoard';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
@@ -38,11 +39,12 @@ import AppMenu from './AppMenu';
 import StatusLine from './StatusLine';
 import BottomTabs from './BottomTabs';
 import FocusModeToggle, { ExitFocusModeButton } from './FocusModeToggle';
+import TaskSections, { useShouldUseSections } from './TaskSections';
 import { v4 as uuidv4 } from 'uuid';
 import {
   LayoutList, LayoutGrid, Wifi, WifiOff, Search,
   ArrowUpDown, User, AlertTriangle, CheckSquare,
-  Trash2, X, ChevronDown, GitMerge,
+  Trash2, X, ChevronDown, GitMerge, Layers,
   Paperclip, Filter, RotateCcw, Check, Home
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
@@ -70,6 +72,18 @@ import {
 
 // Lazy load secondary features for better initial load performance
 // These components are not needed immediately on page load
+// NOTE: FloatingChat removed - Chat is now accessible via navigation sidebar
+// const FloatingChat = dynamic(() => import('./FloatingChat'), {
+//   ssr: false,
+//   loading: () => null,
+// });
+
+// NOTE: UtilitySidebar removed - navigation now in AppShell sidebar
+// const UtilitySidebar = dynamic(() => import('./UtilitySidebar'), {
+//   ssr: false,
+//   loading: () => <div className="w-[280px] bg-[var(--surface)] animate-pulse" />,
+// });
+
 const ChatPanel = dynamic(() => import('./ChatPanel'), {
   ssr: false,
   loading: () => <ChatPanelSkeleton />,
@@ -119,8 +133,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const darkMode = theme === 'dark';
   const canViewArchive = currentUser.role === 'admin' || ['derrick', 'adrian'].includes(userName.toLowerCase());
 
-  // Detect wide desktop for persistent sidebar layout (xl+ screens = 1280px+)
-  const isWideDesktop = useIsDesktopWide(1280);
+  // NOTE: isWideDesktop removed - no longer using UtilitySidebar or conditional chat layouts
+  // const isWideDesktop = useIsDesktopWide(1280);
 
   // Core data from Zustand store (managed by useTodoData hook)
   const {
@@ -145,6 +159,12 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const { refresh: refreshTodos } = useTodoData(currentUser);
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // Sectioned view toggle (Overdue/Today/Upcoming/No Date grouping)
+  const [useSectionedView, setUseSectionedView] = useState(true);
+
+  // Simplified add task input toggle (use InlineAddTask vs AddTodo)
+  const [useSimplifiedInput, setUseSimplifiedInput] = useState(true);
 
   // Filter state from useFilters hook (manages search, sort, quick filters, and advanced filters)
   const {
@@ -180,6 +200,9 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     hasAttachmentsFilter,
     dateRangeFilter,
   } = filters;
+
+  // Determine if sections should be used (disabled for custom sort/drag-drop)
+  const shouldUseSections = useShouldUseSections(sortOption);
 
   // Get showAdvancedFilters and focusMode from UI state (not part of filters in store)
   const { showAdvancedFilters, focusMode } = useTodoStore((state) => state.ui);
@@ -1460,7 +1483,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
             ? 'bg-[var(--gradient-hero)] border-white/5'
             : 'bg-white border-[var(--border)]'
         }`}>
-        <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
+        <div className="mx-auto px-4 sm:px-6 py-4 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
           <div className="flex items-center justify-between gap-3">
             {/* Logo & Context Info */}
             <div className="flex items-center gap-3 min-w-0">
@@ -1531,6 +1554,26 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 </div>
               )}
 
+              {/* Sections Toggle - Only show when in list view and not using custom sort */}
+              {viewMode === 'list' && shouldUseSections && !focusMode && (
+                <button
+                  onClick={() => setUseSectionedView(!useSectionedView)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                    useSectionedView
+                      ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30'
+                      : darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10 border-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] border-[var(--border)]'
+                  }`}
+                  aria-pressed={useSectionedView}
+                  aria-label="Toggle date sections"
+                  title="Group tasks by due date"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Sections</span>
+                </button>
+              )}
+
               {/* Focus Mode Toggle */}
               <FocusModeToggle />
 
@@ -1569,9 +1612,9 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         </div>
       </header>
 
-      {/* Connection status - floating indicator (positioned above chat button) - hidden in focus mode */}
+      {/* Connection status - floating indicator (bottom right) - hidden in focus mode */}
       {!focusMode && (
-        <div className="fixed bottom-24 right-6 z-30">
+        <div className="fixed bottom-6 right-6 z-30">
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium shadow-[var(--shadow-md)] backdrop-blur-sm ${
             connected
               ? 'bg-[var(--success-light)] text-[var(--success)] border border-[var(--success)]/20'
@@ -1586,11 +1629,16 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       {/* Exit Focus Mode button - shown only in focus mode */}
       <ExitFocusModeButton />
 
-      {/* Content Layout - Flex container for wide desktop with docked sidebar */}
-      <div className={`flex ${isWideDesktop && !focusMode ? 'xl:pr-[380px] 2xl:pr-[420px]' : ''}`}>
+      {/* Content Layout - Single column, calm layout */}
+      <div className={`
+        flex transition-all duration-300 ease-out min-h-[calc(100vh-72px)]
+        ${focusMode ? '' : ''}
+      `}>
+        {/* NOTE: UtilitySidebar removed - navigation now via AppShell sidebar
+            The left sidebar in NavigationSidebar handles quick filters and navigation */}
 
       {/* Main */}
-      <main id="main-content" className={`flex-1 min-w-0 mx-auto px-4 sm:px-6 py-6 ${viewMode === 'kanban' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
+      <main id="main-content" className="flex-1 min-w-0 mx-auto px-4 sm:px-6 py-6 w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl">
         {/* Context label when filtered - hidden in focus mode */}
         {!focusMode && (quickFilter !== 'all' || highPriorityOnly) && (
           <div className="text-xs text-[var(--text-muted)] mb-2 flex items-center gap-2">
@@ -1621,7 +1669,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         {/* Add todo with template picker - template picker hidden in focus mode */}
         <div className="mb-6 space-y-3">
           {!focusMode && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-2">
               <TemplatePicker
                 currentUserName={userName}
                 users={users}
@@ -1630,9 +1678,38 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                   addTodo(text, priority, undefined, assignedTo, subtasks);
                 }}
               />
+              {/* Toggle between simplified and advanced input */}
+              <button
+                type="button"
+                onClick={() => setUseSimplifiedInput(!useSimplifiedInput)}
+                className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors ${
+                  useSimplifiedInput
+                    ? 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                    : 'text-[var(--accent)] bg-[var(--accent)]/10'
+                }`}
+                title={useSimplifiedInput ? 'Switch to advanced input with more options' : 'Switch to simplified input'}
+              >
+                {useSimplifiedInput ? 'Advanced' : 'Simple'}
+              </button>
             </div>
           )}
-          <AddTodo onAdd={addTodo} users={users} darkMode={darkMode} currentUserId={currentUser.id} autoFocus={autoFocusAddTask} />
+          {useSimplifiedInput ? (
+            <InlineAddTask
+              onAdd={addTodo}
+              users={users}
+              darkMode={darkMode}
+              currentUserId={currentUser.id}
+              autoFocus={autoFocusAddTask}
+            />
+          ) : (
+            <AddTodo
+              onAdd={addTodo}
+              users={users}
+              darkMode={darkMode}
+              currentUserId={currentUser.id}
+              autoFocus={autoFocusAddTask}
+            />
+          )}
         </div>
 
         {/* Unified Filter Bar - Premium - hidden in focus mode */}
@@ -1902,126 +1979,250 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         </div>
         )}
 
-        {/* List or Kanban */}
-        {viewMode === 'list' ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={filteredAndSortedTodos.map((t) => t.id)}
-              strategy={verticalListSortingStrategy}
+        {/* List or Kanban - with smooth view transition */}
+        <AnimatePresence mode="wait" initial={false}>
+          {viewMode === 'list' ? (
+            <motion.div
+              key="list-view"
+              initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion() ? undefined : { opacity: 0, y: -10 }}
+              transition={{ duration: DURATION.fast }}
             >
-              <div className="space-y-2" role="list" aria-label="Task list">
-                <AnimatePresence mode="popLayout" initial={false}>
-                  {filteredAndSortedTodos.length === 0 ? (
-                    <motion.div
-                      key="empty-state"
-                      initial={prefersReducedMotion() ? false : { opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: DURATION.fast }}
-                    >
-                      <EmptyState
-                        variant={
-                          searchQuery
-                            ? 'no-results'
-                            : quickFilter === 'due_today'
-                              ? 'no-due-today'
-                              : quickFilter === 'overdue'
-                                ? 'no-overdue'
-                                : stats.total === 0
-                                  ? 'no-tasks'
-                                  : stats.completed === stats.total && stats.total > 0
-                                    ? 'all-done'
-                                    : 'no-tasks'
-                        }
-                        darkMode={darkMode}
-                        searchQuery={searchQuery}
-                        onAddTask={() => {
-                          const input = document.querySelector('textarea[placeholder*="task"]') as HTMLTextAreaElement;
-                          if (input) input.focus();
-                        }}
-                        onClearSearch={() => setSearchQuery('')}
-                        userName={userName}
-                      />
-                    </motion.div>
-                  ) : (
-                    filteredAndSortedTodos.map((todo, index) => (
-                      <motion.div
-                        key={todo.id}
-                        layout={!prefersReducedMotion()}
-                        variants={prefersReducedMotion() ? undefined : listItemVariants}
-                        initial={prefersReducedMotion() ? false : 'hidden'}
-                        animate="visible"
-                        exit="exit"
-                        transition={{
-                          layout: { type: 'spring', stiffness: 350, damping: 25 },
-                          delay: Math.min(index * 0.02, 0.1),
-                        }}
-                      >
-                        <SortableTodoItem
-                          todo={todo}
-                          users={users}
-                          currentUserName={userName}
-                          selected={selectedTodos.has(todo.id)}
-                          onSelect={showBulkActions ? handleSelectTodo : undefined}
-                          onToggle={toggleTodo}
-                          onDelete={confirmDeleteTodo}
-                          onAssign={assignTodo}
-                          onSetDueDate={setDueDate}
-                          onSetReminder={setReminder}
-                          onSetPriority={setPriority}
-                          onStatusChange={updateStatus}
-                          onUpdateText={updateText}
-                          onDuplicate={duplicateTodo}
-                          onUpdateNotes={updateNotes}
-                          onSetRecurrence={setRecurrence}
-                          onUpdateSubtasks={updateSubtasks}
-                          onUpdateAttachments={updateAttachments}
-                          onSaveAsTemplate={(t) => setTemplateTodo(t)}
-                          onEmailCustomer={(todo) => {
-                            setEmailTargetTodos([todo]);
-                            setShowEmailModal(true);
-                          }}
-                          isDragEnabled={!showBulkActions && sortOption === 'custom'}
-                        />
-                      </motion.div>
-                    ))
-                  )}
-                </AnimatePresence>
-              </div>
-            </SortableContext>
-          </DndContext>
-        ) : (
-          <KanbanBoard
-            todos={filteredAndSortedTodos}
-            users={users}
-            darkMode={darkMode}
-            onStatusChange={updateStatus}
-            onDelete={confirmDeleteTodo}
-            onAssign={assignTodo}
-            onSetDueDate={setDueDate}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={filteredAndSortedTodos.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {/* Render sectioned view or flat list based on toggle */}
+                  {useSectionedView && shouldUseSections ? (
+                    <TaskSections
+                      todos={filteredAndSortedTodos}
+                      users={users}
+                      currentUserName={userName}
+                      selectedTodos={selectedTodos}
+                      showBulkActions={showBulkActions}
+                      onSelectTodo={showBulkActions ? handleSelectTodo : undefined}
+                      onToggle={toggleTodo}
+                      onDelete={confirmDeleteTodo}
+                      onAssign={assignTodo}
+                      onSetDueDate={setDueDate}
                       onSetReminder={setReminder}
-            onSetPriority={setPriority}
-            onUpdateNotes={updateNotes}
-            onUpdateText={updateText}
-            onUpdateSubtasks={updateSubtasks}
-            onToggle={toggleTodo}
-            onDuplicate={duplicateTodo}
-            onSetRecurrence={setRecurrence}
-            onUpdateAttachments={updateAttachments}
-            onSaveAsTemplate={(t) => setTemplateTodo(t)}
-            onEmailCustomer={(todo) => {
-              setEmailTargetTodos([todo]);
-              setShowEmailModal(true);
-            }}
-            showBulkActions={showBulkActions}
-            selectedTodos={selectedTodos}
-            onSelectTodo={handleSelectTodo}
-          />
-        )}
+                      onSetPriority={setPriority}
+                      onStatusChange={updateStatus}
+                      onUpdateText={updateText}
+                      onDuplicate={duplicateTodo}
+                      onUpdateNotes={updateNotes}
+                      onSetRecurrence={setRecurrence}
+                      onUpdateSubtasks={updateSubtasks}
+                      onUpdateAttachments={updateAttachments}
+                      onSaveAsTemplate={(t) => setTemplateTodo(t)}
+                      onEmailCustomer={(todo) => {
+                        setEmailTargetTodos([todo]);
+                        setShowEmailModal(true);
+                      }}
+                      isDragEnabled={!showBulkActions && sortOption === 'custom'}
+                      renderTodoItem={(todo, index) => (
+                        <motion.div
+                          key={todo.id}
+                          layout={!prefersReducedMotion()}
+                          variants={prefersReducedMotion() ? undefined : listItemVariants}
+                          initial={prefersReducedMotion() ? false : 'hidden'}
+                          animate="visible"
+                          exit="exit"
+                          transition={{
+                            layout: { type: 'spring', stiffness: 350, damping: 25 },
+                            delay: Math.min(index * 0.02, 0.1),
+                          }}
+                        >
+                          <SortableTodoItem
+                            todo={todo}
+                            users={users}
+                            currentUserName={userName}
+                            selected={selectedTodos.has(todo.id)}
+                            onSelect={showBulkActions ? handleSelectTodo : undefined}
+                            onToggle={toggleTodo}
+                            onDelete={confirmDeleteTodo}
+                            onAssign={assignTodo}
+                            onSetDueDate={setDueDate}
+                            onSetReminder={setReminder}
+                            onSetPriority={setPriority}
+                            onStatusChange={updateStatus}
+                            onUpdateText={updateText}
+                            onDuplicate={duplicateTodo}
+                            onUpdateNotes={updateNotes}
+                            onSetRecurrence={setRecurrence}
+                            onUpdateSubtasks={updateSubtasks}
+                            onUpdateAttachments={updateAttachments}
+                            onSaveAsTemplate={(t) => setTemplateTodo(t)}
+                            onEmailCustomer={(todo) => {
+                              setEmailTargetTodos([todo]);
+                              setShowEmailModal(true);
+                            }}
+                            isDragEnabled={!showBulkActions && sortOption === 'custom'}
+                          />
+                        </motion.div>
+                      )}
+                      emptyState={
+                        <motion.div
+                          key="empty-state"
+                          initial={prefersReducedMotion() ? false : { opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: DURATION.fast }}
+                        >
+                          <EmptyState
+                            variant={
+                              searchQuery
+                                ? 'no-results'
+                                : quickFilter === 'due_today'
+                                  ? 'no-due-today'
+                                  : quickFilter === 'overdue'
+                                    ? 'no-overdue'
+                                    : stats.total === 0
+                                      ? 'no-tasks'
+                                      : stats.completed === stats.total && stats.total > 0
+                                        ? 'all-done'
+                                        : 'no-tasks'
+                            }
+                            darkMode={darkMode}
+                            searchQuery={searchQuery}
+                            onAddTask={() => {
+                              const input = document.querySelector('textarea[placeholder*="task"]') as HTMLTextAreaElement;
+                              if (input) input.focus();
+                            }}
+                            onClearSearch={() => setSearchQuery('')}
+                            userName={userName}
+                          />
+                        </motion.div>
+                      }
+                    />
+                  ) : (
+                    /* Flat list view (original behavior) */
+                    <div className="space-y-2" role="list" aria-label="Task list">
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        {filteredAndSortedTodos.length === 0 ? (
+                          <motion.div
+                            key="empty-state"
+                            initial={prefersReducedMotion() ? false : { opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: DURATION.fast }}
+                          >
+                            <EmptyState
+                              variant={
+                                searchQuery
+                                  ? 'no-results'
+                                  : quickFilter === 'due_today'
+                                    ? 'no-due-today'
+                                    : quickFilter === 'overdue'
+                                      ? 'no-overdue'
+                                      : stats.total === 0
+                                        ? 'no-tasks'
+                                        : stats.completed === stats.total && stats.total > 0
+                                          ? 'all-done'
+                                          : 'no-tasks'
+                              }
+                              darkMode={darkMode}
+                              searchQuery={searchQuery}
+                              onAddTask={() => {
+                                const input = document.querySelector('textarea[placeholder*="task"]') as HTMLTextAreaElement;
+                                if (input) input.focus();
+                              }}
+                              onClearSearch={() => setSearchQuery('')}
+                              userName={userName}
+                            />
+                          </motion.div>
+                        ) : (
+                          filteredAndSortedTodos.map((todo, index) => (
+                            <motion.div
+                              key={todo.id}
+                              layout={!prefersReducedMotion()}
+                              variants={prefersReducedMotion() ? undefined : listItemVariants}
+                              initial={prefersReducedMotion() ? false : 'hidden'}
+                              animate="visible"
+                              exit="exit"
+                              transition={{
+                                layout: { type: 'spring', stiffness: 350, damping: 25 },
+                                delay: Math.min(index * 0.02, 0.1),
+                              }}
+                            >
+                              <SortableTodoItem
+                                todo={todo}
+                                users={users}
+                                currentUserName={userName}
+                                selected={selectedTodos.has(todo.id)}
+                                onSelect={showBulkActions ? handleSelectTodo : undefined}
+                                onToggle={toggleTodo}
+                                onDelete={confirmDeleteTodo}
+                                onAssign={assignTodo}
+                                onSetDueDate={setDueDate}
+                                onSetReminder={setReminder}
+                                onSetPriority={setPriority}
+                                onStatusChange={updateStatus}
+                                onUpdateText={updateText}
+                                onDuplicate={duplicateTodo}
+                                onUpdateNotes={updateNotes}
+                                onSetRecurrence={setRecurrence}
+                                onUpdateSubtasks={updateSubtasks}
+                                onUpdateAttachments={updateAttachments}
+                                onSaveAsTemplate={(t) => setTemplateTodo(t)}
+                                onEmailCustomer={(todo) => {
+                                  setEmailTargetTodos([todo]);
+                                  setShowEmailModal(true);
+                                }}
+                                isDragEnabled={!showBulkActions && sortOption === 'custom'}
+                              />
+                            </motion.div>
+                          ))
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </SortableContext>
+              </DndContext>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="kanban-view"
+              initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion() ? undefined : { opacity: 0, y: -10 }}
+              transition={{ duration: DURATION.fast }}
+            >
+              <KanbanBoard
+                todos={filteredAndSortedTodos}
+                users={users}
+                darkMode={darkMode}
+                onStatusChange={updateStatus}
+                onDelete={confirmDeleteTodo}
+                onAssign={assignTodo}
+                onSetDueDate={setDueDate}
+                onSetReminder={setReminder}
+                onSetPriority={setPriority}
+                onUpdateNotes={updateNotes}
+                onUpdateText={updateText}
+                onUpdateSubtasks={updateSubtasks}
+                onToggle={toggleTodo}
+                onDuplicate={duplicateTodo}
+                onSetRecurrence={setRecurrence}
+                onUpdateAttachments={updateAttachments}
+                onSaveAsTemplate={(t) => setTemplateTodo(t)}
+                onEmailCustomer={(todo) => {
+                  setEmailTargetTodos([todo]);
+                  setShowEmailModal(true);
+                }}
+                showBulkActions={showBulkActions}
+                selectedTodos={selectedTodos}
+                onSelectTodo={handleSelectTodo}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Keyboard shortcuts hint - hidden in focus mode */}
         {!focusMode && (
@@ -2045,40 +2246,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         )}
       </main>
 
-      {/* Docked Chat Panel for wide desktop - persistent sidebar */}
-      {isWideDesktop && !focusMode && (
-        <aside
-          className={`
-            hidden xl:block fixed top-0 right-0 h-screen
-            w-[380px] 2xl:w-[420px]
-            border-l
-            ${darkMode
-              ? 'bg-[var(--surface)] border-white/10'
-              : 'bg-white border-[var(--border)]'
-            }
-          `}
-          aria-label="Team chat sidebar"
-        >
-          <ChatPanel
-            currentUser={currentUser}
-            users={usersWithColors}
-            todosMap={todosMap}
-            docked={true}
-            onTaskLinkClick={(taskId) => {
-              const taskElement = document.getElementById(`todo-${taskId}`);
-              if (taskElement) {
-                taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                taskElement.classList.add('ring-2', 'ring-blue-500');
-                setTimeout(() => {
-                  taskElement.classList.remove('ring-2', 'ring-blue-500');
-                }, 2000);
-              }
-            }}
-          />
-        </aside>
-      )}
-
       </div>{/* End content layout flex container */}
+
+      {/* NOTE: Chat moved to dedicated navigation view - no longer floating widget
+          Access chat via the "Messages" item in the navigation sidebar */}
 
       <CelebrationEffect
         show={showCelebration}
@@ -2589,25 +2760,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         </div>
       )}
 
-      {/* ChatPanel - floating version for smaller screens, hidden in focus mode or on wide desktop */}
-      {!focusMode && !isWideDesktop && (
-        <ChatPanel
-          currentUser={currentUser}
-          users={usersWithColors}
-          todosMap={todosMap}
-          onTaskLinkClick={(taskId) => {
-            // Navigate to task from chat link (Feature 2)
-            const taskElement = document.getElementById(`todo-${taskId}`);
-            if (taskElement) {
-              taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              taskElement.classList.add('ring-2', 'ring-blue-500');
-              setTimeout(() => {
-                taskElement.classList.remove('ring-2', 'ring-blue-500');
-              }, 2000);
-            }
-          }}
-        />
-      )}
+      {/* NOTE: ChatPanel removed from task view - access via navigation sidebar "Messages" */}
 
       {/* Bottom Tabs for Mobile Navigation - hidden in focus mode */}
       {!focusMode && (
