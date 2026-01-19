@@ -45,7 +45,9 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   const [loading, setLoading] = useState(true);
   const [initialFilter, setInitialFilter] = useState<QuickFilter | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
+  // Initialize showDashboard to false - we'll check for daily show AFTER data loads
   const [showDashboard, setShowDashboard] = useState(false);
+  const [hasCheckedDailyDashboard, setHasCheckedDailyDashboard] = useState(false);
 
   // Fetch todos
   useEffect(() => {
@@ -93,13 +95,16 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   }, []);
 
   // Check if we should show daily dashboard on first login of the day
-  // Mark as shown IMMEDIATELY to prevent re-showing on refresh/navigation
+  // Only check ONCE after initial data load - prevents flash on hard refresh
   useEffect(() => {
-    if (!loading && shouldShowDailyDashboard()) {
-      markDailyDashboardShown(); // Mark BEFORE showing to prevent duplicates
-      setShowDashboard(true);
+    if (!loading && !hasCheckedDailyDashboard) {
+      setHasCheckedDailyDashboard(true);
+      if (shouldShowDailyDashboard()) {
+        markDailyDashboardShown(); // Mark BEFORE showing to prevent duplicates
+        setShowDashboard(true);
+      }
     }
-  }, [loading]);
+  }, [loading, hasCheckedDailyDashboard]);
 
   const handleNavigateToTasks = useCallback((filter?: QuickFilter) => {
     if (filter) {
@@ -252,16 +257,19 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     <>
       {renderActiveView()}
 
-      <DashboardModal
-        isOpen={showDashboard}
-        onClose={() => setShowDashboard(false)}
-        todos={todos}
-        currentUser={currentUser}
-        onNavigateToTasks={() => handleNavigateToTasks()}
-        onAddTask={handleAddTask}
-        onFilterOverdue={() => handleNavigateToTasks('overdue')}
-        onFilterDueToday={() => handleNavigateToTasks('due_today')}
-      />
+      {/* Only render DashboardModal when it needs to be shown - prevents skeleton flash */}
+      {showDashboard && (
+        <DashboardModal
+          isOpen={showDashboard}
+          onClose={() => setShowDashboard(false)}
+          todos={todos}
+          currentUser={currentUser}
+          onNavigateToTasks={() => handleNavigateToTasks()}
+          onAddTask={handleAddTask}
+          onFilterOverdue={() => handleNavigateToTasks('overdue')}
+          onFilterDueToday={() => handleNavigateToTasks('due_today')}
+        />
+      )}
     </>
   );
 }
