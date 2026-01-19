@@ -641,7 +641,7 @@ export default function DashboardModal({
                         <p className="text-xs italic">"{aiData.motivationalQuote}"</p>
                       </div>
                     </motion.div>
-                  ) : (
+                  ) : activeTab === 'insights' ? (
                     <motion.div
                       key="insights"
                       initial={{ opacity: 0, x: 20 }}
