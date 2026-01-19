@@ -8,7 +8,6 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, Attachment, OWNER_USERNAME } from '@/types/todo';
 import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
-import InlineAddTask from './InlineAddTask';
 import KanbanBoard from './KanbanBoard';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
@@ -166,10 +165,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
   // Sectioned view toggle (Overdue/Today/Upcoming/No Date grouping)
   const [useSectionedView, setUseSectionedView] = useState(true);
-
-  // Simplified add task input toggle (use InlineAddTask vs AddTodo)
-  // Default to false to show full AI-featured AddTodo component
-  const [useSimplifiedInput, setUseSimplifiedInput] = useState(false);
 
   // Filter state from useFilters hook (manages search, sort, quick filters, and advanced filters)
   const {
@@ -1697,51 +1692,25 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
         {/* Add todo input */}
         <div className="mb-6 space-y-3">
-          {/* Input mode toggle and template picker - hidden in focus mode */}
+          {/* Template picker - hidden in focus mode */}
           {!focusMode && (
-            <div className="flex items-center justify-between">
-              {/* Subtle template picker - icon only */}
-              <TemplatePicker
-                currentUserName={userName}
-                users={users}
-                darkMode={darkMode}
-                onSelectTemplate={(text, priority, assignedTo, subtasks) => {
-                  addTodo(text, priority, undefined, assignedTo, subtasks);
-                }}
-                compact={true}
-              />
-              {/* Simple/Advanced toggle */}
-              <button
-                type="button"
-                onClick={() => setUseSimplifiedInput(!useSimplifiedInput)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors ${
-                  useSimplifiedInput
-                    ? 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-                    : 'text-[var(--accent)] bg-[var(--accent)]/10'
-                }`}
-                title={useSimplifiedInput ? 'Switch to advanced input with more options' : 'Switch to simplified input'}
-              >
-                {useSimplifiedInput ? 'Advanced' : 'Simple'}
-              </button>
-            </div>
-          )}
-          {useSimplifiedInput ? (
-            <InlineAddTask
-              onAdd={addTodo}
+            <TemplatePicker
+              currentUserName={userName}
               users={users}
               darkMode={darkMode}
-              currentUserId={currentUser.id}
-              autoFocus={autoFocusAddTask}
-            />
-          ) : (
-            <AddTodo
-              onAdd={addTodo}
-              users={users}
-              darkMode={darkMode}
-              currentUserId={currentUser.id}
-              autoFocus={autoFocusAddTask}
+              onSelectTemplate={(text, priority, assignedTo, subtasks) => {
+                addTodo(text, priority, undefined, assignedTo, subtasks);
+              }}
+              compact={true}
             />
           )}
+          <AddTodo
+            onAdd={addTodo}
+            users={users}
+            darkMode={darkMode}
+            currentUserId={currentUser.id}
+            autoFocus={autoFocusAddTask}
+          />
         </div>
 
         {/* Compact Filter Bar - hidden in focus mode */}
