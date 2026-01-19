@@ -150,24 +150,26 @@ export function QuickTaskButtons({
 
   return (
     <div className="mb-4">
-      {/* Collapsible Header */}
+      {/* Compact Collapsible Header */}
       <button
         type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center justify-between px-1 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors group"
+        className="w-full flex items-center justify-between px-1 py-1.5 text-xs font-medium text-[var(--text-light)] hover:text-[var(--text-muted)] transition-colors group min-h-[36px] touch-manipulation"
         aria-expanded={!isCollapsed}
         aria-controls="quick-add-templates"
       >
-        <span className="flex items-center gap-2">
-          <span>Quick Add</span>
-          <span className="text-xs text-[var(--text-light)]">
-            ({allTemplates.length} templates)
-          </span>
+        <span className="flex items-center gap-1.5">
+          <span className="uppercase tracking-wide">Quick Add</span>
+          {isCollapsed && (
+            <span className="text-[var(--text-light)] opacity-60">
+              ({allTemplates.length})
+            </span>
+          )}
         </span>
         {isCollapsed ? (
-          <ChevronDown className="w-4 h-4 text-[var(--text-light)] group-hover:text-[var(--text-muted)] transition-colors" />
+          <ChevronDown className="w-3.5 h-3.5 text-[var(--text-light)] group-hover:text-[var(--text-muted)] transition-colors" />
         ) : (
-          <ChevronUp className="w-4 h-4 text-[var(--text-light)] group-hover:text-[var(--text-muted)] transition-colors" />
+          <ChevronUp className="w-3.5 h-3.5 text-[var(--text-light)] group-hover:text-[var(--text-muted)] transition-colors" />
         )}
       </button>
 
@@ -228,7 +230,7 @@ export function QuickTaskButtons({
             </AnimatePresence>
 
             {/* Template Grid - 2 columns on mobile, 3 on desktop */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-2">
               {allTemplates.map((template, index) => {
                 const Icon = CATEGORY_ICONS[template.category] || FileText;
                 const colors = CATEGORY_COLORS[template.category] || CATEGORY_COLORS.other;
@@ -240,17 +242,28 @@ export function QuickTaskButtons({
                   <button
                     key={`${template.category}-${index}`}
                     onClick={() => handleTemplateSelect(template)}
-                    className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-all text-left min-h-[44px]"
+                    className="group relative flex items-center gap-2.5 px-3 py-3 sm:py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-hover)] active:scale-[0.98] transition-all text-left min-h-[52px] sm:min-h-[44px] touch-manipulation"
                     title={`${label} - ${rate}% completion rate`}
                     aria-label={`Create ${label} task`}
                   >
+                    {/* Completion Indicator - top left for natural scan pattern */}
+                    {indicator && (
+                      <span
+                        className={`
+                          absolute top-2 left-2 w-1.5 h-1.5 rounded-full
+                          ${indicator === 'high' ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'}
+                        `}
+                        aria-label={indicator === 'high' ? 'High completion rate' : 'Low completion rate'}
+                      />
+                    )}
+
                     {/* Icon */}
                     <span
-                      className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105"
+                      className="flex-shrink-0 w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105"
                       style={{ backgroundColor: colors.bg }}
                     >
                       <Icon
-                        className="w-4 h-4"
+                        className="w-4.5 h-4.5 sm:w-4 sm:h-4"
                         style={{ color: colors.icon }}
                       />
                     </span>
@@ -261,32 +274,9 @@ export function QuickTaskButtons({
                         {label}
                       </span>
                     </span>
-
-                    {/* Completion Indicator (subtle dot) */}
-                    {indicator && (
-                      <span
-                        className={`
-                          absolute top-1.5 right-1.5 w-2 h-2 rounded-full
-                          ${indicator === 'high' ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'}
-                        `}
-                        title={indicator === 'high' ? 'High completion rate' : 'Low completion rate'}
-                      />
-                    )}
                   </button>
                 );
               })}
-            </div>
-
-            {/* Subtle legend */}
-            <div className="flex items-center justify-end gap-4 mt-2 px-1">
-              <span className="flex items-center gap-1.5 text-xs text-[var(--text-light)]">
-                <span className="w-2 h-2 rounded-full bg-[var(--success)]" />
-                High completion
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-[var(--text-light)]">
-                <span className="w-2 h-2 rounded-full bg-[var(--warning)]" />
-                Needs focus
-              </span>
             </div>
           </motion.div>
         )}
