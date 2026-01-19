@@ -185,6 +185,52 @@ export function WeeklyProgressChartSkeleton({ darkMode = true }: SkeletonProps) 
 }
 
 /**
+ * Loading skeleton for AIInbox
+ * Displays a full-page inbox placeholder
+ */
+export function AIInboxSkeleton({ darkMode = true }: SkeletonProps) {
+  const bgClass = darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]';
+  const cardClass = darkMode ? 'bg-[var(--surface)]' : 'bg-[var(--surface)]';
+  const pulseClass = darkMode ? 'bg-[var(--surface-2)]' : 'bg-[var(--surface-2)]';
+  const borderClass = darkMode ? 'border-white/10' : 'border-[var(--border)]';
+
+  return (
+    <div className={`flex flex-col h-full ${bgClass}`}>
+      {/* Header skeleton */}
+      <div className={`flex items-center justify-between px-6 py-4 border-b ${borderClass}`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl ${pulseClass} animate-pulse`} />
+          <div>
+            <div className={`h-5 w-24 ${pulseClass} rounded animate-pulse mb-1`} />
+            <div className={`h-3 w-32 ${pulseClass} rounded animate-pulse`} />
+          </div>
+        </div>
+        <div className={`w-9 h-9 ${pulseClass} rounded-lg animate-pulse`} />
+      </div>
+
+      {/* Content skeleton */}
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {/* Category card skeletons */}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-2">
+            {/* Category header */}
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-xl ${cardClass}`}>
+              <div className={`w-8 h-8 rounded-lg ${pulseClass} animate-pulse`} />
+              <div className="flex-1">
+                <div className={`h-4 w-32 ${pulseClass} rounded animate-pulse mb-1`} />
+                <div className={`h-3 w-48 ${pulseClass} rounded animate-pulse`} />
+              </div>
+              <div className={`h-6 w-8 ${pulseClass} rounded-full animate-pulse`} />
+              <div className={`w-5 h-5 ${pulseClass} rounded animate-pulse`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Loading skeleton for DashboardModal
  * Displays a modal placeholder with stats and task previews
  */

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import TodoList from './TodoList';
 import { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
-import { DashboardModalSkeleton, ChatPanelSkeleton } from './LoadingSkeletons';
+import { DashboardModalSkeleton, ChatPanelSkeleton, AIInboxSkeleton } from './LoadingSkeletons';
 import { AuthUser, Todo, QuickFilter } from '@/types/todo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
@@ -26,7 +26,7 @@ const ChatView = dynamic(() => import('./views/ChatView'), {
 // Lazy load AIInbox for the AI-derived items review
 const AIInbox = dynamic(() => import('./views/AIInbox'), {
   ssr: false,
-  loading: () => <ChatPanelSkeleton />,
+  loading: () => <AIInboxSkeleton />,
 });
 
 interface MainAppProps {
