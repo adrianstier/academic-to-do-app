@@ -69,14 +69,14 @@ const CATEGORY_COLORS: Record<TaskCategory, { icon: string; bg: string }> = {
  */
 const CATEGORY_LABELS: Record<TaskCategory, string> = {
   policy_review: 'Policy Review',
-  follow_up: 'Follow Up Call',
+  follow_up: 'Follow Up',
   vehicle_add: 'Add Vehicle',
-  payment: 'Payment Issue',
+  payment: 'Payment',
   endorsement: 'Endorsement',
-  documentation: 'Send Documents',
-  claim: 'Process Claim',
-  quote: 'Quote Request',
-  cancellation: 'Cancellation',
+  documentation: 'Documents',
+  claim: 'Claim',
+  quote: 'Quote',
+  cancellation: 'Cancel',
   new_client: 'New Client',
   other: 'Other',
 };
@@ -153,7 +153,7 @@ export function QuickTaskButtons({
 
   // Render the template grid (shared between inline and normal mode)
   const renderTemplateGrid = () => (
-    <div className={`grid grid-cols-2 sm:grid-cols-3 ${inline ? 'gap-2' : 'gap-2.5 sm:gap-2'}`}>
+    <div className={`flex flex-wrap ${inline ? 'gap-2' : 'gap-2.5'}`}>
       {allTemplates.map((template, index) => {
         const Icon = CATEGORY_ICONS[template.category] || FileText;
         const colors = CATEGORY_COLORS[template.category] || CATEGORY_COLORS.other;
@@ -166,44 +166,46 @@ export function QuickTaskButtons({
             key={`${template.category}-${index}`}
             type="button"
             onClick={() => handleTemplateSelect(template)}
-            className={`group relative flex items-center gap-2 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] hover:border-[var(--border-hover)] active:scale-[0.98] transition-all text-left touch-manipulation ${
-              inline ? 'py-2 min-h-[40px]' : 'py-3 sm:py-2.5 min-h-[52px] sm:min-h-[44px]'
+            className={`group relative inline-flex items-center gap-2 rounded-full border bg-[var(--surface)] hover:bg-[var(--surface-2)] active:scale-[0.97] transition-all text-left touch-manipulation shadow-sm hover:shadow-md ${
+              inline
+                ? 'px-3 py-1.5 border-[var(--border)]'
+                : 'px-4 py-2 border-[var(--border)] hover:border-[var(--border-hover)]'
             }`}
+            style={{
+              borderColor: indicator === 'high' ? colors.icon + '40' : undefined,
+            }}
             title={`${label} - ${rate}% completion rate`}
             aria-label={`Create ${label} task`}
           >
-            {/* Completion Indicator - top left for natural scan pattern */}
-            {indicator && (
-              <span
-                className={`
-                  absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full
-                  ${indicator === 'high' ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'}
-                `}
-                aria-label={indicator === 'high' ? 'High completion rate' : 'Low completion rate'}
-              />
-            )}
-
-            {/* Icon */}
+            {/* Icon with colored background */}
             <span
-              className={`flex-shrink-0 rounded-md flex items-center justify-center transition-transform group-hover:scale-105 ${
-                inline ? 'w-7 h-7' : 'w-9 h-9 sm:w-8 sm:h-8 rounded-lg'
+              className={`flex-shrink-0 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
+                inline ? 'w-5 h-5' : 'w-6 h-6'
               }`}
               style={{ backgroundColor: colors.bg }}
             >
               <Icon
-                className={inline ? 'w-3.5 h-3.5' : 'w-4.5 h-4.5 sm:w-4 sm:h-4'}
+                className={inline ? 'w-3 h-3' : 'w-3.5 h-3.5'}
                 style={{ color: colors.icon }}
               />
             </span>
 
             {/* Label */}
-            <span className="flex-1 min-w-0">
-              <span className={`block font-medium text-[var(--foreground)] truncate ${
-                inline ? 'text-xs' : 'text-sm'
-              }`}>
-                {label}
-              </span>
+            <span className={`font-medium text-[var(--foreground)] whitespace-nowrap ${
+              inline ? 'text-xs' : 'text-sm'
+            }`}>
+              {label}
             </span>
+
+            {/* Completion Indicator dot - subtle, next to label */}
+            {indicator && (
+              <span
+                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                  indicator === 'high' ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'
+                }`}
+                aria-label={indicator === 'high' ? 'High completion rate' : 'Low completion rate'}
+              />
+            )}
           </button>
         );
       })}

@@ -541,7 +541,7 @@ export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
   // NEW: Endorsement/Policy Change (18% of all tasks)
   {
     text: 'Policy endorsement - [customer]',
-    category: 'documentation',
+    category: 'endorsement',
     defaultPriority: 'medium',
     suggestedSubtasks: [
       'Review requested change details',

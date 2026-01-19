@@ -622,63 +622,79 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
         {/* Options row - visible when focused or has content */}
         {(showOptions || text) && (
-          <div className="px-4 pb-4 pt-3 border-t border-[var(--border-subtle)] flex flex-wrap items-center gap-3">
-            {/* Priority */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-colors">
-              <Flag className="w-4 h-4 flex-shrink-0" style={{ color: priorityConfig.color }} />
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as TodoPriority)}
-                aria-label="Priority"
-                className="bg-transparent text-sm font-medium cursor-pointer focus:outline-none"
-                style={{ color: priorityConfig.color }}
+          <div className="px-4 pb-4 pt-3 border-t border-[var(--border-subtle)]">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Priority - pill style */}
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all cursor-pointer hover:shadow-sm"
+                style={{
+                  borderColor: priorityConfig.color + '40',
+                  backgroundColor: priorityConfig.color + '10'
+                }}
               >
-                <option value="low" className="text-[var(--foreground)] bg-[var(--surface)]">Low</option>
-                <option value="medium" className="text-[var(--foreground)] bg-[var(--surface)]">Medium</option>
-                <option value="high" className="text-[var(--foreground)] bg-[var(--surface)]">High</option>
-                <option value="urgent" className="text-[var(--foreground)] bg-[var(--surface)]">Urgent</option>
-              </select>
-            </div>
+                <Flag className="w-3.5 h-3.5 flex-shrink-0" style={{ color: priorityConfig.color }} />
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as TodoPriority)}
+                  aria-label="Priority"
+                  className="bg-transparent text-xs font-semibold cursor-pointer focus:outline-none appearance-none pr-1"
+                  style={{ color: priorityConfig.color }}
+                >
+                  <option value="low" className="text-[var(--foreground)] bg-[var(--surface)]">Low</option>
+                  <option value="medium" className="text-[var(--foreground)] bg-[var(--surface)]">Medium</option>
+                  <option value="high" className="text-[var(--foreground)] bg-[var(--surface)]">High</option>
+                  <option value="urgent" className="text-[var(--foreground)] bg-[var(--surface)]">Urgent</option>
+                </select>
+              </div>
 
-            {/* Due date */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-colors">
-              <Calendar className="w-4 h-4 flex-shrink-0 text-[var(--text-muted)]" />
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                aria-label="Due date"
-                className={`bg-transparent text-sm cursor-pointer focus:outline-none ${
-                  dueDate ? 'text-[var(--foreground)]' : 'text-[var(--text-muted)]'
-                }`}
+              {/* Due date - pill style */}
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all cursor-pointer hover:shadow-sm ${
+                dueDate
+                  ? 'border-[var(--accent)]/30 bg-[var(--accent-light)]'
+                  : 'border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)]'
+              }`}>
+                <Calendar className={`w-3.5 h-3.5 flex-shrink-0 ${dueDate ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}`} />
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  aria-label="Due date"
+                  className={`bg-transparent text-xs font-medium cursor-pointer focus:outline-none w-[90px] ${
+                    dueDate ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+                  }`}
+                />
+              </div>
+
+              {/* Assignee - pill style */}
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all cursor-pointer hover:shadow-sm ${
+                assignedTo
+                  ? 'border-[var(--success)]/30 bg-[var(--success)]/10'
+                  : 'border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)]'
+              }`}>
+                <User className={`w-3.5 h-3.5 flex-shrink-0 ${assignedTo ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'}`} />
+                <select
+                  value={assignedTo}
+                  onChange={(e) => setAssignedTo(e.target.value)}
+                  aria-label="Assign to"
+                  className={`bg-transparent text-xs font-medium cursor-pointer focus:outline-none appearance-none pr-1 ${
+                    assignedTo ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'
+                  }`}
+                >
+                  <option value="" className="text-[var(--foreground)] bg-[var(--surface)]">Unassigned</option>
+                  {users.map((user) => (
+                    <option key={user} value={user} className="text-[var(--foreground)] bg-[var(--surface)]">{user}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Reminder - pill style */}
+              <ReminderPicker
+                value={reminderAt || undefined}
+                dueDate={dueDate || undefined}
+                onChange={(time) => setReminderAt(time)}
+                compact
               />
             </div>
-
-            {/* Assignee */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)] transition-colors">
-              <User className="w-4 h-4 flex-shrink-0 text-[var(--text-muted)]" />
-              <select
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                aria-label="Assign to"
-                className={`bg-transparent text-sm cursor-pointer focus:outline-none ${
-                  assignedTo ? 'text-[var(--foreground)]' : 'text-[var(--text-muted)]'
-                }`}
-              >
-                <option value="" className="text-[var(--foreground)] bg-[var(--surface)]">Unassigned</option>
-                {users.map((user) => (
-                  <option key={user} value={user} className="text-[var(--foreground)] bg-[var(--surface)]">{user}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Reminder */}
-            <ReminderPicker
-              value={reminderAt || undefined}
-              dueDate={dueDate || undefined}
-              onChange={(time) => setReminderAt(time)}
-              compact
-            />
           </div>
         )}
 

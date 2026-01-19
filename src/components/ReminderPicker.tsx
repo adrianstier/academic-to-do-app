@@ -149,27 +149,26 @@ export default function ReminderPicker({
   }, [parsedDueDate]);
 
   if (compact) {
-    // Compact mode: just a button that opens a dropdown
+    // Compact mode: pill button that matches other options
     return (
       <div className={`relative ${className}`}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-lg)] border transition-colors ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all hover:shadow-sm ${
             parsedValue
-              ? 'border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]'
-              : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)] hover:border-[var(--border-hover)]'
+              ? 'border-[var(--warning)]/30 bg-[var(--warning)]/10'
+              : 'border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)]'
           }`}
         >
-          <Bell className="w-4 h-4 flex-shrink-0" />
+          <Bell className={`w-3.5 h-3.5 flex-shrink-0 ${parsedValue ? 'text-[var(--warning)]' : 'text-[var(--text-muted)]'}`} />
           {parsedValue ? (
-            <span className="text-sm truncate max-w-[120px]">
+            <span className="text-xs font-medium truncate max-w-[100px] text-[var(--warning)]">
               {formatReminderDisplay(parsedValue)}
             </span>
           ) : (
-            <span className="text-sm">Reminder</span>
+            <span className="text-xs font-medium text-[var(--text-muted)]">Reminder</span>
           )}
-          <ChevronDown className="w-3 h-3 flex-shrink-0" />
         </button>
 
         {isOpen && (
