@@ -116,12 +116,12 @@ export default function ConfirmDialog({
             animate={reducedMotion ? { opacity: 1 } : 'visible'}
             exit={reducedMotion ? { opacity: 0 } : 'exit'}
             transition={reducedMotion ? { duration: 0 } : modalTransition}
-            className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden"
+            className="relative bg-[var(--surface)] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-[var(--border-subtle)]"
           >
         {/* Close button */}
         <button
           onClick={onCancel}
-          className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          className="absolute top-3 right-3 p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
           aria-label="Close dialog"
         >
           <X className="w-4 h-4" />
@@ -140,13 +140,13 @@ export default function ConfirmDialog({
           {/* Content */}
           <h2
             id="confirm-dialog-title"
-            className="text-lg font-semibold text-slate-900 dark:text-white text-center mb-2"
+            className="text-lg font-semibold text-[var(--foreground)] text-center mb-2"
           >
             {title}
           </h2>
           <p
             id="confirm-dialog-message"
-            className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6"
+            className="text-sm text-[var(--text-muted)] text-center mb-6"
           >
             {message}
           </p>
@@ -157,7 +157,7 @@ export default function ConfirmDialog({
               onClick={onCancel}
               whileHover={reducedMotion ? undefined : { scale: 1.02 }}
               whileTap={reducedMotion ? undefined : { scale: 0.98 }}
-              className="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-medium rounded-lg transition-colors min-h-[44px]"
+              className="flex-1 py-2.5 px-4 bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--foreground)] font-medium rounded-lg transition-colors min-h-[44px] touch-manipulation"
             >
               {cancelLabel}
             </motion.button>
@@ -166,7 +166,7 @@ export default function ConfirmDialog({
               onClick={onConfirm}
               whileHover={reducedMotion ? undefined : { scale: 1.02 }}
               whileTap={reducedMotion ? undefined : { scale: 0.98 }}
-              className={`flex-1 py-2.5 px-4 ${confirmBgColor} text-white font-medium rounded-lg transition-colors min-h-[44px]`}
+              className={`flex-1 py-2.5 px-4 ${confirmBgColor} text-white font-medium rounded-lg transition-colors min-h-[44px] touch-manipulation`}
             >
               {confirmLabel}
             </motion.button>

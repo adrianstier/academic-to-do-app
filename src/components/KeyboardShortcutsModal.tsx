@@ -89,7 +89,8 @@ export default function KeyboardShortcutsModal({
               </div>
               <button
                 onClick={onClose}
-                className={`p-1.5 rounded-lg transition-colors ${
+                aria-label="Close keyboard shortcuts"
+                className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
                   darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
               >

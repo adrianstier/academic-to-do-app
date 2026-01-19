@@ -234,7 +234,7 @@ export default function DashboardModal({
                   <button
                     onClick={onClose}
                     aria-label="Close dashboard"
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                    className="absolute top-3 right-3 p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -447,7 +447,7 @@ export default function DashboardModal({
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <button
                     onClick={() => handleAction(onNavigateToTasks)}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl font-semibold transition-colors ${
+                    className={`flex items-center justify-center gap-2 p-3 rounded-xl font-semibold transition-colors min-h-[48px] touch-manipulation ${
                       darkMode
                         ? 'bg-slate-700 text-white hover:bg-slate-600'
                         : 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-50'
@@ -459,7 +459,7 @@ export default function DashboardModal({
 
                   <button
                     onClick={() => handleAction(onAddTask)}
-                    className="flex items-center justify-center gap-2 p-3 rounded-xl bg-[#0033A0] text-white font-semibold hover:bg-[#0028A0] transition-colors"
+                    className="flex items-center justify-center gap-2 p-3 rounded-xl bg-[#0033A0] text-white font-semibold hover:bg-[#0028A0] transition-colors min-h-[48px] touch-manipulation"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="text-sm">Add Task</span>

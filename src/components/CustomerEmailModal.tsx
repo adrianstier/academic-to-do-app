@@ -265,7 +265,8 @@ export default function CustomerEmailModal({
           </div>
           <button
             onClick={onClose}
-            className={`p-2 rounded-xl transition-colors ${
+            aria-label="Close modal"
+            className={`p-2 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
               darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'
             }`}
           >

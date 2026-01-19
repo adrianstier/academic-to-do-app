@@ -53,6 +53,7 @@ import TemplatePicker from './TemplatePicker';
 import SaveTemplateModal from './SaveTemplateModal';
 import ArchivedTaskModal from './ArchivedTaskModal';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAppShell } from './layout/AppShell';
 import { logActivity } from '@/lib/activityLogger';
 import { findPotentialDuplicates, shouldCheckForDuplicates, DuplicateMatch } from '@/lib/duplicateDetection';
 import { sendTaskAssignmentNotification, sendTaskCompletionNotification } from '@/lib/taskNotifications';
@@ -132,6 +133,9 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
   const canViewArchive = currentUser.role === 'admin' || ['derrick', 'adrian'].includes(userName.toLowerCase());
+
+  // Get navigation state from AppShell context
+  const { activeView, setActiveView } = useAppShell();
 
   // NOTE: isWideDesktop removed - no longer using UtilitySidebar or conditional chat layouts
   // const isWideDesktop = useIsDesktopWide(1280);
@@ -215,6 +219,29 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       setQuickFilter(initialFilter);
     }
   }, [initialFilter, setQuickFilter]);
+
+  // Sync navigation activeView with internal panel states
+  // This connects the sidebar navigation to the view panels
+  useEffect(() => {
+    if (activeView === 'activity') {
+      setShowActivityFeed(true);
+      setShowStrategicDashboard(false);
+      setShowArchiveView(false);
+    } else if (activeView === 'goals') {
+      setShowActivityFeed(false);
+      setShowStrategicDashboard(true);
+      setShowArchiveView(false);
+    } else if (activeView === 'archive') {
+      setShowActivityFeed(false);
+      setShowStrategicDashboard(false);
+      setShowArchiveView(true);
+    } else if (activeView === 'tasks') {
+      // Close all overlay panels when returning to tasks view
+      setShowActivityFeed(false);
+      setShowStrategicDashboard(false);
+      setShowArchiveView(false);
+    }
+  }, [activeView]);
 
   // Bulk actions from hook
   const {
@@ -2301,13 +2328,13 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Activity Feed">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowActivityFeed(false)}
+            onClick={() => { setShowActivityFeed(false); setActiveView('tasks'); }}
           />
           <div className={`relative ml-auto w-full max-w-md h-full shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
             <ActivityFeed
               currentUserName={userName}
               darkMode={darkMode}
-              onClose={() => setShowActivityFeed(false)}
+              onClose={() => { setShowActivityFeed(false); setActiveView('tasks'); }}
             />
           </div>
         </div>
@@ -2318,7 +2345,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         <StrategicDashboard
           userName={userName}
           darkMode={darkMode}
-          onClose={() => setShowStrategicDashboard(false)}
+          onClose={() => { setShowStrategicDashboard(false); setActiveView('tasks'); }}
         />
       )}
 
@@ -2326,7 +2353,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Archived tasks">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowArchiveView(false)}
+            onClick={() => { setShowArchiveView(false); setActiveView('tasks'); }}
           />
           <div className="relative w-full max-w-3xl rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
@@ -2337,7 +2364,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 </p>
               </div>
               <button
-                onClick={() => setShowArchiveView(false)}
+                onClick={() => { setShowArchiveView(false); setActiveView('tasks'); }}
                 className="p-2 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]"
                 aria-label="Close archive"
               >

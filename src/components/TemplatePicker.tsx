@@ -153,7 +153,9 @@ export default function TemplatePicker({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
           darkMode
             ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -186,7 +188,8 @@ export default function TemplatePicker({
               </h3>
               <button
                 onClick={() => setShowCreateForm(!showCreateForm)}
-                className={`p-1.5 rounded-lg transition-colors ${
+                aria-label={showCreateForm ? 'Cancel creating template' : 'Create new template'}
+                className={`p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation ${
                   darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
               >
@@ -271,7 +274,7 @@ export default function TemplatePicker({
                   <button
                     type="submit"
                     disabled={!newName.trim() || isSaving}
-                    className="px-4 py-2 rounded-lg bg-[#0033A0] text-white text-sm font-medium hover:bg-[#002878] disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg bg-[#0033A0] text-white text-sm font-medium hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] touch-manipulation"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create'}
                   </button>
@@ -426,7 +429,8 @@ function TemplateItem({
       {isOwner && (
         <button
           onClick={onDelete}
-          className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${
+          aria-label={`Delete template: ${template.name}`}
+          className={`p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity min-h-[40px] min-w-[40px] flex items-center justify-center touch-manipulation ${
             darkMode ? 'hover:bg-slate-600 text-slate-400' : 'hover:bg-slate-200 text-slate-500'
           }`}
         >
