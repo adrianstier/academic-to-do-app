@@ -40,6 +40,7 @@ interface MainAppProps {
 function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   const { activeView, setActiveView, onNewTaskTrigger } = useAppShell();
   const usersWithColors = useTodoStore((state) => state.usersWithColors);
+  const users = useTodoStore((state) => state.users);
 
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,6 +269,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
           onAddTask={handleAddTask}
           onFilterOverdue={() => handleNavigateToTasks('overdue')}
           onFilterDueToday={() => handleNavigateToTasks('due_today')}
+          users={users}
         />
       )}
     </>
