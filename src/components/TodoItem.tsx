@@ -588,8 +588,8 @@ export default function TodoItem({
 
           </div>
 
-          {/* Quick inline actions - visible on hover for incomplete tasks */}
-          {!todo.completed && (
+          {/* Quick inline actions - visible on hover for incomplete tasks (hide when menu is open) */}
+          {!todo.completed && !showActionsMenu && (
             <div
               className="hidden sm:flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => e.stopPropagation()}
