@@ -26,6 +26,8 @@ interface QuickTaskButtonsProps {
   onSelectTemplate: (template: QuickTaskTemplate) => void;
   patterns?: TaskPattern[];
   collapsed?: boolean;
+  /** When true, renders in a compact inline mode without header/collapse controls */
+  inline?: boolean;
 }
 
 /**
@@ -101,6 +103,7 @@ export function QuickTaskButtons({
   onSelectTemplate,
   patterns = [],
   collapsed: initialCollapsed = false,
+  inline = false,
 }: QuickTaskButtonsProps) {
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [showQuoteWarning, setShowQuoteWarning] = useState(false);
@@ -148,6 +151,128 @@ export function QuickTaskButtons({
     return null;
   }
 
+  // Render the template grid (shared between inline and normal mode)
+  const renderTemplateGrid = () => (
+    <div className={`grid grid-cols-2 sm:grid-cols-3 ${inline ? 'gap-2' : 'gap-2.5 sm:gap-2'}`}>
+      {allTemplates.map((template, index) => {
+        const Icon = CATEGORY_ICONS[template.category] || FileText;
+        const colors = CATEGORY_COLORS[template.category] || CATEGORY_COLORS.other;
+        const indicator = getCompletionIndicator(template.category);
+        const rate = CATEGORY_COMPLETION_RATES[template.category];
+        const label = CATEGORY_LABELS[template.category] || template.category;
+
+        return (
+          <button
+            key={`${template.category}-${index}`}
+            type="button"
+            onClick={() => handleTemplateSelect(template)}
+            className={`group relative flex items-center gap-2 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] hover:border-[var(--border-hover)] active:scale-[0.98] transition-all text-left touch-manipulation ${
+              inline ? 'py-2 min-h-[40px]' : 'py-3 sm:py-2.5 min-h-[52px] sm:min-h-[44px]'
+            }`}
+            title={`${label} - ${rate}% completion rate`}
+            aria-label={`Create ${label} task`}
+          >
+            {/* Completion Indicator - top left for natural scan pattern */}
+            {indicator && (
+              <span
+                className={`
+                  absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full
+                  ${indicator === 'high' ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'}
+                `}
+                aria-label={indicator === 'high' ? 'High completion rate' : 'Low completion rate'}
+              />
+            )}
+
+            {/* Icon */}
+            <span
+              className={`flex-shrink-0 rounded-md flex items-center justify-center transition-transform group-hover:scale-105 ${
+                inline ? 'w-7 h-7' : 'w-9 h-9 sm:w-8 sm:h-8 rounded-lg'
+              }`}
+              style={{ backgroundColor: colors.bg }}
+            >
+              <Icon
+                className={inline ? 'w-3.5 h-3.5' : 'w-4.5 h-4.5 sm:w-4 sm:h-4'}
+                style={{ color: colors.icon }}
+              />
+            </span>
+
+            {/* Label */}
+            <span className="flex-1 min-w-0">
+              <span className={`block font-medium text-[var(--foreground)] truncate ${
+                inline ? 'text-xs' : 'text-sm'
+              }`}>
+                {label}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // Inline mode: just render the grid with a subtle header
+  if (inline) {
+    return (
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] uppercase tracking-wider font-medium text-[var(--text-light)]">
+            Quick Add
+          </span>
+          <div className="flex-1 h-px bg-[var(--border-subtle)]" />
+        </div>
+
+        {/* Quote Warning Toast (inline) */}
+        <AnimatePresence>
+          {showQuoteWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-2 p-2 bg-[var(--warning-light)] border border-[var(--warning)]/30 rounded-lg"
+              role="alert"
+            >
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-[var(--warning)] flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-[var(--foreground)]">
+                    Quote tasks have a 50% completion rate
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={confirmQuoteSelection}
+                      className="px-2 py-1 text-xs font-medium bg-[var(--warning)] text-white rounded hover:brightness-110 transition-all"
+                    >
+                      Continue
+                    </button>
+                    <button
+                      type="button"
+                      onClick={dismissQuoteWarning}
+                      className="px-2 py-1 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissQuoteWarning}
+                  className="p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+                  aria-label="Dismiss warning"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {renderTemplateGrid()}
+      </div>
+    );
+  }
+
+  // Normal mode: collapsible with header
   return (
     <div className="mb-4">
       {/* Compact Collapsible Header */}
@@ -204,12 +329,14 @@ export function QuickTaskButtons({
                       </p>
                       <div className="flex gap-2 mt-3">
                         <button
+                          type="button"
                           onClick={confirmQuoteSelection}
                           className="px-3 py-1.5 text-xs font-medium bg-[var(--warning)] text-white rounded-lg hover:brightness-110 transition-all min-h-[32px]"
                         >
                           Continue
                         </button>
                         <button
+                          type="button"
                           onClick={dismissQuoteWarning}
                           className="px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors min-h-[32px]"
                         >
@@ -218,6 +345,7 @@ export function QuickTaskButtons({
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={dismissQuoteWarning}
                       className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
                       aria-label="Dismiss warning"
@@ -229,55 +357,7 @@ export function QuickTaskButtons({
               )}
             </AnimatePresence>
 
-            {/* Template Grid - 2 columns on mobile, 3 on desktop */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-2">
-              {allTemplates.map((template, index) => {
-                const Icon = CATEGORY_ICONS[template.category] || FileText;
-                const colors = CATEGORY_COLORS[template.category] || CATEGORY_COLORS.other;
-                const indicator = getCompletionIndicator(template.category);
-                const rate = CATEGORY_COMPLETION_RATES[template.category];
-                const label = CATEGORY_LABELS[template.category] || template.category;
-
-                return (
-                  <button
-                    key={`${template.category}-${index}`}
-                    onClick={() => handleTemplateSelect(template)}
-                    className="group relative flex items-center gap-2.5 px-3 py-3 sm:py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-hover)] active:scale-[0.98] transition-all text-left min-h-[52px] sm:min-h-[44px] touch-manipulation"
-                    title={`${label} - ${rate}% completion rate`}
-                    aria-label={`Create ${label} task`}
-                  >
-                    {/* Completion Indicator - top left for natural scan pattern */}
-                    {indicator && (
-                      <span
-                        className={`
-                          absolute top-2 left-2 w-1.5 h-1.5 rounded-full
-                          ${indicator === 'high' ? 'bg-[var(--success)]' : 'bg-[var(--warning)]'}
-                        `}
-                        aria-label={indicator === 'high' ? 'High completion rate' : 'Low completion rate'}
-                      />
-                    )}
-
-                    {/* Icon */}
-                    <span
-                      className="flex-shrink-0 w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105"
-                      style={{ backgroundColor: colors.bg }}
-                    >
-                      <Icon
-                        className="w-4.5 h-4.5 sm:w-4 sm:h-4"
-                        style={{ color: colors.icon }}
-                      />
-                    </span>
-
-                    {/* Label */}
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-medium text-[var(--foreground)] truncate">
-                        {label}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            {renderTemplateGrid()}
           </motion.div>
         )}
       </AnimatePresence>

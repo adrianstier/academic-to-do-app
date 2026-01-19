@@ -271,6 +271,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const [showArchiveView, setShowArchiveView] = useState(false);
   const [selectedArchivedTodo, setSelectedArchivedTodo] = useState<Todo | null>(null);
   const [archiveQuery, setArchiveQuery] = useState('');
+  const [showSearchExpanded, setShowSearchExpanded] = useState(false);
   const [, setArchiveTick] = useState(0); // tick value unused, only setter needed for refresh
   const [customOrder, setCustomOrder] = useState<string[]>([]);
   const [showMergeModal, setShowMergeModal] = useState(false);
@@ -1743,146 +1744,206 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           )}
         </div>
 
-        {/* Unified Filter Bar - Premium - hidden in focus mode */}
+        {/* Compact Filter Bar - hidden in focus mode */}
         {!focusMode && (
-        <div className="rounded-[var(--radius-xl)] p-4 mb-4 bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-sm)]">
-          {/* Search Row */}
-          <div className="flex gap-2 mb-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-light)] pointer-events-none" aria-hidden="true" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tasks..."
-                aria-label="Search tasks"
-                className="input-refined w-full !pl-10 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--text-light)]"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Sort dropdown */}
+        <div className="mb-4">
+          {/* Single Row: All filters, search, sort, select */}
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            {/* Expandable Search */}
             <div className="relative">
-              <select
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as SortOption)}
-                aria-label="Sort tasks"
-                className="input-refined appearance-none pl-3 pr-10 py-2.5 text-sm text-[var(--foreground)] cursor-pointer min-w-[110px]"
-              >
-                <option value="created">Newest</option>
-                <option value="due_date">Due Date</option>
-                <option value="priority">Priority</option>
-                <option value="urgency">Urgency</option>
-                <option value="alphabetical">A-Z</option>
-                <option value="custom">Manual</option>
-              </select>
-              <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
+              <AnimatePresence mode="wait">
+                {searchQuery || showSearchExpanded ? (
+                  <motion.div
+                    key="search-expanded"
+                    initial={{ width: 36, opacity: 0.8 }}
+                    animate={{ width: 'auto', opacity: 1 }}
+                    exit={{ width: 36, opacity: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center"
+                  >
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-light)] pointer-events-none" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onBlur={() => !searchQuery && setShowSearchExpanded(false)}
+                        placeholder="Search..."
+                        aria-label="Search tasks"
+                        autoFocus
+                        className="w-[140px] sm:w-[180px] pl-8 pr-7 py-1.5 text-xs rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] placeholder-[var(--text-light)] focus:outline-none focus:border-[var(--accent)]/50"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => {
+                            setSearchQuery('');
+                            setShowSearchExpanded(false);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                          aria-label="Clear search"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="search-collapsed"
+                    type="button"
+                    onClick={() => setShowSearchExpanded(true)}
+                    className="p-2 rounded-md text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+                    aria-label="Search tasks"
+                    title="Search tasks"
+                  >
+                    <Search className="w-4 h-4" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
 
-          {/* Simplified Filter Bar */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Assignment dropdown */}
+            {/* Divider */}
+            <div className="w-px h-4 bg-[var(--border-subtle)] hidden sm:block" />
+
+            {/* Quick filter dropdown - compact */}
             <div className="relative">
               <select
                 value={quickFilter}
                 onChange={(e) => setQuickFilter(e.target.value as QuickFilter)}
-                className="input-refined appearance-none pl-10 pr-9 py-2 text-sm font-medium cursor-pointer min-w-[150px]"
+                className="appearance-none pl-2 pr-6 py-1.5 text-xs font-medium rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] cursor-pointer hover:bg-[var(--surface-3)] transition-colors"
               >
-                <option value="all">All Tasks</option>
-                <option value="my_tasks">My Tasks</option>
-                <option value="due_today">Due Today</option>
+                <option value="all">All</option>
+                <option value="my_tasks">Mine</option>
+                <option value="due_today">Today</option>
                 <option value="overdue">Overdue</option>
               </select>
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[var(--text-muted)]" />
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-[var(--text-muted)]" />
             </div>
 
-            {/* High Priority toggle - more compact */}
+            {/* High Priority toggle - icon only on mobile */}
             <button
               type="button"
               onClick={() => setHighPriorityOnly(!highPriorityOnly)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
                 highPriorityOnly
-                  ? 'bg-[var(--danger)] text-white shadow-sm'
-                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
+                  ? 'bg-[var(--danger)] text-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
               }`}
               aria-pressed={highPriorityOnly}
+              title="High Priority"
             >
               <AlertTriangle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">High Priority</span>
-              <span className="sm:hidden">Urgent</span>
+              <span className="hidden sm:inline">Urgent</span>
             </button>
 
-            {/* Show completed toggle - more compact */}
+            {/* Show completed toggle - icon only on mobile */}
             <button
               type="button"
               onClick={() => setShowCompleted(!showCompleted)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
                 showCompleted
-                  ? 'bg-[var(--success)] text-white shadow-sm'
-                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
+                  ? 'bg-[var(--success)] text-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
               }`}
               aria-pressed={showCompleted}
+              title="Show Completed"
             >
               <CheckSquare className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Show Completed</span>
-              <span className="sm:hidden">Done</span>
+              <span className="hidden sm:inline">Done</span>
             </button>
 
-            <div className="w-px h-4 bg-[var(--border)] mx-0.5" />
-
-            {/* Advanced filters toggle - more compact */}
+            {/* More filters button */}
             <button
               type="button"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
+              className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
                 showAdvancedFilters || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end
-                  ? 'bg-[var(--brand-blue)] text-white shadow-sm'
-                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
+                  ? 'bg-[var(--accent)] text-white'
+                  : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
               }`}
               aria-expanded={showAdvancedFilters}
+              title="More Filters"
             >
               <Filter className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Filters</span>
               {(statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                <span className="px-1 py-0.5 text-[10px] rounded-full bg-white/20 leading-none">
                   {[statusFilter !== 'all', assignedToFilter !== 'all', customerFilter !== 'all', hasAttachmentsFilter !== null, dateRangeFilter.start || dateRangeFilter.end].filter(Boolean).length}
                 </span>
               )}
             </button>
 
-            {/* Active filter indicator / Clear all */}
-            {(quickFilter !== 'all' || highPriorityOnly || showCompleted || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
+            {/* Sort dropdown - compact */}
+            <div className="relative">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
+                aria-label="Sort tasks"
+                className="appearance-none pl-2 pr-6 py-1.5 text-xs font-medium rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] cursor-pointer hover:bg-[var(--surface-3)] transition-colors"
+              >
+                <option value="created">New</option>
+                <option value="due_date">Due</option>
+                <option value="priority">Priority</option>
+                <option value="urgency">Urgency</option>
+                <option value="alphabetical">A-Z</option>
+                <option value="custom">Manual</option>
+              </select>
+              <ArrowUpDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-[var(--text-muted)]" />
+            </div>
+
+            {/* Spacer to push Select to right on desktop */}
+            <div className="flex-1 hidden sm:block" />
+
+            {/* Select/Bulk actions button */}
+            <button
+              onClick={() => {
+                if (showBulkActions) {
+                  clearSelection();
+                }
+                setShowBulkActions(!showBulkActions);
+              }}
+              className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
+                showBulkActions
+                  ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+              }`}
+              title={showBulkActions ? 'Cancel selection' : 'Select tasks'}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{showBulkActions ? 'Cancel' : 'Select'}</span>
+            </button>
+
+            {/* Clear all - only when filters active */}
+            {(quickFilter !== 'all' || highPriorityOnly || showCompleted || searchQuery || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
               <button
                 type="button"
                 onClick={() => {
                   setQuickFilter('all');
                   setHighPriorityOnly(false);
                   setShowCompleted(false);
+                  setSearchQuery('');
                   setStatusFilter('all');
                   setAssignedToFilter('all');
                   setCustomerFilter('all');
                   setHasAttachmentsFilter(null);
                   setDateRangeFilter({ start: '', end: '' });
                 }}
-                className="flex items-center gap-1 text-xs text-[var(--accent)] hover:underline ml-auto font-medium"
+                className="flex items-center gap-1 px-2 py-1.5 text-xs text-[var(--accent)] hover:text-[var(--accent-dark)] font-medium"
+                title="Clear all filters"
               >
                 <RotateCcw className="w-3 h-3" />
-                Clear all
+                <span className="hidden sm:inline">Clear</span>
               </button>
             )}
           </div>
 
-          {/* Advanced Filters Panel */}
+          {/* Selection mode hint */}
+          {showBulkActions && (
+            <div className="mt-2 text-xs text-[var(--text-muted)]">
+              Click tasks to select them
+            </div>
+          )}
+
+          {/* Advanced Filters Panel - expandable */}
           <AnimatePresence>
             {showAdvancedFilters && (
               <motion.div
@@ -1892,121 +1953,92 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 transition={{ duration: DURATION.normal }}
                 className="overflow-hidden"
               >
-                <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {/* Status filter */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as TodoStatus | 'all')}
-                  className="input-refined w-full text-sm py-2"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="todo">To Do</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="done">Done</option>
-                </select>
-              </div>
+                <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {/* Status filter */}
+                  <div>
+                    <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as TodoStatus | 'all')}
+                      className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
+                    >
+                      <option value="all">All</option>
+                      <option value="todo">To Do</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="done">Done</option>
+                    </select>
+                  </div>
 
-              {/* Assigned to filter */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Assigned To</label>
-                <select
-                  value={assignedToFilter}
-                  onChange={(e) => setAssignedToFilter(e.target.value)}
-                  className="input-refined w-full text-sm py-2"
-                >
-                  <option value="all">Anyone</option>
-                  <option value="unassigned">Unassigned</option>
-                  {users.map((user) => (
-                    <option key={user} value={user}>{user}</option>
-                  ))}
-                </select>
-              </div>
+                  {/* Assigned to filter */}
+                  <div>
+                    <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Assigned</label>
+                    <select
+                      value={assignedToFilter}
+                      onChange={(e) => setAssignedToFilter(e.target.value)}
+                      className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
+                    >
+                      <option value="all">Anyone</option>
+                      <option value="unassigned">Unassigned</option>
+                      {users.map((user) => (
+                        <option key={user} value={user}>{user}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Customer filter */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Customer</label>
-                <select
-                  value={customerFilter}
-                  onChange={(e) => setCustomerFilter(e.target.value)}
-                  className="input-refined w-full text-sm py-2"
-                >
-                  <option value="all">All Customers</option>
-                  {uniqueCustomers.map((customer) => (
-                    <option key={customer} value={customer}>{customer}</option>
-                  ))}
-                </select>
-              </div>
+                  {/* Customer filter */}
+                  <div>
+                    <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Customer</label>
+                    <select
+                      value={customerFilter}
+                      onChange={(e) => setCustomerFilter(e.target.value)}
+                      className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
+                    >
+                      <option value="all">All</option>
+                      {uniqueCustomers.map((customer) => (
+                        <option key={customer} value={customer}>{customer}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Has attachments filter */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Attachments</label>
-                <select
-                  value={hasAttachmentsFilter === null ? 'all' : hasAttachmentsFilter ? 'yes' : 'no'}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setHasAttachmentsFilter(val === 'all' ? null : val === 'yes');
-                  }}
-                  className="input-refined w-full text-sm py-2"
-                >
-                  <option value="all">Any</option>
-                  <option value="yes">Has Attachments</option>
-                  <option value="no">No Attachments</option>
-                </select>
-              </div>
+                  {/* Has attachments filter */}
+                  <div>
+                    <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Attachments</label>
+                    <select
+                      value={hasAttachmentsFilter === null ? 'all' : hasAttachmentsFilter ? 'yes' : 'no'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setHasAttachmentsFilter(val === 'all' ? null : val === 'yes');
+                      }}
+                      className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
+                    >
+                      <option value="all">Any</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
 
-              {/* Date range filter */}
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Due Date Range</label>
-                <div className="flex gap-1">
-                  <input
-                    type="date"
-                    value={dateRangeFilter.start}
-                    onChange={(e) => setDateRangeFilter({ ...dateRangeFilter, start: e.target.value })}
-                    className="input-refined flex-1 text-xs py-2"
-                    placeholder="From"
-                  />
-                  <input
-                    type="date"
-                    value={dateRangeFilter.end}
-                    onChange={(e) => setDateRangeFilter({ ...dateRangeFilter, end: e.target.value })}
-                    className="input-refined flex-1 text-xs py-2"
-                    placeholder="To"
-                  />
-                </div>
-              </div>
+                  {/* Date range filter */}
+                  <div>
+                    <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Due Range</label>
+                    <div className="flex gap-1">
+                      <input
+                        type="date"
+                        value={dateRangeFilter.start}
+                        onChange={(e) => setDateRangeFilter({ ...dateRangeFilter, start: e.target.value })}
+                        className="flex-1 text-xs py-1.5 px-1 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] min-w-0"
+                      />
+                      <input
+                        type="date"
+                        value={dateRangeFilter.end}
+                        onChange={(e) => setDateRangeFilter({ ...dateRangeFilter, end: e.target.value })}
+                        className="flex-1 text-xs py-1.5 px-1 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] min-w-0"
+                      />
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-        )}
-
-        {/* Bulk Select Toggle - hidden in focus mode */}
-        {!focusMode && (
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => {
-              if (showBulkActions) {
-                clearSelection();
-              }
-              setShowBulkActions(!showBulkActions);
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-all duration-200 ${
-              showBulkActions
-                ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-sm'
-                : 'bg-[var(--surface)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] border border-[var(--border)]'
-            }`}
-          >
-            <CheckSquare className="w-4 h-4" />
-            {showBulkActions ? 'Cancel' : 'Select'}
-          </button>
-          {showBulkActions && (
-            <span className="text-sm text-[var(--text-muted)]">
-              Click tasks to select them
-            </span>
-          )}
         </div>
         )}
 

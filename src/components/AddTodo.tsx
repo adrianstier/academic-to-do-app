@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Calendar, Flag, User, Sparkles, Loader2, Mic, MicOff, Upload, X, Bell } from 'lucide-react';
 import SmartParseModal from './SmartParseModal';
 import ReminderPicker from './ReminderPicker';
@@ -110,6 +111,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     return '';
   });
   const [showOptions, setShowOptions] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [draggedFile, setDraggedFile] = useState<File | null>(null);
 
@@ -451,12 +453,6 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
   return (
     <>
-      {/* Quick Task Buttons (Feature 4) */}
-      <QuickTaskButtons
-        onSelectTemplate={handleQuickTaskSelect}
-        patterns={patterns}
-      />
-
       {/* AI Pattern Detection Indicator (Feature 4) */}
       <CategoryConfidenceIndicator
         patternMatch={patternMatch}
@@ -496,7 +492,14 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                 ref={textareaRef}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                onFocus={() => setShowOptions(true)}
+                onFocus={() => {
+                  setShowOptions(true);
+                  setIsInputFocused(true);
+                }}
+                onBlur={() => {
+                  // Delay hiding to allow clicking quick task buttons
+                  setTimeout(() => setIsInputFocused(false), 150);
+                }}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "Speak your task..." : "Add a task... (paste text for AI help)"}
                 rows={1}
@@ -595,6 +598,27 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
             <VoiceRecordingIndicator isRecording={isRecording} darkMode={darkMode} />
           </div>
         )}
+
+        {/* Quick Task Buttons - shown when input is focused or has content */}
+        <AnimatePresence>
+          {(isInputFocused || text) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="overflow-hidden border-t border-[var(--border-subtle)]"
+            >
+              <div className="px-4 pt-3 pb-3">
+                <QuickTaskButtons
+                  onSelectTemplate={handleQuickTaskSelect}
+                  patterns={patterns}
+                  inline
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Options row - visible when focused or has content */}
         {(showOptions || text) && (
