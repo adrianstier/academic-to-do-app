@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f5f5f0"/>
+
+  <!-- Title -->
+  <text x="400" y="50" font-family="Comic Sans MS, cursive" font-size="28" font-weight="bold" text-anchor="middle" fill="#333">
+    Sprint Planning - Week 4
+  </text>
+  <line x1="100" y1="65" x2="700" y2="65" stroke="#666" stroke-width="2"/>
+
+  <!-- Column Headers -->
+  <text x="150" y="100" font-family="Arial" font-size="18" font-weight="bold" fill="#e74c3c">TO DO</text>
+  <text x="400" y="100" font-family="Arial" font-size="18" font-weight="bold" fill="#f39c12">IN PROGRESS</text>
+  <text x="650" y="100" font-family="Arial" font-size="18" font-weight="bold" fill="#27ae60">DONE</text>
+
+  <!-- TO DO Items -->
+  <rect x="50" y="120" width="200" height="60" fill="#fee2e2" stroke="#e74c3c" stroke-width="2" rx="5"/>
+  <text x="60" y="145" font-family="Arial" font-size="12" fill="#333">Fix login bug</text>
+  <text x="60" y="165" font-family="Arial" font-size="10" fill="#666">Priority: HIGH - Due: Jan 22</text>
+
+  <rect x="50" y="190" width="200" height="60" fill="#fee2e2" stroke="#e74c3c" stroke-width="2" rx="5"/>
+  <text x="60" y="215" font-family="Arial" font-size="12" fill="#333">Add dark mode toggle</text>
+  <text x="60" y="235" font-family="Arial" font-size="10" fill="#666">Assigned: Casey</text>
+
+  <rect x="50" y="260" width="200" height="60" fill="#fee2e2" stroke="#e74c3c" stroke-width="2" rx="5"/>
+  <text x="60" y="285" font-family="Arial" font-size="12" fill="#333">Update API documentation</text>
+  <text x="60" y="305" font-family="Arial" font-size="10" fill="#666">Due: End of sprint</text>
+
+  <!-- IN PROGRESS Items -->
+  <rect x="300" y="120" width="200" height="60" fill="#fef3c7" stroke="#f39c12" stroke-width="2" rx="5"/>
+  <text x="310" y="145" font-family="Arial" font-size="12" fill="#333">Payment integration</text>
+  <text x="310" y="165" font-family="Arial" font-size="10" fill="#666">Jordan - 60% complete</text>
+
+  <rect x="300" y="190" width="200" height="60" fill="#fef3c7" stroke="#f39c12" stroke-width="2" rx="5"/>
+  <text x="310" y="215" font-family="Arial" font-size="12" fill="#333">User profile redesign</text>
+  <text x="310" y="235" font-family="Arial" font-size="10" fill="#666">Riley - needs review</text>
+
+  <!-- DONE Items -->
+  <rect x="550" y="120" width="200" height="60" fill="#d1fae5" stroke="#27ae60" stroke-width="2" rx="5"/>
+  <text x="560" y="145" font-family="Arial" font-size="12" fill="#333" text-decoration="line-through">Setup CI/CD pipeline</text>
+  <text x="560" y="165" font-family="Arial" font-size="10" fill="#666">Alex - ✓ Completed Jan 18</text>
+
+  <rect x="550" y="190" width="200" height="60" fill="#d1fae5" stroke="#27ae60" stroke-width="2" rx="5"/>
+  <text x="560" y="215" font-family="Arial" font-size="12" fill="#333" text-decoration="line-through">Database migration</text>
+  <text x="560" y="235" font-family="Arial" font-size="10" fill="#666">Team - ✓ Completed Jan 17</text>
+
+  <!-- Notes Section -->
+  <rect x="50" y="350" width="700" height="230" fill="#fff9c4" stroke="#fbc02d" stroke-width="2" rx="5"/>
+  <text x="70" y="380" font-family="Arial" font-size="16" font-weight="bold" fill="#333">📝 Notes & Action Items:</text>
+
+  <text x="70" y="410" font-family="Arial" font-size="14" fill="#333">• Need to schedule code review for payment module</text>
+  <text x="70" y="435" font-family="Arial" font-size="14" fill="#333">• Blocker: Waiting on Stripe API keys from finance</text>
+  <text x="70" y="460" font-family="Arial" font-size="14" fill="#333">• Testing env down - Alex to investigate</text>
+  <text x="70" y="485" font-family="Arial" font-size="14" fill="#333">• Client demo scheduled for Friday 2pm</text>
+  <text x="70" y="510" font-family="Arial" font-size="14" fill="#333">• Reminder: Submit timesheets by Thursday</text>
+  <text x="70" y="535" font-family="Arial" font-size="14" fill="#e74c3c" font-weight="bold">• URGENT: Fix prod deployment issue before EOD!</text>
+  <text x="70" y="560" font-family="Arial" font-size="14" fill="#333">• Next standup: Wednesday 10am</text>
+</svg>

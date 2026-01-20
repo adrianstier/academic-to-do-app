@@ -1,0 +1,48 @@
+INVOICE #INV-2026-0142
+========================
+
+From: Acme Web Solutions
+123 Tech Street
+San Francisco, CA 94105
+
+To: Johnson Corporation
+456 Business Ave
+New York, NY 10001
+
+Date: January 15, 2026
+Due Date: February 15, 2026
+
+ITEMS:
+------
+| Description                      | Qty | Rate    | Amount   |
+|----------------------------------|-----|---------|----------|
+| Website Redesign - Phase 1       | 1   | $15,000 | $15,000  |
+| Mobile App Development - iOS     | 1   | $25,000 | $25,000  |
+| API Integration Services         | 40h | $150/h  | $6,000   |
+| Cloud Infrastructure Setup       | 1   | $5,000  | $5,000   |
+| Monthly Maintenance (6 months)   | 6   | $2,000  | $12,000  |
+|----------------------------------|-----|---------|----------|
+| SUBTOTAL                         |     |         | $63,000  |
+| Tax (8.5%)                       |     |         | $5,355   |
+| TOTAL DUE                        |     |         | $68,355  |
+
+PAYMENT TERMS:
+- 50% deposit required to begin work
+- Net 30 payment terms
+- Late payments subject to 1.5% monthly fee
+
+BANK DETAILS:
+Bank: First National Bank
+Account: 1234567890
+Routing: 987654321
+
+Please reference Invoice #INV-2026-0142 with payment.
+
+Questions? Contact billing@acmewebsolutions.com
+
+ACTION REQUIRED:
+- Review line items for accuracy
+- Process payment by February 15, 2026
+- Sign and return attached contract
+
+Thank you for your business!

@@ -1,0 +1,45 @@
+From: jennifer.smith@bigcorp.com
+To: projects@yourcompany.com
+Subject: RE: Q1 Feature Requests - PRIORITY
+Date: January 18, 2026 9:47 AM
+
+Hi Team,
+
+Following up on our call yesterday. The executive team has finalized the Q1 priorities
+and we need to move fast on these:
+
+1. URGENT (by Jan 25): Fix the dashboard loading issue. Users are complaining about
+   15+ second load times. This is affecting our NPS score.
+
+2. HIGH PRIORITY (by Feb 1): Implement SSO integration with Okta. Our IT department
+   mandates this for all vendor tools. Contact mike.chen@bigcorp.com for the technical
+   specs.
+
+3. MEDIUM (by Feb 15): Add export to PDF functionality for reports. Marketing needs
+   this for board presentations. They specifically want:
+   - Company logo in header
+   - Custom date range selection
+   - Graphs should be included
+   - File size under 5MB
+
+4. LOW (Q1 sometime): Dark mode toggle. The dev team keeps asking for this :)
+
+Budget: We have $50,000 approved for Q1 enhancements.
+
+Can you please provide:
+a) Time estimates for each item
+b) Proposed implementation order
+c) Any concerns or blockers
+d) A project plan we can share with stakeholders
+
+Let's schedule a kickoff call for early next week. I'm free Tuesday 2-4pm or
+Thursday morning.
+
+Best regards,
+Jennifer Smith
+VP of Operations, BigCorp Inc.
+Phone: (555) 123-4567
+
+---
+Please consider the environment before printing this email.
+CONFIDENTIAL: This email and its attachments are intended only for the named recipient.

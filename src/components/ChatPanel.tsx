@@ -1312,6 +1312,16 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   const markMessagesAsRead = useCallback(async (messageIds: string[]) => {
     if (messageIds.length === 0) return;
 
+    // Capture original read_by state BEFORE optimistic update for fallback logic
+    const originalMessages = messagesRef.current;
+    const originalReadByMap = new Map<string, string[]>();
+    messageIds.forEach(id => {
+      const msg = originalMessages.find(m => m.id === id);
+      if (msg) {
+        originalReadByMap.set(id, msg.read_by || []);
+      }
+    });
+
     // Optimistic update - immediately update local state
     setMessages(prev => prev.map(m => {
       if (messageIds.includes(m.id) && m.created_by !== currentUser.name) {
@@ -1333,19 +1343,16 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
           p_message_id: messageId,
           p_user_name: currentUser.name
         });
-        
+
         // If RPC doesn't exist, fall back to regular update
+        // Use originalReadByMap to check if user was already in read_by BEFORE optimistic update
         if (error?.code === '42883') { // function does not exist
-          const currentMessages = messagesRef.current;
-          const message = currentMessages.find(m => m.id === messageId);
-          if (message && message.created_by !== currentUser.name) {
-            const readBy = message.read_by || [];
-            if (!readBy.includes(currentUser.name)) {
-              await supabase
-                .from('messages')
-                .update({ read_by: [...readBy, currentUser.name] })
-                .eq('id', messageId);
-            }
+          const originalReadBy = originalReadByMap.get(messageId) || [];
+          if (!originalReadBy.includes(currentUser.name)) {
+            await supabase
+              .from('messages')
+              .update({ read_by: [...originalReadBy, currentUser.name] })
+              .eq('id', messageId);
           }
         } else if (error) {
           logger.error('Error marking message as read', error, { component: 'ChatPanel', messageId });
