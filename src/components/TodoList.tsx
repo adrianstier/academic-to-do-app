@@ -2273,12 +2273,15 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
 
-      <WeeklyProgressChart
-        todos={visibleTodos}
-        darkMode={darkMode}
-        show={showWeeklyChart}
-        onClose={() => setShowWeeklyChart(false)}
-      />
+      {/* Only render when shown to prevent skeleton flash during dynamic import */}
+      {showWeeklyChart && (
+        <WeeklyProgressChart
+          todos={visibleTodos}
+          darkMode={darkMode}
+          show={showWeeklyChart}
+          onClose={() => setShowWeeklyChart(false)}
+        />
+      )}
 
       <KeyboardShortcutsModal
         show={showShortcuts}
