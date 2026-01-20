@@ -1421,6 +1421,28 @@ input[type="radio"]:focus-visible {
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* Notification highlight - used when clicking on a notification to navigate to a task */
+.notification-highlight {
+  animation: notification-highlight 3s ease-out forwards;
+  position: relative;
+  z-index: 10;
+}
+
+@keyframes notification-highlight {
+  0% {
+    box-shadow: 0 0 0 4px var(--accent), 0 0 20px 4px rgba(0, 51, 160, 0.3);
+    transform: scale(1.02);
+  }
+  20% {
+    box-shadow: 0 0 0 4px var(--accent), 0 0 30px 8px rgba(0, 51, 160, 0.4);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0px transparent, 0 0 0 0px transparent;
+    transform: scale(1);
+  }
+}
+
 /* Fade slide up */
 .fade-slide-up {
   animation: fade-slide-up var(--duration-standard) var(--ease-smooth-out);

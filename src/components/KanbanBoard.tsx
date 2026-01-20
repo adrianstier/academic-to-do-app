@@ -197,6 +197,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
 
   return (
     <motion.div
+      id={`todo-${todo.id}`}
       ref={setNodeRef}
       style={style}
       {...attributes}

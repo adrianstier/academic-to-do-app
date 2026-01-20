@@ -369,6 +369,7 @@ export default function TodoItem({
 
   return (
     <div
+      id={`todo-${todo.id}`}
       role="listitem"
       className={`group relative rounded-[var(--radius-xl)] border transition-all duration-200 ${getCardStyle()} ${showActionsMenu ? 'z-[100]' : ''}`}
     >

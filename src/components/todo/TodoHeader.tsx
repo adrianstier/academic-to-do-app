@@ -133,12 +133,14 @@ function TodoHeader({
         const taskElement = document.getElementById(`todo-${activity.todo_id}`);
         if (taskElement) {
           taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          taskElement.classList.add('ring-2', 'ring-[var(--accent)]', 'ring-offset-2');
+          // Add animated highlight class
+          taskElement.classList.add('notification-highlight');
+          // Remove the class after animation completes
           setTimeout(() => {
-            taskElement.classList.remove('ring-2', 'ring-[var(--accent)]', 'ring-offset-2');
+            taskElement.classList.remove('notification-highlight');
           }, 3000);
         }
-      }, 100);
+      }, 150);
     } else {
       // Otherwise go to full activity view
       setActiveView('activity');
