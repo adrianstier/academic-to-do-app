@@ -254,7 +254,7 @@ describe('Store + Hooks Integration', () => {
 
       // Toggle between filters
       act(() => {
-        useTodoStore.getState().setQuickFilter('completed');
+        useTodoStore.getState().setQuickFilter('all');
       });
 
       act(() => {

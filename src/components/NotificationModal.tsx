@@ -44,6 +44,7 @@ interface NotificationModalProps {
   onActivityClick?: (activity: ActivityLogEntry) => void;
   onMarkAllRead?: () => void;
   anchorRef?: React.RefObject<HTMLButtonElement | null>;
+  onViewAllActivity?: () => void;
 }
 
 const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: string; color: string; verb: string }> = {
@@ -80,6 +81,7 @@ export default function NotificationModal({
   onActivityClick,
   onMarkAllRead,
   anchorRef,
+  onViewAllActivity,
 }: NotificationModalProps) {
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
@@ -404,7 +406,7 @@ export default function NotificationModal({
                 onClick={() => {
                   onClose();
                   // Navigate to full activity view
-                  onActivityClick?.({ action: 'task_created' } as ActivityLogEntry);
+                  onViewAllActivity?.();
                 }}
                 className={`
                   text-sm font-medium transition-colors

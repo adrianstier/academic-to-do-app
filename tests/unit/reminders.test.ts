@@ -197,7 +197,7 @@ describe('Todo Type with Reminders', () => {
   });
 
   it('should allow undefined reminder fields', () => {
-    const todo = {
+    const todo: Partial<import('@/types/todo').Todo> = {
       id: 'test-id',
       text: 'Test todo',
       completed: false,

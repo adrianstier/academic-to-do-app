@@ -25,9 +25,9 @@ const createMockTodo = (overrides: Partial<Todo> = {}): Todo => ({
 // Helper to create mock celebration data
 const createMockCelebrationData = (todo: Todo): CelebrationData => ({
   completedTask: todo,
-  streak: 5,
-  suggestedTasks: [],
-  message: 'Great job!',
+  nextTasks: [],
+  streakCount: 5,
+  encouragementMessage: 'Great job!',
 });
 
 // Helper to create mock duplicate match
@@ -461,6 +461,7 @@ describe('useTodoModals', () => {
         action: 'task_created',
         user_name: 'TestUser',
         created_at: new Date().toISOString(),
+        details: {},
       }];
 
       act(() => {

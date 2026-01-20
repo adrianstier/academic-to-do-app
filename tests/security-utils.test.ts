@@ -235,7 +235,7 @@ async function testFileValidation() {
   const exeFile = new File([exeBlob], 'malware.pdf', { type: 'application/pdf' });
   const exeResult = await validateFileContent(exeFile, 'application/pdf');
   assert(!exeResult.valid, 'Rejects EXE disguised as PDF');
-  assert(exeResult.error?.includes('executable') || exeResult.error?.includes('Blocked'), 'Provides executable error message');
+  assert(exeResult.error?.includes('executable') || exeResult.error?.includes('Blocked') || false, 'Provides executable error message');
 
   // Invalid: ELF binary
   const elfBytes = new Uint8Array([0x7F, 0x45, 0x4C, 0x46]); // \x7FELF
@@ -274,7 +274,7 @@ async function testSvgSecurity() {
   const scriptSvgFile = new File([scriptSvgBlob], 'script.svg', { type: 'image/svg+xml' });
   const scriptResult = await isSvgSafe(scriptSvgFile);
   assert(!scriptResult.safe, 'SVG with script tag is rejected');
-  assert(scriptResult.reason?.includes('script'), 'Provides script warning');
+  assert(scriptResult.reason?.includes('script') ?? false, 'Provides script warning');
 
   // SVG with onclick
   const onclickSvgContent = '<svg xmlns="http://www.w3.org/2000/svg"><rect onclick="alert(1)"/></svg>';
@@ -282,7 +282,7 @@ async function testSvgSecurity() {
   const onclickSvgFile = new File([onclickSvgBlob], 'onclick.svg', { type: 'image/svg+xml' });
   const onclickResult = await isSvgSafe(onclickSvgFile);
   assert(!onclickResult.safe, 'SVG with onclick is rejected');
-  assert(onclickResult.reason?.includes('event'), 'Provides event handler warning');
+  assert(onclickResult.reason?.includes('event') ?? false, 'Provides event handler warning');
 }
 
 // ================================

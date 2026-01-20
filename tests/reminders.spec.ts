@@ -11,7 +11,7 @@
 import { test, expect } from '@playwright/test';
 
 // Helper to login as a user
-async function loginAsUser(page, userName: string, pin: string) {
+async function loginAsUser(page: import('@playwright/test').Page, userName: string, pin: string) {
   await page.goto('/');
   // Wait for login page to load
   await page.waitForSelector('[data-testid="login-screen"]', { timeout: 10000 }).catch(() => {

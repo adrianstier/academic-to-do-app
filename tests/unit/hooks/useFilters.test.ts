@@ -491,7 +491,7 @@ describe('useFilters', () => {
       const todos = [
         createMockTodo({
           text: 'With attachment',
-          attachments: [{ id: 'a1', file_name: 'doc.pdf', file_type: 'pdf', file_size: 100, storage_path: 'path', uploaded_by: 'User', uploaded_at: new Date().toISOString() }],
+          attachments: [{ id: 'a1', file_name: 'doc.pdf', file_type: 'pdf', file_size: 100, storage_path: 'path', mime_type: 'application/pdf', uploaded_by: 'User', uploaded_at: new Date().toISOString() }],
         }),
         createMockTodo({ text: 'Without attachment' }),
       ];
@@ -514,7 +514,7 @@ describe('useFilters', () => {
       const todos = [
         createMockTodo({
           text: 'With attachment',
-          attachments: [{ id: 'a1', file_name: 'doc.pdf', file_type: 'pdf', file_size: 100, storage_path: 'path', uploaded_by: 'User', uploaded_at: new Date().toISOString() }],
+          attachments: [{ id: 'a1', file_name: 'doc.pdf', file_type: 'pdf', file_size: 100, storage_path: 'path', mime_type: 'application/pdf', uploaded_by: 'User', uploaded_at: new Date().toISOString() }],
         }),
         createMockTodo({ text: 'Without attachment' }),
       ];

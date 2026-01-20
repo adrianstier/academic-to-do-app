@@ -3,7 +3,7 @@
  * Tests all features including transcriptions, attachments, subtasks, warnings, and insurance agent style
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const ENDPOINT = `${API_URL}/api/ai/generate-email`;

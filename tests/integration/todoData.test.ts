@@ -112,6 +112,8 @@ describe('useTodoData Integration Tests', () => {
     id: 'user-1',
     name: 'TestUser',
     color: '#0033A0',
+    role: 'member' as const,
+    created_at: new Date().toISOString(),
   };
 
   beforeEach(() => {
@@ -457,6 +459,8 @@ describe('useTodoData Error Handling', () => {
     id: 'user-1',
     name: 'TestUser',
     color: '#0033A0',
+    role: 'member' as const,
+    created_at: new Date().toISOString(),
   };
 
   beforeEach(() => {
@@ -490,6 +494,8 @@ describe('useTodoData Edge Cases', () => {
     id: 'user-1',
     name: 'TestUser',
     color: '#0033A0',
+    role: 'member' as const,
+    created_at: new Date().toISOString(),
   };
 
   beforeEach(() => {
@@ -540,7 +546,7 @@ describe('useTodoData Edge Cases', () => {
     // Priority 'medium' is default so should NOT be included in insert
     const insertCall = mockInsert.mock.calls.find((c: unknown[]) => c[0] === 'todos');
     expect(insertCall).toBeDefined();
-    const insertData = insertCall[1][0];
+    const insertData = insertCall![1][0];
     expect(insertData.priority).toBeUndefined();
   });
 });
@@ -550,6 +556,8 @@ describe('useTodoData Rollback on Error', () => {
     id: 'user-1',
     name: 'TestUser',
     color: '#0033A0',
+    role: 'member' as const,
+    created_at: new Date().toISOString(),
   };
 
   beforeEach(() => {
@@ -635,6 +643,8 @@ describe('useTodoData Create with Transcription', () => {
     id: 'user-1',
     name: 'TestUser',
     color: '#0033A0',
+    role: 'member' as const,
+    created_at: new Date().toISOString(),
   };
 
   beforeEach(() => {
@@ -732,6 +742,8 @@ describe('useTodoData Real-time Events', () => {
     id: 'user-1',
     name: 'TestUser',
     color: '#0033A0',
+    role: 'member' as const,
+    created_at: new Date().toISOString(),
   };
 
   beforeEach(() => {
