@@ -1,12 +1,54 @@
-# What's New: OAuth + Schema Migration 🎉
+# What's New
+
+## 🗃️ Archive Experience Overhaul (January 20, 2026)
+
+**Status:** ✅ Implemented and Tested
+
+### New Full-Page Archive Browser
+
+The archive has been completely redesigned from a cramped modal to a dedicated full-page experience with powerful features:
+
+**Filtering & Search:**
+- 🔍 Real-time search through archived tasks
+- 📅 Date presets: Last 7 days, 30 days, 90 days, This Year, All Time
+- 📅 Custom date range picker
+- 👤 Filter by assignee
+- 🎯 Filter by priority
+
+**Sorting:**
+- Newest/Oldest (by completion date)
+- Name A-Z / Z-A
+- Priority High→Low / Low→High
+
+**Actions:**
+- ↩️ **Restore** - One-click restore tasks back to active list
+- 🗑️ **Delete** - Permanently remove archived tasks
+- ☑️ **Bulk Operations** - Select multiple tasks for bulk restore/delete
+- 📊 **Export CSV** - Download filtered results as spreadsheet
+
+**Statistics Header:**
+- Tasks archived this week
+- Tasks archived this month
+- Top archiver (who completes the most)
+
+**Testing:**
+- 22 Playwright E2E tests (all passing on Chromium + Firefox)
+
+**Files:**
+- `src/components/ArchiveView.tsx` - New archive browser component
+- `tests/archive.spec.ts` - Comprehensive test coverage
+- `docs/ARCHIVE_IMPROVEMENT_PLAN.md` - Implementation details
+
+---
+
+## 🔐 OAuth + Schema Migration (January 8, 2026)
 
 **Branch:** `refactor/security-and-architecture`
-**Date:** 2026-01-08
 **Status:** ✅ Ready to Deploy
 
 ---
 
-## 🚀 Two Major Upgrades Ready!
+### 🚀 Two Major Upgrades Ready!
 
 You now have **two big improvements** ready to deploy:
 

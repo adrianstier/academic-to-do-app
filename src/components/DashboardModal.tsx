@@ -29,7 +29,12 @@ import {
   Wand2,
   Zap,
   GitBranch,
+  CalendarDays,
+  ListTodo,
 } from 'lucide-react';
+import AnimatedProgressRing from '@/components/dashboard/AnimatedProgressRing';
+import StatCard from '@/components/dashboard/StatCard';
+import QuickActions from '@/components/dashboard/QuickActions';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useEscapeKey } from '@/hooks';
 import {
@@ -61,6 +66,9 @@ interface DashboardModalProps {
   darkMode?: boolean;
   users?: string[]; // Team members list for manager view
   onReassignTask?: (taskId: string, newAssignee: string) => void;
+  onOpenChat?: () => void;
+  onViewCalendar?: () => void;
+  onViewReport?: () => void;
 }
 
 interface WeekDay {
@@ -91,6 +99,9 @@ export default function DashboardModal({
   darkMode = true,
   users = [],
   onReassignTask: _onReassignTask,
+  onOpenChat,
+  onViewCalendar,
+  onViewReport,
 }: DashboardModalProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'team'>('overview');
@@ -367,17 +378,25 @@ export default function DashboardModal({
 
                   {/* Productivity Score Badge */}
                   <div className="absolute top-4 right-14 flex flex-col items-center">
-                    <div className={`
-                      w-12 h-12 rounded-full flex items-center justify-center
-                      ${aiData.productivityScore >= 70
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : aiData.productivityScore >= 40
-                          ? 'bg-amber-500/20 text-amber-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }
-                    `}>
-                      <span className="text-lg font-bold">{aiData.productivityScore}</span>
-                    </div>
+                    <AnimatedProgressRing
+                      progress={aiData.productivityScore}
+                      size={56}
+                      strokeWidth={5}
+                      darkMode={true}
+                      gradientId="headerProgressGradient"
+                    >
+                      <div className="flex flex-col items-center">
+                        <span className={`text-lg font-bold ${
+                          aiData.productivityScore >= 70
+                            ? 'text-emerald-400'
+                            : aiData.productivityScore >= 40
+                              ? 'text-amber-400'
+                              : 'text-red-400'
+                        }`}>
+                          {aiData.productivityScore}
+                        </span>
+                      </div>
+                    </AnimatedProgressRing>
                     <span className="text-white/40 text-[10px] mt-1">Score</span>
                   </div>
                 </div>
@@ -463,6 +482,15 @@ export default function DashboardModal({
                       transition={{ duration: 0.2 }}
                       className="space-y-4"
                     >
+                      {/* Quick Actions */}
+                      <QuickActions
+                        darkMode={darkMode}
+                        onAddTask={() => handleAction(onAddTask)}
+                        onViewCalendar={onViewCalendar ? () => handleAction(onViewCalendar) : undefined}
+                        onOpenChat={onOpenChat ? () => handleAction(onOpenChat) : undefined}
+                        onViewReport={onViewReport ? () => handleAction(onViewReport) : undefined}
+                      />
+
                       {/* Today's Focus (AI Suggested) */}
                       {aiData.todaysFocus && (
                         <motion.div
@@ -834,69 +862,65 @@ export default function DashboardModal({
                       className="space-y-4"
                     >
                       {/* Team Overview Stats */}
-                      <div className={`rounded-xl p-4 ${
-                        darkMode
-                          ? 'bg-[#1E293B] border border-[#334155]'
-                          : 'bg-white border border-slate-200'
-                      }`}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <BarChart3 className="w-4 h-4 text-[#0033A0]" />
-                          <h3 className={`text-xs font-semibold uppercase tracking-wide ${
-                            darkMode ? 'text-slate-400' : 'text-slate-500'
-                          }`}>
-                            Team Overview
-                          </h3>
-                        </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <StatCard
+                          label="Active Tasks"
+                          value={managerData.teamOverview.totalActive}
+                          icon={ListTodo}
+                          variant="info"
+                          darkMode={darkMode}
+                          delay={0}
+                        />
+                        <StatCard
+                          label="Overdue"
+                          value={managerData.teamOverview.totalOverdue}
+                          icon={AlertTriangle}
+                          variant={managerData.teamOverview.totalOverdue > 0 ? 'danger' : 'success'}
+                          darkMode={darkMode}
+                          delay={0.1}
+                        />
+                        <StatCard
+                          label="This Week"
+                          value={managerData.teamOverview.weeklyTeamCompleted}
+                          icon={CalendarDays}
+                          variant="default"
+                          darkMode={darkMode}
+                          delay={0.2}
+                        />
+                        <StatCard
+                          label="Completion"
+                          value={managerData.teamOverview.teamCompletionRate}
+                          icon={TrendingUp}
+                          variant="success"
+                          suffix="%"
+                          darkMode={darkMode}
+                          delay={0.3}
+                        />
+                      </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
-                            <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                              {managerData.teamOverview.totalActive}
-                            </p>
-                            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Active Tasks</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
-                            <p className={`text-2xl font-bold ${
-                              managerData.teamOverview.totalOverdue > 0
-                                ? 'text-red-500'
-                                : darkMode ? 'text-emerald-400' : 'text-emerald-600'
-                            }`}>
-                              {managerData.teamOverview.totalOverdue}
-                            </p>
-                            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Overdue</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
-                            <p className={`text-2xl font-bold text-[#0033A0]`}>
-                              {managerData.teamOverview.weeklyTeamCompleted}
-                            </p>
-                            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>This Week</p>
-                          </div>
-                          <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
-                            <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                              {managerData.teamOverview.teamCompletionRate}%
-                            </p>
-                            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Completion</p>
-                          </div>
-                        </div>
-
-                        {/* Highlights */}
-                        {(managerData.teamOverview.topPerformer || managerData.teamOverview.needsAttention) && (
-                          <div className="mt-3 space-y-2">
+                      {/* Team Highlights */}
+                      {(managerData.teamOverview.topPerformer || managerData.teamOverview.needsAttention) && (
+                        <div className={`rounded-xl p-4 ${
+                          darkMode
+                            ? 'bg-[#1E293B] border border-[#334155]'
+                            : 'bg-white border border-slate-200'
+                        }`}>
+                          <div className="space-y-2">
                             {managerData.teamOverview.topPerformer && (
-                              <div className={`flex items-center gap-2 text-xs ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                                <Award className="w-3.5 h-3.5" />
+                              <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                <Award className="w-4 h-4" />
                                 <span><strong>{managerData.teamOverview.topPerformer}</strong> is crushing it this week!</span>
                               </div>
                             )}
                             {managerData.teamOverview.needsAttention && (
-                              <div className={`flex items-center gap-2 text-xs ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                                <AlertCircle className="w-3.5 h-3.5" />
+                              <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                                <AlertCircle className="w-4 h-4" />
                                 <span><strong>{managerData.teamOverview.needsAttention}</strong> may need support</span>
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {/* Team Member Workload */}
                       <div className={`rounded-xl p-4 ${

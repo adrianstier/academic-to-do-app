@@ -244,9 +244,11 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       setShowStrategicDashboard(true);
       setShowArchiveView(false);
     } else if (activeView === 'archive') {
+      // Archive is now handled by MainApp with dedicated ArchiveView component
+      // This case should not render TodoList, but close overlays just in case
       setShowActivityFeed(false);
       setShowStrategicDashboard(false);
-      setShowArchiveView(true);
+      setShowArchiveView(false);
     } else if (activeView === 'tasks') {
       // Close all overlay panels when returning to tasks view
       setShowActivityFeed(false);

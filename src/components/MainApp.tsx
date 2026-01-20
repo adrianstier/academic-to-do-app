@@ -35,6 +35,12 @@ const DashboardPage = dynamic(() => import('./views/DashboardPage'), {
   loading: () => <DashboardModalSkeleton />,
 });
 
+// Lazy load ArchiveView for the archive browser
+const ArchiveView = dynamic(() => import('./ArchiveView'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
+});
+
 interface MainAppProps {
   currentUser: AuthUser;
   onUserChange: (user: AuthUser | null) => void;
@@ -147,6 +153,80 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     }, 100);
   }, [setActiveView]);
 
+  // Handle restoring an archived task
+  const handleRestoreTask = useCallback(async (taskId: string) => {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+      // Restore task by marking it as not completed and resetting status
+      const { error } = await supabase
+        .from('todos')
+        .update({
+          completed: false,
+          status: 'todo',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', taskId);
+
+      if (error) {
+        logger.error('Failed to restore task', error, { component: 'MainApp', taskId });
+        throw error;
+      }
+
+      // Log the restore action
+      await supabase.from('activity_log').insert({
+        action: 'restore',
+        entity_type: 'todo',
+        entity_id: taskId,
+        user_name: currentUser.name,
+        details: { restored_from: 'archive' },
+      });
+
+      logger.info('Task restored from archive', { component: 'MainApp', taskId });
+    } catch (error) {
+      logger.error('Failed to restore task', error, { component: 'MainApp', taskId });
+      throw error;
+    }
+  }, [currentUser.name]);
+
+  // Handle permanently deleting an archived task
+  const handleDeleteTask = useCallback(async (taskId: string) => {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+      // Get task info for logging before deletion
+      const { data: taskData } = await supabase
+        .from('todos')
+        .select('text')
+        .eq('id', taskId)
+        .single();
+
+      const { error } = await supabase
+        .from('todos')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) {
+        logger.error('Failed to delete task', error, { component: 'MainApp', taskId });
+        throw error;
+      }
+
+      // Log the deletion
+      await supabase.from('activity_log').insert({
+        action: 'permanent_delete',
+        entity_type: 'todo',
+        entity_id: taskId,
+        user_name: currentUser.name,
+        details: { task_text: taskData?.text, deleted_from: 'archive' },
+      });
+
+      logger.info('Task permanently deleted from archive', { component: 'MainApp', taskId });
+    } catch (error) {
+      logger.error('Failed to delete task', error, { component: 'MainApp', taskId });
+      throw error;
+    }
+  }, [currentUser.name]);
+
   // Dashboard view is now a full page, no longer triggers modal
   // The modal is only shown on daily login check
 
@@ -221,14 +301,14 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
         );
 
       case 'archive':
-        // Archive is handled by TodoList internally
+        // Full-featured archive browser
         return (
-          <TodoList
+          <ArchiveView
             currentUser={currentUser}
-            onUserChange={onUserChange}
-            initialFilter={initialFilter}
-            autoFocusAddTask={showAddTask}
-            onOpenDashboard={handleOpenDashboard}
+            users={users}
+            onRestore={handleRestoreTask}
+            onDelete={handleDeleteTask}
+            onClose={() => setActiveView('tasks')}
           />
         );
 

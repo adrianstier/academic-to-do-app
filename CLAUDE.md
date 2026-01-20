@@ -459,6 +459,9 @@ App Entry: page.tsx (auth state)
     │
     ├── StrategicDashboard.tsx (owner only)
     │
+    ├── ArchiveView.tsx (view === 'archive')
+    │   └── ArchivedTaskModal.tsx
+    │
     ├── ActivityFeed.tsx
     │
     └── Global UI Components

@@ -33,7 +33,11 @@ import {
   DollarSign,
   Shield,
   Car,
+  CalendarDays,
 } from 'lucide-react';
+import AnimatedProgressRing from '@/components/dashboard/AnimatedProgressRing';
+import StatCard from '@/components/dashboard/StatCard';
+import QuickActions from '@/components/dashboard/QuickActions';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTodoStore } from '@/store/todoStore';
@@ -60,6 +64,9 @@ interface DashboardPageProps {
   onAddTask?: () => void;
   onFilterOverdue?: () => void;
   onFilterDueToday?: () => void;
+  onOpenChat?: () => void;
+  onViewCalendar?: () => void;
+  onViewReport?: () => void;
 }
 
 interface WeekDay {
@@ -79,6 +86,9 @@ export default function DashboardPage({
   onAddTask,
   onFilterOverdue,
   onFilterDueToday,
+  onOpenChat,
+  onViewCalendar,
+  onViewReport,
 }: DashboardPageProps) {
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
@@ -261,6 +271,29 @@ export default function DashboardPage({
     setIsRefreshing(false);
   };
 
+  const handleOpenChat = useCallback(() => {
+    if (onOpenChat) {
+      onOpenChat();
+    } else {
+      setActiveView('chat');
+    }
+  }, [onOpenChat, setActiveView]);
+
+  const handleViewCalendar = useCallback(() => {
+    if (onViewCalendar) {
+      onViewCalendar();
+    } else {
+      // Calendar view is opened via tasks view with calendar layout
+      setActiveView('tasks');
+    }
+  }, [onViewCalendar, setActiveView]);
+
+  const handleViewReport = useCallback(() => {
+    if (onViewReport) {
+      onViewReport();
+    }
+  }, [onViewReport]);
+
   const getInsightIcon = (type: ProductivityInsight['type']) => {
     switch (type) {
       case 'streak': return Flame;
@@ -346,25 +379,35 @@ export default function DashboardPage({
 
             {/* Productivity Score */}
             <div className="flex flex-col items-center">
-              <div className={`
-                w-16 h-16 rounded-2xl flex items-center justify-center
-                ${aiData.productivityScore >= 70
-                  ? 'bg-emerald-500/20 text-emerald-400'
-                  : aiData.productivityScore >= 40
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'bg-red-500/20 text-red-400'
-                }
-              `}>
-                <span className="text-2xl font-bold">{aiData.productivityScore}</span>
-              </div>
+              <AnimatedProgressRing
+                progress={aiData.productivityScore}
+                size={72}
+                strokeWidth={6}
+                darkMode={true}
+                gradientId="dashboardPageProgressGradient"
+              >
+                <div className="flex flex-col items-center">
+                  <span className={`text-xl font-bold ${
+                    aiData.productivityScore >= 70
+                      ? 'text-emerald-400'
+                      : aiData.productivityScore >= 40
+                        ? 'text-amber-400'
+                        : 'text-red-400'
+                  }`}>
+                    {aiData.productivityScore}
+                  </span>
+                </div>
+              </AnimatedProgressRing>
               <span className="text-white/40 text-xs mt-2">Productivity</span>
             </div>
           </div>
 
           {/* Quick Stats Row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-            <button
+            <motion.button
               onClick={handleFilterOverdue}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className={`p-4 rounded-xl text-left transition-all ${
                 stats.overdue > 0
                   ? 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30'
@@ -375,31 +418,55 @@ export default function DashboardPage({
                 {stats.overdue}
               </p>
               <p className="text-white/60 text-xs">Overdue</p>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               onClick={handleFilterDueToday}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               className="p-4 rounded-xl text-left bg-white/10 hover:bg-white/15 transition-all"
             >
               <p className="text-2xl font-bold text-white">{stats.dueToday}</p>
               <p className="text-white/60 text-xs">Due Today</p>
-            </button>
+            </motion.button>
 
-            <div className="p-4 rounded-xl text-left bg-white/10">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="p-4 rounded-xl text-left bg-white/10"
+            >
               <p className="text-2xl font-bold text-amber-400">{stats.highPriority}</p>
               <p className="text-white/60 text-xs">High Priority</p>
-            </div>
+            </motion.div>
 
-            <div className="p-4 rounded-xl text-left bg-white/10">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="p-4 rounded-xl text-left bg-white/10"
+            >
               <p className="text-2xl font-bold text-emerald-400">{stats.weeklyCompleted}</p>
               <p className="text-white/60 text-xs">This Week</p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
 
       {/* Main Content Grid */}
       <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Quick Actions */}
+        <Card className="mb-6">
+          <SectionTitle icon={Sparkles} title="Quick Actions" />
+          <QuickActions
+            darkMode={darkMode}
+            onAddTask={handleAddTask}
+            onViewCalendar={handleViewCalendar}
+            onOpenChat={handleOpenChat}
+            onViewReport={handleViewReport}
+          />
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Left Column - Tasks */}

@@ -36,6 +36,16 @@ A comprehensive real-time collaborative task management platform built for small
 - **User presence** - Online, away, DND, and offline status
 - **Task discussions** - Link messages to specific tasks
 
+### Archive Browser
+- **Full-page archive view** - Dedicated view for completed tasks (auto-archived after 48 hours)
+- **Advanced filtering** - Filter by date range, assignee, priority with presets (Last 7/30/90 days)
+- **Multiple sort options** - Sort by completion date, name (A-Z), or priority
+- **Search** - Real-time search through archived task names and content
+- **Restore functionality** - One-click restore of archived tasks back to active
+- **Bulk operations** - Select multiple tasks for bulk restore or permanent delete
+- **Statistics header** - Archive metrics (this week, this month, top archiver)
+- **CSV export** - Export filtered archive results to spreadsheet
+
 ### Analytics & Monitoring
 - **Dashboard** - Executive overview with completion stats and team workload
 - **Weekly progress chart** - Visual 5-day (Mon-Fri) completion tracking
@@ -236,7 +246,7 @@ The app is configured for Railway deployment:
 
 This section provides context for AI assistants working on this codebase.
 
-### Current State (January 2025)
+### Current State (January 2026)
 
 - **Production URL**: https://shared-todo-list-production.up.railway.app
 - **Primary Users**: Derrick (Owner/Admin) and Sefra (Team Member)
@@ -257,6 +267,7 @@ This section provides context for AI assistants working on this codebase.
 | `src/components/ChatPanel.tsx` | Team chat & DMs - messages, reactions, threading, presence |
 | `src/components/StrategicDashboard.tsx` | Owner dashboard - long-term goals, milestones, progress tracking |
 | `src/components/ActivityFeed.tsx` | Activity log - audit trail of all team actions |
+| `src/components/ArchiveView.tsx` | Archive browser - filtering, sorting, restore, bulk ops, export |
 | `src/components/TodoItem.tsx` | Task list item - inline editing, notes, subtasks, attachments |
 | `src/components/SortableTodoItem.tsx` | Kanban card - drag-and-drop task with metadata |
 | `src/components/AddTodo.tsx` | Task creation form - manual entry, templates, AI parsing |

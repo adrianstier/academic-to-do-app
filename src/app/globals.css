@@ -1492,3 +1492,221 @@ input[type="radio"]:focus-visible {
     display: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD COMPONENTS
+   Enhanced styling for dashboard cards, progress indicators, and data viz
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Stat Card Styles ─── */
+.stat-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1rem;
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+:root.dark .stat-card {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+:root.dark .stat-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Progress Ring Glow ─── */
+.progress-ring-glow {
+  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.4));
+}
+
+:root.dark .progress-ring-glow {
+  filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.5));
+}
+
+/* ─── Quick Action Buttons ─── */
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.quick-action-btn:hover {
+  transform: scale(1.02);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.98);
+}
+
+.quick-action-btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.quick-action-btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.quick-action-btn-secondary {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+:root.dark .quick-action-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.quick-action-btn-secondary:hover {
+  background: var(--surface-3);
+  color: var(--foreground);
+}
+
+:root.dark .quick-action-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* ─── Insight Card Accents ─── */
+.insight-card {
+  position: relative;
+  border-left: 4px solid;
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  background: var(--surface);
+}
+
+:root.dark .insight-card {
+  background: var(--surface-2);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.insight-card-info {
+  border-left-color: #3B82F6;
+}
+
+.insight-card-success {
+  border-left-color: #10B981;
+}
+
+.insight-card-warning {
+  border-left-color: #F59E0B;
+}
+
+.insight-card-tip {
+  border-left-color: #8B5CF6;
+}
+
+.insight-card-alert {
+  border-left-color: #EF4444;
+}
+
+/* ─── Chart Bar Gradients ─── */
+.chart-bar {
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+
+.chart-bar:hover {
+  transform: scaleX(1.05);
+}
+
+.chart-bar-active {
+  background: linear-gradient(180deg, var(--brand-blue-light) 0%, var(--brand-blue) 100%);
+}
+
+.chart-bar-inactive {
+  background: var(--surface-3);
+}
+
+:root.dark .chart-bar-active {
+  background: linear-gradient(180deg, #0047CC 0%, #0033A0 100%);
+}
+
+:root.dark .chart-bar-inactive {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ─── Goal Line ─── */
+.goal-line {
+  border-top: 2px dashed;
+  border-color: var(--success);
+  opacity: 0.4;
+}
+
+:root.dark .goal-line {
+  opacity: 0.5;
+}
+
+/* ─── Dashboard Section Cards ─── */
+.dashboard-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+:root.dark .dashboard-card {
+  background: var(--surface);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+:root.dark .dashboard-card-header {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-card-body {
+  padding: 1.25rem;
+}
+
+/* ─── Animated Number Counter ─── */
+.count-up {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Dashboard Header Gradient ─── */
+.dashboard-header-gradient {
+  background: linear-gradient(135deg, #0A1628 0%, #0033A0 50%, #1E3A5F 100%);
+}
+
+:root:not(.dark) .dashboard-header-gradient {
+  background: linear-gradient(135deg, #0033A0 0%, #0047CC 50%, #1E3A5F 100%);
+}
+
+/* ─── Tooltip Styles ─── */
+.dashboard-tooltip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.75rem;
+  z-index: 50;
+}
+
+:root.dark .dashboard-tooltip {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+}

@@ -1,16 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { TrendingUp, TrendingDown, Minus, X, Target, Sparkles } from 'lucide-react';
 import { Todo } from '@/types/todo';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
+import CountUp from '@/components/ui/CountUp';
 
 interface WeeklyProgressChartProps {
   todos: Todo[];
   darkMode?: boolean;
   show: boolean;
   onClose: () => void;
+  dailyGoal?: number;
 }
 
 interface DayData {
@@ -26,7 +28,10 @@ export default function WeeklyProgressChart({
   darkMode = true,
   show,
   onClose,
+  dailyGoal = 5,
 }: WeeklyProgressChartProps) {
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+
   // Close on Escape key press
   useEscapeKey(onClose, { enabled: show });
 
@@ -78,7 +83,7 @@ export default function WeeklyProgressChart({
   const stats = useMemo(() => {
     const totalCompleted = weekData.reduce((sum, d) => sum + d.completed, 0);
     const totalCreated = weekData.reduce((sum, d) => sum + d.created, 0);
-    const maxCompleted = Math.max(...weekData.map(d => d.completed), 1);
+    const maxCompleted = Math.max(...weekData.map(d => d.completed), dailyGoal);
 
     // Calculate trend (compare last 3 days to previous 4)
     const recentCompleted = weekData.slice(-3).reduce((sum, d) => sum + d.completed, 0);
@@ -94,6 +99,8 @@ export default function WeeklyProgressChart({
       ? Math.round((totalCompleted / totalCreated) * 100)
       : 0;
 
+    const daysMetGoal = weekData.filter(d => d.completed >= dailyGoal).length;
+
     return {
       totalCompleted,
       totalCreated,
@@ -101,37 +108,52 @@ export default function WeeklyProgressChart({
       trend,
       completionRate,
       avgPerDay: (totalCompleted / 5).toFixed(1),
+      daysMetGoal,
     };
-  }, [weekData]);
+  }, [weekData, dailyGoal]);
 
   if (!show) return null;
+
+  const goalLinePosition = stats.maxCompleted > 0
+    ? ((dailyGoal / stats.maxCompleted) * 96)
+    : 0;
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
         className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden ${
-          darkMode ? 'bg-slate-800' : 'bg-white'
+          darkMode ? 'bg-[#0A1628]' : 'bg-white'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
-            Weekly Progress
-          </h3>
+        <div className={`flex items-center justify-between p-4 border-b ${
+          darkMode ? 'border-white/10' : 'border-slate-200'
+        }`}>
+          <div className="flex items-center gap-2">
+            <div className={`p-2 rounded-lg ${
+              darkMode ? 'bg-[#0033A0]/20' : 'bg-[#0033A0]/10'
+            }`}>
+              <TrendingUp className="w-4 h-4 text-[#0033A0]" />
+            </div>
+            <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              Weekly Progress
+            </h3>
+          </div>
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-lg transition-colors ${
-              darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+            className={`p-2 rounded-lg transition-colors ${
+              darkMode ? 'hover:bg-white/10 text-white/60' : 'hover:bg-slate-100 text-slate-500'
             }`}
           >
             <X className="w-5 h-5" />
@@ -139,37 +161,74 @@ export default function WeeklyProgressChart({
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 p-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-[#0033A0]">{stats.totalCompleted}</p>
-            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Completed</p>
-          </div>
-          <div className="text-center">
+        <div className={`grid grid-cols-3 gap-4 p-4 border-b ${
+          darkMode ? 'border-white/10' : 'border-slate-200'
+        }`}>
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <p className="text-2xl font-bold text-[#0033A0]">
+              <CountUp end={stats.totalCompleted} duration={800} />
+            </p>
+            <p className={`text-xs ${darkMode ? 'text-white/50' : 'text-slate-500'}`}>Completed</p>
+          </motion.div>
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
               {stats.avgPerDay}
             </p>
-            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Avg/Day</p>
-          </div>
-          <div className="text-center">
+            <p className={`text-xs ${darkMode ? 'text-white/50' : 'text-slate-500'}`}>Avg/Day</p>
+          </motion.div>
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             <div className="flex items-center justify-center gap-1">
               <p className={`text-2xl font-bold ${
                 stats.trend === 'up' ? 'text-emerald-500' :
                 stats.trend === 'down' ? 'text-red-500' :
                 darkMode ? 'text-white' : 'text-slate-800'
               }`}>
-                {stats.completionRate}%
+                <CountUp end={stats.completionRate} duration={800} suffix="%" />
               </p>
               {stats.trend === 'up' && <TrendingUp className="w-4 h-4 text-emerald-500" />}
               {stats.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-500" />}
               {stats.trend === 'stable' && <Minus className="w-4 h-4 text-slate-400" />}
             </div>
-            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Rate</p>
-          </div>
+            <p className={`text-xs ${darkMode ? 'text-white/50' : 'text-slate-500'}`}>Rate</p>
+          </motion.div>
         </div>
 
         {/* Chart */}
-        <div className="p-4">
-          <div className="flex items-end justify-between gap-2 h-32 mb-2">
+        <div className="p-4 relative">
+          {/* Goal line */}
+          {dailyGoal > 0 && stats.maxCompleted >= dailyGoal && (
+            <div
+              className="absolute left-4 right-4 flex items-center z-10 pointer-events-none"
+              style={{ bottom: `${goalLinePosition + 56}px` }}
+            >
+              <div className={`flex-1 border-t-2 border-dashed ${
+                darkMode ? 'border-emerald-500/40' : 'border-emerald-500/30'
+              }`} />
+              <span className={`ml-2 text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                darkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
+              }`}>
+                <Target className="w-3 h-3 inline mr-1" />
+                Goal: {dailyGoal}
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-end justify-between gap-3 h-32 mb-2">
             {weekData.map((day, index) => {
               // Calculate height in pixels (max container height is 128px / 8rem)
               const maxBarHeight = 96; // Leave room for label
@@ -177,29 +236,80 @@ export default function WeeklyProgressChart({
                 ? Math.max((day.completed / stats.maxCompleted) * maxBarHeight, day.completed > 0 ? 8 : 4)
                 : 4;
               const isToday = index === weekData.length - 1;
+              const isHovered = hoveredDay === index;
+              const metGoal = day.completed >= dailyGoal;
 
               return (
-                <div key={day.day} className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
+                <div
+                  key={day.day}
+                  className="flex-1 flex flex-col items-center justify-end gap-1 h-full relative"
+                  onMouseEnter={() => setHoveredDay(index)}
+                  onMouseLeave={() => setHoveredDay(null)}
+                >
+                  {/* Tooltip */}
+                  <AnimatePresence>
+                    {isHovered && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                        className={`absolute bottom-full mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap z-20 ${
+                          darkMode
+                            ? 'bg-white/10 backdrop-blur-md border border-white/10'
+                            : 'bg-slate-800 text-white'
+                        }`}
+                      >
+                        <p className="font-semibold">{day.day}</p>
+                        <p className={darkMode ? 'text-white/70' : 'text-white/70'}>
+                          {day.completed} completed
+                        </p>
+                        <p className={darkMode ? 'text-white/50' : 'text-white/50'}>
+                          {day.created} created
+                        </p>
+                        {metGoal && (
+                          <p className="text-emerald-400 mt-1 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" /> Goal met!
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {/* Count label */}
-                  <span className={`text-xs font-medium ${
-                    day.completed > 0
-                      ? 'text-[#0033A0]'
-                      : darkMode ? 'text-slate-500' : 'text-slate-400'
-                  }`}>
+                  <motion.span
+                    className={`text-xs font-medium transition-colors ${
+                      isHovered
+                        ? 'text-[#0033A0]'
+                        : day.completed > 0
+                          ? 'text-[#0033A0]/80'
+                          : darkMode ? 'text-white/30' : 'text-slate-400'
+                    }`}
+                    animate={{ scale: isHovered ? 1.1 : 1 }}
+                  >
                     {day.completed}
-                  </span>
+                  </motion.span>
 
                   {/* Bar */}
                   <motion.div
                     initial={{ height: 0 }}
-                    animate={{ height: barHeight }}
-                    transition={{ delay: index * 0.05, duration: 0.4, ease: 'easeOut' }}
-                    className={`w-full rounded-t-md ${
+                    animate={{
+                      height: barHeight,
+                      scale: isHovered ? 1.05 : 1,
+                    }}
+                    transition={{
+                      height: { delay: index * 0.08, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+                      scale: { duration: 0.15 }
+                    }}
+                    className={`w-full rounded-t-lg cursor-pointer transition-colors ${
                       isToday
-                        ? 'bg-[#0033A0]'
+                        ? metGoal
+                          ? 'bg-gradient-to-t from-emerald-600 to-emerald-400'
+                          : 'bg-gradient-to-t from-[#0033A0] to-[#0047CC]'
                         : day.completed > 0
-                          ? 'bg-[#0033A0]/50'
-                          : darkMode ? 'bg-slate-700' : 'bg-slate-200'
+                          ? metGoal
+                            ? darkMode ? 'bg-emerald-500/40' : 'bg-emerald-500/30'
+                            : darkMode ? 'bg-[#0033A0]/60' : 'bg-[#0033A0]/40'
+                          : darkMode ? 'bg-white/10' : 'bg-slate-200'
                     }`}
                   />
                 </div>
@@ -211,24 +321,62 @@ export default function WeeklyProgressChart({
           <div className="flex justify-between">
             {weekData.map((day, index) => {
               const isToday = index === weekData.length - 1;
+              const isHovered = hoveredDay === index;
               return (
                 <div key={day.day} className="flex-1 text-center">
-                  <span className={`text-xs font-medium ${
-                    isToday
+                  <span className={`text-xs font-medium transition-colors ${
+                    isHovered
                       ? 'text-[#0033A0]'
-                      : darkMode ? 'text-slate-400' : 'text-slate-500'
+                      : isToday
+                        ? 'text-[#0033A0]'
+                        : darkMode ? 'text-white/40' : 'text-slate-500'
                   }`}>
                     {day.shortDay}
                   </span>
+                  {isToday && (
+                    <div className="flex justify-center mt-1">
+                      <div className="w-1 h-1 rounded-full bg-[#0033A0]" />
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
 
+        {/* Goal progress */}
+        <div className={`mx-4 mb-2 p-3 rounded-xl ${
+          darkMode ? 'bg-white/5' : 'bg-slate-50'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-xs font-medium ${darkMode ? 'text-white/60' : 'text-slate-600'}`}>
+              Days goal met
+            </span>
+            <span className={`text-xs font-semibold ${
+              stats.daysMetGoal >= 4 ? 'text-emerald-500' :
+              stats.daysMetGoal >= 2 ? 'text-amber-500' :
+              darkMode ? 'text-white/40' : 'text-slate-400'
+            }`}>
+              {stats.daysMetGoal}/5
+            </span>
+          </div>
+          <div className="flex gap-1">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div
+                key={i}
+                className={`flex-1 h-1.5 rounded-full ${
+                  i < stats.daysMetGoal
+                    ? 'bg-emerald-500'
+                    : darkMode ? 'bg-white/10' : 'bg-slate-200'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* Footer tip */}
         <div className={`px-4 py-3 text-center text-xs ${
-          darkMode ? 'bg-slate-700/50 text-slate-400' : 'bg-slate-50 text-slate-500'
+          darkMode ? 'bg-white/5 text-white/50' : 'bg-slate-50 text-slate-500'
         }`}>
           {stats.trend === 'up' && "Great job! You're completing more tasks than last week."}
           {stats.trend === 'down' && "Keep going! Consistency is key."}
