@@ -13,6 +13,9 @@ interface TemplatePickerProps {
   users: string[];
   darkMode?: boolean;
   compact?: boolean; // Show as subtle icon button instead of full dropdown button
+  isOpen?: boolean; // Optional controlled open state
+  onOpenChange?: (open: boolean) => void; // Callback when open state changes
+  hideTrigger?: boolean; // Hide the trigger button (for use when controlled externally)
   onSelectTemplate: (
     text: string,
     priority: TodoPriority,
@@ -26,10 +29,24 @@ export default function TemplatePicker({
   users,
   darkMode = true,
   compact = false,
+  isOpen: controlledIsOpen,
+  onOpenChange,
+  hideTrigger = false,
   onSelectTemplate,
 }: TemplatePickerProps) {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  // Use controlled state if provided, otherwise use internal state
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+    if (controlledIsOpen === undefined) {
+      setInternalIsOpen(open);
+    }
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -152,34 +169,36 @@ export default function TemplatePicker({
 
   return (
     <div className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-label={compact ? 'My Templates' : undefined}
-        title={compact ? 'My Templates - Create and use custom task templates' : undefined}
-        className={compact
-          ? `flex items-center justify-center p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] touch-manipulation ${
-              darkMode
-                ? 'text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)]'
-                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-            }`
-          : `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
-              darkMode
-                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`
-        }
-      >
-        <FileText className={compact ? 'w-4 h-4' : 'w-4 h-4'} />
-        {!compact && (
-          <>
-            <span>Templates</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </>
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-label={compact ? 'My Templates' : undefined}
+          title={compact ? 'My Templates - Create and use custom task templates' : undefined}
+          className={compact
+            ? `flex items-center justify-center p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] touch-manipulation ${
+                darkMode
+                  ? 'text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)]'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`
+            : `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${
+                darkMode
+                  ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`
+          }
+        >
+          <FileText className={compact ? 'w-4 h-4' : 'w-4 h-4'} />
+          {!compact && (
+            <>
+              <span>Templates</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </>
+          )}
+        </button>
+      )}
 
       {isOpen && (
         <>
@@ -309,9 +328,35 @@ export default function TemplatePicker({
                 </div>
               ) : templates.length === 0 ? (
                 <div className={`p-8 text-center ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No templates yet</p>
-                  <p className="text-xs mt-1">Create one to get started!</p>
+                  <div
+                    className={`w-14 h-14 mx-auto mb-4 rounded-xl flex items-center justify-center ${
+                      darkMode ? 'bg-slate-800/50' : 'bg-slate-100'
+                    }`}
+                  >
+                    <FileText className={`w-7 h-7 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  </div>
+                  <p className={`font-medium text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    No templates yet
+                  </p>
+                  <p className={`text-xs mt-1.5 max-w-[180px] mx-auto ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                    Save time by creating reusable task templates
+                  </p>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      // Trigger create template action - users can create from task menu
+                    }}
+                    className={`mt-4 px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
+                      darkMode
+                        ? 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Plus className="w-3.5 h-3.5" />
+                      Create your first template
+                    </span>
+                  </button>
                 </div>
               ) : (
                 <>

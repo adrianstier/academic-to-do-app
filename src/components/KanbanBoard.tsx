@@ -50,7 +50,11 @@ import {
   File,
   Image,
   Video,
-  Mic
+  Mic,
+  AlertTriangle,
+  Calendar,
+  CalendarClock,
+  CalendarX,
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG, Subtask, RecurrencePattern, Attachment } from '@/types/todo';
 import Celebration from './Celebration';
@@ -79,6 +83,8 @@ interface KanbanBoardProps {
   showBulkActions?: boolean;
   selectedTodos?: Set<string>;
   onSelectTodo?: (id: string, selected: boolean) => void;
+  // Sectioned view - groups tasks by date within each column
+  useSectionedView?: boolean;
 }
 
 const columns: { id: TodoStatus; title: string; Icon: LucideIcon; color: string; bgColor: string }[] = [
@@ -1274,6 +1280,7 @@ export default function KanbanBoard({
   showBulkActions,
   selectedTodos,
   onSelectTodo,
+  useSectionedView = false,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -1339,6 +1346,42 @@ export default function KanbanBoard({
         if (aDue !== bDue) return aDue - bDue;
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
+  };
+
+  // Date section types for grouping within columns
+  type DateSection = 'overdue' | 'today' | 'upcoming' | 'no_date';
+
+  const getDateSection = (todo: Todo): DateSection => {
+    if (!todo.due_date) return 'no_date';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(todo.due_date);
+    dueDate.setHours(0, 0, 0, 0);
+
+    if (dueDate < today && !todo.completed) return 'overdue';
+    if (dueDate.getTime() === today.getTime()) return 'today';
+    return 'upcoming';
+  };
+
+  const dateSectionConfig: Record<DateSection, { label: string; color: string; bgColor: string; Icon: LucideIcon }> = {
+    overdue: { label: 'Overdue', color: 'var(--error)', bgColor: 'var(--error-light)', Icon: AlertTriangle },
+    today: { label: 'Today', color: 'var(--accent)', bgColor: 'var(--accent-light)', Icon: Calendar },
+    upcoming: { label: 'Upcoming', color: 'var(--success)', bgColor: 'var(--success-light)', Icon: CalendarClock },
+    no_date: { label: 'No Date', color: 'var(--text-muted)', bgColor: 'var(--surface-2)', Icon: CalendarX },
+  };
+
+  const groupTodosByDateSection = (columnTodos: Todo[]): Record<DateSection, Todo[]> => {
+    const groups: Record<DateSection, Todo[]> = {
+      overdue: [],
+      today: [],
+      upcoming: [],
+      no_date: [],
+    };
+    columnTodos.forEach(todo => {
+      const section = getDateSection(todo);
+      groups[section].push(todo);
+    });
+    return groups;
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -1452,40 +1495,111 @@ export default function KanbanBoard({
                 strategy={verticalListSortingStrategy}
               >
                 <DroppableColumn id={column.id} color={column.color} isActive={!!activeId} isCurrentOver={overId === column.id}>
-                  <AnimatePresence mode="popLayout">
-                    {columnTodos.map((todo) => (
-                      <SortableCard
-                        key={todo.id}
-                        todo={todo}
-                        users={users}
-                        onDelete={onDelete}
-                        onAssign={onAssign}
-                        onSetDueDate={onSetDueDate}
-                        onSetPriority={onSetPriority}
-                        onCardClick={setSelectedTodo}
-                        showBulkActions={showBulkActions}
-                        isSelected={selectedTodos?.has(todo.id)}
-                        onSelectTodo={onSelectTodo}
-                      />
-                    ))}
-                  </AnimatePresence>
+                  {useSectionedView ? (
+                    // Sectioned view - group by date
+                    (() => {
+                      const groupedTodos = groupTodosByDateSection(columnTodos);
+                      const sectionOrder: DateSection[] = ['overdue', 'today', 'upcoming', 'no_date'];
+                      const hasAnyTodos = columnTodos.length > 0;
 
-                  {columnTodos.length === 0 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex flex-col items-center justify-center py-8 sm:py-12 text-slate-400 dark:text-slate-500"
-                    >
-                      <div
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3"
-                        style={{ backgroundColor: column.bgColor }}
-                      >
-                        <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
-                      </div>
-                      <p className="text-xs sm:text-sm font-medium">
-                        {column.id === 'done' ? 'Complete tasks to see them here' : 'Drop tasks here'}
-                      </p>
-                    </motion.div>
+                      return (
+                        <>
+                          {sectionOrder.map((sectionKey) => {
+                            const sectionTodos = groupedTodos[sectionKey];
+                            const config = dateSectionConfig[sectionKey];
+                            if (sectionTodos.length === 0) return null;
+
+                            return (
+                              <div key={sectionKey} className="mb-2">
+                                {/* Section header */}
+                                <div
+                                  className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded-md mb-1"
+                                  style={{ backgroundColor: config.bgColor, color: config.color }}
+                                >
+                                  <config.Icon className="w-3.5 h-3.5" />
+                                  <span>{config.label}</span>
+                                  <span className="ml-auto opacity-70">({sectionTodos.length})</span>
+                                </div>
+                                {/* Section cards */}
+                                <AnimatePresence mode="popLayout">
+                                  {sectionTodos.map((todo) => (
+                                    <SortableCard
+                                      key={todo.id}
+                                      todo={todo}
+                                      users={users}
+                                      onDelete={onDelete}
+                                      onAssign={onAssign}
+                                      onSetDueDate={onSetDueDate}
+                                      onSetPriority={onSetPriority}
+                                      onCardClick={setSelectedTodo}
+                                      showBulkActions={showBulkActions}
+                                      isSelected={selectedTodos?.has(todo.id)}
+                                      onSelectTodo={onSelectTodo}
+                                    />
+                                  ))}
+                                </AnimatePresence>
+                              </div>
+                            );
+                          })}
+                          {!hasAnyTodos && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="flex flex-col items-center justify-center py-8 sm:py-12 text-slate-400 dark:text-slate-500"
+                            >
+                              <div
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3"
+                                style={{ backgroundColor: column.bgColor }}
+                              >
+                                <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
+                              </div>
+                              <p className="text-xs sm:text-sm font-medium">
+                                {column.id === 'done' ? 'Complete tasks to see them here' : 'Drop tasks here'}
+                              </p>
+                            </motion.div>
+                          )}
+                        </>
+                      );
+                    })()
+                  ) : (
+                    // Flat view - no sections
+                    <>
+                      <AnimatePresence mode="popLayout">
+                        {columnTodos.map((todo) => (
+                          <SortableCard
+                            key={todo.id}
+                            todo={todo}
+                            users={users}
+                            onDelete={onDelete}
+                            onAssign={onAssign}
+                            onSetDueDate={onSetDueDate}
+                            onSetPriority={onSetPriority}
+                            onCardClick={setSelectedTodo}
+                            showBulkActions={showBulkActions}
+                            isSelected={selectedTodos?.has(todo.id)}
+                            onSelectTodo={onSelectTodo}
+                          />
+                        ))}
+                      </AnimatePresence>
+
+                      {columnTodos.length === 0 && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex flex-col items-center justify-center py-8 sm:py-12 text-slate-400 dark:text-slate-500"
+                        >
+                          <div
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 sm:mb-3"
+                            style={{ backgroundColor: column.bgColor }}
+                          >
+                            <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
+                          </div>
+                          <p className="text-xs sm:text-sm font-medium">
+                            {column.id === 'done' ? 'Complete tasks to see them here' : 'Drop tasks here'}
+                          </p>
+                        </motion.div>
+                      )}
+                    </>
                   )}
                 </DroppableColumn>
               </SortableContext>

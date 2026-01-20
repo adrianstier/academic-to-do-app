@@ -46,6 +46,7 @@ import {
 } from '@/lib/orchestratorIntegration';
 // Re-export utilities for backwards compatibility
 export { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
+import { isDashboardAutoOpenDisabled, setDashboardAutoOpenDisabled } from '@/lib/dashboardUtils';
 
 interface DashboardModalProps {
   isOpen: boolean;
@@ -93,6 +94,7 @@ export default function DashboardModal({
 }: DashboardModalProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'team'>('overview');
+  const [dontShowOnLogin, setDontShowOnLogin] = useState(() => isDashboardAutoOpenDisabled());
 
   // Check if user has team members (is a manager)
   const hasTeam = users.length > 1;
@@ -256,6 +258,11 @@ export default function DashboardModal({
   const handleAction = (action: () => void) => {
     onClose();
     action();
+  };
+
+  const handleDontShowOnLoginChange = (checked: boolean) => {
+    setDontShowOnLogin(checked);
+    setDashboardAutoOpenDisabled(checked);
   };
 
   const getInsightIcon = (type: ProductivityInsight['type']) => {
@@ -777,10 +784,24 @@ export default function DashboardModal({
 
                       {/* Empty state for insights */}
                       {aiData.neglectedTasks.length === 0 && aiData.insights.length === 0 && (
-                        <div className={`text-center py-8 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p className="text-sm font-medium">All caught up!</p>
-                          <p className="text-xs mt-1">No special insights right now. Keep up the good work!</p>
+                        <div className="text-center py-10">
+                          <motion.div
+                            className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                              darkMode
+                                ? 'bg-gradient-to-br from-emerald-500/20 to-green-500/10 border border-emerald-500/30'
+                                : 'bg-gradient-to-br from-emerald-100 to-green-50 border border-emerald-200'
+                            }`}
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                          >
+                            <Award className={`w-8 h-8 ${darkMode ? 'text-emerald-400' : 'text-emerald-500'}`} />
+                          </motion.div>
+                          <p className={`font-semibold text-base ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                            All caught up!
+                          </p>
+                          <p className={`text-sm mt-2 max-w-[200px] mx-auto ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            No special insights right now. Keep up the excellent work!
+                          </p>
                         </div>
                       )}
 
@@ -1160,10 +1181,24 @@ export default function DashboardModal({
 
                       {/* Empty state for team tab */}
                       {managerData.memberStats.length === 0 && (
-                        <div className={`text-center py-8 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p className="text-sm font-medium">No team data yet</p>
-                          <p className="text-xs mt-1">Assign tasks to team members to see their stats here.</p>
+                        <div className="text-center py-10">
+                          <motion.div
+                            className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                              darkMode
+                                ? 'bg-gradient-to-br from-blue-500/20 to-indigo-500/10 border border-blue-500/30'
+                                : 'bg-gradient-to-br from-blue-100 to-indigo-50 border border-blue-200'
+                            }`}
+                            animate={{ y: [-2, 2, -2] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                          >
+                            <Users className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} />
+                          </motion.div>
+                          <p className={`font-semibold text-base ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                            No team data yet
+                          </p>
+                          <p className={`text-sm mt-2 max-w-[220px] mx-auto ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            Assign tasks to team members to see their productivity stats here
+                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -1192,6 +1227,23 @@ export default function DashboardModal({
                     <span className="text-sm">Add Task</span>
                   </button>
                 </div>
+
+                {/* Don't show on login checkbox */}
+                <label className={`flex items-center gap-2 pt-3 cursor-pointer select-none ${
+                  darkMode ? 'text-slate-400' : 'text-slate-500'
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={dontShowOnLogin}
+                    onChange={(e) => handleDontShowOnLoginChange(e.target.checked)}
+                    className={`w-4 h-4 rounded border-2 cursor-pointer transition-colors ${
+                      darkMode
+                        ? 'bg-slate-700 border-slate-600 checked:bg-[#0033A0] checked:border-[#0033A0]'
+                        : 'bg-white border-slate-300 checked:bg-[#0033A0] checked:border-[#0033A0]'
+                    }`}
+                  />
+                  <span className="text-xs">Don&apos;t show automatically on login</span>
+                </label>
               </div>
             </div>
           </motion.div>

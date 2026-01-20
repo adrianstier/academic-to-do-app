@@ -1,194 +1,136 @@
 'use client';
 
 import { memo } from 'react';
-import {
-  LayoutList, LayoutGrid, Sun, Moon, BarChart2, Activity, Target, Home, Archive
-} from 'lucide-react';
-import { AuthUser, OWNER_USERNAME, ViewMode } from '@/types/todo';
+import { LayoutList, LayoutGrid } from 'lucide-react';
+import { AuthUser, ViewMode } from '@/types/todo';
 import UserSwitcher from '../UserSwitcher';
+import AppMenu from '../AppMenu';
+import FocusModeToggle from '../FocusModeToggle';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useTodoStore } from '@/store/todoStore';
 
 interface TodoHeaderProps {
   currentUser: AuthUser;
   onUserChange: (user: AuthUser | null) => void;
-  onOpenDashboard?: () => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
-  stats: {
-    active: number;
-    dueToday: number;
-    overdue: number;
-  };
   canViewArchive: boolean;
   setShowActivityFeed: (show: boolean) => void;
   setShowArchiveView: (show: boolean) => void;
   setShowStrategicDashboard: (show: boolean) => void;
   setShowWeeklyChart: (show: boolean) => void;
+  setShowShortcuts: (show: boolean) => void;
+  showAdvancedFilters: boolean;
+  setShowAdvancedFilters: (show: boolean) => void;
+  onResetFilters: () => void;
 }
 
+/**
+ * TodoHeader - Unified single-row header component
+ *
+ * Layout:
+ * - Left side: View toggle (List/Board), Focus mode toggle
+ * - Right side: User switcher, Menu button
+ *
+ * Hidden in focus mode except for the focus mode toggle button.
+ */
 function TodoHeader({
   currentUser,
   onUserChange,
-  onOpenDashboard,
   viewMode,
   setViewMode,
-  stats,
   canViewArchive,
   setShowActivityFeed,
   setShowArchiveView,
   setShowStrategicDashboard,
   setShowWeeklyChart,
+  setShowShortcuts,
+  showAdvancedFilters,
+  setShowAdvancedFilters,
+  onResetFilters,
 }: TodoHeaderProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const darkMode = theme === 'dark';
   const userName = currentUser.name;
+  const { focusMode } = useTodoStore((state) => state.ui);
 
   return (
-    <header className={`sticky top-0 z-40 shadow-[var(--shadow-lg)] border-b ${
-      darkMode
-        ? 'bg-[var(--gradient-hero)] border-white/5'
-        : 'bg-white border-[var(--border)]'
-    }`}>
-      <div className={`mx-auto px-4 sm:px-6 py-4 ${viewMode === 'kanban' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
-        <div className="flex items-center justify-between gap-3">
-          {/* Logo & Context Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Dashboard button */}
-            {onOpenDashboard && (
-              <button
-                onClick={onOpenDashboard}
-                className={`p-2 rounded-xl transition-all flex-shrink-0 ${
+    <header
+      className={`sticky top-0 z-40 border-b ${
+        darkMode
+          ? 'bg-[var(--surface)] border-white/5'
+          : 'bg-white border-[var(--border)]'
+      }`}
+    >
+      <div className="mx-auto px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          {/* Left side: View toggle & Focus mode toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* View toggle - hidden in focus mode */}
+            {!focusMode && (
+              <div
+                className={`flex backdrop-blur-sm rounded-lg sm:rounded-xl p-0.5 sm:p-1 border ${
                   darkMode
-                    ? 'hover:bg-white/10 text-white/70 hover:text-white'
-                    : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]'
+                    ? 'bg-white/8 border-white/10'
+                    : 'bg-[var(--surface-2)] border-[var(--border)]'
                 }`}
-                title="Daily Summary"
               >
-                <Home className="w-5 h-5" />
-              </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-medium transition-all duration-200 ${
+                    viewMode === 'list'
+                      ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
+                      : darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
+                  }`}
+                  aria-pressed={viewMode === 'list'}
+                  aria-label="List view"
+                >
+                  <LayoutList className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">List</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-xs font-medium transition-all duration-200 ${
+                    viewMode === 'kanban'
+                      ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
+                      : darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
+                  }`}
+                  aria-pressed={viewMode === 'kanban'}
+                  aria-label="Board view"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Board</span>
+                </button>
+              </div>
             )}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center flex-shrink-0 shadow-lg" style={{ boxShadow: '0 4px 12px rgba(0, 51, 160, 0.35)' }}>
-              <span className="text-white font-bold text-base">B</span>
-            </div>
-            <div className="min-w-0">
-              <h1 className={`text-base font-bold truncate tracking-tight ${darkMode ? 'text-white' : 'text-[var(--brand-navy)]'}`}>Bealer Agency</h1>
-              <p className={`text-xs truncate ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>
-                {stats.active} active{stats.dueToday > 0 && ` • ${stats.dueToday} due today`}{stats.overdue > 0 && ` • ${stats.overdue} overdue`}
-              </p>
-            </div>
+
+            {/* Focus Mode Toggle - always visible */}
+            <FocusModeToggle />
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* View toggle with labels */}
-            <div className={`flex backdrop-blur-sm rounded-xl p-1 border ${
-              darkMode
-                ? 'bg-white/8 border-white/10'
-                : 'bg-[var(--surface-2)] border-[var(--border)]'
-            }`}>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                  viewMode === 'list'
-                    ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
-                    : darkMode
-                      ? 'text-white/70 hover:text-white hover:bg-white/10'
-                      : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
-                }`}
-                aria-pressed={viewMode === 'list'}
-                aria-label="List view"
-              >
-                <LayoutList className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">List</span>
-              </button>
-              <button
-                onClick={() => setViewMode('kanban')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                  viewMode === 'kanban'
-                    ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
-                    : darkMode
-                      ? 'text-white/70 hover:text-white hover:bg-white/10'
-                      : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
-                }`}
-                aria-pressed={viewMode === 'kanban'}
-                aria-label="Board view"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Board</span>
-              </button>
+          {/* Right side: User switcher & Menu - hidden in focus mode */}
+          {!focusMode && (
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
+
+              <AppMenu
+                userName={userName}
+                canViewArchive={canViewArchive}
+                onShowActivityFeed={() => setShowActivityFeed(true)}
+                onShowWeeklyChart={() => setShowWeeklyChart(true)}
+                onShowStrategicDashboard={() => setShowStrategicDashboard(true)}
+                onShowArchive={() => setShowArchiveView(true)}
+                onShowShortcuts={() => setShowShortcuts(true)}
+                onShowAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                onResetFilters={onResetFilters}
+                showAdvancedFilters={showAdvancedFilters}
+              />
             </div>
-
-            {/* Activity Feed - accessible to all users */}
-            <button
-              onClick={() => setShowActivityFeed(true)}
-              className={`p-2 rounded-xl transition-all duration-200 ${
-                darkMode
-                  ? 'text-white/60 hover:text-white hover:bg-white/10'
-                  : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-              }`}
-              aria-label="View activity feed"
-            >
-              <Activity className="w-4 h-4" />
-            </button>
-
-            {canViewArchive && (
-              <button
-                onClick={() => setShowArchiveView(true)}
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  darkMode
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                }`}
-                aria-label="View archive"
-                title="Archived tasks"
-              >
-                <Archive className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Strategic Dashboard - Owner only */}
-            {userName === OWNER_USERNAME && (
-              <button
-                onClick={() => setShowStrategicDashboard(true)}
-                className={`p-2 rounded-xl transition-all duration-200 ${
-                  darkMode
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-                }`}
-                aria-label="Strategic Goals Dashboard"
-                title="Strategic Goals"
-              >
-                <Target className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Weekly progress chart */}
-            <button
-              onClick={() => setShowWeeklyChart(true)}
-              className={`p-2 rounded-xl transition-all duration-200 ${
-                darkMode
-                  ? 'text-white/60 hover:text-white hover:bg-white/10'
-                  : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-              }`}
-              aria-label="View weekly progress"
-            >
-              <BarChart2 className="w-4 h-4" />
-            </button>
-
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-xl transition-all duration-200 ${
-                darkMode
-                  ? 'text-white/60 hover:text-white hover:bg-white/10'
-                  : 'text-[var(--text-muted)] hover:text-[var(--brand-blue)] hover:bg-[var(--surface-2)]'
-              }`}
-              aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-            >
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
-          </div>
+          )}
         </div>
       </div>
     </header>

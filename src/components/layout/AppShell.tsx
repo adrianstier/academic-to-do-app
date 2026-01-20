@@ -378,7 +378,6 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: '📋' },
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'activity', label: 'Activity', icon: '⚡' },
     { id: 'chat', label: 'Messages', icon: '💬' },
   ];
 

@@ -298,12 +298,38 @@ function ReactionsSummary({ reactions }: { reactions: MessageReaction[] }) {
   );
 }
 
+// Constants for resizable panel
+const CHAT_PANEL_MIN_WIDTH = 280;
+const CHAT_PANEL_MAX_WIDTH = 600;
+const CHAT_PANEL_DEFAULT_WIDTH = 420;
+const CHAT_PANEL_WIDTH_KEY = 'chat_panel_width';
+
 export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLinkClick, todosMap, docked = false, initialConversation, onConversationChange }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   // When docked, always show open state; otherwise start closed
   const [isOpen, setIsOpen] = useState(docked);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  // Resizable panel state
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    if (typeof window === 'undefined') return CHAT_PANEL_DEFAULT_WIDTH;
+    try {
+      const stored = localStorage.getItem(CHAT_PANEL_WIDTH_KEY);
+      if (stored) {
+        const width = parseInt(stored, 10);
+        if (!isNaN(width) && width >= CHAT_PANEL_MIN_WIDTH && width <= CHAT_PANEL_MAX_WIDTH) {
+          return width;
+        }
+      }
+    } catch {
+      // localStorage not available
+    }
+    return CHAT_PANEL_DEFAULT_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(CHAT_PANEL_DEFAULT_WIDTH);
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -407,6 +433,55 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   useEffect(() => {
     localStorage.setItem('chat_dnd_mode', isDndMode.toString());
   }, [isDndMode]);
+
+  // Persist panel width to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_PANEL_WIDTH_KEY, panelWidth.toString());
+    } catch {
+      // localStorage not available
+    }
+  }, [panelWidth]);
+
+  // Handle resize mouse events
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = panelWidth;
+  }, [panelWidth]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Panel is on the right, so dragging left (negative delta) increases width
+      const delta = resizeStartX.current - e.clientX;
+      const newWidth = Math.min(
+        CHAT_PANEL_MAX_WIDTH,
+        Math.max(CHAT_PANEL_MIN_WIDTH, resizeStartWidth.current + delta)
+      );
+      setPanelWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    // Add cursor style to body during resize
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
 
   // Auto-clear rate limit warning
   useEffect(() => {
@@ -1229,6 +1304,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   const markMessagesAsRead = useCallback(async (messageIds: string[]) => {
     if (messageIds.length === 0) return;
 
+    // Optimistic update - immediately update local state
     setMessages(prev => prev.map(m => {
       if (messageIds.includes(m.id) && m.created_by !== currentUser.name) {
         const readBy = m.read_by || [];
@@ -1239,25 +1315,41 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
       return m;
     }));
 
-    // Use ref to get current messages to avoid stale closure
-    const currentMessages = messagesRef.current;
-    const updatePromises = messageIds
-      .map(messageId => {
-        const message = currentMessages.find(m => m.id === messageId);
-        if (message && message.created_by !== currentUser.name) {
-          const readBy = message.read_by || [];
-          if (!readBy.includes(currentUser.name)) {
-            return supabase
-              .from('messages')
-              .update({ read_by: [...readBy, currentUser.name] })
-              .eq('id', messageId);
+    // Use RPC function to atomically append to read_by array
+    // This avoids race conditions when multiple tabs mark the same message as read
+    try {
+      const updatePromises = messageIds.map(async (messageId) => {
+        // Use raw SQL via rpc to safely append to array without race conditions
+        // Falls back to regular update if rpc not available
+        const { error } = await supabase.rpc('mark_message_read', {
+          p_message_id: messageId,
+          p_user_name: currentUser.name
+        });
+        
+        // If RPC doesn't exist, fall back to regular update
+        if (error?.code === '42883') { // function does not exist
+          const currentMessages = messagesRef.current;
+          const message = currentMessages.find(m => m.id === messageId);
+          if (message && message.created_by !== currentUser.name) {
+            const readBy = message.read_by || [];
+            if (!readBy.includes(currentUser.name)) {
+              await supabase
+                .from('messages')
+                .update({ read_by: [...readBy, currentUser.name] })
+                .eq('id', messageId);
+            }
           }
+        } else if (error) {
+          logger.error('Error marking message as read', error, { component: 'ChatPanel', messageId });
         }
-        return null;
-      })
-      .filter(Boolean);
+      });
 
-    await Promise.all(updatePromises);
+      await Promise.all(updatePromises);
+    } catch (err) {
+      logger.error('Error in markMessagesAsRead', err, { component: 'ChatPanel' });
+      // Don't revert optimistic update - user experience is better with stale read state
+      // than flickering UI. The next page load will correct it if needed.
+    }
   }, [currentUser.name]);
 
   // Mark messages as read when viewing conversation - intentional side effect
@@ -1484,8 +1576,16 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                 className="flex-1 overflow-y-auto px-3 py-2 space-y-2"
               >
                 {filteredMessages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-white/40 text-sm">
-                    No messages yet
+                  <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                    <motion.div
+                      className="w-14 h-14 rounded-2xl bg-white/[0.06] border border-white/[0.1] flex items-center justify-center mb-4"
+                      animate={{ y: [-3, 3, -3] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <MessageSquare className="w-7 h-7 text-white/30" />
+                    </motion.div>
+                    <p className="font-medium text-white/70 text-sm">No messages yet</p>
+                    <p className="text-xs mt-1.5 text-white/40">Start the conversation below</p>
                   </div>
                 ) : (
                   filteredMessages.map((message, index) => {
@@ -1628,11 +1728,34 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
               height: isMinimized ? 'auto' : 'min(650px, 85vh)'
             }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-6 right-6 z-50 w-[420px] max-w-[calc(100vw-2rem)] flex flex-col"
+            transition={{ duration: isResizing ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-6 right-6 z-50 max-w-[calc(100vw-2rem)] flex flex-col"
+            style={{ width: `${panelWidth}px` }}
             role="dialog"
             aria-label="Chat panel"
           >
+            {/* Resize handle on left edge */}
+            <div
+              onMouseDown={handleResizeMouseDown}
+              className={`absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize z-10 group/resize transition-colors duration-150 ${
+                isResizing ? 'bg-[var(--accent)]/50' : 'bg-transparent hover:bg-white/20'
+              }`}
+              style={{ borderRadius: '28px 0 0 28px' }}
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize chat panel"
+              aria-valuenow={panelWidth}
+              aria-valuemin={CHAT_PANEL_MIN_WIDTH}
+              aria-valuemax={CHAT_PANEL_MAX_WIDTH}
+            >
+              {/* Visual indicator line */}
+              <div
+                className={`absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-12 rounded-full transition-all duration-150 ${
+                  isResizing ? 'bg-[var(--accent)] h-16' : 'bg-white/20 group-hover/resize:bg-white/40 group-hover/resize:h-16'
+                }`}
+              />
+            </div>
+
             {/* Outer glow */}
             <div className="absolute -inset-[1px] bg-gradient-to-b from-[var(--accent)]/30 via-white/[0.08] to-white/[0.02] rounded-[28px] blur-[1px]" />
 
@@ -1963,11 +2086,27 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
 
                       {otherUsers.length === 0 && (
                         <div className="px-6 py-12 text-center">
-                          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
-                            <User className="w-8 h-8 text-white/20" />
-                          </div>
-                          <p className="font-medium text-white/80">No other users yet</p>
-                          <p className="text-sm mt-1 text-white/40">Invite teammates to start chatting</p>
+                          <motion.div
+                            className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/[0.1] flex items-center justify-center"
+                            animate={{ scale: [1, 1.05, 1] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                          >
+                            <Users className="w-8 h-8 text-[var(--accent)]/50" />
+                          </motion.div>
+                          <p className="font-semibold text-white/90 text-lg">No teammates yet</p>
+                          <p className="text-sm mt-2 text-white/50 max-w-[200px] mx-auto">
+                            Invite your team members to collaborate and chat in real-time
+                          </p>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="mt-5 px-5 py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-medium shadow-lg shadow-[var(--accent)]/20"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Plus className="w-4 h-4" />
+                              Invite Team
+                            </span>
+                          </motion.button>
                         </div>
                       )}
                     </div>
@@ -2010,15 +2149,43 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                             <p className="font-semibold text-white text-lg">
                               {searchQuery ? 'No messages found' : 'No messages yet'}
                             </p>
-                            <p className="text-sm mt-2 text-white/40">
+                            <p className="text-sm mt-2 text-white/50 max-w-xs">
                               {searchQuery
                                 ? 'Try a different search term'
                                 : conversation?.type === 'team'
-                                ? 'Be the first to say hello!'
+                                ? 'Be the first to say hello to the team!'
                                 : conversation?.type === 'dm'
                                 ? `Start a conversation with ${conversation.userName}`
-                                : 'Select a conversation'}
+                                : 'Select a conversation to get started'}
                             </p>
+                            {searchQuery ? (
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setSearchQuery('')}
+                                className="mt-5 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm font-medium transition-colors"
+                              >
+                                <span className="flex items-center gap-2">
+                                  <X className="w-4 h-4" />
+                                  Clear Search
+                                </span>
+                              </motion.button>
+                            ) : conversation && (
+                              <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  const input = document.querySelector('input[placeholder="Type a message..."]') as HTMLInputElement;
+                                  input?.focus();
+                                }}
+                                className="mt-5 px-5 py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-medium shadow-lg shadow-[var(--accent)]/20"
+                              >
+                                <span className="flex items-center gap-2">
+                                  <Send className="w-4 h-4" />
+                                  Start Conversation
+                                </span>
+                              </motion.button>
+                            )}
                           </div>
                         ) : (
                           <>

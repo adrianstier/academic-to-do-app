@@ -251,20 +251,38 @@ export default function AIInbox({
         {totalPending === 0 ? (
           /* Empty State */
           <div className="flex flex-col items-center justify-center h-full px-6 py-12">
-            <div
+            <motion.div
               className={`
-                w-16 h-16 rounded-2xl flex items-center justify-center mb-4
-                ${darkMode ? 'bg-white/5' : 'bg-[var(--surface-2)]'}
+                w-20 h-20 rounded-2xl flex items-center justify-center mb-5
+                ${darkMode
+                  ? 'bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent)]/5 border border-[var(--accent)]/20'
+                  : 'bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent)]/5 border border-[var(--accent)]/20'}
               `}
+              animate={{ y: [-3, 3, -3] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <Sparkles className={`w-8 h-8 ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`} />
-            </div>
-            <h2 className={`text-lg font-medium mb-2 ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
-              No items to review
+              <Inbox className={`w-10 h-10 ${darkMode ? 'text-[var(--accent)]/60' : 'text-[var(--accent)]'}`} />
+            </motion.div>
+            <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+              All caught up!
             </h2>
-            <p className={`text-sm text-center max-w-sm ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}`}>
-              When AI extracts tasks from emails, voicemails, or documents, they&apos;ll appear here for your review.
+            <p className={`text-sm text-center max-w-xs mb-6 ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}`}>
+              When AI extracts tasks from emails, voicemails, or documents, they will appear here for your review.
             </p>
+            <div className={`flex flex-wrap gap-3 justify-center text-xs ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5">
+                <Mail className="w-3.5 h-3.5" />
+                Emails
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5">
+                <Mic className="w-3.5 h-3.5" />
+                Voicemails
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5">
+                <FileText className="w-3.5 h-3.5" />
+                Documents
+              </span>
+            </div>
           </div>
         ) : (
           /* Category List */

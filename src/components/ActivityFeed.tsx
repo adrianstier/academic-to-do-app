@@ -516,14 +516,38 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
             </button>
           </div>
         ) : filteredActivities.length === 0 ? (
-          <div className="p-8 text-center text-[var(--text-muted)]">
-            <Activity className="w-10 h-10 mx-auto mb-3 opacity-50" />
-            <p className="font-medium">
+          <div className="p-10 text-center">
+            <div
+              className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                darkMode ? 'bg-white/5 border border-white/10' : 'bg-[var(--surface-2)] border border-[var(--border)]'
+              }`}
+            >
+              {filterType !== 'all' ? (
+                <Filter className={`w-8 h-8 ${darkMode ? 'text-white/30' : 'text-[var(--text-muted)]'}`} />
+              ) : (
+                <Activity className={`w-8 h-8 ${darkMode ? 'text-white/30' : 'text-[var(--text-muted)]'}`} />
+              )}
+            </div>
+            <p className={`font-semibold text-base ${darkMode ? 'text-white/80' : 'text-[var(--foreground)]'}`}>
               {filterType !== 'all' ? 'No matching activity' : 'No activity yet'}
             </p>
-            <p className="text-sm mt-1">
-              {filterType !== 'all' ? 'Try a different filter' : 'Task changes will appear here'}
+            <p className={`text-sm mt-2 max-w-[200px] mx-auto ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
+              {filterType !== 'all'
+                ? 'Try selecting a different filter to see more activity'
+                : 'When you or your team make changes to tasks, they will appear here'}
             </p>
+            {filterType !== 'all' && (
+              <button
+                onClick={() => setFilterType('all')}
+                className={`mt-5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  darkMode
+                    ? 'bg-white/10 hover:bg-white/15 text-white'
+                    : 'bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--foreground)]'
+                }`}
+              >
+                Show all activity
+              </button>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-[var(--border)]/50">

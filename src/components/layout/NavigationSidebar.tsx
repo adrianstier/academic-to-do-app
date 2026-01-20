@@ -84,6 +84,8 @@ export default function NavigationSidebar({
 
   // Track last seen notification timestamp
   const LAST_SEEN_KEY = 'notificationLastSeenAt';
+  // Track last seen activity timestamp for Activity nav badge
+  const ACTIVITY_LAST_SEEN_KEY = 'activityLastSeenAt';
 
   // Calculate unread notifications count
   const updateUnreadCount = useCallback(() => {
@@ -112,10 +114,52 @@ export default function NavigationSidebar({
     fetchCount();
   }, [currentUser.name]);
 
+  // Calculate unread activity count for Activity nav badge
+  const updateActivityCount = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const lastSeenStr = localStorage.getItem(ACTIVITY_LAST_SEEN_KEY);
+    const lastSeen = lastSeenStr ? new Date(lastSeenStr) : new Date(0);
+
+    const fetchActivityCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('activity_log')
+          .select('*', { count: 'exact', head: true })
+          .gt('created_at', lastSeen.toISOString());
+
+        if (!error && count !== null) {
+          setActivityCount(count);
+        }
+      } catch {
+        // Silently fail - not critical
+      }
+    };
+
+    fetchActivityCount();
+  }, []);
+
   // Update unread count on mount and when modal closes
   useEffect(() => {
     updateUnreadCount();
   }, [updateUnreadCount]);
+
+  // Update activity count on mount and when navigating away from activity view
+  useEffect(() => {
+    updateActivityCount();
+  }, [updateActivityCount]);
+
+  // Mark activity as seen when user navigates to the Activity view
+  useEffect(() => {
+    if (activeView === 'activity') {
+      // Mark as seen after a short delay to allow the view to load
+      const timeout = setTimeout(() => {
+        localStorage.setItem(ACTIVITY_LAST_SEEN_KEY, new Date().toISOString());
+        setActivityCount(0);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [activeView]);
 
   // Subscribe to real-time activity updates for badge count
   useEffect(() => {
@@ -142,6 +186,31 @@ export default function NavigationSidebar({
       supabase.removeChannel(channel);
     };
   }, [currentUser.name, notificationModalOpen]);
+
+  // Subscribe to real-time activity updates for Activity nav badge
+  useEffect(() => {
+    const channel = supabase
+      .channel('activity-nav-badge')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'activity_log',
+        },
+        () => {
+          // Only increment if not currently viewing activity
+          if (activeView !== 'activity') {
+            setActivityCount(prev => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeView]);
 
   // Handle notification click - navigate to task or activity view
   const handleNotificationClick = useCallback((activity: ActivityLogEntry) => {
@@ -262,26 +331,69 @@ export default function NavigationSidebar({
           )}
         </AnimatePresence>
 
-        {/* Collapse toggle - only visible when expanded */}
-        {isExpanded && (
-          <button
-            onClick={toggleSidebar}
-            className={`
-              p-1.5 rounded-lg transition-colors
-              ${darkMode
-                ? 'text-white/40 hover:text-white hover:bg-white/10'
-                : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }
-            `}
-            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </button>
-        )}
+        {/* Notification Bell - Prominent position in header */}
+        <div className="flex items-center gap-1">
+          <div className="relative">
+            <button
+              ref={notificationButtonRef}
+              onClick={() => setNotificationModalOpen(!notificationModalOpen)}
+              className={`
+                relative p-2 rounded-lg transition-colors
+                ${notificationModalOpen
+                  ? darkMode
+                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                    : 'bg-[var(--accent-light)] text-[var(--accent)]'
+                  : darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                }
+              `}
+              aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotifications > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full text-[10px] font-bold bg-[var(--danger)] text-white"
+                >
+                  {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                </motion.span>
+              )}
+            </button>
+
+            {/* Notification Modal */}
+            <NotificationModal
+              currentUserName={currentUser.name}
+              isOpen={notificationModalOpen}
+              onClose={() => setNotificationModalOpen(false)}
+              onActivityClick={handleNotificationClick}
+              onMarkAllRead={handleMarkAllRead}
+              anchorRef={notificationButtonRef}
+            />
+          </div>
+
+          {/* Collapse toggle - only visible when expanded */}
+          {isExpanded && (
+            <button
+              onClick={toggleSidebar}
+              className={`
+                p-1.5 rounded-lg transition-colors
+                ${darkMode
+                  ? 'text-white/40 hover:text-white hover:bg-white/10'
+                  : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                }
+              `}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ─── Search / Command Bar ─── */}
@@ -409,66 +521,22 @@ export default function NavigationSidebar({
         border-t px-3 py-3 space-y-2
         ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}
       `}>
-        {/* Quick settings */}
-        <div className="flex items-center gap-1">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className={`
-              flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg
-              transition-colors
-              ${darkMode
-                ? 'text-white/60 hover:text-white hover:bg-white/10'
-                : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }
-            `}
-            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {isExpanded && <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>}
-          </button>
-
-          {/* Notification Bell */}
-          <div className="relative">
-            <button
-              ref={notificationButtonRef}
-              onClick={() => setNotificationModalOpen(!notificationModalOpen)}
-              className={`
-                relative p-2 rounded-lg transition-colors
-                ${notificationModalOpen
-                  ? darkMode
-                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                    : 'bg-[var(--accent-light)] text-[var(--accent)]'
-                  : darkMode
-                    ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-                }
-              `}
-              aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
-            >
-              <Bell className="w-4 h-4" />
-              {unreadNotifications > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full text-[10px] font-bold bg-[var(--danger)] text-white"
-                >
-                  {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                </motion.span>
-              )}
-            </button>
-
-            {/* Notification Modal */}
-            <NotificationModal
-              currentUserName={currentUser.name}
-              isOpen={notificationModalOpen}
-              onClose={() => setNotificationModalOpen(false)}
-              onActivityClick={handleNotificationClick}
-              onMarkAllRead={handleMarkAllRead}
-              anchorRef={notificationButtonRef}
-            />
-          </div>
-        </div>
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className={`
+            w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+            transition-colors
+            ${darkMode
+              ? 'text-white/60 hover:text-white hover:bg-white/10'
+              : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+            }
+          `}
+          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {isExpanded && <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>}
+        </button>
 
         {/* User profile */}
         <div className={`

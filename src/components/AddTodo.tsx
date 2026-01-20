@@ -367,7 +367,17 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Cmd/Ctrl + Enter - Submit with AI enhancement
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+      e.preventDefault();
+      if (text.trim() && !isProcessing) {
+        handleAiClick();
+      }
+      return;
+    }
+
+    // Enter (without modifiers) - Quick add
+    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       if (text.trim() && !isProcessing) {
         onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined);

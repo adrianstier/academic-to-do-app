@@ -217,6 +217,14 @@ export default function NotificationModal({
     onClose();
   };
 
+  // Handle mark all as read button click
+  const handleMarkAllReadClick = useCallback(() => {
+    const now = new Date().toISOString();
+    localStorage.setItem(LAST_SEEN_KEY, now);
+    setLastSeenAt(now);
+    onMarkAllRead?.();
+  }, [onMarkAllRead]);
+
   // Calculate position based on anchor element
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
@@ -295,19 +303,36 @@ export default function NotificationModal({
                 </span>
               )}
             </div>
-            <button
-              onClick={onClose}
-              className={`
-                p-1.5 rounded-lg transition-colors
-                ${darkMode
-                  ? 'text-white/40 hover:text-white hover:bg-white/10'
-                  : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-                }
-              `}
-              aria-label="Close notifications"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllReadClick}
+                  className={`
+                    px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors
+                    ${darkMode
+                      ? 'text-[var(--accent)] hover:bg-[var(--accent)]/10'
+                      : 'text-[var(--accent)] hover:bg-[var(--accent-light)]'
+                    }
+                  `}
+                  aria-label="Mark all notifications as read"
+                >
+                  Mark all as read
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className={`
+                  p-1.5 rounded-lg transition-colors
+                  ${darkMode
+                    ? 'text-white/40 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                  }
+                `}
+                aria-label="Close notifications"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Content */}
@@ -335,13 +360,23 @@ export default function NotificationModal({
                 </button>
               </div>
             ) : activities.length === 0 ? (
-              <div className="p-8 text-center">
-                <Bell className="w-10 h-10 mx-auto mb-3 opacity-30 text-[var(--text-muted)]" />
-                <p className={`font-medium ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>
+              <div className="p-10 text-center">
+                <motion.div
+                  className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                    darkMode
+                      ? 'bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10'
+                      : 'bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200'
+                  }`}
+                  animate={{ scale: [1, 1.03, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <BellRing className={`w-8 h-8 ${darkMode ? 'text-white/30' : 'text-slate-400'}`} />
+                </motion.div>
+                <p className={`font-semibold text-base ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
                   No notifications yet
                 </p>
-                <p className="text-sm mt-1 text-[var(--text-muted)]">
-                  Activity will appear here
+                <p className={`text-sm mt-2 max-w-[200px] mx-auto ${darkMode ? 'text-white/40' : 'text-slate-500'}`}>
+                  When there is activity on your tasks, you will be notified here
                 </p>
               </div>
             ) : (

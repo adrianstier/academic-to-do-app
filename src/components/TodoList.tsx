@@ -12,7 +12,7 @@ import AddTaskModal from './AddTaskModal';
 import KanbanBoard from './KanbanBoard';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
-import { useTodoData, useFilters, useBulkActions, useIsDesktopWide } from '@/hooks';
+import { useTodoData, useFilters, useBulkActions, useIsDesktopWide, useEscapeKey } from '@/hooks';
 import {
   DndContext,
   closestCenter,
@@ -35,20 +35,19 @@ import ConfirmDialog from './ConfirmDialog';
 import EmptyState from './EmptyState';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal';
 import PullToRefresh from './PullToRefresh';
-import AppMenu from './AppMenu';
 import StatusLine from './StatusLine';
 import BottomTabs from './BottomTabs';
-import FocusModeToggle, { ExitFocusModeButton } from './FocusModeToggle';
+import { ExitFocusModeButton } from './FocusModeToggle';
+import TodoHeader from './todo/TodoHeader';
 import TaskSections, { useShouldUseSections } from './TaskSections';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  LayoutList, LayoutGrid, Wifi, WifiOff, Search,
+  Wifi, WifiOff, Search,
   ArrowUpDown, User, AlertTriangle, CheckSquare,
   Trash2, X, ChevronDown, GitMerge, Layers,
-  Paperclip, Filter, RotateCcw, Check, Home, FileText
+  Paperclip, Filter, RotateCcw, Check, FileText, MoreHorizontal
 } from 'lucide-react';
 import { AuthUser } from '@/types/todo';
-import UserSwitcher from './UserSwitcher';
 import SaveTemplateModal from './SaveTemplateModal';
 import TemplatePicker from './TemplatePicker';
 import ArchivedTaskModal from './ArchivedTaskModal';
@@ -166,6 +165,15 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
   // Sectioned view toggle (Overdue/Today/Upcoming/No Date grouping)
   const [useSectionedView, setUseSectionedView] = useState(true);
+
+  // "More" dropdown state for overflow menu in filter bar
+  const [showMoreDropdown, setShowMoreDropdown] = useState(false);
+
+  // Separate state to control showing TemplatePicker (opened from More dropdown)
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+
+  // Close "More" dropdown on Escape key
+  useEscapeKey(() => setShowMoreDropdown(false), { enabled: showMoreDropdown });
 
   // Filter state from useFilters hook (manages search, sort, quick filters, and advanced filters)
   const {
@@ -1512,140 +1520,32 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           Skip to main content
         </a>
 
-        {/* Header - Theme Responsive */}
-        <header className={`sticky top-0 z-40 shadow-[var(--shadow-lg)] border-b ${
-          darkMode
-            ? 'bg-[var(--gradient-hero)] border-white/5'
-            : 'bg-white border-[var(--border)]'
-        }`}>
-        <div className="mx-auto px-4 sm:px-6 py-4 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl">
-          <div className="flex items-center justify-between gap-3">
-            {/* Logo & Context Info */}
-            <div className="flex items-center gap-3 min-w-0">
-              {/* Dashboard button */}
-              {onOpenDashboard && (
-                <button
-                  onClick={onOpenDashboard}
-                  className={`p-2 rounded-xl transition-all flex-shrink-0 ${
-                    darkMode
-                      ? 'hover:bg-white/10 text-white/70 hover:text-white'
-                      : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]'
-                  }`}
-                  title="Daily Summary"
-                >
-                  <Home className="w-5 h-5" />
-                </button>
-              )}
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center flex-shrink-0 shadow-lg" style={{ boxShadow: '0 4px 12px rgba(0, 51, 160, 0.35)' }}>
-                <span className="text-white font-bold text-base">B</span>
-              </div>
-              <div className="min-w-0">
-                <h1 className={`text-base font-bold truncate tracking-tight ${darkMode ? 'text-white' : 'text-[var(--brand-navy)]'}`}>Bealer Agency</h1>
-                {/* Show contextual info instead of "Welcome back" */}
-                <p className={`text-xs truncate ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>
-                  {stats.active} active{stats.dueToday > 0 && ` • ${stats.dueToday} due today`}{stats.overdue > 0 && ` • ${stats.overdue} overdue`}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              {/* View toggle with labels - hidden in focus mode */}
-              {!focusMode && (
-                <div className={`flex backdrop-blur-sm rounded-xl p-1 border ${
-                  darkMode
-                    ? 'bg-white/8 border-white/10'
-                    : 'bg-[var(--surface-2)] border-[var(--border)]'
-                }`}>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      viewMode === 'list'
-                        ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
-                        : darkMode
-                          ? 'text-white/70 hover:text-white hover:bg-white/10'
-                          : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
-                    }`}
-                    aria-pressed={viewMode === 'list'}
-                    aria-label="List view"
-                  >
-                    <LayoutList className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">List</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('kanban')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      viewMode === 'kanban'
-                        ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
-                        : darkMode
-                          ? 'text-white/70 hover:text-white hover:bg-white/10'
-                          : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
-                    }`}
-                    aria-pressed={viewMode === 'kanban'}
-                    aria-label="Board view"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Board</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Sections Toggle - Only show when in list view and not using custom sort */}
-              {viewMode === 'list' && shouldUseSections && !focusMode && (
-                <button
-                  onClick={() => setUseSectionedView(!useSectionedView)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
-                    useSectionedView
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30'
-                      : darkMode
-                        ? 'text-white/70 hover:text-white hover:bg-white/10 border-white/10'
-                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] border-[var(--border)]'
-                  }`}
-                  aria-pressed={useSectionedView}
-                  aria-label="Toggle date sections"
-                  title="Group tasks by due date"
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Sections</span>
-                </button>
-              )}
-
-              {/* Focus Mode Toggle */}
-              <FocusModeToggle />
-
-              {/* User Switcher - hidden in focus mode */}
-              {!focusMode && (
-                <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
-              )}
-
-              {/* Hamburger Menu - hidden in focus mode */}
-              {!focusMode && (
-                <AppMenu
-                userName={userName}
-                canViewArchive={canViewArchive}
-                onShowActivityFeed={() => setShowActivityFeed(true)}
-                onShowWeeklyChart={() => setShowWeeklyChart(true)}
-                onShowStrategicDashboard={() => setShowStrategicDashboard(true)}
-                onShowArchive={() => setShowArchiveView(true)}
-                onShowShortcuts={() => setShowShortcuts(true)}
-                onShowAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  onResetFilters={() => {
-                    setQuickFilter('all');
-                    setShowCompleted(false);
-                    setHighPriorityOnly(false);
-                    setSearchQuery('');
-                    setStatusFilter('all');
-                    setAssignedToFilter('all');
-                    setCustomerFilter('all');
-                    setHasAttachmentsFilter(false);
-                    setDateRangeFilter({ start: '', end: '' });
-                  }}
-                  showAdvancedFilters={showAdvancedFilters}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+        {/* Unified Header - single row */}
+        <TodoHeader
+          currentUser={currentUser}
+          onUserChange={onUserChange}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          canViewArchive={canViewArchive}
+          setShowActivityFeed={setShowActivityFeed}
+          setShowArchiveView={setShowArchiveView}
+          setShowStrategicDashboard={setShowStrategicDashboard}
+          setShowWeeklyChart={setShowWeeklyChart}
+          setShowShortcuts={setShowShortcuts}
+          showAdvancedFilters={showAdvancedFilters}
+          setShowAdvancedFilters={setShowAdvancedFilters}
+          onResetFilters={() => {
+            setQuickFilter('all');
+            setShowCompleted(false);
+            setHighPriorityOnly(false);
+            setSearchQuery('');
+            setStatusFilter('all');
+            setAssignedToFilter('all');
+            setCustomerFilter('all');
+            setHasAttachmentsFilter(false);
+            setDateRangeFilter({ start: '', end: '' });
+          }}
+        />
 
       {/* Connection status - floating indicator (bottom right) - hidden in focus mode */}
       {!focusMode && (
@@ -1834,38 +1734,109 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               <ArrowUpDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-[var(--text-muted)]" />
             </div>
 
-            {/* Template picker - load from saved templates */}
-            <TemplatePicker
-              currentUserName={userName}
-              users={users}
-              darkMode={darkMode}
-              onSelectTemplate={(text, priority, assignedTo, subtasks) => {
-                addTodo(text, priority, undefined, assignedTo, subtasks);
-              }}
-              compact={true}
-            />
+            {/* More dropdown - contains Templates, Select, and Sections */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowMoreDropdown(!showMoreDropdown)}
+                className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  showMoreDropdown || showBulkActions || useSectionedView
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
+                }`}
+                aria-expanded={showMoreDropdown}
+                aria-haspopup="menu"
+                title="More options"
+              >
+                <MoreHorizontal className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">More</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${showMoreDropdown ? 'rotate-180' : ''}`} />
+              </button>
 
-            {/* Spacer to push Select to right on desktop */}
-            <div className="flex-1 hidden sm:block" />
+              {showMoreDropdown && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMoreDropdown(false)} />
 
-            {/* Select/Bulk actions button */}
-            <button
-              onClick={() => {
-                if (showBulkActions) {
-                  clearSelection();
-                }
-                setShowBulkActions(!showBulkActions);
-              }}
-              className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
-                showBulkActions
-                  ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }`}
-              title={showBulkActions ? 'Cancel selection' : 'Select tasks'}
-            >
-              <CheckSquare className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{showBulkActions ? 'Cancel' : 'Select'}</span>
-            </button>
+                  {/* Dropdown */}
+                  <div className={`absolute right-0 top-full mt-1 w-48 rounded-lg shadow-lg border z-50 overflow-hidden ${
+                    darkMode ? 'bg-[var(--surface)] border-[var(--border)]' : 'bg-white border-slate-200'
+                  }`}>
+                    {/* Templates button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMoreDropdown(false);
+                        setShowTemplatePicker(true);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
+                        darkMode ? 'hover:bg-[var(--surface-2)] text-[var(--foreground)]' : 'hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4 text-[var(--text-muted)]" />
+                      <span>Templates</span>
+                    </button>
+
+                    {/* Select/Bulk actions button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (showBulkActions) {
+                          clearSelection();
+                        }
+                        setShowBulkActions(!showBulkActions);
+                        setShowMoreDropdown(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
+                        showBulkActions
+                          ? 'bg-[var(--brand-sky)]/10 text-[var(--brand-sky)]'
+                          : darkMode ? 'hover:bg-[var(--surface-2)] text-[var(--foreground)]' : 'hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <CheckSquare className="w-4 h-4 text-[var(--text-muted)]" />
+                      <span>{showBulkActions ? 'Cancel Selection' : 'Select Tasks'}</span>
+                    </button>
+
+                    {/* Sections Toggle - Show in both list and board views when not using custom sort */}
+                    {shouldUseSections && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUseSectionedView(!useSectionedView);
+                          setShowMoreDropdown(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
+                          useSectionedView
+                            ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                            : darkMode ? 'hover:bg-[var(--surface-2)] text-[var(--foreground)]' : 'hover:bg-slate-50 text-slate-700'
+                        }`}
+                        aria-pressed={useSectionedView}
+                      >
+                        <Layers className="w-4 h-4 text-[var(--text-muted)]" />
+                        <span>Sections</span>
+                        {useSectionedView && <Check className="w-3.5 h-3.5 ml-auto" />}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Template Picker - controlled from More dropdown */}
+            <div className="relative">
+              <TemplatePicker
+                currentUserName={userName}
+                users={users}
+                darkMode={darkMode}
+                isOpen={showTemplatePicker}
+                onOpenChange={setShowTemplatePicker}
+                hideTrigger={true}
+                onSelectTemplate={(text, priority, assignedTo, subtasks) => {
+                  addTodo(text, priority, undefined, assignedTo, subtasks);
+                  setShowTemplatePicker(false);
+                }}
+              />
+            </div>
 
             {/* Clear all - only when filters active */}
             {(quickFilter !== 'all' || highPriorityOnly || showCompleted || searchQuery || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
@@ -2237,6 +2208,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 showBulkActions={showBulkActions}
                 selectedTodos={selectedTodos}
                 onSelectTodo={handleSelectTodo}
+                useSectionedView={useSectionedView}
               />
             </motion.div>
           )}

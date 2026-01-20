@@ -568,21 +568,47 @@ export default function StrategicDashboard({
           <div className="flex-1 overflow-y-auto p-6">
             {filteredGoals.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className={`p-4 rounded-2xl mb-4 ${darkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                  <Target className={`w-12 h-12 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} />
-                </div>
-                <h3 className={`text-lg font-medium mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
-                  {searchQuery ? 'No goals found' : 'No goals yet'}
+                <motion.div
+                  className={`p-5 rounded-2xl mb-5 ${
+                    darkMode
+                      ? 'bg-gradient-to-br from-[#0033A0]/20 to-[#0033A0]/10 border border-[#0033A0]/30'
+                      : 'bg-gradient-to-br from-[#0033A0]/10 to-[#0033A0]/5 border border-[#0033A0]/20'
+                  }`}
+                  animate={{ scale: [1, 1.03, 1] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  {searchQuery ? (
+                    <Search className={`w-12 h-12 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
+                  ) : (
+                    <Target className={`w-12 h-12 ${darkMode ? 'text-[#0033A0]/70' : 'text-[#0033A0]'}`} />
+                  )}
+                </motion.div>
+                <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                  {searchQuery ? 'No goals found' : 'Set your strategic goals'}
                 </h3>
-                <p className={`text-sm mb-4 max-w-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                <p className={`text-sm mb-5 max-w-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   {searchQuery
-                    ? 'Try adjusting your search or filters'
-                    : 'Start planning your strategic objectives by creating your first goal'}
+                    ? 'Try adjusting your search or filters to find what you are looking for'
+                    : 'Define your objectives and track progress toward achieving your strategic vision'}
                 </p>
-                {!searchQuery && (
+                {searchQuery ? (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      darkMode
+                        ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                        : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                    }`}
+                  >
+                    <X className="w-4 h-4" />
+                    Clear search
+                  </button>
+                ) : (
                   <button
                     onClick={() => setShowAddGoal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#0033A0] text-white text-sm font-medium rounded-lg hover:bg-[#002878] transition-colors"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#0033A0] text-white text-sm font-medium rounded-lg hover:bg-[#002878] transition-colors shadow-lg shadow-[#0033A0]/20"
                   >
                     <Plus className="w-4 h-4" />
                     Create your first goal

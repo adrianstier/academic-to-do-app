@@ -77,18 +77,31 @@ export default function FloatingChatButton({
     const fetchUnreadCount = async () => {
       try {
         // Get messages not read by current user
+        // We need to fetch recipient to filter out DMs between other users
         const { data, error } = await supabase
           .from('messages')
-          .select('id, read_by')
+          .select('id, read_by, recipient')
           .not('created_by', 'eq', currentUser.name)
           .is('deleted_at', null);
 
         if (error) throw error;
 
-        // Count messages where current user is not in read_by array
-        const unread = data?.filter(
-          (msg) => !msg.read_by?.includes(currentUser.name)
-        ).length || 0;
+        // Count messages where:
+        // 1. Current user is not in read_by array
+        // 2. Message is either a team message (no recipient) OR a DM to the current user
+        const unread = data?.filter((msg) => {
+          // Skip if already read
+          if (msg.read_by?.includes(currentUser.name)) return false;
+          
+          // Team message (no recipient) - count it
+          if (!msg.recipient) return true;
+          
+          // DM to current user - count it
+          if (msg.recipient === currentUser.name) return true;
+          
+          // DM between other users - don't count it
+          return false;
+        }).length || 0;
 
         setUnreadCount(unread);
       } catch (err) {

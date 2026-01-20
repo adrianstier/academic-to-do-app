@@ -101,6 +101,7 @@ export default function TaskCard({
   const darkMode = theme === 'dark';
 
   const [isHovered, setIsHovered] = useState(false);
+  const [showMobileMetadata, setShowMobileMetadata] = useState(false);
 
   const priorityStyle = PRIORITY_STYLES[task.priority];
   const assignedUser = users.find(u => u.name === task.assigned_to);
@@ -161,6 +162,13 @@ export default function TaskCard({
   const handleCardClick = useCallback(() => {
     onOpenDetail(task.id);
   }, [task.id, onOpenDetail]);
+
+  // Toggle mobile metadata visibility on tap
+  const handleMobileMetadataToggle = useCallback((e: React.TouchEvent) => {
+    // Prevent triggering card click when toggling metadata
+    e.stopPropagation();
+    setShowMobileMetadata(prev => !prev);
+  }, []);
 
   return (
     <motion.article
@@ -259,6 +267,7 @@ export default function TaskCard({
 
             {/* Metadata row */}
             <div className="flex flex-wrap items-center gap-2 mt-2">
+              {/* PRIMARY METADATA - Always visible */}
               {/* Priority badge (only for high/urgent) */}
               {(task.priority === 'urgent' || task.priority === 'high') && !task.completed && (
                 <span
@@ -273,7 +282,7 @@ export default function TaskCard({
                 </span>
               )}
 
-              {/* Due date */}
+              {/* Due date - Primary metadata, always visible */}
               {dueDateInfo && (
                 <span
                   className={`
@@ -291,12 +300,14 @@ export default function TaskCard({
                 </span>
               )}
 
+              {/* SECONDARY METADATA - Hidden on mobile, shown on tap/hover or on larger screens */}
               {/* Subtask progress */}
               {subtaskProgress && (
                 <span
                   className={`
                     inline-flex items-center gap-1.5 text-xs
                     ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}
+                    ${showMobileMetadata ? 'flex' : 'hidden'} sm:inline-flex
                   `}
                 >
                   <div className="relative w-12 h-1.5 rounded-full overflow-hidden bg-[var(--surface-2)]">
@@ -313,7 +324,11 @@ export default function TaskCard({
               {/* Attachments indicator */}
               {hasAttachments && (
                 <span
-                  className={`inline-flex items-center gap-1 text-xs ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}`}
+                  className={`
+                    items-center gap-1 text-xs
+                    ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}
+                    ${showMobileMetadata ? 'inline-flex' : 'hidden'} sm:inline-flex
+                  `}
                 >
                   <Paperclip className="w-3 h-3" />
                   {task.attachments!.length}
@@ -322,19 +337,48 @@ export default function TaskCard({
 
               {/* Notes/Transcription indicator */}
               {(hasNotes || hasTranscription) && (
-                <span className={`inline-flex ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}`}>
+                <span
+                  className={`
+                    ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}
+                    ${showMobileMetadata ? 'inline-flex' : 'hidden'} sm:inline-flex
+                  `}
+                >
                   <MessageSquare className="w-3 h-3" />
                 </span>
+              )}
+
+              {/* Mobile metadata toggle indicator - only on mobile when there's hidden metadata */}
+              {(subtaskProgress || hasAttachments || hasNotes || hasTranscription || assignedUser) && (
+                <button
+                  onTouchEnd={handleMobileMetadataToggle}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMobileMetadata(prev => !prev);
+                  }}
+                  className={`
+                    inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded
+                    ${darkMode ? 'text-white/40 hover:text-white/60 hover:bg-white/5' : 'text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)]'}
+                    sm:hidden
+                    transition-colors
+                  `}
+                  aria-label={showMobileMetadata ? 'Hide details' : 'Show more details'}
+                >
+                  <MoreHorizontal className="w-3 h-3" />
+                  {!showMobileMetadata && <span className="text-[10px]">more</span>}
+                </button>
               )}
             </div>
           </div>
 
           {/* Right side: Assignee + Actions */}
           <div className="flex items-center gap-2">
-            {/* Assignee avatar */}
+            {/* Assignee avatar - hidden on mobile, shown on tap or larger screens */}
             {assignedUser && (
               <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
+                className={`
+                  w-7 h-7 rounded-full items-center justify-center text-white text-xs font-semibold flex-shrink-0
+                  ${showMobileMetadata ? 'flex' : 'hidden'} sm:flex
+                `}
                 style={{ backgroundColor: assignedUser.color }}
                 title={assignedUser.name}
               >
@@ -346,16 +390,16 @@ export default function TaskCard({
             <motion.div
               initial={{ opacity: 0, x: -5 }}
               animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : -5 }}
-              className={`${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}
+              className={`hidden sm:block ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}
             >
               <ChevronRight className="w-5 h-5" />
             </motion.div>
           </div>
         </div>
 
-        {/* Expanded subtasks preview (optional, for important tasks) */}
+        {/* Expanded subtasks preview (optional, for important tasks) - hidden on mobile unless expanded */}
         {!compact && task.priority === 'urgent' && subtaskProgress && subtaskProgress.total <= 5 && (
-          <div className="mt-3 pl-8 space-y-1">
+          <div className={`mt-3 pl-8 space-y-1 ${showMobileMetadata ? 'block' : 'hidden'} sm:block`}>
             {task.subtasks?.slice(0, 3).map(subtask => (
               <div
                 key={subtask.id}
@@ -385,7 +429,7 @@ export default function TaskCard({
         )}
       </div>
 
-      {/* Hover action bar */}
+      {/* Hover action bar - hidden on mobile to reduce density */}
       <AnimatePresence>
         {isHovered && !task.completed && (
           <motion.div
@@ -394,7 +438,7 @@ export default function TaskCard({
             exit={{ opacity: 0, y: 10 }}
             className={`
               absolute bottom-0 inset-x-0 px-4 py-2
-              flex items-center justify-end gap-2
+              hidden sm:flex items-center justify-end gap-2
               ${darkMode
                 ? 'bg-gradient-to-t from-[var(--surface)] via-[var(--surface)]/80 to-transparent'
                 : 'bg-gradient-to-t from-white via-white/80 to-transparent'
@@ -498,10 +542,11 @@ export function TaskCardSkeleton({ compact = false }: { compact?: boolean }) {
           <div className={`h-4 rounded w-3/4 ${darkMode ? 'bg-white/10' : 'bg-[var(--surface-2)]'}`} />
           <div className="flex gap-2">
             <div className={`h-3 rounded w-16 ${darkMode ? 'bg-white/5' : 'bg-[var(--surface-2)]'}`} />
-            <div className={`h-3 rounded w-20 ${darkMode ? 'bg-white/5' : 'bg-[var(--surface-2)]'}`} />
+            <div className={`h-3 rounded w-20 hidden sm:block ${darkMode ? 'bg-white/5' : 'bg-[var(--surface-2)]'}`} />
           </div>
         </div>
-        <div className={`w-7 h-7 rounded-full ${darkMode ? 'bg-white/10' : 'bg-[var(--surface-2)]'}`} />
+        {/* Assignee avatar skeleton - hidden on mobile */}
+        <div className={`w-7 h-7 rounded-full hidden sm:block ${darkMode ? 'bg-white/10' : 'bg-[var(--surface-2)]'}`} />
       </div>
     </div>
   );

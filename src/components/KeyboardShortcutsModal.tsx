@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Keyboard } from 'lucide-react';
 import { useEscapeKey } from '@/hooks';
@@ -15,12 +16,29 @@ interface ShortcutGroup {
   shortcuts: { keys: string[]; description: string }[];
 }
 
-const shortcutGroups: ShortcutGroup[] = [
+/**
+ * Platform detection for showing correct modifier key symbols
+ */
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
+/**
+ * Get platform-appropriate modifier symbol
+ */
+const getModifierKey = () => isMac ? '⌘' : 'Ctrl';
+const getShiftKey = () => isMac ? '⇧' : 'Shift';
+const getAltKey = () => isMac ? '⌥' : 'Alt';
+
+/**
+ * Generate shortcut groups with platform-appropriate modifier keys
+ */
+const getShortcutGroups = (): ShortcutGroup[] => [
   {
     title: 'Navigation',
     shortcuts: [
       { keys: ['N'], description: 'Focus new task input' },
       { keys: ['/'], description: 'Focus search' },
+      { keys: [getModifierKey(), 'K'], description: 'Open command palette' },
+      { keys: [getModifierKey(), 'B'], description: 'Toggle sidebar' },
       { keys: ['Esc'], description: 'Clear search & selection' },
     ],
   },
@@ -30,20 +48,26 @@ const shortcutGroups: ShortcutGroup[] = [
       { keys: ['1'], description: 'Show all tasks' },
       { keys: ['2'], description: 'Show my tasks' },
       { keys: ['3'], description: 'Show due today' },
-      { keys: ['4'], description: 'Show urgent tasks' },
+      { keys: ['4'], description: 'Show overdue tasks' },
     ],
   },
   {
     title: 'Task Actions',
     shortcuts: [
       { keys: ['Enter'], description: 'Submit new task' },
-      { keys: ['⌘', 'Enter'], description: 'Submit with AI enhancement' },
+      { keys: [getModifierKey(), 'Enter'], description: 'Submit with AI enhancement' },
     ],
   },
   {
     title: 'View Modes',
     shortcuts: [
-      { keys: ['⌘', 'Shift', 'F'], description: 'Toggle focus mode' },
+      { keys: [getModifierKey(), getShiftKey(), 'F'], description: 'Toggle focus mode' },
+    ],
+  },
+  {
+    title: 'Help',
+    shortcuts: [
+      { keys: ['?'], description: 'Show keyboard shortcuts' },
     ],
   },
 ];
@@ -55,6 +79,9 @@ export default function KeyboardShortcutsModal({
 }: KeyboardShortcutsModalProps) {
   // Handle Escape key to close modal
   useEscapeKey(onClose, { enabled: show });
+
+  // Generate platform-appropriate shortcut groups
+  const shortcutGroups = useMemo(() => getShortcutGroups(), []);
 
   return (
     <AnimatePresence>
