@@ -221,7 +221,7 @@ export async function processReminder(
 
   let chatSuccess = true;
   let pushSuccess = true;
-  let errorMessage: string | undefined;
+  const errorMessages: string[] = [];
 
   // Send chat notification
   if (reminder_type === 'chat_message' || reminder_type === 'both') {
@@ -234,8 +234,8 @@ export async function processReminder(
       custom_message || undefined
     );
     chatSuccess = result.success;
-    if (!chatSuccess) {
-      errorMessage = result.error;
+    if (!chatSuccess && result.error) {
+      errorMessages.push(`Chat: ${result.error}`);
     }
   }
 
@@ -249,16 +249,28 @@ export async function processReminder(
         due_date
       );
       pushSuccess = result.success;
-      if (!pushSuccess && !errorMessage) {
-        errorMessage = result.error;
+      if (!pushSuccess && result.error) {
+        errorMessages.push(`Push: ${result.error}`);
       }
+    } else {
+      // No user_id means we can't send push notification
+      pushSuccess = false;
+      errorMessages.push('Push: No user ID available');
     }
   }
+
+  // Determine overall success - for 'both' type, both must succeed
+  const overallSuccess = reminder_type === 'both'
+    ? chatSuccess && pushSuccess
+    : (reminder_type === 'chat_message' ? chatSuccess : pushSuccess);
+
+  // Combine all error messages
+  const combinedError = errorMessages.length > 0 ? errorMessages.join('; ') : undefined;
 
   // Mark reminder as sent or failed
   const { error } = await supabase.rpc('mark_reminder_sent', {
     p_reminder_id: reminder_id,
-    p_error_message: chatSuccess && pushSuccess ? null : errorMessage,
+    p_error_message: overallSuccess ? null : combinedError,
   });
 
   if (error) {
@@ -266,7 +278,7 @@ export async function processReminder(
     return { success: false, error: 'Failed to update reminder status' };
   }
 
-  return { success: chatSuccess && pushSuccess, error: errorMessage };
+  return { success: overallSuccess, error: combinedError };
 }
 
 /**

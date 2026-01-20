@@ -27,6 +27,9 @@ import {
   AlertOctagon,
   Send,
   RefreshCw,
+  Wand2,
+  Zap,
+  GitBranch,
 } from 'lucide-react';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useEscapeKey } from '@/hooks';
@@ -40,6 +43,13 @@ import {
   TeamMemberStats,
   TeamBottleneck,
 } from '@/lib/managerDashboardInsights';
+import {
+  analyzeTaskForDecomposition,
+  generateBottleneckResolutions,
+  getOrchestratorCapabilities,
+  TaskDecomposition,
+  WorkflowSuggestion,
+} from '@/lib/orchestratorIntegration';
 // Re-export utilities for backwards compatibility
 export { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
 
@@ -112,6 +122,26 @@ export default function DashboardModal({
     if (!hasTeam) return null;
     return generateManagerDashboardData(todos, currentUser.name, users);
   }, [todos, currentUser.name, users, hasTeam]);
+
+  // Generate orchestrator suggestions for bottleneck resolution
+  const orchestratorSuggestions = useMemo(() => {
+    if (!hasTeam || !managerData) return [];
+    return generateBottleneckResolutions(managerData.bottlenecks, todos);
+  }, [hasTeam, managerData, todos]);
+
+  // Analyze complex pending tasks for potential decomposition
+  const complexTaskAnalysis = useMemo(() => {
+    if (!hasTeam) return [];
+    const activeTodos = todos.filter(t => !t.completed);
+    // Analyze tasks that might benefit from decomposition (high priority or long titles)
+    const complexTasks = activeTodos
+      .filter(t => t.priority === 'urgent' || t.priority === 'high' || t.text.length > 50)
+      .slice(0, 3);
+    return complexTasks.map(task => ({
+      task,
+      analysis: analyzeTaskForDecomposition(task.text, task.notes),
+    }));
+  }, [hasTeam, todos]);
 
   const stats = useMemo(() => {
     const today = new Date();
@@ -1026,6 +1056,108 @@ export default function DashboardModal({
                                 <span className={`text-xs flex-shrink-0 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                                   {task.assigned_to}
                                 </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* AI-Powered Task Decomposition Suggestions */}
+                      {complexTaskAnalysis.length > 0 && (
+                        <div className={`rounded-xl p-4 ${
+                          darkMode
+                            ? 'bg-gradient-to-br from-violet-900/20 to-purple-900/20 border border-violet-500/20'
+                            : 'bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-200'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Wand2 className="w-4 h-4 text-violet-500" />
+                            <h3 className={`text-xs font-semibold uppercase tracking-wide ${
+                              darkMode ? 'text-violet-300' : 'text-violet-600'
+                            }`}>
+                              AI Task Decomposition
+                            </h3>
+                          </div>
+
+                          <div className="space-y-3">
+                            {complexTaskAnalysis.slice(0, 2).map(({ task, analysis }) => (
+                              <div
+                                key={task.id}
+                                className={`p-3 rounded-lg ${darkMode ? 'bg-black/20' : 'bg-white/60'}`}
+                              >
+                                <p className={`text-sm font-medium truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                  {task.text}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className={`px-2 py-0.5 text-[10px] font-semibold rounded ${
+                                    analysis.estimatedComplexity === 'high'
+                                      ? 'bg-red-500/20 text-red-500'
+                                      : analysis.estimatedComplexity === 'medium'
+                                        ? 'bg-amber-500/20 text-amber-500'
+                                        : 'bg-emerald-500/20 text-emerald-500'
+                                  }`}>
+                                    {analysis.estimatedComplexity.toUpperCase()} COMPLEXITY
+                                  </span>
+                                  <span className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                    → {analysis.suggestedSubtasks.length} subtasks
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {analysis.suggestedSubtasks.slice(0, 4).map((subtask, idx) => (
+                                    <span
+                                      key={idx}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] ${
+                                        darkMode ? 'bg-slate-700/50 text-slate-300' : 'bg-slate-100 text-slate-600'
+                                      }`}
+                                    >
+                                      <GitBranch className="w-3 h-3" />
+                                      {subtask.agentType.replace('_', ' ')}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <p className={`text-xs mt-3 ${darkMode ? 'text-violet-400' : 'text-violet-600'}`}>
+                            <Zap className="w-3 h-3 inline mr-1" />
+                            Complex tasks can be broken down using AI agents
+                          </p>
+                        </div>
+                      )}
+
+                      {/* AI-Powered Bottleneck Resolution */}
+                      {orchestratorSuggestions.length > 0 && (
+                        <div className={`rounded-xl p-4 ${
+                          darkMode
+                            ? 'bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border border-cyan-500/20'
+                            : 'bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200'
+                        }`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Zap className="w-4 h-4 text-cyan-500" />
+                            <h3 className={`text-xs font-semibold uppercase tracking-wide ${
+                              darkMode ? 'text-cyan-300' : 'text-cyan-600'
+                            }`}>
+                              AI Resolution Suggestions
+                            </h3>
+                          </div>
+
+                          <div className="space-y-2">
+                            {orchestratorSuggestions.slice(0, 2).map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className={`p-3 rounded-lg ${darkMode ? 'bg-black/20' : 'bg-white/60'}`}
+                              >
+                                <p className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                  {suggestion.suggestedAction}
+                                </p>
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] ${
+                                    darkMode ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'
+                                  }`}>
+                                    <Brain className="w-3 h-3" />
+                                    {suggestion.agentRecommendation.replace('_', ' ')} can help
+                                  </span>
+                                </div>
                               </div>
                             ))}
                           </div>

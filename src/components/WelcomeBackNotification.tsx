@@ -251,6 +251,28 @@ export default function WelcomeBackNotification({
   );
 }
 
+// Helper to safely access sessionStorage (handles private browsing mode)
+function safeSessionStorageGet(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    // sessionStorage may be unavailable in private browsing mode
+    return null;
+  }
+}
+
+function safeSessionStorageSet(key: string, value: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    sessionStorage.setItem(key, value);
+    return true;
+  } catch {
+    // sessionStorage may be unavailable in private browsing mode
+    return false;
+  }
+}
+
 // Helper to check if we should show the notification (using cloud data)
 // Shows on first login of the session, and again after 4+ hours away
 export function shouldShowWelcomeNotification(currentUser: AuthUser): boolean {
@@ -258,12 +280,10 @@ export function shouldShowWelcomeNotification(currentUser: AuthUser): boolean {
   const now = new Date();
 
   // Check session storage to see if we've shown it this browser session
-  if (typeof window !== 'undefined') {
-    const sessionShown = sessionStorage.getItem(`welcomeShown_${currentUser.id}`);
-    if (sessionShown) {
-      // Already shown this session, don't show again
-      return false;
-    }
+  const sessionShown = safeSessionStorageGet(`welcomeShown_${currentUser.id}`);
+  if (sessionShown) {
+    // Already shown this session, don't show again
+    return false;
   }
 
   // Check if welcome was shown recently (in case of page refresh within session)
@@ -274,10 +294,8 @@ export function shouldShowWelcomeNotification(currentUser: AuthUser): boolean {
     if (hoursSinceShown < 4) return false;
   }
 
-  // Mark as shown in session storage
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem(`welcomeShown_${currentUser.id}`, 'true');
-  }
+  // Mark as shown in session storage (best effort - may fail in private browsing)
+  safeSessionStorageSet(`welcomeShown_${currentUser.id}`, 'true');
 
   return true;
 }

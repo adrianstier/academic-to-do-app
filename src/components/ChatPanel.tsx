@@ -27,8 +27,13 @@ import {
   debounce,
 } from '@/lib/chatUtils';
 
-// Notification sound (short, pleasant chime)
-const NOTIFICATION_SOUND_URL = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleTs1WpbOzq1fMUJFk8zSrGg/V0Bml8jRzaZ4g2pqmaW4zc7Mu7/Fz8q9rZ2WnqWyxdLOv62WiaOxyb6kkXuNqL+2pJZ7cn2ftLaylnuFjJmnq52Xjn5/gI+dn6OZj4KGjJGVl5qakIuIhYaHiYuOkJGQj42Lh4OCgoKEhoeIiIiHhoWDgoGBgYGCg4SEhISDgoGAgICAgIGBgoKCgoKBgYCAgICAgICBgYGBgYGBgICAgICAgICAgYGBgYGBgYCAgICAgA==';
+// Notification sound URL - using external file for better caching and memory efficiency
+// Falls back to a small inline data URL if the file fails to load
+const NOTIFICATION_SOUND_URL = '/sounds/notification-chime.wav';
+const NOTIFICATION_SOUND_FALLBACK = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleTs1WpbOzq1fMUJFk8zSrGg/V0Bml8jRzaZ4g2pqmaW4zc7Mu7/Fz8q9rZ2WnqWyxdLOv62WiaOxyb6kkXuNqL+2pJZ7cn2ftLaylnuFjJmnq52Xjn5/gI+dn6OZj4KGjJGVl5qakIuIhYaHiYuOkJGQj42Lh4OCgoKEhoeIiIiHhoWDgoGBgYGCg4SEhISDgoGAgICAgIGBgoKCgoKBgYCAgICAgICBgYGBgYGBgICAgICAgICAgYGBgYGBgYCAgICAgA==';
+
+// Track if permission request is in progress to prevent race conditions
+let permissionRequestInProgress = false;
 
 // Helper to request notification permission
 async function requestNotificationPermission(): Promise<boolean> {
@@ -40,12 +45,26 @@ async function requestNotificationPermission(): Promise<boolean> {
     return true;
   }
 
-  if (Notification.permission !== 'denied') {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
+  if (Notification.permission === 'denied') {
+    // User has permanently denied notifications
+    return false;
   }
 
-  return false;
+  // Prevent multiple simultaneous permission requests
+  if (permissionRequestInProgress) {
+    return false;
+  }
+
+  try {
+    permissionRequestInProgress = true;
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  } catch {
+    // Permission request failed
+    return false;
+  } finally {
+    permissionRequestInProgress = false;
+  }
 }
 
 // Helper to show browser notification
@@ -54,22 +73,37 @@ function showBrowserNotification(title: string, body: string, onClick?: () => vo
     return;
   }
 
-  const notification = new Notification(title, {
-    body,
-    icon: '/favicon.ico',
-    tag: 'chat-message',
-    requireInteraction: false,
-  });
+  try {
+    const notification = new Notification(title, {
+      body,
+      icon: '/favicon.ico',
+      tag: 'chat-message',
+      requireInteraction: false,
+    });
 
-  if (onClick) {
-    notification.onclick = () => {
-      window.focus();
-      onClick();
-      notification.close();
-    };
+    if (onClick) {
+      notification.onclick = () => {
+        window.focus();
+        onClick();
+        try {
+          notification.close();
+        } catch {
+          // Notification may already be closed
+        }
+      };
+    }
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      try {
+        notification.close();
+      } catch {
+        // Notification may already be closed by user
+      }
+    }, 5000);
+  } catch {
+    // Failed to create notification - browser may not support it
   }
-
-  setTimeout(() => notification.close(), 5000);
 }
 
 // Tapback emoji mapping
@@ -332,14 +366,32 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   const hasInitialScrolled = useRef<string | null>(null); // Track which conversation we scrolled for
   const messagesRef = useRef<ChatMessage[]>(messages);
   const typingTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastPresenceTimestamps = useRef<Map<string, number>>(new Map());
   const PRESENCE_TIMEOUT_MS = 60000; // Mark offline after 60 seconds without presence
 
-  // Initialize audio element for notification sound
+  // Initialize audio element for notification sound with cleanup
   useEffect(() => {
-    audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
-    audioRef.current.volume = 0.5;
+    const audio = new Audio(NOTIFICATION_SOUND_URL);
+    audio.volume = 0.5;
+
+    // Handle load error by falling back to inline audio
+    audio.onerror = () => {
+      logger.debug('Failed to load notification sound, using fallback', { component: 'ChatPanel' });
+      audio.src = NOTIFICATION_SOUND_FALLBACK;
+    };
+
+    audioRef.current = audio;
+
+    // Cleanup: pause audio and remove reference to prevent memory leak
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = ''; // Release audio resources
+        audioRef.current = null;
+      }
+    };
   }, []);
 
   // Persist muted conversations to localStorage
@@ -783,7 +835,11 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
           typingTimeoutsRef.current.set(payload.user, timeout);
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          typingChannelRef.current = typingChannel;
+        }
+      });
 
     // Presence channel - store in ref for use by presence update effect
     const presenceChannel = supabase
@@ -815,6 +871,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(typingChannel);
       supabase.removeChannel(presenceChannel);
+      typingChannelRef.current = null;
       presenceChannelRef.current = null;
       // Clean up all typing timeouts
       typingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
@@ -825,9 +882,9 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   // Broadcast typing indicator (throttled)
   const broadcastTyping = useCallback(() => {
     const now = Date.now();
-    if (now - lastTypingBroadcastRef.current > 2000) {
+    if (now - lastTypingBroadcastRef.current > 2000 && typingChannelRef.current) {
       lastTypingBroadcastRef.current = now;
-      supabase.channel('typing-channel').send({
+      typingChannelRef.current.send({
         type: 'broadcast',
         event: 'typing',
         payload: { user: currentUser.name, conversation: conversation ? getConversationKey(conversation) : null }
@@ -1331,7 +1388,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
         <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-[var(--surface-dark)]" strokeWidth={2.5} />
+              <MessageSquare className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div>
               <h2 className="text-white font-semibold text-sm">Team Chat</h2>
@@ -1462,11 +1519,11 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                         <div
                           className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
                             isOwn
-                              ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-[var(--surface-dark)]'
+                              ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white'
                               : 'bg-white/10 text-white'
                           }`}
                         >
-                          {message.text}
+                          {renderMessageText(message.text)}
                         </div>
                       </div>
                     );
@@ -1480,7 +1537,13 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                   <input
                     type="text"
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      // Broadcast typing indicator when user types
+                      if (e.target.value.trim()) {
+                        broadcastTyping();
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -1493,7 +1556,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-[var(--surface-dark)] disabled:opacity-50 transition-opacity"
+                    className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white disabled:opacity-50 transition-opacity"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -1531,7 +1594,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
           >
             {/* Main button */}
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-200">
-              <MessageSquare className="w-6 h-6 text-[var(--surface-dark)]" strokeWidth={2.5} />
+              <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
 
             {/* Unread badge */}
@@ -1574,7 +1637,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                   {showConversationList ? (
                     <>
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] flex items-center justify-center shadow-lg shadow-[var(--accent)]/20">
-                        <MessageSquare className="w-5 h-5 text-[var(--surface-dark)]" strokeWidth={2.5} />
+                        <MessageSquare className="w-5 h-5 text-white" strokeWidth={2.5} />
                       </div>
                       <span className="font-bold text-white text-lg tracking-tight">Messages</span>
                     </>
@@ -1643,7 +1706,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                       whileTap={{ scale: 0.95 }}
                     >
                       <Pin className="w-4 h-4" />
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--accent)] rounded-full text-[9px] flex items-center justify-center text-[var(--surface-dark)] font-bold">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--accent)] rounded-full text-[9px] flex items-center justify-center text-white font-bold">
                         {pinnedMessages.length}
                       </span>
                     </motion.button>
@@ -2073,7 +2136,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                                                 onClick={() => setTapbackMessageId(tapbackMessageId === msg.id ? null : msg.id)}
                                                 className={`px-4 py-2.5 rounded-2xl break-words whitespace-pre-wrap cursor-pointer transition-all duration-200 text-[15px] leading-relaxed ${
                                                   isOwn
-                                                    ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-[var(--surface-dark)] rounded-br-md shadow-lg shadow-[var(--accent)]/20'
+                                                    ? 'bg-[var(--accent)] text-white rounded-br-md shadow-lg shadow-[var(--accent)]/20'
                                                     : 'bg-white/[0.08] text-white rounded-bl-md border border-white/[0.06]'
                                                 } ${showTapbackMenu ? 'ring-2 ring-[var(--accent)]/50' : ''}`}
                                                 whileHover={{ scale: 1.01 }}
@@ -2089,7 +2152,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                                                     }}
                                                     className={`mt-2 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                                       isOwn
-                                                        ? 'bg-[var(--surface-dark)]/20 text-[var(--surface-dark)] hover:bg-[var(--surface-dark)]/30'
+                                                        ? 'bg-white/20 text-white hover:bg-white/30'
                                                         : 'bg-white/[0.1] text-white/80 hover:bg-white/[0.15]'
                                                     }`}
                                                   >
@@ -2386,7 +2449,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                               <motion.button
                                 onClick={saveEdit}
                                 disabled={!editText.trim()}
-                                className="px-5 py-3 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-[var(--surface-dark)] rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[var(--accent)]/20"
+                                className="px-5 py-3 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[var(--accent)]/20"
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                               >
@@ -2545,7 +2608,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                             <motion.button
                               onClick={sendMessage}
                               disabled={!newMessage.trim() || !tableExists}
-                              className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-[var(--surface-dark)] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[var(--accent)]/20 disabled:shadow-none"
+                              className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[var(--accent)]/20 disabled:shadow-none"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -2596,7 +2659,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                 </motion.button>
                 <motion.button
                   onClick={handleCreateTask}
-                  className="px-5 py-3 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-[var(--surface-dark)] font-semibold shadow-lg shadow-[var(--accent)]/20 hover:opacity-90 transition-all"
+                  className="px-5 py-3 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white font-semibold shadow-lg shadow-[var(--accent)]/20 hover:opacity-90 transition-all"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

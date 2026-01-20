@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -9,22 +9,22 @@ import {
   Activity,
   Target,
   Archive,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Search,
   LogOut,
   Moon,
   Sun,
-  Keyboard,
-  Users,
   Plus,
   Command,
   Inbox,
+  Bell,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { AuthUser, OWNER_USERNAME } from '@/types/todo';
+import { AuthUser, OWNER_USERNAME, ActivityLogEntry } from '@/types/todo';
 import { useAppShell, ActiveView } from './AppShell';
+import NotificationModal from '../NotificationModal';
+import { supabase } from '@/lib/supabaseClient';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NAVIGATION SIDEBAR
@@ -78,6 +78,97 @@ export default function NavigationSidebar({
   const [hovering, setHovering] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [activityCount, setActivityCount] = useState(0);
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Track last seen notification timestamp
+  const LAST_SEEN_KEY = 'notificationLastSeenAt';
+
+  // Calculate unread notifications count
+  const updateUnreadCount = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const lastSeenStr = localStorage.getItem(LAST_SEEN_KEY);
+    const lastSeen = lastSeenStr ? new Date(lastSeenStr) : new Date(0);
+
+    // Fetch count of activities since last seen
+    const fetchCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('activity_log')
+          .select('*', { count: 'exact', head: true })
+          .gt('created_at', lastSeen.toISOString())
+          .neq('user_name', currentUser.name);
+
+        if (!error && count !== null) {
+          setUnreadNotifications(count);
+        }
+      } catch {
+        // Silently fail - not critical
+      }
+    };
+
+    fetchCount();
+  }, [currentUser.name]);
+
+  // Update unread count on mount and when modal closes
+  useEffect(() => {
+    updateUnreadCount();
+  }, [updateUnreadCount]);
+
+  // Subscribe to real-time activity updates for badge count
+  useEffect(() => {
+    const channel = supabase
+      .channel('notification-badge')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'activity_log',
+        },
+        (payload) => {
+          const newActivity = payload.new as ActivityLogEntry;
+          // Only increment if from another user and modal is closed
+          if (newActivity.user_name !== currentUser.name && !notificationModalOpen) {
+            setUnreadNotifications(prev => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser.name, notificationModalOpen]);
+
+  // Handle notification click - navigate to task or activity view
+  const handleNotificationClick = useCallback((activity: ActivityLogEntry) => {
+    // If there's a related todo, navigate to tasks and highlight it
+    if (activity.todo_id) {
+      setActiveView('tasks');
+      // Small delay to ensure view switches, then scroll to task
+      setTimeout(() => {
+        const taskElement = document.getElementById(`todo-${activity.todo_id}`);
+        if (taskElement) {
+          taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          taskElement.classList.add('ring-2', 'ring-[var(--accent)]', 'ring-offset-2');
+          setTimeout(() => {
+            taskElement.classList.remove('ring-2', 'ring-[var(--accent)]', 'ring-offset-2');
+          }, 3000);
+        }
+      }, 100);
+    } else {
+      // Otherwise go to full activity view
+      setActiveView('activity');
+    }
+  }, [setActiveView]);
+
+  // Mark notifications as read when modal closes
+  const handleMarkAllRead = useCallback(() => {
+    setUnreadNotifications(0);
+  }, []);
 
   // Determine if the sidebar should be expanded (collapsed=false OR hovering while collapsed)
   const isExpanded = !sidebarCollapsed || hovering;
@@ -337,20 +428,46 @@ export default function NavigationSidebar({
             {isExpanded && <span className="text-sm">{darkMode ? 'Light' : 'Dark'}</span>}
           </button>
 
-          {/* Keyboard shortcuts */}
-          <button
-            onClick={() => {/* Open shortcuts modal */}}
-            className={`
-              p-2 rounded-lg transition-colors
-              ${darkMode
-                ? 'text-white/60 hover:text-white hover:bg-white/10'
-                : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }
-            `}
-            aria-label="Keyboard shortcuts"
-          >
-            <Keyboard className="w-4 h-4" />
-          </button>
+          {/* Notification Bell */}
+          <div className="relative">
+            <button
+              ref={notificationButtonRef}
+              onClick={() => setNotificationModalOpen(!notificationModalOpen)}
+              className={`
+                relative p-2 rounded-lg transition-colors
+                ${notificationModalOpen
+                  ? darkMode
+                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                    : 'bg-[var(--accent-light)] text-[var(--accent)]'
+                  : darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                }
+              `}
+              aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotifications > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center px-1 rounded-full text-[10px] font-bold bg-[var(--danger)] text-white"
+                >
+                  {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                </motion.span>
+              )}
+            </button>
+
+            {/* Notification Modal */}
+            <NotificationModal
+              currentUserName={currentUser.name}
+              isOpen={notificationModalOpen}
+              onClose={() => setNotificationModalOpen(false)}
+              onActivityClick={handleNotificationClick}
+              onMarkAllRead={handleMarkAllRead}
+              anchorRef={notificationButtonRef}
+            />
+          </div>
         </div>
 
         {/* User profile */}

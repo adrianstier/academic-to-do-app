@@ -54,6 +54,28 @@ export async function sendTaskAssignmentNotification(
   if (!taskText || !taskText.trim()) {
     return { success: false, error: 'taskText is required' };
   }
+  if (!assignedTo || !assignedTo.trim()) {
+    return { success: false, error: 'assignedTo is required' };
+  }
+
+  // Validate priority if provided
+  const validPriorities = ['low', 'medium', 'high', 'urgent'];
+  if (priority && !validPriorities.includes(priority)) {
+    return { success: false, error: 'Invalid priority value' };
+  }
+
+  // Validate subtasks array if provided
+  if (subtasks && !Array.isArray(subtasks)) {
+    return { success: false, error: 'subtasks must be an array' };
+  }
+
+  // Validate dueDate format if provided
+  if (dueDate) {
+    const date = new Date(dueDate);
+    if (isNaN(date.getTime())) {
+      return { success: false, error: 'Invalid dueDate format' };
+    }
+  }
 
   // Don't notify if self-assigned
   if (assignedTo === assignedBy) {
@@ -196,9 +218,12 @@ export async function sendTaskCompletionNotification(
   if (!taskText || !taskText.trim()) {
     return { success: false, error: 'taskText is required' };
   }
+  if (!completedBy || !completedBy.trim()) {
+    return { success: false, error: 'completedBy is required' };
+  }
 
-  // Don't notify if the completer is also the assigner
-  if (completedBy === assignedBy) {
+  // Don't notify if the completer is also the assigner (or no assigner)
+  if (!assignedBy || completedBy === assignedBy) {
     return { success: true };
   }
 
@@ -247,6 +272,26 @@ export async function sendTaskReassignmentNotification(
   }
   if (!taskText || !taskText.trim()) {
     return { success: false, error: 'taskText is required' };
+  }
+  if (!newAssignee || !newAssignee.trim()) {
+    return { success: false, error: 'newAssignee is required' };
+  }
+  if (!reassignedBy || !reassignedBy.trim()) {
+    return { success: false, error: 'reassignedBy is required' };
+  }
+
+  // Validate priority if provided
+  const validPriorities = ['low', 'medium', 'high', 'urgent'];
+  if (priority && !validPriorities.includes(priority)) {
+    return { success: false, error: 'Invalid priority value' };
+  }
+
+  // Validate dueDate format if provided
+  if (dueDate) {
+    const date = new Date(dueDate);
+    if (isNaN(date.getTime())) {
+      return { success: false, error: 'Invalid dueDate format' };
+    }
   }
 
   // Early return if same assignee

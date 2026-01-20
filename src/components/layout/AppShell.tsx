@@ -4,9 +4,11 @@ import { useState, useCallback, useEffect, createContext, useContext, ReactNode 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
 import NavigationSidebar from './NavigationSidebar';
 import CommandPalette from './CommandPalette';
 import EnhancedBottomNav from './EnhancedBottomNav';
+import FloatingChatButton from '../FloatingChatButton';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // APP SHELL - CORE LAYOUT ARCHITECTURE
@@ -89,6 +91,9 @@ export default function AppShell({
 }: AppShellProps) {
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
+  
+  // Get users from store for FloatingChatButton
+  const users = useTodoStore((state) => state.usersWithColors);
 
   // Navigation state
   const [activeView, setActiveView] = useState<ActiveView>('tasks');
@@ -286,6 +291,12 @@ export default function AppShell({
 
         {/* ═══ MOBILE BOTTOM NAVIGATION ═══ */}
         <EnhancedBottomNav />
+
+        {/* ═══ FLOATING CHAT BUTTON ═══ */}
+        <FloatingChatButton
+          currentUser={currentUser}
+          users={users}
+        />
 
         {/* ═══ COMMAND PALETTE ═══ */}
         <CommandPalette

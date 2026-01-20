@@ -8,6 +8,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { Todo, TodoStatus, TodoPriority, ViewMode, SortOption, QuickFilter, RecurrencePattern, Subtask, Attachment, OWNER_USERNAME } from '@/types/todo';
 import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
+import AddTaskModal from './AddTaskModal';
 import KanbanBoard from './KanbanBoard';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
@@ -216,6 +217,13 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     }
   }, [initialFilter, setQuickFilter]);
 
+  // Open add task modal when autoFocusAddTask is true
+  useEffect(() => {
+    if (autoFocusAddTask) {
+      setShowAddTaskModal(true);
+    }
+  }, [autoFocusAddTask]);
+
   // Sync navigation activeView with internal panel states
   // This connects the sidebar navigation to the view panels
   useEffect(() => {
@@ -266,7 +274,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const [showArchiveView, setShowArchiveView] = useState(false);
   const [selectedArchivedTodo, setSelectedArchivedTodo] = useState<Todo | null>(null);
   const [archiveQuery, setArchiveQuery] = useState('');
-  const [showSearchExpanded, setShowSearchExpanded] = useState(false);
+  // showSearchExpanded removed - search is now always visible
   const [, setArchiveTick] = useState(0); // tick value unused, only setter needed for refresh
   const [customOrder, setCustomOrder] = useState<string[]>([]);
   const [showMergeModal, setShowMergeModal] = useState(false);
@@ -291,6 +299,9 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   // Customer email modal state
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTargetTodos, setEmailTargetTodos] = useState<Todo[]>([]);
+
+  // Add Task modal state
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
 
   // Enhanced celebration state (Features 1 & 3)
   const [showEnhancedCelebration, setShowEnhancedCelebration] = useState(false);
@@ -1690,27 +1701,22 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           </div>
         )}
 
-        {/* Add todo input */}
-        <div className="mb-6 space-y-3">
-          {/* Template picker - hidden in focus mode */}
-          {!focusMode && (
-            <TemplatePicker
-              currentUserName={userName}
-              users={users}
-              darkMode={darkMode}
-              onSelectTemplate={(text, priority, assignedTo, subtasks) => {
-                addTodo(text, priority, undefined, assignedTo, subtasks);
-              }}
-              compact={true}
-            />
-          )}
-          <AddTodo
-            onAdd={addTodo}
-            users={users}
-            darkMode={darkMode}
-            currentUserId={currentUser.id}
-            autoFocus={autoFocusAddTask}
-          />
+        {/* Add Task Button - opens modal */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowAddTaskModal(true)}
+            className={`
+              flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm
+              bg-[var(--accent)] text-white
+              hover:bg-[var(--accent)]/90 active:scale-[0.98]
+              transition-all duration-150 shadow-sm hover:shadow
+            `}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Task
+          </button>
         </div>
 
         {/* Compact Filter Bar - hidden in focus mode */}
@@ -1718,57 +1724,26 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         <div className="mb-4">
           {/* Single Row: All filters, search, sort, select */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            {/* Expandable Search */}
-            <div className="relative">
-              <AnimatePresence mode="wait">
-                {searchQuery || showSearchExpanded ? (
-                  <motion.div
-                    key="search-expanded"
-                    initial={{ width: 36, opacity: 0.8 }}
-                    animate={{ width: 'auto', opacity: 1 }}
-                    exit={{ width: 36, opacity: 0.8 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-center"
-                  >
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-light)] pointer-events-none" />
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onBlur={() => !searchQuery && setShowSearchExpanded(false)}
-                        placeholder="Search..."
-                        aria-label="Search tasks"
-                        autoFocus
-                        className="w-[140px] sm:w-[180px] pl-8 pr-7 py-1.5 text-xs rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] placeholder-[var(--text-light)] focus:outline-none focus:border-[var(--accent)]/50"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => {
-                            setSearchQuery('');
-                            setShowSearchExpanded(false);
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--foreground)]"
-                          aria-label="Clear search"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="search-collapsed"
-                    type="button"
-                    onClick={() => setShowSearchExpanded(true)}
-                    className="p-2 rounded-md text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
-                    aria-label="Search tasks"
-                    title="Search tasks"
-                  >
-                    <Search className="w-4 h-4" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
+            {/* Always-Visible Search Field */}
+            <div className="relative flex items-center">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-light)] pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tasks..."
+                aria-label="Search tasks"
+                className="w-[160px] sm:w-[200px] pl-8 pr-7 py-1.5 text-xs rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] placeholder-[var(--text-light)] focus:outline-none focus:border-[var(--accent)]/50 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             {/* Divider */}
@@ -1858,6 +1833,17 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               </select>
               <ArrowUpDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-[var(--text-muted)]" />
             </div>
+
+            {/* Template picker - load from saved templates */}
+            <TemplatePicker
+              currentUserName={userName}
+              users={users}
+              darkMode={darkMode}
+              onSelectTemplate={(text, priority, assignedTo, subtasks) => {
+                addTodo(text, priority, undefined, assignedTo, subtasks);
+              }}
+              compact={true}
+            />
 
             {/* Spacer to push Select to right on desktop */}
             <div className="flex-1 hidden sm:block" />
@@ -2328,19 +2314,52 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         darkMode={darkMode}
       />
 
-      {/* Activity Feed Slide-over */}
+      {/* Add Task Modal */}
+      <AddTaskModal
+        isOpen={showAddTaskModal}
+        onClose={() => setShowAddTaskModal(false)}
+        onAdd={addTodo}
+        users={users}
+        darkMode={darkMode}
+        currentUserId={currentUser.id}
+      />
+
+      {/* Activity Feed - Full Page View */}
       {showActivityFeed && (
-        <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Activity Feed">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => { setShowActivityFeed(false); setActiveView('tasks'); }}
-          />
-          <div className={`relative ml-auto w-full max-w-md h-full shadow-xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}>
-            <ActivityFeed
-              currentUserName={userName}
-              darkMode={darkMode}
-              onClose={() => { setShowActivityFeed(false); setActiveView('tasks'); }}
-            />
+        <div className="fixed inset-0 z-50 flex flex-col" role="dialog" aria-modal="true" aria-label="Activity Feed">
+          {/* Full-page container with proper spacing for navigation */}
+          <div className={`flex-1 flex flex-col ${darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]'}`}>
+            {/* Header with back button */}
+            <div className={`px-4 sm:px-6 py-4 border-b flex items-center gap-4 ${darkMode ? 'border-[var(--border)] bg-[var(--surface)]' : 'border-[var(--border)] bg-white'}`}>
+              <button
+                onClick={() => { setShowActivityFeed(false); setActiveView('tasks'); }}
+                className={`p-2 -ml-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'}`}
+                aria-label="Back to tasks"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div>
+                <h1 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+                  Activity Monitor
+                </h1>
+                <p className={`text-sm ${darkMode ? 'text-[var(--text-muted)]' : 'text-[var(--text-muted)]'}`}>
+                  Track all changes across your tasks
+                </p>
+              </div>
+            </div>
+            
+            {/* Activity Feed Content - Centered container for readability */}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full max-w-4xl mx-auto">
+                <ActivityFeed
+                  currentUserName={userName}
+                  darkMode={darkMode}
+                  onClose={() => { setShowActivityFeed(false); setActiveView('tasks'); }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}

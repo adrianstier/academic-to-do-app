@@ -32,8 +32,9 @@ function getNotificationSettings(): ActivityNotificationSettings {
     if (stored) {
       return { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(stored) };
     }
-  } catch {
-    // Ignore parse errors
+  } catch (e) {
+    // Log parse errors for debugging but continue with defaults
+    logger.error('Failed to parse notification settings from localStorage', e, { component: 'ActivityFeed' });
   }
   return DEFAULT_NOTIFICATION_SETTINGS;
 }
@@ -110,7 +111,18 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
     if (typeof window === 'undefined') return;
 
     try {
-      const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      // Access webkit prefixed AudioContext for older Safari versions
+      const AudioContextClass = window.AudioContext ||
+        (typeof window !== 'undefined' && 'webkitAudioContext' in window
+          ? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+          : undefined);
+
+      if (!AudioContextClass) {
+        logger.debug('AudioContext not supported in this browser', { component: 'ActivityFeed' });
+        return;
+      }
+
+      const audioContext = new AudioContextClass();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -138,12 +150,25 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
     if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
 
-    const config = ACTION_CONFIG[activity.action];
-    new Notification(`${activity.user_name} ${config.label}`, {
-      body: activity.todo_text || 'Activity update',
-      icon: '/favicon.ico',
-      tag: activity.id,
-    });
+    try {
+      const config = ACTION_CONFIG[activity.action];
+      const notification = new Notification(`${activity.user_name} ${config.label}`, {
+        body: activity.todo_text || 'Activity update',
+        icon: '/favicon.ico',
+        tag: activity.id,
+      });
+
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        try {
+          notification.close();
+        } catch {
+          // Notification may already be closed by user
+        }
+      }, 5000);
+    } catch (e) {
+      logger.error('Failed to show browser notification', e, { component: 'ActivityFeed' });
+    }
   }, [notificationSettings.browserNotificationsEnabled]);
 
   const handleNotificationSettingsChange = (key: keyof ActivityNotificationSettings, value: boolean) => {
@@ -152,15 +177,33 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
     saveNotificationSettings(newSettings);
   };
 
-  const requestBrowserNotificationPermission = async () => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
-    if (Notification.permission === 'default') {
+  const requestBrowserNotificationPermission = async (): Promise<'granted' | 'denied' | 'unsupported'> => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return 'unsupported';
+    }
+
+    if (Notification.permission === 'granted') {
+      handleNotificationSettingsChange('browserNotificationsEnabled', true);
+      return 'granted';
+    }
+
+    if (Notification.permission === 'denied') {
+      // User has previously denied - can't request again
+      logger.debug('Browser notifications were previously denied', { component: 'ActivityFeed' });
+      return 'denied';
+    }
+
+    // Permission is 'default' - request permission
+    try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         handleNotificationSettingsChange('browserNotificationsEnabled', true);
+        return 'granted';
       }
-    } else if (Notification.permission === 'granted') {
-      handleNotificationSettingsChange('browserNotificationsEnabled', true);
+      return 'denied';
+    } catch (e) {
+      logger.error('Failed to request notification permission', e, { component: 'ActivityFeed' });
+      return 'denied';
     }
   };
 
@@ -294,32 +337,33 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
 
   return (
     <div className={`h-full flex flex-col ${darkMode ? 'bg-[var(--surface)]' : 'bg-white'}`}>
-      {/* Header */}
-      <div className={`px-4 py-3 border-b flex items-center justify-between ${darkMode ? 'border-[var(--border)]' : 'border-[var(--border)]'}`}>
-        <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-[var(--accent)]" />
-          <h2 className={`font-semibold ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>Activity Feed</h2>
-          <span className="text-xs text-[var(--text-muted)]">
-            ({filteredActivities.length}{hasMore ? '+' : ''})
+      {/* Toolbar - Controls for filtering and settings */}
+      <div className={`px-4 py-2.5 border-b flex items-center justify-between ${darkMode ? 'border-[var(--border)]' : 'border-[var(--border)]'}`}>
+        <div className="flex items-center gap-3">
+          {/* Activity count badge */}
+          <span className={`text-sm font-medium ${darkMode ? 'text-[var(--text-muted)]' : 'text-[var(--text-muted)]'}`}>
+            {filteredActivities.length}{hasMore ? '+' : ''} activities
           </span>
-        </div>
-        <div className="flex items-center gap-1">
+          
           {/* Filter dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowFilterMenu(!showFilterMenu)}
-              className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 filterType !== 'all'
                   ? 'text-[var(--accent)] bg-[var(--accent)]/10'
-                  : darkMode ? 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'
+                  : darkMode 
+                    ? 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]' 
+                    : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--foreground)]'
               }`}
               title="Filter activities"
             >
-              <Filter className="w-4 h-4" />
-              {filterType !== 'all' && <ChevronDown className="w-3 h-3" />}
+              <Filter className="w-3.5 h-3.5" />
+              <span>{FILTER_OPTIONS.find(f => f.value === filterType)?.label || 'All'}</span>
+              <ChevronDown className="w-3 h-3" />
             </button>
             {showFilterMenu && (
-              <div className={`absolute right-0 top-full mt-1 z-10 w-40 rounded-lg border shadow-lg ${
+              <div className={`absolute left-0 top-full mt-1 z-10 w-44 rounded-lg border shadow-lg ${
                 darkMode ? 'bg-[var(--surface)] border-[var(--border)]' : 'bg-white border-[var(--border)]'
               }`}>
                 {FILTER_OPTIONS.map(option => (
@@ -338,26 +382,21 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
               </div>
             )}
           </div>
+        </div>
+        
+        <div className="flex items-center gap-1">
           {/* Notification toggle button */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-[var(--surface-2)]' : 'hover:bg-[var(--surface-2)]'} ${
+            className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-[var(--surface-2)]' : 'hover:bg-[var(--surface-2)]'} ${
               notificationSettings.enabled
                 ? 'text-[var(--accent)]'
                 : 'text-[var(--text-muted)]'
             }`}
             title="Notification settings"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4" />
           </button>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className={`p-1.5 rounded-lg transition-colors ${darkMode ? 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]' : 'hover:bg-[var(--surface-2)] text-[var(--text-muted)]'}`}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
         </div>
       </div>
 
