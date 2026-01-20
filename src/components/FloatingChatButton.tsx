@@ -183,28 +183,6 @@ export default function FloatingChatButton({
         aria-label={`Open chat${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
         <MessageCircle className="w-6 h-6 text-white" />
-        
-        {/* Unread Badge */}
-        <AnimatePresence>
-          {unreadCount > 0 && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className={`
-                absolute -top-1 -right-1
-                min-w-[22px] h-[22px]
-                flex items-center justify-center
-                px-1.5 rounded-full
-                text-xs font-bold text-white
-                bg-red-500 border-2
-                ${darkMode ? 'border-[var(--background)]' : 'border-white'}
-              `}
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </motion.span>
-          )}
-        </AnimatePresence>
       </motion.button>
 
       {/* Chat Popup - Google Chat style */}

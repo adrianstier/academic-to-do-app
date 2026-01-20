@@ -1529,11 +1529,6 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
               </p>
             </div>
           </div>
-          {totalUnreadCount > 0 && (
-            <span className="px-2 py-0.5 bg-red-500 rounded-full text-xs font-bold text-white">
-              {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
-            </span>
-          )}
         </div>
 
         {/* Conversation List or Chat Content */}
@@ -1552,11 +1547,6 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                   <p className="text-white font-medium text-sm">Team Chat</p>
                   <p className="text-white/40 text-xs truncate">All team messages</p>
                 </div>
-                {unreadCounts['team'] > 0 && (
-                  <span className="px-2 py-0.5 bg-red-500 rounded-full text-xs font-bold text-white">
-                    {unreadCounts['team']}
-                  </span>
-                )}
               </button>
 
               {/* DM Users */}
@@ -1576,11 +1566,6 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                     <p className="text-white font-medium text-sm">{user.name}</p>
                     <p className="text-white/40 text-xs">Direct message</p>
                   </div>
-                  {unreadCounts[user.name] > 0 && (
-                    <span className="px-2 py-0.5 bg-red-500 rounded-full text-xs font-bold text-white">
-                      {unreadCounts[user.name]}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
@@ -1731,12 +1716,6 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
               <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
 
-            {/* Unread badge */}
-            {totalUnreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 min-w-[1.75rem] h-7 px-2 bg-red-500 rounded-full text-xs font-bold flex items-center justify-center text-white shadow-lg border-2 border-[var(--surface-dark)]">
-                {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
-              </span>
-            )}
           </motion.button>
         )}
       </AnimatePresence>
