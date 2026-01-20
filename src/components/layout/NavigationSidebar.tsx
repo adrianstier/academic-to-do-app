@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   CheckSquare,
-  MessageCircle,
   Activity,
   Target,
   Archive,
@@ -51,7 +50,6 @@ const primaryNavItems: NavItem[] = [
   { id: 'ai_inbox', label: 'AI Inbox', icon: Inbox },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'activity', label: 'Activity', icon: Activity },
-  { id: 'chat', label: 'Messages', icon: MessageCircle },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -76,7 +74,6 @@ export default function NavigationSidebar({
   } = useAppShell();
 
   const [hovering, setHovering] = useState(false);
-  const [unreadMessages, setUnreadMessages] = useState(0);
   const [activityCount, setActivityCount] = useState(0);
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -448,7 +445,7 @@ export default function NavigationSidebar({
         {primaryNavItems.map(item => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
-          const badge = item.id === 'chat' ? unreadMessages : item.id === 'activity' ? activityCount : 0;
+          const badge = item.id === 'activity' ? activityCount : 0;
 
           return (
             <button
