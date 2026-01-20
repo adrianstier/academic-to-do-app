@@ -205,7 +205,7 @@ export default function NavigationSidebar({
       </div>
 
       {/* ─── Primary Navigation ─── */}
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto" aria-label="Primary">
+      <nav className="px-3 py-2 space-y-1 overflow-y-auto" aria-label="Primary">
         {primaryNavItems.map(item => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
@@ -256,55 +256,60 @@ export default function NavigationSidebar({
               </button>
             );
           })}
-      </nav>
 
-      {/* ─── Utility Actions ─── */}
-      <div className="px-3 py-2 space-y-1">
-        {/* Weekly Progress */}
-        {onShowWeeklyChart && (
-          <button
-            onClick={onShowWeeklyChart}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2 rounded-xl
-              font-medium text-sm transition-all duration-150
-              ${darkMode
-                ? 'text-white/60 hover:text-white hover:bg-white/5'
-                : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }
-            `}
-          >
-            <BarChart2 className={`w-5 h-5 flex-shrink-0 ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`} />
-            {isExpanded && <span>Weekly Progress</span>}
-          </button>
-        )}
+        {/* ─── Utility Actions (integrated into nav) ─── */}
+        {(onShowWeeklyChart || onShowShortcuts) && (
+          <>
+            {/* Divider before utility actions */}
+            <div className={`my-3 border-t ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}`} />
 
-        {/* Keyboard Shortcuts */}
-        {onShowShortcuts && (
-          <button
-            onClick={onShowShortcuts}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2 rounded-xl
-              font-medium text-sm transition-all duration-150
-              ${darkMode
-                ? 'text-white/60 hover:text-white hover:bg-white/5'
-                : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }
-            `}
-          >
-            <Keyboard className={`w-5 h-5 flex-shrink-0 ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`} />
-            {isExpanded && (
-              <>
-                <span className="flex-1 text-left">Shortcuts</span>
-                <span className={`text-xs ${darkMode ? 'text-white/30' : 'text-[var(--text-light)]'}`}>?</span>
-              </>
+            {/* Weekly Progress */}
+            {onShowWeeklyChart && (
+              <button
+                onClick={onShowWeeklyChart}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
+                  font-medium text-sm transition-all duration-150
+                  ${darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/5'
+                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                  }
+                `}
+              >
+                <BarChart2 className={`w-5 h-5 flex-shrink-0 ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`} />
+                {isExpanded && <span>Weekly Progress</span>}
+              </button>
             )}
-          </button>
+
+            {/* Keyboard Shortcuts */}
+            {onShowShortcuts && (
+              <button
+                onClick={onShowShortcuts}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
+                  font-medium text-sm transition-all duration-150
+                  ${darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/5'
+                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                  }
+                `}
+              >
+                <Keyboard className={`w-5 h-5 flex-shrink-0 ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`} />
+                {isExpanded && (
+                  <>
+                    <span className="flex-1 text-left">Shortcuts</span>
+                    <span className={`text-xs ${darkMode ? 'text-white/30' : 'text-[var(--text-light)]'}`}>?</span>
+                  </>
+                )}
+              </button>
+            )}
+          </>
         )}
-      </div>
+      </nav>
 
       {/* ─── Footer / User Section ─── */}
       <div className={`
-        border-t px-3 py-3 space-y-2
+        mt-auto border-t px-3 py-3 space-y-2
         ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}
       `}>
         {/* Theme toggle */}

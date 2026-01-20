@@ -1612,7 +1612,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
             setStatusFilter('all');
             setAssignedToFilter('all');
             setCustomerFilter('all');
-            setHasAttachmentsFilter(false);
+            setHasAttachmentsFilter(null);
             setDateRangeFilter({ start: '', end: '' });
           }}
         />
