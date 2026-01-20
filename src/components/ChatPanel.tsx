@@ -689,6 +689,12 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
       const initialUnreadCounts: Record<string, number> = {};
       let firstUnread: string | null = null;
 
+      // Determine the currently viewed conversation key (if any)
+      // If we're already viewing a conversation, don't count its messages as unread
+      const currentlyViewingKey = (!showConversationListRef.current && conversationRef.current)
+        ? getConversationKey(conversationRef.current)
+        : null;
+
       messages.forEach((msg: ChatMessage) => {
         if (msg.created_by === currentUser.name) return;
         if (msg.deleted_at) return;
@@ -703,7 +709,8 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
           convKey = msg.created_by;
         }
 
-        if (convKey) {
+        // Skip counting as unread if we're currently viewing this conversation
+        if (convKey && convKey !== currentlyViewingKey) {
           initialUnreadCounts[convKey] = (initialUnreadCounts[convKey] || 0) + 1;
           if (!firstUnread) firstUnread = msg.id;
         }
@@ -713,7 +720,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
       setFirstUnreadId(firstUnread);
     }
     setLoading(false);
-  }, [currentUser.name]);
+  }, [currentUser.name, getConversationKey]);
 
   // Track state in refs to avoid re-subscribing
   const isOpenRef = useRef(isOpen);
@@ -997,15 +1004,16 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   }, [loading, isOpen, conversation, showConversationList, filteredMessages.length, getConversationKey, scrollToBottom]);
 
   // Focus input and scroll to bottom when opening chat or switching conversations
+  // Also clear unread count when loading completes (to handle initial load with persisted conversation)
   useEffect(() => {
-    if (isOpen && !isMinimized && !showConversationList && conversation) {
+    if (isOpen && !isMinimized && !showConversationList && conversation && !loading) {
       setTimeout(() => inputRef.current?.focus(), 100);
       // Scroll to bottom to show most recent messages
       setTimeout(() => scrollToBottom('instant'), 50);
       const key = getConversationKey(conversation);
       setUnreadCounts(prev => ({ ...prev, [key]: 0 }));
     }
-  }, [isOpen, isMinimized, showConversationList, conversation, getConversationKey, scrollToBottom]);
+  }, [isOpen, isMinimized, showConversationList, conversation, loading, getConversationKey, scrollToBottom]);
 
   // Handle mention detection in input
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -1511,10 +1519,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
             <div className="h-full overflow-y-auto p-3 space-y-2">
               {/* Team Chat */}
               <button
-                onClick={() => {
-                  setConversation({ type: 'team' });
-                  setShowConversationList(false);
-                }}
+                onClick={() => selectConversation({ type: 'team' })}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)]/30 to-[var(--accent)]/10 flex items-center justify-center">
@@ -1535,10 +1540,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
               {users.filter(u => u.name !== currentUser.name).map(user => (
                 <button
                   key={user.name}
-                  onClick={() => {
-                    setConversation({ type: 'dm', userName: user.name });
-                    setShowConversationList(false);
-                  }}
+                  onClick={() => selectConversation({ type: 'dm', userName: user.name })}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left"
                 >
                   <div

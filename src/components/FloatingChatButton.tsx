@@ -77,28 +77,42 @@ export default function FloatingChatButton({
     const fetchUnreadCount = async () => {
       try {
         // Get messages not read by current user
-        // We need to fetch recipient to filter out DMs between other users
+        // We need to fetch recipient and created_by to filter properly
         const { data, error } = await supabase
           .from('messages')
-          .select('id, read_by, recipient')
+          .select('id, read_by, recipient, created_by')
           .not('created_by', 'eq', currentUser.name)
           .is('deleted_at', null);
 
         if (error) throw error;
 
+        // Determine what conversation will be shown when chat opens
+        // If we have a persisted conversation, don't count those messages as unread
+        const persistedConversationType = lastConversation?.type;
+        const persistedDmUser = persistedConversationType === 'dm' ? lastConversation?.userName : null;
+
         // Count messages where:
         // 1. Current user is not in read_by array
         // 2. Message is either a team message (no recipient) OR a DM to the current user
+        // 3. Message is NOT from the persisted conversation (which will be shown immediately)
         const unread = data?.filter((msg) => {
           // Skip if already read
           if (msg.read_by?.includes(currentUser.name)) return false;
-          
-          // Team message (no recipient) - count it
-          if (!msg.recipient) return true;
-          
-          // DM to current user - count it
-          if (msg.recipient === currentUser.name) return true;
-          
+
+          // Team message (no recipient)
+          if (!msg.recipient) {
+            // Skip if team chat is the persisted conversation
+            if (persistedConversationType === 'team') return false;
+            return true;
+          }
+
+          // DM to current user
+          if (msg.recipient === currentUser.name) {
+            // Skip if this DM is from the persisted conversation user
+            if (persistedDmUser && msg.created_by === persistedDmUser) return false;
+            return true;
+          }
+
           // DM between other users - don't count it
           return false;
         }).length || 0;
@@ -126,7 +140,7 @@ export default function FloatingChatButton({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser.name]);
+  }, [currentUser.name, lastConversation]);
 
   // Clear unread count when opening chat
   useEffect(() => {
