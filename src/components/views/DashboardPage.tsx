@@ -28,6 +28,11 @@ import {
   RefreshCw,
   Calendar,
   ListTodo,
+  FileText,
+  Phone,
+  DollarSign,
+  Shield,
+  Car,
 } from 'lucide-react';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -41,6 +46,10 @@ import {
 import {
   generateManagerDashboardData,
 } from '@/lib/managerDashboardInsights';
+import {
+  getInsuranceWorkloadSummary,
+  InsuranceTaskCategory,
+} from '@/lib/orchestratorIntegration';
 
 interface DashboardPageProps {
   currentUser: AuthUser;
@@ -95,6 +104,11 @@ export default function DashboardPage({
     if (!hasTeam) return null;
     return generateManagerDashboardData(todos, currentUser.name, users);
   }, [todos, currentUser.name, users, hasTeam]);
+
+  // Generate insurance workload summary (for agency manager view)
+  const insuranceWorkload = useMemo(() => {
+    return getInsuranceWorkloadSummary(todos);
+  }, [todos]);
 
   const stats = useMemo(() => {
     const today = new Date();
@@ -746,6 +760,55 @@ export default function DashboardPage({
                     ))}
                   </div>
                 )}
+              </Card>
+            )}
+
+            {/* Insurance Workload Summary (Agency-specific) */}
+            {hasTeam && (
+              <Card>
+                <SectionTitle icon={Shield} title="Insurance Workload" />
+                <div className="space-y-3">
+                  {/* Key Categories with icons */}
+                  {[
+                    { key: 'claim' as InsuranceTaskCategory, label: 'Claims', icon: FileText, color: 'text-red-500' },
+                    { key: 'follow_up' as InsuranceTaskCategory, label: 'Follow-ups', icon: Phone, color: 'text-blue-500' },
+                    { key: 'payment' as InsuranceTaskCategory, label: 'Payments', icon: DollarSign, color: 'text-emerald-500' },
+                    { key: 'vehicle_add' as InsuranceTaskCategory, label: 'Vehicle Adds', icon: Car, color: 'text-purple-500' },
+                    { key: 'policy_review' as InsuranceTaskCategory, label: 'Policy Reviews', icon: Shield, color: 'text-amber-500' },
+                  ].map(({ key, label, icon: Icon, color }) => {
+                    const data = insuranceWorkload[key];
+                    const hasItems = data.active > 0 || data.overdue > 0;
+                    if (!hasItems) return null;
+
+                    return (
+                      <div key={key} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`w-4 h-4 ${color}`} />
+                          <span className={`text-sm ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
+                            {label}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className={`${darkMode ? 'text-white/60' : 'text-slate-500'}`}>
+                            {data.active} active
+                          </span>
+                          {data.overdue > 0 && (
+                            <span className="text-red-500 font-medium">
+                              {data.overdue} overdue
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* No active insurance tasks */}
+                  {Object.values(insuranceWorkload).every(d => d.active === 0) && (
+                    <p className={`text-sm text-center py-2 ${darkMode ? 'text-white/40' : 'text-slate-400'}`}>
+                      No active insurance tasks
+                    </p>
+                  )}
+                </div>
               </Card>
             )}
 

@@ -26,7 +26,6 @@ import {
   BarChart3,
   AlertOctagon,
   Send,
-  RefreshCw,
   Wand2,
   Zap,
   GitBranch,
@@ -40,15 +39,10 @@ import {
 } from '@/lib/aiDashboardInsights';
 import {
   generateManagerDashboardData,
-  TeamMemberStats,
-  TeamBottleneck,
 } from '@/lib/managerDashboardInsights';
 import {
   analyzeTaskForDecomposition,
   generateBottleneckResolutions,
-  getOrchestratorCapabilities,
-  TaskDecomposition,
-  WorkflowSuggestion,
 } from '@/lib/orchestratorIntegration';
 // Re-export utilities for backwards compatibility
 export { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
@@ -95,7 +89,7 @@ export default function DashboardModal({
   activityLog = [],
   darkMode = true,
   users = [],
-  onReassignTask,
+  onReassignTask: _onReassignTask,
 }: DashboardModalProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'team'>('overview');
@@ -668,7 +662,7 @@ export default function DashboardModal({
 
                       {/* Motivational Quote */}
                       <div className={`text-center py-3 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                        <p className="text-xs italic">"{aiData.motivationalQuote}"</p>
+                        <p className="text-xs italic">&ldquo;{aiData.motivationalQuote}&rdquo;</p>
                       </div>
                     </motion.div>
                   ) : activeTab === 'insights' ? (
@@ -754,7 +748,7 @@ export default function DashboardModal({
 
                           <div className="space-y-3">
                             {aiData.insights.map((insight, index) => {
-                              const IconComponent = getInsightIcon(insight.type);
+                              const _IconComponent = getInsightIcon(insight.type);
                               return (
                                 <motion.div
                                   key={index}

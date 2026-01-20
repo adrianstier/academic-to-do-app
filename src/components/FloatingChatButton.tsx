@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -8,7 +8,9 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppShell } from './layout/AppShell';
 import { ChatPanelSkeleton } from './LoadingSkeletons';
-import { AuthUser } from '@/types/todo';
+import { AuthUser, ChatConversation } from '@/types/todo';
+
+const CHAT_STATE_KEY = 'floating_chat_last_conversation';
 
 // Lazy load ChatPanel for better performance
 const ChatPanel = dynamic(() => import('./ChatPanel'), {
@@ -30,9 +32,40 @@ export default function FloatingChatButton({
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
   const { activeView } = useAppShell();
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Restore last conversation from localStorage
+  const [lastConversation, setLastConversation] = useState<ChatConversation | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem(CHAT_STATE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate the structure
+        if (parsed && parsed.conversation) {
+          return parsed.conversation as ChatConversation;
+        }
+      }
+    } catch {
+      // Invalid stored data, ignore
+    }
+    return null;
+  });
+
+  // Callback to persist conversation state
+  const handleConversationChange = useCallback((conversation: ChatConversation | null, showList: boolean) => {
+    // Only persist if we have a selected conversation (not showing list)
+    if (conversation && !showList) {
+      setLastConversation(conversation);
+      try {
+        localStorage.setItem(CHAT_STATE_KEY, JSON.stringify({ conversation }));
+      } catch {
+        // localStorage might be full or disabled
+      }
+    }
+  }, []);
 
   // Don't show button when already on chat view
   const shouldShow = activeView !== 'chat';
@@ -212,6 +245,8 @@ export default function FloatingChatButton({
                   currentUser={currentUser}
                   users={users}
                   docked={true}
+                  initialConversation={lastConversation}
+                  onConversationChange={handleConversationChange}
                   onTaskLinkClick={(taskId) => {
                     onTaskLinkClick?.(taskId);
                     setIsOpen(false);

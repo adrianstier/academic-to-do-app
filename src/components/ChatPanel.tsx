@@ -141,6 +141,10 @@ interface ChatPanelProps {
   todosMap?: Map<string, Todo>;
   /** Whether the chat is docked in a sidebar (changes styling from floating) */
   docked?: boolean;
+  /** Initial conversation to open (for restoring previous state) */
+  initialConversation?: ChatConversation | null;
+  /** Callback when conversation changes (for persisting state) */
+  onConversationChange?: (conversation: ChatConversation | null, showList: boolean) => void;
 }
 
 /**
@@ -294,7 +298,7 @@ function ReactionsSummary({ reactions }: { reactions: MessageReaction[] }) {
   );
 }
 
-export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLinkClick, todosMap, docked = false }: ChatPanelProps) {
+export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLinkClick, todosMap, docked = false, initialConversation, onConversationChange }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   // When docked, always show open state; otherwise start closed
@@ -304,8 +308,8 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   const [loading, setLoading] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [tableExists, setTableExists] = useState(true);
-  const [conversation, setConversation] = useState<ChatConversation | null>(null);
-  const [showConversationList, setShowConversationList] = useState(true);
+  const [conversation, setConversation] = useState<ChatConversation | null>(initialConversation ?? null);
+  const [showConversationList, setShowConversationList] = useState(initialConversation ? false : true);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState<keyof typeof EMOJI_CATEGORIES>('recent');
@@ -649,6 +653,11 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   useEffect(() => { isAtBottomRef.current = isAtBottom; }, [isAtBottom]);
   useEffect(() => { conversationRef.current = conversation; }, [conversation]);
   useEffect(() => { showConversationListRef.current = showConversationList; }, [showConversationList]);
+
+  // Notify parent when conversation changes (for persistence)
+  useEffect(() => {
+    onConversationChange?.(conversation, showConversationList);
+  }, [conversation, showConversationList, onConversationChange]);
   useEffect(() => { playNotificationSoundRef.current = playNotificationSound; }, [playNotificationSound]);
   useEffect(() => { mutedConversationsRef.current = mutedConversations; }, [mutedConversations]);
   useEffect(() => { isDndModeRef.current = isDndMode; }, [isDndMode]);

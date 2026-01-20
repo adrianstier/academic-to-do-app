@@ -71,6 +71,148 @@ const TASK_KEYWORDS: Record<AgentType, string[]> = {
   ux: ['design', 'wireframe', 'prototype', 'user experience', 'usability'],
 };
 
+// Insurance-specific task categories for agency workflows
+export type InsuranceTaskCategory =
+  | 'policy_review'
+  | 'follow_up'
+  | 'vehicle_add'
+  | 'payment'
+  | 'endorsement'
+  | 'claim'
+  | 'quote'
+  | 'documentation'
+  | 'new_client'
+  | 'cancellation';
+
+const INSURANCE_TASK_KEYWORDS: Record<InsuranceTaskCategory, string[]> = {
+  policy_review: ['review policy', 'policy check', 'renewal', 'review coverage', 'annual review'],
+  follow_up: ['follow up', 'call back', 'check in', 'reach out', 'contact'],
+  vehicle_add: ['add vehicle', 'new vehicle', 'car add', 'auto add'],
+  payment: ['payment', 'billing', 'premium', 'invoice', 'collect'],
+  endorsement: ['endorsement', 'change coverage', 'add coverage', 'modify policy'],
+  claim: ['claim', 'accident', 'damage', 'incident', 'loss'],
+  quote: ['quote', 'estimate', 'proposal', 'pricing'],
+  documentation: ['document', 'paperwork', 'form', 'sign', 'upload'],
+  new_client: ['new client', 'new customer', 'onboard', 'welcome'],
+  cancellation: ['cancel', 'terminate', 'stop coverage', 'non-renew'],
+};
+
+export interface InsuranceTaskAnalysis {
+  category: InsuranceTaskCategory | null;
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+  suggestedPriority: 'low' | 'medium' | 'high' | 'urgent';
+  isClientFacing: boolean;
+  requiresFollowUp: boolean;
+  estimatedDuration: 'quick' | 'standard' | 'extended';
+}
+
+/**
+ * Analyze a task for insurance-specific patterns.
+ * Useful for the agency lead to understand workload distribution.
+ */
+export function analyzeInsuranceTask(taskText: string, dueDate?: string | null): InsuranceTaskAnalysis {
+  const text = taskText.toLowerCase();
+
+  // Detect category
+  let category: InsuranceTaskCategory | null = null;
+  for (const [cat, keywords] of Object.entries(INSURANCE_TASK_KEYWORDS)) {
+    if (keywords.some(kw => text.includes(kw))) {
+      category = cat as InsuranceTaskCategory;
+      break;
+    }
+  }
+
+  // Determine urgency based on category and due date
+  let urgencyLevel: InsuranceTaskAnalysis['urgencyLevel'] = 'medium';
+
+  if (dueDate) {
+    const due = new Date(dueDate);
+    const now = new Date();
+    const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilDue < 0) urgencyLevel = 'critical';
+    else if (daysUntilDue <= 1) urgencyLevel = 'high';
+    else if (daysUntilDue <= 3) urgencyLevel = 'medium';
+    else urgencyLevel = 'low';
+  }
+
+  // High-urgency categories
+  if (category === 'claim' || category === 'cancellation') {
+    urgencyLevel = urgencyLevel === 'low' ? 'medium' : urgencyLevel;
+  }
+
+  // Map urgency to priority
+  const priorityMap: Record<InsuranceTaskAnalysis['urgencyLevel'], InsuranceTaskAnalysis['suggestedPriority']> = {
+    critical: 'urgent',
+    high: 'high',
+    medium: 'medium',
+    low: 'low',
+  };
+
+  // Client-facing detection
+  const clientFacingKeywords = ['call', 'email', 'meet', 'contact', 'client', 'customer', 'speak'];
+  const isClientFacing = clientFacingKeywords.some(kw => text.includes(kw));
+
+  // Follow-up detection
+  const followUpKeywords = ['follow', 'check', 'confirm', 'verify', 'remind'];
+  const requiresFollowUp = followUpKeywords.some(kw => text.includes(kw));
+
+  // Duration estimation
+  let estimatedDuration: InsuranceTaskAnalysis['estimatedDuration'] = 'standard';
+  if (category === 'quote' || category === 'new_client' || category === 'claim') {
+    estimatedDuration = 'extended';
+  } else if (category === 'follow_up' || category === 'payment') {
+    estimatedDuration = 'quick';
+  }
+
+  return {
+    category,
+    urgencyLevel,
+    suggestedPriority: priorityMap[urgencyLevel],
+    isClientFacing,
+    requiresFollowUp,
+    estimatedDuration,
+  };
+}
+
+/**
+ * Get workload summary by insurance task category.
+ */
+export function getInsuranceWorkloadSummary(todos: Todo[]): Record<InsuranceTaskCategory, { active: number; completed: number; overdue: number }> {
+  const summary: Record<InsuranceTaskCategory, { active: number; completed: number; overdue: number }> = {
+    policy_review: { active: 0, completed: 0, overdue: 0 },
+    follow_up: { active: 0, completed: 0, overdue: 0 },
+    vehicle_add: { active: 0, completed: 0, overdue: 0 },
+    payment: { active: 0, completed: 0, overdue: 0 },
+    endorsement: { active: 0, completed: 0, overdue: 0 },
+    claim: { active: 0, completed: 0, overdue: 0 },
+    quote: { active: 0, completed: 0, overdue: 0 },
+    documentation: { active: 0, completed: 0, overdue: 0 },
+    new_client: { active: 0, completed: 0, overdue: 0 },
+    cancellation: { active: 0, completed: 0, overdue: 0 },
+  };
+
+  const now = new Date();
+
+  for (const todo of todos) {
+    const analysis = analyzeInsuranceTask(todo.text, todo.due_date);
+    if (!analysis.category) continue;
+
+    const cat = summary[analysis.category];
+
+    if (todo.completed) {
+      cat.completed++;
+    } else {
+      cat.active++;
+      if (todo.due_date && new Date(todo.due_date) < now) {
+        cat.overdue++;
+      }
+    }
+  }
+
+  return summary;
+}
+
 /**
  * Analyze a task description and suggest decomposition into subtasks.
  * This mirrors what the orchestrator's build_prompt tool does.
