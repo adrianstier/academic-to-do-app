@@ -10,30 +10,22 @@ import {
   Sun,
   Moon,
   Sunrise,
-  Sparkles,
-  TrendingUp,
-  AlertCircle,
-  Lightbulb,
   Target,
-  Flame,
-  Award,
   Brain,
   Users,
-  Calendar,
   FileText,
   Phone,
   DollarSign,
   Shield,
   Car,
+  Clock,
 } from 'lucide-react';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useTodoStore } from '@/store/todoStore';
 import { useAppShell } from '../layout';
 import {
   generateDashboardAIData,
   NeglectedTask,
-  ProductivityInsight,
 } from '@/lib/aiDashboardInsights';
 import {
   generateManagerDashboardData,
@@ -68,15 +60,13 @@ export default function DashboardPage({
   activityLog = [],
   users = [],
   onNavigateToTasks,
-  onAddTask,
   onFilterOverdue,
   onFilterDueToday,
 }: DashboardPageProps) {
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
-  const { setActiveView, triggerNewTask } = useAppShell();
+  const { setActiveView } = useAppShell();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Check if user has team members (is a manager)
   const hasTeam = users.length > 1;
@@ -222,14 +212,6 @@ export default function DashboardPage({
     }
   }, [onNavigateToTasks, setActiveView]);
 
-  const handleAddTask = useCallback(() => {
-    if (onAddTask) {
-      onAddTask();
-    } else {
-      triggerNewTask();
-    }
-  }, [onAddTask, triggerNewTask]);
-
   const handleFilterOverdue = useCallback(() => {
     if (onFilterOverdue) {
       onFilterOverdue();
@@ -246,37 +228,11 @@ export default function DashboardPage({
     }
   }, [onFilterDueToday, setActiveView]);
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Simulate refresh
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
-  };
-
-  const getInsightIcon = (type: ProductivityInsight['type']) => {
-    switch (type) {
-      case 'streak': return Flame;
-      case 'milestone': return Award;
-      case 'pattern': return TrendingUp;
-      case 'encouragement': return Sparkles;
-      case 'tip': return Lightbulb;
-      default: return Brain;
-    }
-  };
-
-  const getUrgencyColor = (urgency: NeglectedTask['urgencyLevel']) => {
+  const getUrgencyBadge = (urgency: NeglectedTask['urgencyLevel']) => {
     switch (urgency) {
-      case 'critical': return 'text-red-500';
-      case 'warning': return 'text-amber-500';
-      case 'notice': return 'text-blue-400';
-    }
-  };
-
-  const getUrgencyBg = (urgency: NeglectedTask['urgencyLevel']) => {
-    switch (urgency) {
-      case 'critical': return darkMode ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200';
-      case 'warning': return darkMode ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200';
-      case 'notice': return darkMode ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200';
+      case 'critical': return { bg: 'bg-red-500', text: 'text-white', label: 'CRITICAL' };
+      case 'warning': return { bg: 'bg-amber-500', text: 'text-white', label: 'STALLED' };
+      case 'notice': return { bg: 'bg-blue-500', text: 'text-white', label: 'NEEDS ATTENTION' };
     }
   };
 
@@ -379,319 +335,389 @@ export default function DashboardPage({
 
       {/* Main Content Grid */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Critical Alerts - FIRST thing users should see */}
+
+        {/* Status Summary - Quick glance at what needs attention */}
         {(stats.overdue > 0 || aiData.neglectedTasks.length > 0) && (
-          <Card className="mb-6">
-            <SectionTitle icon={AlertTriangle} title="Critical Alerts" />
-            <div className="space-y-3">
+          <div className="mb-6">
+            <div className={`rounded-2xl overflow-hidden ${
+              darkMode ? 'bg-[var(--surface)] border border-white/10' : 'bg-white border border-[var(--border)] shadow-sm'
+            }`}>
+              {/* Overdue Alert Banner - Most critical */}
               {stats.overdue > 0 && (
                 <button
                   onClick={handleFilterOverdue}
-                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-colors group"
+                  className="w-full flex items-center gap-4 p-4 bg-red-500/10 hover:bg-red-500/15 transition-colors group border-b border-red-500/20"
                 >
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  <div className="flex-1 text-left">
-                    <span className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                      {stats.overdue} overdue tasks
-                    </span>
-                    <span className={`text-sm ml-2 ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>
-                      need immediate attention
-                    </span>
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/20">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
                   </div>
-                  <ArrowRight className="w-4 h-4 text-red-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <div className="flex-1 text-left">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      {stats.overdue} task{stats.overdue > 1 ? 's' : ''} overdue
+                    </p>
+                    <p className={`text-sm ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>
+                      Click to view and resolve
+                    </p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-red-500 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </button>
               )}
 
-              {aiData.neglectedTasks.slice(0, 2).map((item) => (
-                <div
-                  key={item.todo.id}
-                  className={`p-4 rounded-xl border ${getUrgencyBg(item.urgencyLevel)}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${getUrgencyColor(item.urgencyLevel)}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        {item.todo.text}
-                      </p>
-                      <p className={`text-xs mt-1 ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>
-                        {item.daysSinceActivity} days without activity
-                      </p>
-                      <p className={`text-xs mt-2 italic ${darkMode ? 'text-white/50' : 'text-slate-600'}`}>
-                        <Brain className="w-3 h-3 inline mr-1" />
-                        {item.aiSuggestion}
-                      </p>
-                    </div>
+              {/* Stalled/Neglected Tasks - Compact list */}
+              {aiData.neglectedTasks.length > 0 && (
+                <div className={`p-4 ${stats.overdue > 0 ? '' : ''}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className={`w-4 h-4 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+                    <span className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? 'text-white/70' : 'text-slate-600'}`}>
+                      Needs Attention
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {aiData.neglectedTasks.slice(0, 3).map((item) => {
+                      const badge = getUrgencyBadge(item.urgencyLevel);
+                      return (
+                        <div
+                          key={item.todo.id}
+                          className={`flex items-center gap-3 p-3 rounded-xl ${
+                            darkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-50 hover:bg-slate-100'
+                          } transition-colors cursor-pointer`}
+                          onClick={handleNavigateToTasks}
+                        >
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${badge.bg} ${badge.text}`}>
+                            {item.daysSinceActivity}d
+                          </span>
+                          <span className={`flex-1 truncate text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                            {item.todo.text}
+                          </span>
+                          <ChevronRight className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-white/30' : 'text-slate-300'}`} />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
-          </Card>
+          </div>
         )}
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`grid gap-6 ${hasTeam ? 'grid-cols-1 lg:grid-cols-5' : 'grid-cols-1 lg:grid-cols-3'}`}>
 
-          {/* Left Column - Tasks */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Main Column - Your Day */}
+          <div className={`${hasTeam ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-6`}>
 
-            {/* Today's Focus */}
+            {/* Your Day - Combined Today + Coming Up */}
             <Card>
-              <SectionTitle icon={Target} title="Today's Focus" />
+              <SectionTitle icon={Target} title="Your Day" />
 
+              {/* AI Focus Suggestion - Only if relevant */}
               {aiData.todaysFocus && (
-                <div className={`flex items-center gap-3 p-4 rounded-xl mb-4 ${
-                  darkMode
-                    ? 'bg-violet-500/10 border border-violet-500/30'
-                    : 'bg-violet-50 border border-violet-200'
+                <div className={`flex items-start gap-3 p-3 rounded-xl mb-4 ${
+                  darkMode ? 'bg-[#0033A0]/20 border border-[#0033A0]/30' : 'bg-blue-50 border border-blue-200'
                 }`}>
-                  <Sparkles className="w-5 h-5 text-violet-500 flex-shrink-0" />
-                  <p className={`text-sm font-medium ${darkMode ? 'text-violet-300' : 'text-violet-700'}`}>
+                  <Brain className={`w-4 h-4 mt-0.5 flex-shrink-0 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
+                  <p className={`text-sm ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`}>
                     {aiData.todaysFocus}
                   </p>
                 </div>
               )}
 
+              {/* Due Today Section */}
               {stats.dueToday > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                      Due Today
+                    </span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      darkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {stats.dueToday}
+                    </span>
+                  </div>
                   {stats.dueTodayTasks.slice(0, 5).map((task) => (
                     <button
                       key={task.id}
                       onClick={handleNavigateToTasks}
-                      className={`w-full flex items-start gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
                         darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-50'
                       }`}
                     >
-                      <div className={`w-3 h-3 mt-1 rounded-full flex-shrink-0 ${
+                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
                         task.priority === 'urgent' ? 'bg-red-500' :
                         task.priority === 'high' ? 'bg-orange-500' :
                         'bg-[#0033A0]'
                       }`} />
-                      <span className={`flex-1 font-medium line-clamp-2 ${
-                        darkMode ? 'text-white' : 'text-slate-900'
-                      }`}>
+                      <span className={`flex-1 text-sm truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                         {task.text}
                       </span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {task.assigned_to && task.assigned_to !== currentUser.name && (
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            darkMode ? 'bg-white/10 text-white/60' : 'bg-slate-100 text-slate-500'
-                          }`}>
-                            {task.assigned_to}
-                          </span>
-                        )}
-                        <ChevronRight className={`w-4 h-4 ${darkMode ? 'text-white/40' : 'text-slate-400'}`} />
-                      </div>
+                      {task.assigned_to && task.assigned_to !== currentUser.name && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          darkMode ? 'bg-white/10 text-white/50' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {task.assigned_to.split(' ')[0]}
+                        </span>
+                      )}
                     </button>
                   ))}
                   {stats.dueToday > 5 && (
                     <button
                       onClick={handleFilterDueToday}
-                      className={`w-full text-center py-2 text-sm font-medium ${
+                      className={`w-full text-center py-2 text-xs font-medium ${
                         darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'
                       } hover:underline`}
                     >
-                      View all {stats.dueToday} tasks due today
+                      +{stats.dueToday - 5} more due today
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-3 py-4">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                  <span className={`${darkMode ? 'text-white/70' : 'text-slate-600'}`}>
-                    No tasks due today. Great job staying ahead!
+                <div className={`flex items-center gap-3 py-3 px-3 rounded-lg ${
+                  darkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'
+                }`}>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <span className={`text-sm ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                    No tasks due today - you're ahead of schedule
                   </span>
                 </div>
               )}
-            </Card>
 
-            {/* Upcoming This Week */}
-            {stats.upcoming > 0 && (
-              <Card>
-                <SectionTitle icon={Calendar} title="Coming Up This Week" />
-                <div className="space-y-2">
-                  {stats.upcomingTasks.slice(0, 4).map((task) => (
-                    <button
-                      key={task.id}
-                      onClick={handleNavigateToTasks}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${
-                        darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        task.priority === 'urgent' ? 'bg-red-500' :
-                        task.priority === 'high' ? 'bg-orange-500' :
-                        'bg-slate-400'
-                      }`} />
-                      <span className={`flex-1 truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        {task.text}
-                      </span>
-                      <span className={`text-xs ${darkMode ? 'text-white/50' : 'text-slate-500'}`}>
-                        {task.due_date && formatDueDate(task.due_date)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-
-          {/* Right Column - Insights & Team */}
-          <div className="space-y-6">
-
-            {/* AI Insights */}
-            <Card>
-              <SectionTitle icon={Sparkles} title="AI Insights" />
-
-              {aiData.insights.length > 0 ? (
-                <div className="space-y-3">
-                  {aiData.insights.slice(0, 4).map((insight, index) => {
-                    const IconComponent = getInsightIcon(insight.type);
-                    return (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className={`flex items-start gap-3 p-3 rounded-xl ${
-                          darkMode ? 'bg-white/5' : 'bg-slate-50'
+              {/* Coming Up Section - Only show if there's upcoming tasks */}
+              {stats.upcoming > 0 && (
+                <div className="mt-5 pt-4 border-t border-dashed border-slate-200 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-semibold uppercase tracking-wide ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                      Coming Up
+                    </span>
+                    <span className={`text-xs ${darkMode ? 'text-white/40' : 'text-slate-400'}`}>
+                      Next 7 days
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {stats.upcomingTasks.slice(0, 4).map((task) => (
+                      <button
+                        key={task.id}
+                        onClick={handleNavigateToTasks}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                          darkMode ? 'hover:bg-white/5' : 'hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-xl flex-shrink-0">{insight.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                            {insight.title}
-                          </p>
-                          <p className={`text-xs mt-0.5 ${darkMode ? 'text-white/60' : 'text-slate-600'}`}>
-                            {insight.message}
-                          </p>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className={`text-center py-6 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
-                  <Sparkles className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">All caught up! No insights right now.</p>
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          task.priority === 'urgent' ? 'bg-red-500' :
+                          task.priority === 'high' ? 'bg-orange-500' :
+                          'bg-slate-300 dark:bg-slate-600'
+                        }`} />
+                        <span className={`flex-1 text-sm truncate ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
+                          {task.text}
+                        </span>
+                        <span className={`text-xs flex-shrink-0 ${darkMode ? 'text-white/40' : 'text-slate-400'}`}>
+                          {task.due_date && formatDueDate(task.due_date)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </Card>
+          </div>
 
-            {/* Team Overview (if manager) */}
+          {/* Right Column - Team Health (for managers) or Insurance Summary */}
+          <div className={`${hasTeam ? 'lg:col-span-2' : 'lg:col-span-1'} space-y-6`}>
+
+            {/* Team Health - Simplified, action-oriented */}
             {hasTeam && managerData && (
               <Card>
-                <SectionTitle icon={Users} title="Team Overview" />
+                <SectionTitle icon={Users} title="Team Health" />
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className={`text-center p-3 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className={`text-center p-2 rounded-lg ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
+                    <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                       {managerData.teamOverview.totalActive}
                     </p>
-                    <p className={`text-xs ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>Active</p>
+                    <p className={`text-[10px] uppercase ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Active</p>
                   </div>
-                  <div className={`text-center p-3 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
-                    <p className={`text-2xl font-bold ${
-                      managerData.teamOverview.totalOverdue > 0 ? 'text-red-500' : 'text-emerald-500'
+                  <div className={`text-center p-2 rounded-lg ${
+                    managerData.teamOverview.totalOverdue > 0
+                      ? darkMode ? 'bg-red-500/10' : 'bg-red-50'
+                      : darkMode ? 'bg-white/5' : 'bg-slate-50'
+                  }`}>
+                    <p className={`text-xl font-bold ${
+                      managerData.teamOverview.totalOverdue > 0 ? 'text-red-500' : darkMode ? 'text-white' : 'text-slate-900'
                     }`}>
                       {managerData.teamOverview.totalOverdue}
                     </p>
-                    <p className={`text-xs ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>Overdue</p>
+                    <p className={`text-[10px] uppercase ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>Overdue</p>
+                  </div>
+                  <div className={`text-center p-2 rounded-lg ${darkMode ? 'bg-white/5' : 'bg-slate-50'}`}>
+                    <p className={`text-xl font-bold text-emerald-500`}>
+                      {managerData.teamOverview.weeklyTeamCompleted}
+                    </p>
+                    <p className={`text-[10px] uppercase ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>This Week</p>
                   </div>
                 </div>
 
-                {/* Team workload bars */}
-                <div className="space-y-3">
-                  {managerData.memberStats.slice(0, 4).map((member) => (
-                    <div key={member.name} className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                          {member.name}
-                        </span>
-                        <span className={`text-xs ${darkMode ? 'text-white/50' : 'text-slate-500'}`}>
-                          {member.activeTasks} tasks
-                        </span>
-                      </div>
-                      <div className={`h-2 rounded-full ${darkMode ? 'bg-white/10' : 'bg-slate-100'}`}>
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            member.workloadLevel === 'overloaded' ? 'bg-red-500' :
-                            member.workloadLevel === 'heavy' ? 'bg-amber-500' :
-                            member.workloadLevel === 'normal' ? 'bg-[#0033A0]' :
-                            'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(member.activeTasks / 15 * 100, 100)}%` }}
-                        />
-                      </div>
+                {/* Who Needs Help - Only show if there are issues */}
+                {(managerData.bottlenecks.length > 0 || managerData.memberStats.some(m => m.overdueTasks > 0)) && (
+                  <div className="mb-4">
+                    <div className={`text-xs font-semibold uppercase tracking-wide mb-2 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                      Needs Attention
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-2">
+                      {managerData.memberStats
+                        .filter(m => m.overdueTasks > 0 || m.workloadLevel === 'overloaded')
+                        .slice(0, 3)
+                        .map((member) => (
+                          <div
+                            key={member.name}
+                            className={`flex items-center gap-3 p-2.5 rounded-lg ${
+                              member.workloadLevel === 'overloaded'
+                                ? darkMode ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-200'
+                                : darkMode ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-50 border border-amber-200'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                              member.workloadLevel === 'overloaded'
+                                ? 'bg-red-500/20 text-red-500'
+                                : 'bg-amber-500/20 text-amber-500'
+                            }`}>
+                              {member.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                {member.name}
+                              </p>
+                              <p className={`text-xs ${darkMode ? 'text-white/60' : 'text-slate-500'}`}>
+                                {member.overdueTasks > 0 && `${member.overdueTasks} overdue`}
+                                {member.overdueTasks > 0 && member.workloadLevel === 'overloaded' && ' · '}
+                                {member.workloadLevel === 'overloaded' && `${member.activeTasks} tasks`}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
 
-                {/* Bottlenecks */}
-                {managerData.bottlenecks.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {managerData.bottlenecks.slice(0, 2).map((bottleneck, index) => (
-                      <div
-                        key={index}
-                        className={`p-3 rounded-xl text-sm ${
-                          bottleneck.severity === 'critical'
-                            ? darkMode ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-700'
-                            : darkMode ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        <AlertCircle className="w-4 h-4 inline mr-2" />
-                        {bottleneck.title}
+                {/* Team Workload Bars - Compact */}
+                <div>
+                  <div className={`text-xs font-semibold uppercase tracking-wide mb-2 ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                    Workload
+                  </div>
+                  <div className="space-y-2">
+                    {managerData.memberStats.slice(0, 5).map((member) => (
+                      <div key={member.name} className="flex items-center gap-2">
+                        <span className={`w-20 text-xs truncate ${darkMode ? 'text-white/70' : 'text-slate-600'}`}>
+                          {member.name.split(' ')[0]}
+                        </span>
+                        <div className={`flex-1 h-1.5 rounded-full ${darkMode ? 'bg-white/10' : 'bg-slate-100'}`}>
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              member.workloadLevel === 'overloaded' ? 'bg-red-500' :
+                              member.workloadLevel === 'heavy' ? 'bg-amber-500' :
+                              member.workloadLevel === 'normal' ? 'bg-[#0033A0]' :
+                              'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(member.activeTasks / 15 * 100, 100)}%` }}
+                          />
+                        </div>
+                        <span className={`w-6 text-right text-xs ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                          {member.activeTasks}
+                        </span>
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
               </Card>
             )}
 
-            {/* Insurance Workload Summary (Agency-specific) */}
+            {/* Insurance Workload - Only show categories with issues */}
             {hasTeam && (
               <Card>
-                <SectionTitle icon={Shield} title="Insurance Workload" />
-                <div className="space-y-3">
-                  {/* Key Categories with icons */}
-                  {[
-                    { key: 'claim' as InsuranceTaskCategory, label: 'Claims', icon: FileText, color: 'text-red-500' },
-                    { key: 'follow_up' as InsuranceTaskCategory, label: 'Follow-ups', icon: Phone, color: 'text-blue-500' },
-                    { key: 'payment' as InsuranceTaskCategory, label: 'Payments', icon: DollarSign, color: 'text-emerald-500' },
-                    { key: 'vehicle_add' as InsuranceTaskCategory, label: 'Vehicle Adds', icon: Car, color: 'text-purple-500' },
-                    { key: 'policy_review' as InsuranceTaskCategory, label: 'Policy Reviews', icon: Shield, color: 'text-amber-500' },
-                  ].map(({ key, label, icon: Icon, color }) => {
-                    const data = insuranceWorkload[key];
-                    const hasItems = data.active > 0 || data.overdue > 0;
-                    if (!hasItems) return null;
+                <SectionTitle icon={Shield} title="Insurance Tasks" />
 
+                {/* Only show categories that have overdue items or significant active work */}
+                {(() => {
+                  const categories = [
+                    { key: 'claim' as InsuranceTaskCategory, label: 'Claims', icon: FileText, color: 'text-red-500', bgColor: 'bg-red-500/10' },
+                    { key: 'follow_up' as InsuranceTaskCategory, label: 'Follow-ups', icon: Phone, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+                    { key: 'payment' as InsuranceTaskCategory, label: 'Payments', icon: DollarSign, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+                    { key: 'vehicle_add' as InsuranceTaskCategory, label: 'Vehicle Adds', icon: Car, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+                    { key: 'policy_review' as InsuranceTaskCategory, label: 'Policy Reviews', icon: Shield, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+                  ];
+
+                  // Prioritize categories with overdue items
+                  const withOverdue = categories.filter(c => insuranceWorkload[c.key].overdue > 0);
+                  const withActive = categories.filter(c => insuranceWorkload[c.key].active > 0 && insuranceWorkload[c.key].overdue === 0);
+                  const relevantCategories = [...withOverdue, ...withActive].slice(0, 4);
+
+                  if (relevantCategories.length === 0) {
                     return (
-                      <div key={key} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className={`w-4 h-4 ${color}`} />
-                          <span className={`text-sm ${darkMode ? 'text-white/80' : 'text-slate-700'}`}>
-                            {label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs">
-                          <span className={`${darkMode ? 'text-white/60' : 'text-slate-500'}`}>
-                            {data.active} active
-                          </span>
-                          {data.overdue > 0 && (
-                            <span className="text-red-500 font-medium">
-                              {data.overdue} overdue
-                            </span>
-                          )}
-                        </div>
+                      <div className={`text-center py-4 ${darkMode ? 'text-white/40' : 'text-slate-400'}`}>
+                        <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">All insurance tasks on track</p>
                       </div>
                     );
-                  })}
+                  }
 
-                  {/* No active insurance tasks */}
-                  {Object.values(insuranceWorkload).every(d => d.active === 0) && (
-                    <p className={`text-sm text-center py-2 ${darkMode ? 'text-white/40' : 'text-slate-400'}`}>
-                      No active insurance tasks
-                    </p>
-                  )}
+                  return (
+                    <div className="space-y-2">
+                      {relevantCategories.map(({ key, label, icon: Icon, color, bgColor }) => {
+                        const data = insuranceWorkload[key];
+                        return (
+                          <div
+                            key={key}
+                            className={`flex items-center gap-3 p-2.5 rounded-lg ${
+                              data.overdue > 0
+                                ? darkMode ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-100'
+                                : darkMode ? 'bg-white/5' : 'bg-slate-50'
+                            }`}
+                          >
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgColor}`}>
+                              <Icon className={`w-4 h-4 ${color}`} />
+                            </div>
+                            <span className={`flex-1 text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {label}
+                            </span>
+                            <div className="flex items-center gap-2 text-xs">
+                              {data.overdue > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-red-500 text-white font-medium">
+                                  {data.overdue} late
+                                </span>
+                              )}
+                              <span className={`${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                                {data.active} active
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </Card>
+            )}
+
+            {/* For non-managers, show a simple status card */}
+            {!hasTeam && (
+              <Card>
+                <SectionTitle icon={CheckCircle2} title="Your Progress" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm ${darkMode ? 'text-white/70' : 'text-slate-600'}`}>Completed this week</span>
+                    <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      {stats.weeklyCompleted}
+                    </span>
+                  </div>
+                  <div className={`h-2 rounded-full ${darkMode ? 'bg-white/10' : 'bg-slate-100'}`}>
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all"
+                      style={{ width: `${Math.min(stats.weeklyRatio, 100)}%` }}
+                    />
+                  </div>
+                  <p className={`text-xs ${darkMode ? 'text-white/50' : 'text-slate-400'}`}>
+                    {stats.weeklyRatio}% of your weekly tasks completed
+                  </p>
                 </div>
               </Card>
             )}
