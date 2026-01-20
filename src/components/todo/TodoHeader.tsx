@@ -1,11 +1,10 @@
 'use client';
 
 import { memo, useState, useEffect, useCallback, useRef } from 'react';
-import { LayoutList, LayoutGrid, Bell, Search, X } from 'lucide-react';
+import { LayoutList, LayoutGrid, Bell, Search, X, Filter, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AuthUser, ViewMode, ActivityLogEntry } from '@/types/todo';
 import UserSwitcher from '../UserSwitcher';
-import AppMenu from '../AppMenu';
 import FocusModeToggle from '../FocusModeToggle';
 import NotificationModal from '../NotificationModal';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -17,10 +16,9 @@ import { supabase } from '@/lib/supabaseClient';
 // UNIFIED TODO HEADER - Single header row with integrated search
 // Layout:
 // - Left side: View toggle (List/Board), Search field, Focus mode toggle
-// - Right side: Notifications bell, User switcher, Menu button
+// - Right side: Filter toggle, Reset, Notifications bell, User switcher
 //
-// NOTE: Activity, Archive, and Strategic Goals are now in NavigationSidebar
-// The AppMenu only contains: Weekly Progress, Keyboard Shortcuts, Filters
+// NOTE: Weekly Progress and Keyboard Shortcuts are now in NavigationSidebar
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface TodoHeaderProps {
@@ -31,9 +29,6 @@ interface TodoHeaderProps {
   // Search integration
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  // Modal triggers - only for items NOT in sidebar
-  setShowWeeklyChart: (show: boolean) => void;
-  setShowShortcuts: (show: boolean) => void;
   // Filter controls
   showAdvancedFilters: boolean;
   setShowAdvancedFilters: (show: boolean) => void;
@@ -50,8 +45,6 @@ function TodoHeader({
   setViewMode,
   searchQuery,
   setSearchQuery,
-  setShowWeeklyChart,
-  setShowShortcuts,
   showAdvancedFilters,
   setShowAdvancedFilters,
   onResetFilters,
@@ -283,15 +276,44 @@ function TodoHeader({
                 />
               </div>
 
-              <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
+              {/* Filter Toggle */}
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className={`
+                  p-1.5 sm:p-2 rounded-lg transition-colors
+                  ${showAdvancedFilters
+                    ? darkMode
+                      ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                      : 'bg-[var(--accent-light)] text-[var(--accent)]'
+                    : darkMode
+                      ? 'text-white/60 hover:text-white hover:bg-white/10'
+                      : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                  }
+                `}
+                aria-label={showAdvancedFilters ? 'Hide filters' : 'Show filters'}
+                aria-pressed={showAdvancedFilters}
+                title="Toggle Filters"
+              >
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
 
-              <AppMenu
-                onShowWeeklyChart={() => setShowWeeklyChart(true)}
-                onShowShortcuts={() => setShowShortcuts(true)}
-                onShowAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                onResetFilters={onResetFilters}
-                showAdvancedFilters={showAdvancedFilters}
-              />
+              {/* Reset Filters */}
+              <button
+                onClick={onResetFilters}
+                className={`
+                  p-1.5 sm:p-2 rounded-lg transition-colors
+                  ${darkMode
+                    ? 'text-white/60 hover:text-white hover:bg-white/10'
+                    : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                  }
+                `}
+                aria-label="Reset all filters"
+                title="Reset Filters"
+              >
+                <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+
+              <UserSwitcher currentUser={currentUser} onUserChange={onUserChange} />
             </div>
           )}
         </div>

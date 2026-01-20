@@ -1602,8 +1602,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           setViewMode={setViewMode}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          setShowWeeklyChart={setShowWeeklyChart}
-          setShowShortcuts={setShowShortcuts}
           showAdvancedFilters={showAdvancedFilters}
           setShowAdvancedFilters={setShowAdvancedFilters}
           onResetFilters={() => {
