@@ -142,6 +142,11 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     setShowAddTask(false);
   }, []);
 
+  // Reset the initial filter after it's applied
+  const handleInitialFilterApplied = useCallback(() => {
+    setInitialFilter(null);
+  }, []);
+
   // Handle task link click from chat (navigate to tasks view and scroll to task)
   const handleTaskLinkClick = useCallback((taskId: string) => {
     setActiveView('tasks');
@@ -292,6 +297,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             initialFilter={initialFilter}
             autoFocusAddTask={showAddTask}
             onAddTaskModalOpened={handleAddTaskModalOpened}
+            onInitialFilterApplied={handleInitialFilterApplied}
             onOpenDashboard={handleOpenDashboard}
           />
         );
@@ -305,6 +311,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             initialFilter={initialFilter}
             autoFocusAddTask={showAddTask}
             onAddTaskModalOpened={handleAddTaskModalOpened}
+            onInitialFilterApplied={handleInitialFilterApplied}
             onOpenDashboard={handleOpenDashboard}
           />
         );
@@ -351,6 +358,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             initialFilter={initialFilter}
             autoFocusAddTask={showAddTask}
             onAddTaskModalOpened={handleAddTaskModalOpened}
+            onInitialFilterApplied={handleInitialFilterApplied}
             onOpenDashboard={handleOpenDashboard}
           />
         );

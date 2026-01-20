@@ -1515,11 +1515,11 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
   // For docked mode, render a simplified layout that fills the sidebar
   if (docked) {
     return (
-      <div className="h-full flex flex-col bg-gradient-to-b from-[var(--surface-dark)] to-[#050A12]">
+      <div className="h-full flex flex-col bg-[var(--surface-dark)]">
         {/* Docked Header */}
         <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-[var(--accent)] flex items-center justify-center">
               <MessageSquare className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <div>
@@ -1540,7 +1540,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                 onClick={() => selectConversation({ type: 'team' })}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)]/30 to-[var(--accent)]/10 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-[var(--accent)]/15 flex items-center justify-center">
                   <Users className="w-5 h-5 text-[var(--accent)]" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -1638,7 +1638,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                         <div
                           className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
                             isOwn
-                              ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white'
+                              ? 'bg-[var(--accent)] text-white'
                               : 'bg-white/10 text-white'
                           }`}
                         >
@@ -1675,7 +1675,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white disabled:opacity-50 transition-opacity"
+                    className="p-2.5 rounded-xl bg-[var(--accent)] text-white disabled:opacity-50 transition-opacity hover:bg-[var(--accent)]/90"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -1712,7 +1712,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
             aria-label={`Open chat${totalUnreadCount > 0 ? `, ${totalUnreadCount} unread messages` : ''}`}
           >
             {/* Main button */}
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-200">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--accent)] flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200 group-hover:bg-[var(--accent)]/90">
               <MessageSquare className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
 
@@ -1760,11 +1760,8 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
               />
             </div>
 
-            {/* Outer glow */}
-            <div className="absolute -inset-[1px] bg-gradient-to-b from-[var(--accent)]/30 via-white/[0.08] to-white/[0.02] rounded-[28px] blur-[1px]" />
-
             {/* Main container */}
-            <div className="relative bg-gradient-to-b from-[var(--surface-dark)] to-[#050A12] rounded-[28px] border border-white/[0.1] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col h-full">
+            <div className="relative bg-[var(--surface-dark)] rounded-[28px] border border-white/[0.12] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col h-full">
 
               {/* Header */}
               <div className="relative flex items-center justify-between px-5 py-4 border-b border-white/[0.08]">
@@ -1772,7 +1769,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                 <div className="flex items-center gap-3 relative z-10">
                   {showConversationList ? (
                     <>
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] flex items-center justify-center shadow-lg shadow-[var(--accent)]/20">
+                      <div className="w-9 h-9 rounded-xl bg-[var(--accent)] flex items-center justify-center">
                         <MessageSquare className="w-5 h-5 text-white" strokeWidth={2.5} />
                       </div>
                       <span className="font-bold text-white text-lg tracking-tight">Messages</span>
@@ -1788,7 +1785,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                         <ChevronLeft className="w-5 h-5 text-white/70" />
                       </motion.button>
                       {conversation?.type === 'team' ? (
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] flex items-center justify-center shadow-lg">
+                        <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center">
                           <Users className="w-5 h-5 text-white" />
                         </div>
                       ) : conversation?.type === 'dm' ? (
@@ -2034,7 +2031,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                                   <motion.span
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 bg-gradient-to-br from-red-500 to-red-600 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-lg border border-[var(--surface-dark)]"
+                                    className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1.5 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white shadow-lg border border-[var(--surface-dark)]"
                                   >
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                   </motion.span>
@@ -2091,7 +2088,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                       {otherUsers.length === 0 && (
                         <div className="px-6 py-12 text-center">
                           <motion.div
-                            className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/[0.1] flex items-center justify-center"
+                            className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center"
                             animate={{ scale: [1, 1.05, 1] }}
                             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                           >
@@ -2144,7 +2141,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                         ) : filteredMessages.length === 0 ? (
                           <div className="flex flex-col items-center justify-center h-full text-center px-6">
                             <motion.div
-                              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/[0.08] flex items-center justify-center mb-5"
+                              className="w-20 h-20 rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center mb-5"
                               animate={{ y: [-4, 4, -4] }}
                               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                             >
@@ -2235,9 +2232,9 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                                   {/* Unread divider */}
                                   {isFirstUnread && (
                                     <div className="flex items-center gap-3 my-4">
-                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/50 to-transparent" />
+                                      <div className="flex-1 h-px bg-[var(--accent)]/30" />
                                       <span className="text-xs text-[var(--accent)] font-semibold px-3 py-1 bg-[var(--accent)]/10 rounded-full">New Messages</span>
-                                      <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/50 to-transparent" />
+                                      <div className="flex-1 h-px bg-[var(--accent)]/30" />
                                     </div>
                                   )}
 
@@ -2629,7 +2626,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                               <motion.button
                                 onClick={saveEdit}
                                 disabled={!editText.trim()}
-                                className="px-5 py-3 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white rounded-xl text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[var(--accent)]/20"
+                                className="px-5 py-3 bg-[var(--accent)] text-white rounded-xl text-sm font-semibold hover:bg-[var(--accent)]/90 disabled:opacity-50 transition-all"
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                               >
@@ -2652,7 +2649,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
 
                       {/* Input Area */}
                       {!editingMessage && (
-                        <div className="p-4 border-t border-white/[0.06] bg-gradient-to-t from-[#050A12] to-transparent relative">
+                        <div className="p-4 border-t border-white/[0.08] bg-[var(--surface-dark)] relative">
                           {/* Mention autocomplete */}
                           <AnimatePresence>
                             {showMentions && (
@@ -2788,7 +2785,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                             <motion.button
                               onClick={sendMessage}
                               disabled={!newMessage.trim() || !tableExists}
-                              className="p-3 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-[var(--accent)]/20 disabled:shadow-none"
+                              className="p-3 rounded-xl bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                             >
@@ -2839,7 +2836,7 @@ export default function ChatPanel({ currentUser, users, onCreateTask, onTaskLink
                 </motion.button>
                 <motion.button
                   onClick={handleCreateTask}
-                  className="px-5 py-3 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-light)] text-white font-semibold shadow-lg shadow-[var(--accent)]/20 hover:opacity-90 transition-all"
+                  className="px-5 py-3 rounded-xl bg-[var(--accent)] text-white font-semibold hover:bg-[var(--accent)]/90 transition-all"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

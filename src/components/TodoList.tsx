@@ -111,6 +111,7 @@ interface TodoListProps {
   initialFilter?: QuickFilter | null;
   autoFocusAddTask?: boolean;
   onAddTaskModalOpened?: () => void;
+  onInitialFilterApplied?: () => void;
 }
 
 // Helper to get completion timestamp in ms
@@ -128,7 +129,7 @@ const getCompletedAtMs = (todo: Todo): number | null => {
   return null;
 };
 
-export default function TodoList({ currentUser, onUserChange, onOpenDashboard, initialFilter, autoFocusAddTask, onAddTaskModalOpened }: TodoListProps) {
+export default function TodoList({ currentUser, onUserChange, onOpenDashboard, initialFilter, autoFocusAddTask, onAddTaskModalOpened, onInitialFilterApplied }: TodoListProps) {
   const userName = currentUser.name;
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
@@ -223,8 +224,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   useEffect(() => {
     if (initialFilter) {
       setQuickFilter(initialFilter);
+      // Notify parent so it can reset the trigger state
+      onInitialFilterApplied?.();
     }
-  }, [initialFilter, setQuickFilter]);
+  }, [initialFilter, setQuickFilter, onInitialFilterApplied]);
 
   // Open add task modal when autoFocusAddTask is true
   useEffect(() => {
