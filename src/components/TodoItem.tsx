@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Plus, Mail, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, Bell, BellOff } from 'lucide-react';
 import { Todo, TodoPriority, TodoStatus, PRIORITY_CONFIG, RecurrencePattern, Subtask, Attachment, MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
 import { Badge, Button, IconButton } from '@/components/ui';
@@ -222,16 +223,38 @@ export default function TodoItem({
   const [editingText, setEditingText] = useState(false);
   const [text, setText] = useState(todo.text);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const priority = todo.priority || 'medium';
   const status = todo.status || 'todo';
   void status; // Used for status-based logic elsewhere
+
+  // Calculate dropdown position when menu opens
+  useEffect(() => {
+    if (showActionsMenu && menuButtonRef.current) {
+      const rect = menuButtonRef.current.getBoundingClientRect();
+      // Position dropdown below the button, aligned to the right edge
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4, // 4px gap
+        left: rect.right + window.scrollX - 180, // Align right edge (180px is min-w)
+      });
+    } else {
+      setDropdownPosition(null);
+    }
+  }, [showActionsMenu]);
 
   // Close menu when clicking outside
   useEffect(() => {
     if (!showActionsMenu) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      // Check both the menu container and the portal dropdown
+      const target = event.target as Node;
+      const isInsideMenuRef = menuRef.current?.contains(target);
+      const portalDropdown = document.getElementById(`todo-dropdown-${todo.id}`);
+      const isInsidePortal = portalDropdown?.contains(target);
+
+      if (!isInsideMenuRef && !isInsidePortal) {
         setShowActionsMenu(false);
         setShowSnoozeMenu(false);
       }
@@ -239,7 +262,7 @@ export default function TodoItem({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showActionsMenu]);
+  }, [showActionsMenu, todo.id]);
 
   // Helper to get date offset for snooze
   const getSnoozeDate = (days: number) => {
@@ -371,7 +394,7 @@ export default function TodoItem({
     <div
       id={`todo-${todo.id}`}
       role="listitem"
-      className={`group relative rounded-[var(--radius-xl)] border transition-all duration-200 ${getCardStyle()} ${showActionsMenu ? 'z-[9999]' : ''}`}
+      className={`group relative rounded-[var(--radius-xl)] border transition-all duration-200 ${getCardStyle()}`}
     >
       <Celebration trigger={celebrating} onComplete={() => setCelebrating(false)} />
       <div className="flex items-center gap-3 px-4 py-3">
@@ -662,6 +685,7 @@ export default function TodoItem({
           {/* Three-dot menu */}
           <div className="relative" ref={menuRef}>
             <IconButton
+              ref={menuButtonRef}
               variant="ghost"
               size="md"
               icon={<MoreVertical className="w-4 h-4" />}
@@ -672,9 +696,16 @@ export default function TodoItem({
               className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
             />
 
-            {showActionsMenu && (
+            {/* Dropdown rendered via Portal to escape stacking context */}
+            {showActionsMenu && dropdownPosition && typeof document !== 'undefined' && createPortal(
               <div
-                className="absolute right-0 top-full mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-xl z-[9999] py-1 min-w-[180px]"
+                id={`todo-dropdown-${todo.id}`}
+                className="fixed bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] shadow-xl py-1 min-w-[180px]"
+                style={{
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                  zIndex: 99999,
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Edit */}
@@ -755,7 +786,8 @@ export default function TodoItem({
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
