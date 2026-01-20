@@ -26,7 +26,6 @@ import {
   Shield,
   Car,
 } from 'lucide-react';
-import QuickActions from '@/components/dashboard/QuickActions';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTodoStore } from '@/store/todoStore';
@@ -53,8 +52,6 @@ interface DashboardPageProps {
   onAddTask?: () => void;
   onFilterOverdue?: () => void;
   onFilterDueToday?: () => void;
-  onOpenChat?: () => void;
-  onStartFocus?: () => void;
 }
 
 interface WeekDay {
@@ -74,8 +71,6 @@ export default function DashboardPage({
   onAddTask,
   onFilterOverdue,
   onFilterDueToday,
-  onOpenChat,
-  onStartFocus,
 }: DashboardPageProps) {
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
@@ -258,23 +253,6 @@ export default function DashboardPage({
     setIsRefreshing(false);
   };
 
-  const handleOpenChat = useCallback(() => {
-    if (onOpenChat) {
-      onOpenChat();
-    } else {
-      setActiveView('chat');
-    }
-  }, [onOpenChat, setActiveView]);
-
-  const handleStartFocus = useCallback(() => {
-    if (onStartFocus) {
-      onStartFocus();
-    } else {
-      // Default: navigate to tasks to start working on top priority
-      setActiveView('tasks');
-    }
-  }, [onStartFocus, setActiveView]);
-
   const getInsightIcon = (type: ProductivityInsight['type']) => {
     switch (type) {
       case 'streak': return Flame;
@@ -450,18 +428,6 @@ export default function DashboardPage({
           </Card>
         )}
 
-        {/* Quick Actions - Actionable buttons below alerts */}
-        <Card className="mb-6">
-          <SectionTitle icon={Sparkles} title="Quick Actions" />
-          <QuickActions
-            darkMode={darkMode}
-            onAddTask={handleAddTask}
-            onFilterOverdue={handleFilterOverdue}
-            onStartFocus={handleStartFocus}
-            onOpenChat={handleOpenChat}
-            overdueCount={stats.overdue}
-          />
-        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
