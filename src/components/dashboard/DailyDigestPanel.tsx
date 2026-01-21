@@ -208,6 +208,19 @@ function DigestContent({
   );
 }
 
+// Helper to format next scheduled time
+function formatNextScheduled(date: Date | null): string {
+  if (!date) return '';
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  if (isToday) {
+    return `Today at ${time}`;
+  }
+  return `Tomorrow at ${time}`;
+}
+
 export default function DailyDigestPanel({
   currentUser,
   onNavigateToTask,
@@ -217,11 +230,21 @@ export default function DailyDigestPanel({
   className = '',
 }: DailyDigestPanelProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const { digest, loading, error, refetch, lastFetched } = useDailyDigest({
+  const { digest, loading, error, refetch, isNew, digestType, nextScheduled, hasDigest } = useDailyDigest({
     currentUser,
     autoFetch: true,
     enabled: true,
   });
+
+  // Get subtitle text based on state
+  const getSubtitle = () => {
+    if (loading) return 'Loading...';
+    if (error) return 'Unable to load';
+    if (!hasDigest) return 'Your briefing is coming';
+    if (digestType === 'morning') return 'Morning briefing';
+    if (digestType === 'afternoon') return 'Afternoon briefing';
+    return 'AI-powered briefing';
+  };
 
   return (
     <div
@@ -235,13 +258,24 @@ export default function DailyDigestPanel({
         aria-controls="daily-digest-content"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#C9A227]/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-[#C9A227]/10 flex items-center justify-center relative">
             <Sparkles className="w-5 h-5 text-[#C9A227]" />
+            {/* New badge */}
+            {isNew && hasDigest && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-[var(--brand-blue)] rounded-full border-2 border-[var(--surface)]" />
+            )}
           </div>
           <div className="text-left">
-            <h2 className="text-base font-semibold text-[var(--foreground)]">Daily Digest</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-[var(--foreground)]">Daily Digest</h2>
+              {isNew && hasDigest && (
+                <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[var(--brand-blue)] text-white rounded">
+                  New
+                </span>
+              )}
+            </div>
             <p className="text-xs text-[var(--text-muted)]">
-              {loading ? 'Loading AI briefing...' : 'AI-powered briefing'}
+              {getSubtitle()}
             </p>
           </div>
         </div>
@@ -294,8 +328,32 @@ export default function DailyDigestPanel({
               {/* Loading state */}
               {loading && !error && <DailyDigestSkeleton />}
 
+              {/* No digest available state */}
+              {!hasDigest && !loading && !error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center justify-center py-8 text-center"
+                >
+                  <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center mb-3">
+                    <Sparkles className="w-6 h-6 text-[var(--text-muted)]" />
+                  </div>
+                  <h3 className="text-sm font-medium text-[var(--foreground)] mb-1">
+                    Your briefing is on its way
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] max-w-xs">
+                    {nextScheduled
+                      ? `Your next AI-powered briefing will be ready ${formatNextScheduled(nextScheduled)}`
+                      : 'Your AI-powered briefing will be ready soon'}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)] mt-2">
+                    Briefings are generated at 5 AM and 4 PM daily
+                  </p>
+                </motion.div>
+              )}
+
               {/* Digest content */}
-              {digest && !loading && !error && (
+              {digest && hasDigest && !loading && !error && (
                 <DigestContent
                   digest={digest}
                   onTaskClick={onNavigateToTask}
@@ -304,23 +362,30 @@ export default function DailyDigestPanel({
                 />
               )}
 
-              {/* Footer with timestamp and refresh */}
-              {digest && !loading && (
+              {/* Footer with timestamp and next scheduled */}
+              {hasDigest && digest && !loading && (
                 <div className="mt-4 pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Generated at{' '}
-                    {new Date(digest.generatedAt).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </p>
+                  <div className="text-xs text-[var(--text-muted)]">
+                    <p>
+                      Generated at{' '}
+                      {new Date(digest.generatedAt).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    {nextScheduled && (
+                      <p className="mt-0.5">
+                        Next: {formatNextScheduled(nextScheduled)}
+                      </p>
+                    )}
+                  </div>
                   <button
                     onClick={refetch}
                     disabled={loading}
                     className="text-xs text-[var(--accent)] hover:underline inline-flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:opacity-50"
                   >
                     <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
+                    Check for update
                   </button>
                 </div>
               )}

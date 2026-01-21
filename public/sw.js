@@ -20,23 +20,32 @@ self.addEventListener('push', function(event) {
     };
   }
 
+  // Customize actions based on notification type
+  const isDigest = data.type === 'daily_digest';
+  const actions = isDigest
+    ? [
+        { action: 'view', title: 'View Briefing' },
+        { action: 'dismiss', title: 'Dismiss' },
+      ]
+    : [
+        { action: 'view', title: 'View Task' },
+        { action: 'dismiss', title: 'Dismiss' },
+      ];
+
   const options = {
     body: data.body || 'You have a task reminder',
     icon: '/icon-192.png',
     badge: '/badge-72.png',
-    tag: data.taskId || 'task-notification-' + Date.now(),
+    tag: isDigest ? 'daily-digest-' + Date.now() : (data.taskId || 'task-notification-' + Date.now()),
     renotify: true,
     data: {
       url: data.url || '/',
       taskId: data.taskId,
-      type: data.type, // 'task_due_soon', 'task_due_today', 'task_overdue'
+      type: data.type, // 'task_due_soon', 'task_due_today', 'task_overdue', 'daily_digest'
     },
     // Keep notification visible for overdue tasks
     requireInteraction: data.type === 'task_overdue',
-    actions: [
-      { action: 'view', title: 'View Task' },
-      { action: 'dismiss', title: 'Dismiss' },
-    ],
+    actions: actions,
     // Vibration pattern for mobile
     vibrate: [100, 50, 100],
   };
@@ -55,19 +64,29 @@ self.addEventListener('notificationclick', function(event) {
     return;
   }
 
-  // Get the target URL
+  // Get notification data
   const url = event.notification.data?.url || '/';
   const taskId = event.notification.data?.taskId;
+  const type = event.notification.data?.type;
 
-  // Build URL with task parameter for highlighting
-  const targetUrl = taskId ? `/?task=${taskId}` : url;
+  // Determine target URL based on notification type
+  let targetUrl;
+  if (type === 'daily_digest') {
+    // Navigate to dashboard view for digest notifications
+    targetUrl = '/?view=dashboard';
+  } else if (taskId) {
+    // Navigate to specific task
+    targetUrl = `/?task=${taskId}`;
+  } else {
+    targetUrl = url;
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
       // Check if there's already a window open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          // Navigate existing window to the task
+          // Navigate existing window to the target
           client.navigate(targetUrl);
           return client.focus();
         }

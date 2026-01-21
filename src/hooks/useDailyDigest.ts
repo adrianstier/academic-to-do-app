@@ -47,6 +47,10 @@ interface UseDailyDigestReturn {
   error: string | null;
   refetch: () => Promise<void>;
   lastFetched: Date | null;
+  isNew: boolean;
+  digestType: 'morning' | 'afternoon' | null;
+  nextScheduled: Date | null;
+  hasDigest: boolean;
 }
 
 // Helper to get CSRF token from cookie
@@ -65,6 +69,10 @@ export function useDailyDigest({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [digestType, setDigestType] = useState<'morning' | 'afternoon' | null>(null);
+  const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
+  const [hasDigest, setHasDigest] = useState(false);
 
   const fetchDigest = useCallback(async () => {
     if (!currentUser?.name || !enabled) return;
@@ -74,16 +82,14 @@ export function useDailyDigest({
 
     try {
       const csrfToken = getCsrfToken();
-      const response = await fetch('/api/ai/daily-digest', {
-        method: 'POST',
+      // Fetch from stored digests instead of generating on-demand
+      const response = await fetch('/api/digest/latest', {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Name': currentUser.name,
           ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
         },
-        body: JSON.stringify({
-          userName: currentUser.name,
-        }),
       });
 
       const data = await response.json();
@@ -92,7 +98,23 @@ export function useDailyDigest({
         throw new Error(data.error || 'Failed to fetch daily digest');
       }
 
-      setDigest(data);
+      // Handle response from /api/digest/latest
+      if (data.hasDigest) {
+        setDigest(data.digest);
+        setIsNew(data.isNew || false);
+        setDigestType(data.digestType || null);
+        setHasDigest(true);
+      } else {
+        setDigest(null);
+        setIsNew(false);
+        setDigestType(null);
+        setHasDigest(false);
+      }
+
+      if (data.nextScheduled) {
+        setNextScheduled(new Date(data.nextScheduled));
+      }
+
       setLastFetched(new Date());
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Something went wrong';
@@ -105,10 +127,10 @@ export function useDailyDigest({
 
   // Auto-fetch on mount if enabled
   useEffect(() => {
-    if (autoFetch && enabled && !digest && !loading) {
+    if (autoFetch && enabled && !digest && !loading && !lastFetched) {
       fetchDigest();
     }
-  }, [autoFetch, enabled, digest, loading, fetchDigest]);
+  }, [autoFetch, enabled, digest, loading, lastFetched, fetchDigest]);
 
   return {
     digest,
@@ -116,6 +138,10 @@ export function useDailyDigest({
     error,
     refetch: fetchDigest,
     lastFetched,
+    isNew,
+    digestType,
+    nextScheduled,
+    hasDigest,
   };
 }
 
