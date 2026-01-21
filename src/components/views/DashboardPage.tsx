@@ -107,50 +107,67 @@ export default function DashboardPage({
         <div className="relative px-6 py-8 max-w-7xl mx-auto">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <greeting.Icon className="w-5 h-5 text-white/60" />
-              <span className="text-white/60 text-sm font-medium">{greeting.text}</span>
+              <greeting.Icon className="w-5 h-5 text-white/80" />
+              <span className="text-white/80 text-sm font-medium">{greeting.text}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-2">
               {currentUser.name}
             </h1>
-            <p className="text-white/70 text-sm">
+            <p className="text-white/80 text-sm">
               {isManager ? `${users.length} team members · ` : ''}{stats.totalActive} active tasks
             </p>
           </div>
 
-          {/* Quick Stats Row */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
+          {/* Quick Stats Row - Enhanced urgency hierarchy */}
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            {/* Overdue - Most Critical */}
             <button
               onClick={onFilterOverdue}
-              className={`p-4 rounded-xl text-left transition-all ${
+              aria-label={`View ${stats.overdue} overdue task${stats.overdue !== 1 ? 's' : ''}`}
+              className={`p-4 rounded-xl text-left transition-all duration-200 min-h-[92px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0033A0] ${
                 stats.overdue > 0
-                  ? 'bg-red-500/20 hover:bg-red-500/30 border border-red-500/30'
-                  : 'bg-white/10 hover:bg-white/15'
+                  ? 'bg-gradient-to-br from-red-500/25 to-red-500/10 hover:from-red-500/30 hover:to-red-500/15 border-2 border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
+                  : 'bg-white/10 hover:bg-white/15 border border-white/10'
               }`}
             >
-              <p className={`text-2xl font-bold ${stats.overdue > 0 ? 'text-red-400' : 'text-white'}`}>
+              <p className={`text-3xl font-bold tabular-nums ${
+                stats.overdue > 0 ? 'text-red-400' : 'text-white'
+              }`}>
                 {stats.overdue}
               </p>
-              <p className="text-white/60 text-xs">Overdue</p>
+              <p className="text-white/80 text-xs mt-1 font-medium tracking-wide uppercase">
+                Overdue
+              </p>
             </button>
 
+            {/* Due Today - High Priority */}
             <button
               onClick={onFilterDueToday}
-              className={`p-4 rounded-xl text-left transition-all ${
+              aria-label={`View ${stats.dueToday} task${stats.dueToday !== 1 ? 's' : ''} due today`}
+              className={`p-4 rounded-xl text-left transition-all duration-200 min-h-[92px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0033A0] ${
                 stats.dueToday > 0
-                  ? 'bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30'
-                  : 'bg-white/10 hover:bg-white/15'
+                  ? 'bg-gradient-to-br from-amber-500/20 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 border border-amber-500/30'
+                  : 'bg-white/10 hover:bg-white/15 border border-white/10'
               }`}
             >
-              <p className={`text-2xl font-bold ${stats.dueToday > 0 ? 'text-amber-400' : 'text-white'}`}>
+              <p className={`text-3xl font-bold tabular-nums ${
+                stats.dueToday > 0 ? 'text-amber-400' : 'text-white'
+              }`}>
                 {stats.dueToday}
               </p>
-              <p className="text-white/60 text-xs">Due Today</p>
+              <p className="text-white/80 text-xs mt-1 font-medium tracking-wide uppercase">
+                Due Today
+              </p>
             </button>
 
-            <div className="p-4 rounded-xl text-left bg-white/10">
-              <p className="text-2xl font-bold text-white">{stats.upcoming}</p>
-              <p className="text-white/60 text-xs">Due This Week</p>
+            {/* Due This Week - Informational */}
+            <div className="p-4 rounded-xl text-left bg-white/8 border border-white/10 min-h-[92px]" role="status" aria-label={`${stats.upcoming} tasks due this week`}>
+              <p className="text-3xl font-bold text-white tabular-nums">
+                {stats.upcoming}
+              </p>
+              <p className="text-white/80 text-xs mt-1 font-medium tracking-wide uppercase">
+                This Week
+              </p>
             </div>
           </div>
         </div>
