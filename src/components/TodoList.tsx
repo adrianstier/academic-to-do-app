@@ -112,6 +112,8 @@ interface TodoListProps {
   autoFocusAddTask?: boolean;
   onAddTaskModalOpened?: () => void;
   onInitialFilterApplied?: () => void;
+  selectedTaskId?: string | null;
+  onSelectedTaskHandled?: () => void;
 }
 
 // Helper to get completion timestamp in ms
@@ -129,7 +131,7 @@ const getCompletedAtMs = (todo: Todo): number | null => {
   return null;
 };
 
-export default function TodoList({ currentUser, onUserChange, onOpenDashboard, initialFilter, autoFocusAddTask, onAddTaskModalOpened, onInitialFilterApplied }: TodoListProps) {
+export default function TodoList({ currentUser, onUserChange, onOpenDashboard, initialFilter, autoFocusAddTask, onAddTaskModalOpened, onInitialFilterApplied, selectedTaskId, onSelectedTaskHandled }: TodoListProps) {
   const userName = currentUser.name;
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
@@ -2050,6 +2052,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                             users={users}
                             currentUserName={userName}
                             selected={selectedTodos.has(todo.id)}
+                            autoExpand={todo.id === selectedTaskId}
+                            onAutoExpandHandled={onSelectedTaskHandled}
                             onSelect={showBulkActions ? handleSelectTodo : undefined}
                             onToggle={toggleTodo}
                             onDelete={confirmDeleteTodo}
@@ -2161,6 +2165,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                                 users={users}
                                 currentUserName={userName}
                                 selected={selectedTodos.has(todo.id)}
+                                autoExpand={todo.id === selectedTaskId}
+                                onAutoExpandHandled={onSelectedTaskHandled}
                                 onSelect={showBulkActions ? handleSelectTodo : undefined}
                                 onToggle={toggleTodo}
                                 onDelete={confirmDeleteTodo}

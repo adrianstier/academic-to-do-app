@@ -125,6 +125,8 @@ interface TodoItemProps {
   users: string[];
   currentUserName: string;
   selected?: boolean;
+  autoExpand?: boolean;
+  onAutoExpandHandled?: () => void;
   onSelect?: (id: string, selected: boolean) => void;
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
@@ -194,6 +196,8 @@ export default function TodoItem({
   users,
   currentUserName,
   selected,
+  autoExpand,
+  onAutoExpandHandled,
   onSelect,
   onToggle,
   onDelete,
@@ -212,6 +216,15 @@ export default function TodoItem({
   onSetReminder,
 }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
+
+  // Auto-expand when triggered from external navigation (e.g., dashboard task click)
+  useEffect(() => {
+    if (autoExpand) {
+      setExpanded(true);
+      // Notify parent that we've handled the auto-expand
+      onAutoExpandHandled?.();
+    }
+  }, [autoExpand, onAutoExpandHandled]);
   const [celebrating, setCelebrating] = useState(false);
   const [notes, setNotes] = useState(todo.notes || '');
   const [showNotes, setShowNotes] = useState(false);

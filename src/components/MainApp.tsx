@@ -63,6 +63,8 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   // Initialize showDashboard to false - we'll check for daily show AFTER data loads
   const [showDashboard, setShowDashboard] = useState(false);
   const [hasCheckedDailyDashboard, setHasCheckedDailyDashboard] = useState(false);
+  // Track which task to auto-expand when navigating from dashboard/notifications
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Fetch todos
   useEffect(() => {
@@ -149,10 +151,12 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     setInitialFilter(null);
   }, []);
 
-  // Handle task link click from chat (navigate to tasks view and scroll to task)
+  // Handle task link click from chat/dashboard/notifications (navigate to tasks view and open task)
   const handleTaskLinkClick = useCallback((taskId: string) => {
     setActiveView('tasks');
-    // Small delay to allow view switch
+    // Set the selected task ID to trigger auto-expand in TodoItem
+    setSelectedTaskId(taskId);
+    // Small delay to allow view switch, then scroll to task
     setTimeout(() => {
       const taskElement = document.getElementById(`todo-${taskId}`);
       if (taskElement) {
@@ -166,6 +170,11 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
       }
     }, 150);
   }, [setActiveView]);
+
+  // Clear selected task after it has been expanded
+  const handleSelectedTaskHandled = useCallback(() => {
+    setSelectedTaskId(null);
+  }, []);
 
   // Handle restoring an archived task
   const handleRestoreTask = useCallback(async (taskId: string) => {
@@ -310,6 +319,8 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             onAddTaskModalOpened={handleAddTaskModalOpened}
             onInitialFilterApplied={handleInitialFilterApplied}
             onOpenDashboard={handleOpenDashboard}
+            selectedTaskId={selectedTaskId}
+            onSelectedTaskHandled={handleSelectedTaskHandled}
           />
         );
 
@@ -324,6 +335,8 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             onAddTaskModalOpened={handleAddTaskModalOpened}
             onInitialFilterApplied={handleInitialFilterApplied}
             onOpenDashboard={handleOpenDashboard}
+            selectedTaskId={selectedTaskId}
+            onSelectedTaskHandled={handleSelectedTaskHandled}
           />
         );
 
@@ -362,6 +375,8 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             onAddTaskModalOpened={handleAddTaskModalOpened}
             onInitialFilterApplied={handleInitialFilterApplied}
             onOpenDashboard={handleOpenDashboard}
+            selectedTaskId={selectedTaskId}
+            onSelectedTaskHandled={handleSelectedTaskHandled}
           />
         );
     }
@@ -373,8 +388,10 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     usersWithColors,
     initialFilter,
     showAddTask,
+    selectedTaskId,
     handleNavigateToTasks,
     handleTaskLinkClick,
+    handleSelectedTaskHandled,
     handleRestoreTask,
     handleDeleteTask,
     handleAddTaskModalOpened,

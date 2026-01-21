@@ -11,6 +11,8 @@ interface SortableTodoItemProps {
   users: string[];
   currentUserName: string;
   selected?: boolean;
+  autoExpand?: boolean;
+  onAutoExpandHandled?: () => void;
   onSelect?: (id: string, selected: boolean) => void;
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
