@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Use service role for database operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create Supabase client lazily to avoid build-time initialization
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 // Helper to extract user name from request
 function extractUserName(request: NextRequest): string | null {
@@ -55,7 +61,7 @@ export async function POST(request: NextRequest) {
     const subscriptionToken = JSON.stringify(subscription);
 
     // Upsert the device token (update if endpoint already exists for this user)
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('device_tokens')
       .upsert(
         {
@@ -113,7 +119,7 @@ export async function DELETE(request: NextRequest) {
     if (subscription) {
       const subscriptionToken = JSON.stringify(subscription);
 
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('device_tokens')
         .delete()
         .eq('user_id', userId)
@@ -129,7 +135,7 @@ export async function DELETE(request: NextRequest) {
       }
     } else {
       // Remove all web subscriptions for user
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('device_tokens')
         .delete()
         .eq('user_id', userId)
@@ -174,7 +180,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('device_tokens')
       .select('id, platform, updated_at')
       .eq('user_id', userId)

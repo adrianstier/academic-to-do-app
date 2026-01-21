@@ -242,7 +242,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
               {todo.text}
             </p>
 
-          {/* Metadata row */}
+          {/* PRIMARY ROW: Essential info always visible for quick scanning */}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             {/* Priority */}
             <span
@@ -270,21 +270,35 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
                 {formatDueDate(todo.due_date)}
               </span>
             )}
+
+            {/* Assignee - always visible as it's key for knowing who owns the task */}
+            {todo.assigned_to && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                <User className="w-2.5 h-2.5" />
+                {todo.assigned_to}
+              </span>
+            )}
+
+            {/* "Has more" indicator - subtle dot when task has hidden content */}
+            {(hasNotes || subtaskCount > 0 || attachmentCount > 0 || hasTranscription) && (
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 opacity-40 group-hover:opacity-0 transition-opacity"
+                title="Hover for more details"
+              />
+            )}
           </div>
 
-          {/* Notes, Subtasks, Transcription & Attachments indicators */}
+          {/* SECONDARY ROW: Hidden by default, revealed on hover - Progressive Disclosure */}
           {(hasNotes || subtaskCount > 0 || attachmentCount > 0 || hasTranscription) && (
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 flex-wrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               {hasTranscription && (
                 <span className="inline-flex items-center gap-1 text-xs text-purple-500 dark:text-purple-400">
                   <Mic className="w-3 h-3" />
-                  Voicemail
                 </span>
               )}
               {hasNotes && (
                 <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
                   <FileText className="w-3 h-3" />
-                  Notes
                 </span>
               )}
               {subtaskCount > 0 && (
@@ -307,16 +321,8 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
             </div>
           )}
 
-          {/* Assignee */}
-          <div className="flex items-center justify-between mt-2">
-            {todo.assigned_to ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-[#D4A853]">
-                <User className="w-3 h-3" />
-                {todo.assigned_to}
-              </span>
-            ) : (
-              <span className="text-xs text-slate-400 dark:text-slate-500">Unassigned</span>
-            )}
+          {/* Footer row - edit indicator */}
+          <div className="flex items-center justify-end mt-2">
             <Edit3 className="w-3 h-3 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           </div>

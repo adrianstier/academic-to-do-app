@@ -494,10 +494,11 @@ export default function TodoItem({
             </p>
           )}
 
-          {/* Meta row - grouped with better spacing */}
+          {/* Meta row - Progressive Disclosure: Essential info always visible */}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {/* Priority + Date group */}
+            {/* PRIMARY ROW: Priority + Due Date + Assignee (always visible for quick scanning) */}
             <div className="flex items-center gap-2">
+              {/* Priority badge */}
               <Badge
                 variant={PRIORITY_TO_BADGE_VARIANT[priority]}
                 size="sm"
@@ -506,10 +507,9 @@ export default function TodoItem({
                 {priorityConfig.label}
               </Badge>
 
-              {/* Due date - improved color coding with days overdue */}
+              {/* Due date - critical for decision-making */}
               {todo.due_date && dueDateStatus && (() => {
                 const daysOverdue = dueDateStatus === 'overdue' ? getDaysOverdue(todo.due_date) : 0;
-                // Map due date status to Badge variant
                 const dueDateVariant = todo.completed
                   ? 'default'
                   : dueDateStatus === 'overdue'
@@ -537,139 +537,154 @@ export default function TodoItem({
                 );
               })()}
 
-              {/* Recurrence indicator */}
-              {todo.recurrence && (
-                <Badge
-                  variant="primary"
-                  size="sm"
-                  icon={<Repeat className="w-3 h-3" />}
-                >
-                  {todo.recurrence}
-                </Badge>
-              )}
-
-              {/* Reminder indicator */}
-              {todo.reminder_at && !todo.reminder_sent && !todo.completed && (
-                <Badge
-                  variant="info"
-                  size="sm"
-                  icon={<Bell className="w-3 h-3" />}
-                >
-                  {(() => {
-                    const reminderDate = new Date(todo.reminder_at);
-                    const now = new Date();
-                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const reminderDay = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
-                    const diffDays = Math.round((reminderDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-                    if (diffDays === 0) {
-                      return `Today ${reminderDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-                    } else if (diffDays === 1) {
-                      return `Tomorrow ${reminderDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-                    } else if (diffDays < 0) {
-                      return 'Past';
-                    } else {
-                      return reminderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    }
-                  })()}
-                </Badge>
-              )}
-            </div>
-
-            {/* Separator - only show if there are metadata badges (hidden on mobile) */}
-            {(todo.assigned_to || subtasks.length > 0 || todo.notes || todo.transcription || (todo.attachments && todo.attachments.length > 0)) && (
-              <div className="w-px h-4 bg-[var(--border)] mx-1 hidden sm:block" />
-            )}
-
-            {/* Assignment + Metadata group - secondary items hidden on mobile for density */}
-            <div className="flex items-center gap-2">
-              {/* Assigned to - hidden on mobile, shown in expanded view */}
+              {/* Assignee - always visible as it's key for knowing who owns the task */}
               {todo.assigned_to && (
-                <span className="hidden sm:inline-flex">
-                  <Badge
-                    variant="brand"
-                    size="sm"
-                    icon={<User className="w-3 h-3" />}
-                  >
-                    {todo.assigned_to}
-                  </Badge>
-                </span>
-              )}
-
-              {/* Subtasks indicator - always visible as it's actionable */}
-              {subtasks.length > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowSubtasks(!showSubtasks); }}
-                  className="inline-flex items-center gap-1.5 touch-manipulation"
+                <Badge
+                  variant="brand"
+                  size="sm"
+                  icon={<User className="w-3 h-3" />}
                 >
-                  <Badge
-                    variant={subtaskProgress === 100 ? 'success' : 'primary'}
-                    size="sm"
-                    icon={<ListTree className="w-3 h-3" />}
-                    interactive
-                  >
-                    {completedSubtasks}/{subtasks.length}
-                    {subtaskProgress === 100 && <Check className="w-3 h-3 ml-0.5" />}
-                  </Badge>
-                </button>
+                  {todo.assigned_to}
+                </Badge>
               )}
 
-              {/* Notes indicator - icon-only on mobile */}
-              {todo.notes && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowNotes(!showNotes); }}
-                  className="touch-manipulation"
-                >
-                  <Badge
-                    variant="default"
-                    size="sm"
-                    icon={<MessageSquare className="w-3 h-3" />}
-                    interactive
-                  >
-                    <span className="hidden sm:inline">Note</span>
-                  </Badge>
-                </button>
+              {/* "Has more" indicator - subtle dot when task has hidden content */}
+              {!expanded && (subtasks.length > 0 || todo.notes || todo.transcription || (todo.attachments && todo.attachments.length > 0) || todo.merged_from?.length) && (
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] opacity-40 group-hover:opacity-0 transition-opacity"
+                  title="Hover for more details"
+                />
               )}
-
-              {/* Transcription indicator - icon-only on mobile */}
-              {todo.transcription && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowTranscription(!showTranscription); }}
-                  className="touch-manipulation"
-                >
-                  <Badge
-                    variant="info"
-                    size="sm"
-                    icon={<Mic className="w-3 h-3" />}
-                    interactive
-                  >
-                    <span className="hidden sm:inline">Voicemail</span>
-                  </Badge>
-                </button>
-              )}
-
-              {/* Attachments indicator - always show count as it's important */}
-              {todo.attachments && todo.attachments.length > 0 && (() => {
-                const hasAudio = todo.attachments.some(a => a.file_type === 'audio');
-                const AttachmentIcon = hasAudio ? Music : Paperclip;
-                return (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowAttachments(!showAttachments); }}
-                    className="inline-flex items-center gap-1.5 touch-manipulation"
-                  >
-                    <Badge
-                      variant={hasAudio ? 'info' : 'warning'}
-                      size="sm"
-                      icon={<AttachmentIcon className="w-3 h-3" />}
-                      interactive
-                    >
-                      {todo.attachments.length}
-                    </Badge>
-                  </button>
-                );
-              })()}
             </div>
 
+            {/* SECONDARY ROW: Hidden by default, revealed on hover - Progressive Disclosure */}
+            {/* Shows only when there's secondary metadata AND (hovered OR expanded) */}
+            {(subtasks.length > 0 || todo.notes || todo.transcription || (todo.attachments && todo.attachments.length > 0) || todo.recurrence || (todo.reminder_at && !todo.reminder_sent && !todo.completed) || todo.merged_from?.length) && (
+              <>
+                {/* Separator */}
+                <div className="w-px h-4 bg-[var(--border)] mx-1 hidden group-hover:block sm:group-hover:block" />
+
+                {/* Secondary metadata - only visible on hover/focus */}
+                <div className={`flex items-center gap-2 transition-opacity duration-200 ${expanded ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'}`}>
+                  {/* Recurrence - indicates recurring task */}
+                  {todo.recurrence && (
+                    <Badge
+                      variant="primary"
+                      size="sm"
+                      icon={<Repeat className="w-3 h-3" />}
+                    >
+                      {todo.recurrence}
+                    </Badge>
+                  )}
+
+                  {/* Reminder indicator */}
+                  {todo.reminder_at && !todo.reminder_sent && !todo.completed && (
+                    <Badge
+                      variant="info"
+                      size="sm"
+                      icon={<Bell className="w-3 h-3" />}
+                    >
+                      {(() => {
+                        const reminderDate = new Date(todo.reminder_at);
+                        const now = new Date();
+                        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        const reminderDay = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+                        const diffDays = Math.round((reminderDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                        if (diffDays === 0) {
+                          return `Today ${reminderDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+                        } else if (diffDays === 1) {
+                          return `Tomorrow`;
+                        } else if (diffDays < 0) {
+                          return 'Past';
+                        } else {
+                          return reminderDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        }
+                      })()}
+                    </Badge>
+                  )}
+
+                  {/* Subtasks indicator */}
+                  {subtasks.length > 0 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowSubtasks(!showSubtasks); }}
+                      className="inline-flex items-center gap-1.5 touch-manipulation"
+                    >
+                      <Badge
+                        variant={subtaskProgress === 100 ? 'success' : 'primary'}
+                        size="sm"
+                        icon={<ListTree className="w-3 h-3" />}
+                        interactive
+                      >
+                        {completedSubtasks}/{subtasks.length}
+                      </Badge>
+                    </button>
+                  )}
+
+                  {/* Notes indicator */}
+                  {todo.notes && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowNotes(!showNotes); }}
+                      className="touch-manipulation"
+                    >
+                      <Badge
+                        variant="default"
+                        size="sm"
+                        icon={<MessageSquare className="w-3 h-3" />}
+                        interactive
+                      />
+                    </button>
+                  )}
+
+                  {/* Transcription indicator */}
+                  {todo.transcription && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowTranscription(!showTranscription); }}
+                      className="touch-manipulation"
+                    >
+                      <Badge
+                        variant="info"
+                        size="sm"
+                        icon={<Mic className="w-3 h-3" />}
+                        interactive
+                      />
+                    </button>
+                  )}
+
+                  {/* Attachments indicator */}
+                  {todo.attachments && todo.attachments.length > 0 && (() => {
+                    const hasAudio = todo.attachments.some(a => a.file_type === 'audio');
+                    const AttachmentIcon = hasAudio ? Music : Paperclip;
+                    return (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowAttachments(!showAttachments); }}
+                        className="inline-flex items-center gap-1.5 touch-manipulation"
+                      >
+                        <Badge
+                          variant={hasAudio ? 'info' : 'warning'}
+                          size="sm"
+                          icon={<AttachmentIcon className="w-3 h-3" />}
+                          interactive
+                        >
+                          {todo.attachments.length}
+                        </Badge>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Merged indicator - shows task has history */}
+                  {todo.merged_from && todo.merged_from.length > 0 && (
+                    <Badge
+                      variant="default"
+                      size="sm"
+                      icon={<ListTree className="w-3 h-3" />}
+                    >
+                      +{todo.merged_from.length}
+                    </Badge>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Quick inline actions - visible on hover for incomplete tasks (hide when menu is open) */}
