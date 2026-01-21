@@ -62,11 +62,13 @@ interface AppShellContextType {
   triggerNewTask: () => void;
   onNewTaskTrigger: (callback: () => void) => void;
 
-  // Modal triggers (Weekly Progress, Keyboard Shortcuts)
-  triggerWeeklyChart: () => void;
-  onWeeklyChartTrigger: (callback: () => void) => void;
-  triggerShortcuts: () => void;
-  onShortcutsTrigger: (callback: () => void) => void;
+  // Modal state (Weekly Progress, Keyboard Shortcuts)
+  showWeeklyChart: boolean;
+  openWeeklyChart: () => void;
+  closeWeeklyChart: () => void;
+  showShortcuts: boolean;
+  openShortcuts: () => void;
+  closeShortcuts: () => void;
 
   // User info
   currentUser: AuthUser | null;
@@ -120,10 +122,9 @@ export default function AppShell({
   // New task trigger callback - allows child components to register handlers
   const [newTaskCallback, setNewTaskCallback] = useState<(() => void) | null>(null);
 
-  // Modal trigger callbacks - use refs to avoid stale closure issues
-  // When NavigationSidebar calls triggerWeeklyChart/triggerShortcuts, the ref always has the latest callback
-  const weeklyChartCallbackRef = useRef<(() => void) | null>(null);
-  const shortcutsCallbackRef = useRef<(() => void) | null>(null);
+  // Modal state for Weekly Progress and Shortcuts
+  const [showWeeklyChart, setShowWeeklyChart] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   // Handle responsive sidebar
   useEffect(() => {
@@ -235,29 +236,13 @@ export default function AppShell({
     setNewTaskCallback(() => callback);
   }, []);
 
-  // Weekly chart trigger - calls registered callback via ref (avoids stale closure)
-  const triggerWeeklyChart = useCallback(() => {
-    if (weeklyChartCallbackRef.current) {
-      weeklyChartCallbackRef.current();
-    }
-  }, []);
+  // Weekly chart modal controls
+  const openWeeklyChart = useCallback(() => setShowWeeklyChart(true), []);
+  const closeWeeklyChart = useCallback(() => setShowWeeklyChart(false), []);
 
-  // Allow child components to register their weekly chart handler
-  const onWeeklyChartTrigger = useCallback((callback: () => void) => {
-    weeklyChartCallbackRef.current = callback;
-  }, []);
-
-  // Shortcuts trigger - calls registered callback via ref (avoids stale closure)
-  const triggerShortcuts = useCallback(() => {
-    if (shortcutsCallbackRef.current) {
-      shortcutsCallbackRef.current();
-    }
-  }, []);
-
-  // Allow child components to register their shortcuts handler
-  const onShortcutsTrigger = useCallback((callback: () => void) => {
-    shortcutsCallbackRef.current = callback;
-  }, []);
+  // Shortcuts modal controls
+  const openShortcuts = useCallback(() => setShowShortcuts(true), []);
+  const closeShortcuts = useCallback(() => setShowShortcuts(false), []);
 
   const contextValue: AppShellContextType = {
     activeView,
@@ -277,10 +262,12 @@ export default function AppShell({
     closeMobileSheet,
     triggerNewTask,
     onNewTaskTrigger,
-    triggerWeeklyChart,
-    onWeeklyChartTrigger,
-    triggerShortcuts,
-    onShortcutsTrigger,
+    showWeeklyChart,
+    openWeeklyChart,
+    closeWeeklyChart,
+    showShortcuts,
+    openShortcuts,
+    closeShortcuts,
     currentUser,
   };
 
@@ -306,8 +293,8 @@ export default function AppShell({
           <NavigationSidebar
             currentUser={currentUser}
             onUserChange={onUserChange}
-            onShowWeeklyChart={triggerWeeklyChart}
-            onShowShortcuts={triggerShortcuts}
+            onShowWeeklyChart={openWeeklyChart}
+            onShowShortcuts={openShortcuts}
           />
 
           {/* ═══ MAIN CONTENT AREA ═══ */}

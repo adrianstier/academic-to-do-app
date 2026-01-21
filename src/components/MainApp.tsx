@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import TodoList from './TodoList';
 import { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
-import { DashboardModalSkeleton, ChatPanelSkeleton, AIInboxSkeleton } from './LoadingSkeletons';
+import { DashboardModalSkeleton, ChatPanelSkeleton, AIInboxSkeleton, WeeklyProgressChartSkeleton } from './LoadingSkeletons';
+import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, Todo, QuickFilter } from '@/types/todo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
@@ -37,6 +38,18 @@ const DashboardPage = dynamic(() => import('./views/DashboardPage'), {
   loading: () => <DashboardModalSkeleton />,
 });
 
+// Lazy load WeeklyProgressChart modal (accessible from any view via sidebar)
+const WeeklyProgressChart = dynamic(() => import('./WeeklyProgressChart'), {
+  ssr: false,
+  loading: () => <WeeklyProgressChartSkeleton />,
+});
+
+// Lazy load KeyboardShortcutsModal (accessible from any view via sidebar)
+const KeyboardShortcutsModal = dynamic(() => import('./KeyboardShortcutsModal'), {
+  ssr: false,
+  loading: () => null,
+});
+
 // Lazy load ArchiveView for the archive browser
 const ArchiveView = dynamic(() => import('./ArchiveView'), {
   ssr: false,
@@ -52,7 +65,17 @@ interface MainAppProps {
  * MainAppContent - Inner component that uses AppShell context
  */
 function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
-  const { activeView, setActiveView, onNewTaskTrigger } = useAppShell();
+  const {
+    activeView,
+    setActiveView,
+    onNewTaskTrigger,
+    showWeeklyChart,
+    closeWeeklyChart,
+    showShortcuts,
+    closeShortcuts,
+  } = useAppShell();
+  const { theme } = useTheme();
+  const darkMode = theme === 'dark';
   const usersWithColors = useTodoStore((state) => state.usersWithColors);
   const users = useTodoStore((state) => state.users);
 
@@ -439,6 +462,23 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
 
       {/* Push notification permission banner */}
       <NotificationPermissionBanner currentUser={currentUser} />
+
+      {/* Weekly Progress Chart Modal - accessible from any view via sidebar */}
+      {showWeeklyChart && (
+        <WeeklyProgressChart
+          todos={todos}
+          darkMode={darkMode}
+          show={showWeeklyChart}
+          onClose={closeWeeklyChart}
+        />
+      )}
+
+      {/* Keyboard Shortcuts Modal - accessible from any view via sidebar */}
+      <KeyboardShortcutsModal
+        show={showShortcuts}
+        onClose={closeShortcuts}
+        darkMode={darkMode}
+      />
     </>
   );
 }

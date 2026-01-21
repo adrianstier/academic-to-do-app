@@ -33,7 +33,7 @@ import ProgressSummary from './ProgressSummary';
 import WelcomeBackNotification from './WelcomeBackNotification';
 import ConfirmDialog from './ConfirmDialog';
 import EmptyState from './EmptyState';
-import KeyboardShortcutsModal from './KeyboardShortcutsModal';
+// Note: KeyboardShortcutsModal moved to MainApp.tsx
 import PullToRefresh from './PullToRefresh';
 import StatusLine from './StatusLine';
 import BottomTabs from './BottomTabs';
@@ -67,7 +67,7 @@ import {
   ChatPanelSkeleton,
   StrategicDashboardSkeleton,
   ActivityFeedSkeleton,
-  WeeklyProgressChartSkeleton,
+  // Note: WeeklyProgressChartSkeleton moved to MainApp.tsx
 } from './LoadingSkeletons';
 
 // Lazy load secondary features for better initial load performance
@@ -99,10 +99,7 @@ const ActivityFeed = dynamic(() => import('./ActivityFeed'), {
   loading: () => <ActivityFeedSkeleton />,
 });
 
-const WeeklyProgressChart = dynamic(() => import('./WeeklyProgressChart'), {
-  ssr: false,
-  loading: () => <WeeklyProgressChartSkeleton />,
-});
+// Note: WeeklyProgressChart moved to MainApp.tsx
 
 interface TodoListProps {
   currentUser: AuthUser;
@@ -138,7 +135,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const canViewArchive = currentUser.role === 'admin' || ['derrick', 'adrian'].includes(userName.toLowerCase());
 
   // Get navigation state from AppShell context
-  const { activeView, setActiveView, onWeeklyChartTrigger, onShortcutsTrigger } = useAppShell();
+  const { activeView, setActiveView } = useAppShell();
 
   // NOTE: isWideDesktop removed - no longer using UtilitySidebar or conditional chat layouts
   // const isWideDesktop = useIsDesktopWide(1280);
@@ -457,14 +454,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     hydrateFocusMode();
   }, []);
 
-  // Register modal triggers with AppShell (for sidebar navigation buttons)
-  useEffect(() => {
-    onWeeklyChartTrigger(() => openWeeklyChart());
-  }, [onWeeklyChartTrigger, openWeeklyChart]);
-
-  useEffect(() => {
-    onShortcutsTrigger(() => openShortcuts());
-  }, [onShortcutsTrigger, openShortcuts]);
+  // Note: WeeklyProgressChart and KeyboardShortcutsModal are now rendered in MainApp.tsx
+  // using AppShell context state, so they're accessible from any view (not just tasks)
 
   // Fetch activity log for streak calculation (useTodoData handles todos/users/real-time)
   const fetchActivityLog = useCallback(async () => {
@@ -2293,21 +2284,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         onCancel={() => closeConfirmDialog()}
       />
 
-      {/* Only render when shown to prevent skeleton flash during dynamic import */}
-      {showWeeklyChart && (
-        <WeeklyProgressChart
-          todos={visibleTodos}
-          darkMode={darkMode}
-          show={showWeeklyChart}
-          onClose={() => closeWeeklyChart()}
-        />
-      )}
-
-      <KeyboardShortcutsModal
-        show={showShortcuts}
-        onClose={() => closeShortcuts()}
-        darkMode={darkMode}
-      />
+      {/* Note: WeeklyProgressChart and KeyboardShortcutsModal are rendered in MainApp.tsx
+          using AppShell context state, so they're accessible from any view */}
 
       {/* Add Task Modal */}
       <AddTaskModal
