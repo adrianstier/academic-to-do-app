@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger';
 import { AppShell, useAppShell, ActiveView } from './layout';
 import { useTodoStore } from '@/store/todoStore';
 import { ErrorBoundary } from './ErrorBoundary';
+import NotificationPermissionBanner from './NotificationPermissionBanner';
 
 // Lazy load DashboardModal for better initial load performance
 const DashboardModal = dynamic(() => import('./DashboardModal'), {
@@ -417,6 +418,9 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
           users={users}
         />
       )}
+
+      {/* Push notification permission banner */}
+      <NotificationPermissionBanner currentUser={currentUser} />
     </>
   );
 }

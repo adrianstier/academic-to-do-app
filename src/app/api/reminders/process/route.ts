@@ -8,7 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { processAllDueReminders } from '@/lib/reminderService';
+import { processAllDueReminders, getDueReminders } from '@/lib/reminderService';
+import { sendWebPushNotifications } from '@/lib/webPushServer';
 
 // Use the same API key as Outlook add-in for simplicity
 const API_KEY = process.env.OUTLOOK_ADDON_API_KEY;
@@ -31,7 +32,30 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // First process reminders through the standard flow (Edge Function for iOS)
     const result = await processAllDueReminders();
+
+    // Also send web push notifications directly (more reliable with web-push package)
+    // This is a fallback/supplement to the Edge Function
+    try {
+      const dueReminders = await getDueReminders();
+      for (const reminder of dueReminders) {
+        if (reminder.user_id && (reminder.reminder_type === 'push_notification' || reminder.reminder_type === 'both')) {
+          await sendWebPushNotifications({
+            type: 'task_due_soon',
+            payload: {
+              taskId: reminder.todo_id,
+              taskText: reminder.todo_text,
+              timeUntil: 'soon',
+            },
+            userIds: [reminder.user_id],
+          });
+        }
+      }
+    } catch (webPushError) {
+      console.error('Web push fallback error:', webPushError);
+      // Don't fail the whole request if web push fails
+    }
 
     return NextResponse.json({
       success: true,

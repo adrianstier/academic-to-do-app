@@ -164,7 +164,7 @@ export async function sendReminderChatNotification(
 
 /**
  * Send a push notification for a reminder
- * Calls the Supabase Edge Function for push notifications
+ * Uses the Supabase Edge Function which handles both iOS and Web platforms
  */
 export async function sendReminderPushNotification(
   todoId: string,
@@ -177,7 +177,7 @@ export async function sendReminderPushNotification(
       ? formatDistanceToNow(new Date(dueDate), { addSuffix: false })
       : undefined;
 
-    const { data, error } = await supabase.functions.invoke(
+    const { error } = await supabase.functions.invoke(
       'send-push-notification',
       {
         body: {
@@ -335,6 +335,94 @@ export async function createSimpleReminder(
   }
 
   return { success: true };
+}
+
+/**
+ * Auto-create reminders for a task with a due date
+ * Creates reminders for 1 day before and 1 hour before the deadline
+ */
+export async function createAutoReminders(
+  todoId: string,
+  dueDate: string,
+  userId: string,
+  createdBy: string
+): Promise<{ success: boolean; created: number; error?: string }> {
+  const due = new Date(dueDate);
+  const now = new Date();
+
+  // Define the automatic reminder times
+  const reminderConfigs = [
+    {
+      time: new Date(due.getTime() - 24 * 60 * 60 * 1000), // 1 day before
+      message: 'Task due tomorrow',
+    },
+    {
+      time: new Date(due.getTime() - 60 * 60 * 1000), // 1 hour before
+      message: 'Task due in 1 hour',
+    },
+  ];
+
+  // Filter to only future reminders
+  const futureReminders = reminderConfigs.filter(r => r.time > now);
+
+  if (futureReminders.length === 0) {
+    return { success: true, created: 0 };
+  }
+
+  try {
+    // First, cancel any existing auto-created reminders for this task
+    // to avoid duplicates when due date is updated
+    await supabase
+      .from('task_reminders')
+      .delete()
+      .eq('todo_id', todoId)
+      .eq('status', 'pending')
+      .is('message', null); // Auto-created reminders have no custom message
+
+    // Create new reminders
+    const remindersToInsert = futureReminders.map(config => ({
+      todo_id: todoId,
+      user_id: userId,
+      reminder_time: config.time.toISOString(),
+      reminder_type: 'push_notification' as ReminderType,
+      status: 'pending',
+      message: config.message,
+      created_by: createdBy,
+    }));
+
+    const { error } = await supabase
+      .from('task_reminders')
+      .insert(remindersToInsert);
+
+    if (error) {
+      console.error('Error creating auto reminders:', error);
+      return { success: false, created: 0, error: error.message };
+    }
+
+    return { success: true, created: futureReminders.length };
+  } catch (err) {
+    console.error('Error in createAutoReminders:', err);
+    return { success: false, created: 0, error: 'Unknown error occurred' };
+  }
+}
+
+/**
+ * Update auto reminders when a task's due date changes
+ */
+export async function updateAutoReminders(
+  todoId: string,
+  newDueDate: string | null,
+  userId: string,
+  createdBy: string
+): Promise<{ success: boolean; error?: string }> {
+  // If no due date, cancel all auto reminders
+  if (!newDueDate) {
+    return cancelTaskReminders(todoId);
+  }
+
+  // Create new auto reminders (this also cleans up old ones)
+  const result = await createAutoReminders(todoId, newDueDate, userId, createdBy);
+  return { success: result.success, error: result.error };
 }
 
 /**
