@@ -17,6 +17,8 @@ const AUTHENTICATED_ROUTES = [
  */
 const CSRF_EXEMPT_ROUTES = [
   '/api/outlook/', // Uses API key auth
+  '/api/digest/', // Uses API key auth (cron endpoints)
+  '/api/reminders/', // Uses API key auth (cron endpoints)
   '/api/csp-report', // CSP violation reports
 ];
 

@@ -467,27 +467,30 @@ export async function POST(request: NextRequest) {
         const result = await generateDigestForUser(supabase, user.id, user.name, digestType);
 
         if (result) {
-          // Store the digest - use Pacific time for date since cron runs in PT
-          const today = getTodayInPacific();
+          // Store the digest
+          // Note: digest_date uses database default (CURRENT_DATE) due to column constraint
+          // First, delete any existing digest for this user/type/date, then insert
           const { error: insertError } = await supabase
             .from('daily_digests')
-            .upsert({
+            .insert({
               user_id: user.id,
               user_name: user.name,
               digest_type: digestType,
               digest_data: result.digest,
               generated_at: new Date().toISOString(),
               read_at: null,
-              digest_date: today,
-            }, {
-              onConflict: 'user_id,digest_type,digest_date',
+              // digest_date will default to CURRENT_DATE in database
             });
 
           if (insertError) {
+            console.error('Digest storage error details:', JSON.stringify(insertError, null, 2));
             logger.error('Failed to store digest', insertError, {
               component: 'DigestGenerate',
+              errorCode: insertError.code,
+              errorMessage: insertError.message,
+              errorDetails: insertError.details,
             });
-            results.push({ userId: user.id, userName: user.name, generated: false, notified: false, error: 'Storage failed' });
+            results.push({ userId: user.id, userName: user.name, generated: false, notified: false, error: `Storage failed: ${insertError.message}` });
             continue;
           }
 
