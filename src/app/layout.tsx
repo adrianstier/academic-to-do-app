@@ -33,7 +33,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Academic Project Manager",
-  description: "AI-powered task management for research teams",
+  description: "AI-powered project management for academic research teams",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
