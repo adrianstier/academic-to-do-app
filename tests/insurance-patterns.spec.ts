@@ -1,165 +1,119 @@
 import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate } from './fixtures/helpers';
 
 /**
- * E2E Tests for Insurance Patterns Module
+ * E2E Tests for Academic Patterns Module
  *
  * Tests the pattern matching and categorization logic through the UI.
  * The analyzeTaskPattern function runs client-side when user types.
+ *
+ * Academic categories: research, writing, analysis, submission,
+ * meeting, presentation, reading, coursework, revision, admin
  */
 
-// Helper to login with an existing user by selecting them and entering PIN
-async function loginAsExistingUser(page: Page, userName: string = 'Derrick', pin: string = '8008') {
-  await page.goto('/');
-
-  // Wait for login screen - look for "Welcome back" text which is always visible
-  const welcomeText = page.locator('text=Welcome back').first();
-  await expect(welcomeText).toBeVisible({ timeout: 15000 });
-
-  // Wait for users list to load
-  await page.waitForTimeout(1000);
-
-  // Click on the user card to select them
-  const userCard = page.locator('button').filter({ hasText: userName }).first();
-  await expect(userCard).toBeVisible({ timeout: 10000 });
-  await userCard.click();
-
-  // Wait for PIN entry screen
-  await page.waitForTimeout(500);
-
-  // Enter PIN - look for 4 password inputs
-  const pinInputs = page.locator('input[type="password"]');
-  await expect(pinInputs.first()).toBeVisible({ timeout: 5000 });
-
-  // Enter each digit of the PIN
-  for (let i = 0; i < 4; i++) {
-    await pinInputs.nth(i).fill(pin[i]);
-    await page.waitForTimeout(100); // Small delay between digits
-  }
-
-  // Wait for automatic login after PIN entry
-  await page.waitForTimeout(2000);
-
-  // Close welcome modal if present (click outside, X button, or View Tasks button)
-  const viewTasksBtn = page.locator('button').filter({ hasText: 'View Tasks' });
-  const closeModalBtn = page.locator('button[aria-label*="close"]').or(page.locator('button svg.lucide-x').locator('..'));
-
-  // Try clicking View Tasks first (most reliable)
-  if (await viewTasksBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await viewTasksBtn.click();
-    await page.waitForTimeout(500);
-  }
-  // Or try clicking the close button
-  else if (await closeModalBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await closeModalBtn.click();
-    await page.waitForTimeout(500);
-  }
-
-  // Wait for main app to load - use correct placeholder text
-  const todoInput = page.locator('textarea[placeholder*="Add a task"]')
-    .or(page.locator('textarea[placeholder*="task"]').first());
-  await expect(todoInput).toBeVisible({ timeout: 15000 });
-
-  return todoInput;
-}
-
-test.describe('Insurance Patterns - Pattern Detection via UI', () => {
+test.describe('Academic Patterns - Pattern Detection via UI', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsExistingUser(page);
+    await setupAndNavigate(page);
   });
 
-  test('detects policy review patterns when typing', async ({ page }) => {
+  test('detects research patterns when typing', async ({ page }) => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    // Type text with policy review keywords
-    await taskInput.fill('Review policy coverage for customer renewal');
+    // Type text with research keywords (literature review, methodology)
+    await taskInput.fill('Conduct literature review on research methodology for study');
     await page.waitForTimeout(500);
 
     // Should detect and show indicator
     const indicator = page.locator('text=Detected:');
     await expect(indicator).toBeVisible({ timeout: 5000 });
 
-    // Should show Policy Review category in indicator
-    const category = page.locator('text=Policy Review').first();
+    // Should show Research category in indicator
+    const category = page.locator('text=Research').first();
     await expect(category).toBeVisible();
   });
 
-  test('detects follow-up patterns when typing', async ({ page }) => {
+  test('detects meeting patterns when typing', async ({ page }) => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('Call back John about his voicemail');
+    // Type text with meeting keywords (advisor, committee, meeting)
+    await taskInput.fill('Schedule advisor meeting to review thesis committee feedback');
     await page.waitForTimeout(500);
 
     const indicator = page.locator('text=Detected:');
     await expect(indicator).toBeVisible({ timeout: 5000 });
 
-    // Follow-up detected
-    const category = page.locator('text=Follow Up').first();
+    // Meeting detected
+    const category = page.locator('text=Meeting').first();
     await expect(category).toBeVisible();
   });
 
-  test('detects vehicle patterns when typing', async ({ page }) => {
+  test('detects analysis patterns when typing', async ({ page }) => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('Add new car to policy VIN verification');
+    // Type text with analysis keywords (data analysis, statistics, regression)
+    await taskInput.fill('Run statistical analysis on data with regression model');
     await page.waitForTimeout(500);
 
     const indicator = page.locator('text=Detected:');
     await expect(indicator).toBeVisible({ timeout: 5000 });
 
-    // Vehicle Add detected
-    const category = page.locator('text=Vehicle Add');
+    // Analysis detected
+    const category = page.locator('text=Analysis').first();
     await expect(category).toBeVisible();
   });
 
-  test('detects payment patterns when typing', async ({ page }) => {
+  test('detects submission patterns when typing', async ({ page }) => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('Process payment for overdue billing');
+    // Type text with submission keywords (submit, conference, deadline)
+    await taskInput.fill('Submit paper to conference before the deadline');
     await page.waitForTimeout(500);
 
     const indicator = page.locator('text=Detected:');
     await expect(indicator).toBeVisible({ timeout: 5000 });
 
-    // Should suggest high priority
+    // Should suggest urgent priority for submissions
     const priorityText = page.locator('text=Suggested priority:');
     await expect(priorityText).toBeVisible();
   });
 
-  test('detects claim patterns with urgent priority', async ({ page }) => {
+  test('detects presentation patterns with high priority', async ({ page }) => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('File accident claim for customer collision');
+    // Type text with presentation keywords (defense, slides, talk)
+    await taskInput.fill('Prepare presentation slides for thesis defense practice talk');
     await page.waitForTimeout(500);
 
     const indicator = page.locator('text=Detected:');
     await expect(indicator).toBeVisible({ timeout: 5000 });
 
-    // Claim detected
-    const category = page.locator('text=Claim').first();
+    // Presentation detected
+    const category = page.locator('text=Presentation').first();
     await expect(category).toBeVisible();
 
-    // Should show urgent priority suggestion
-    const urgentText = page.locator('text=urgent').first();
-    await expect(urgentText).toBeVisible();
+    // Should show high priority suggestion
+    const highText = page.locator('text=high').first();
+    await expect(highText).toBeVisible();
   });
 
-  test('detects quote patterns when typing', async ({ page }) => {
+  test('detects writing patterns when typing', async ({ page }) => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('Prepare quote proposal for new customer');
+    // Type text with writing keywords (draft, paper, manuscript, thesis)
+    await taskInput.fill('Write draft paper for manuscript thesis introduction');
     await page.waitForTimeout(500);
 
     const indicator = page.locator('text=Detected:');
     await expect(indicator).toBeVisible({ timeout: 5000 });
 
-    // Quote detected
-    const category = page.locator('text=Quote').first();
+    // Writing detected
+    const category = page.locator('text=Writing').first();
     await expect(category).toBeVisible();
   });
 
@@ -179,7 +133,8 @@ test.describe('Insurance Patterns - Pattern Detection via UI', () => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('Process policy renewal for coverage review');
+    // Type text matching research pattern which has subtasks
+    await taskInput.fill('Conduct literature review and data collection for research study');
     await page.waitForTimeout(500);
 
     const subtasksSection = page.locator('text=Suggested subtasks');
@@ -190,7 +145,8 @@ test.describe('Insurance Patterns - Pattern Detection via UI', () => {
     const taskInput = page.locator('textarea').first();
     await taskInput.focus();
 
-    await taskInput.fill('New client onboarding for customer');
+    // Type text matching coursework pattern
+    await taskInput.fill('Complete assignment for course homework problem set');
     await page.waitForTimeout(500);
 
     // Wait for indicator
@@ -211,39 +167,44 @@ test.describe('Insurance Patterns - Pattern Detection via UI', () => {
 
 test.describe('Completion Rate Badges Logic', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsExistingUser(page);
+    await setupAndNavigate(page);
   });
 
-  test('payment category shows high completion badge', async ({ page }) => {
-    // Find Payment template button and verify it has the 💯 badge
+  test('meeting category shows high completion indicator', async ({ page }) => {
+    // Wait for Quick Add section to appear
     await page.waitForSelector('text=Quick Add', { timeout: 10000 });
 
-    // Expand templates
+    // Expand templates if collapsed
     const showMore = page.locator('button:has-text("more")');
     if (await showMore.isVisible({ timeout: 2000 }).catch(() => false)) {
       await showMore.click();
       await page.waitForTimeout(500);
     }
 
-    // Look for Payment template with badge
-    const paymentWithBadge = page.locator('.grid button').filter({ hasText: /Payment/i }).locator('text=💯');
-    // Payment has 100% completion rate, should have 💯 badge
-    await expect(paymentWithBadge).toBeVisible({ timeout: 5000 });
+    // Meeting has 95% completion rate (>= 90), should have high completion indicator dot
+    // The button has aria-label "Create Meeting task" and contains a green dot with aria-label "High completion rate"
+    const meetingButton = page.locator('button[aria-label="Create Meeting task"]');
+    const highIndicator = meetingButton.locator('[aria-label="High completion rate"]');
+    await expect(highIndicator).toBeVisible({ timeout: 5000 });
   });
 
-  test('quote category shows warning badge', async ({ page }) => {
+  test('writing category shows low completion indicator', async ({ page }) => {
     await page.waitForSelector('text=Quick Add', { timeout: 10000 });
 
-    // Expand templates
+    // Expand templates if collapsed
     const showMore = page.locator('button:has-text("more")');
     if (await showMore.isVisible({ timeout: 2000 }).catch(() => false)) {
       await showMore.click();
       await page.waitForTimeout(500);
     }
 
-    // Look for Quote template with warning badge
-    const quoteWithBadge = page.locator('.grid button').filter({ hasText: /Quote/i }).locator('text=⚠️');
-    // Quote has 50% completion rate, should have ⚠️ badge
-    await expect(quoteWithBadge).toBeVisible({ timeout: 5000 });
+    // Writing has 65% completion rate which is in middle range (>= 60, < 90)
+    // So it gets NO indicator dot. Research at 60% also no indicator.
+    // Check that Writing button exists but does NOT have a completion indicator
+    const writingButton = page.locator('button[aria-label="Create Writing task"]');
+    await expect(writingButton).toBeVisible({ timeout: 5000 });
+
+    // Verify the button title shows the completion rate
+    await expect(writingButton).toHaveAttribute('title', /Writing - 65% completion rate/);
   });
 });

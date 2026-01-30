@@ -23,17 +23,24 @@ interface LoginScreenProps {
 
 type Screen = 'users' | 'pin';
 
-// Animated grid background
+// Animated grid background with academic paper texture
 function AnimatedGrid() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Subtle paper texture */}
+      <div
+        className="absolute inset-0 opacity-[0.015]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
       <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
             <path
               d="M 60 0 L 0 0 0 60"
               fill="none"
-              stroke="rgba(114,181,232,0.08)"
+              stroke="rgba(107,154,196,0.06)"
               strokeWidth="1"
             />
           </pattern>
@@ -57,7 +64,7 @@ function FloatingShapes() {
   return null; // Removed cheesy floating animations
 }
 
-// Clean logo without excessive animations
+// Clean academic logo
 function Logo3D() {
   return (
     <motion.div
@@ -66,23 +73,23 @@ function Logo3D() {
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Main logo */}
+      {/* Main logo - scholarly aesthetic */}
       <div
-        className="relative w-24 h-24 rounded-3xl flex items-center justify-center overflow-hidden"
+        className="relative w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, #A8D4F5 0%, #72B5E8 25%, #0033A0 60%, #00205B 100%)',
-          boxShadow: '0 20px 40px -10px rgba(0,51,160,0.4)',
+          background: 'linear-gradient(135deg, #a3c4e0 0%, #6b9ac4 25%, #2c5282 60%, #1e3a5f 100%)',
+          boxShadow: '0 20px 40px -10px rgba(30,58,95,0.5), 0 8px 16px -8px rgba(44,82,130,0.3)',
         }}
       >
         {/* Inner highlight */}
         <div
-          className="absolute inset-[2px] rounded-[22px] pointer-events-none"
+          className="absolute inset-[2px] rounded-[14px] pointer-events-none"
           style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
           }}
         />
         {/* Icon */}
-        <CheckSquare className="w-12 h-12 text-white relative z-10 drop-shadow-lg" strokeWidth={2.5} />
+        <CheckSquare className="w-11 h-11 text-white relative z-10 drop-shadow-lg" strokeWidth={2.5} />
       </div>
     </motion.div>
   );
@@ -128,21 +135,21 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const features = [
     {
       Icon: Sparkles,
-      title: 'AI-Powered Triage',
-      description: 'Smart parsing turns messy notes into structured tasks instantly.',
-      gradient: 'from-[#0033A0]/20 to-[#72B5E8]/20',
+      title: 'AI-Powered Research Assistant',
+      description: 'Smart parsing turns notes and ideas into structured tasks instantly.',
+      gradient: 'from-[#2c5282]/20 to-[#6b9ac4]/20',
     },
     {
       Icon: Zap,
-      title: 'Real-Time Sync',
-      description: 'Changes appear instantly across all devices and team members.',
-      gradient: 'from-amber-500/20 to-orange-500/20',
+      title: 'Real-Time Collaboration',
+      description: 'Changes sync instantly across all team members and devices.',
+      gradient: 'from-[#c9a227]/20 to-[#d4b84a]/20',
     },
     {
       Icon: Shield,
-      title: 'Secure & Simple',
-      description: 'PIN-based login designed for shared devices without friction.',
-      gradient: 'from-emerald-500/20 to-teal-500/20',
+      title: 'Secure & Scholarly',
+      description: 'Simple authentication designed for academic research teams.',
+      gradient: 'from-[#5d7a64]/20 to-[#7a9a82]/20',
     },
   ];
 
@@ -323,7 +330,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#00205B] via-[#0033A0] to-[#1E3A5F] relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e3a5f] via-[#2c5282] to-[#3b6ea8] relative overflow-hidden">
         <AnimatedGrid />
         <FloatingShapes />
 
@@ -343,7 +350,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 overflow-hidden relative bg-gradient-to-br from-[#00205B] via-[#0033A0] to-[#1E3A5F]">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 overflow-hidden relative bg-gradient-to-br from-[#1e3a5f] via-[#2c5282] to-[#3b6ea8]">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:z-50">
         Skip to content
       </a>
@@ -356,11 +363,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
           className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(114,181,232,0.1) 0%, transparent 60%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(107,154,196,0.12) 0%, transparent 60%)' }}
         />
         <div
           className="absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(0,51,160,0.15) 0%, transparent 60%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 60%)' }}
         />
       </div>
 
@@ -392,24 +399,24 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     Team Workspace
                   </motion.div>
-                  <h2 className="text-2xl font-bold text-white tracking-tight">Bealer Agency</h2>
+                  <h2 className="text-2xl font-bold text-white tracking-tight heading-serif">Academic Projects</h2>
                 </div>
               </motion.div>
 
-              {/* Main headline */}
+              {/* Main headline with serif for academic feel */}
               <motion.h1
-                className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] text-white mb-6"
+                className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] text-white mb-6 text-display-serif"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Your tasks,{' '}
+                Research,{' '}
                 <span className="relative">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#A8D4F5] via-[#72B5E8] to-[#0033A0]">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#a3c4e0] via-[#6b9ac4] to-[#d4b84a]">
                     organized
                   </span>
                   <motion.span
-                    className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-[#A8D4F5] via-[#72B5E8] to-transparent"
+                    className="absolute -bottom-1 left-0 right-0 h-[3px] rounded-full bg-gradient-to-r from-[#a3c4e0] via-[#6b9ac4] to-transparent"
                     initial={{ scaleX: 0, originX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ delay: 0.8, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -423,8 +430,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                The AI-powered task management platform built for insurance teams.
-                Stay aligned, move faster, close more.
+                The AI-powered project management platform built for academic teams.
+                Focus on your research. Let us handle the organization.
               </motion.p>
 
               {/* Feature cards */}
@@ -441,14 +448,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.6 + i * 0.1 }}
-                    whileHover={{ scale: 1.02, borderColor: 'rgba(114,181,232,0.3)' }}
+                    whileHover={{ scale: 1.02, borderColor: 'rgba(107,154,196,0.3)' }}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                     <div className="relative flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-sky)]/20 to-[var(--brand-blue)]/20 flex items-center justify-center text-[var(--brand-sky)] border border-white/10">
                       <feature.Icon className="w-5 h-5" />
                     </div>
                     <div className="relative">
-                      <h3 className="text-sm font-semibold text-white mb-1">{feature.title}</h3>
+                      <h3 className="text-sm font-semibold text-white mb-1 heading-serif">{feature.title}</h3>
                       <p className="text-sm text-white/50">{feature.description}</p>
                     </div>
                   </motion.div>
@@ -507,8 +514,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                     <div className="inline-flex mb-4">
                       <Logo3D />
                     </div>
-                    <h1 className="text-2xl font-bold text-white">Bealer Agency</h1>
-                    <p className="text-sm text-white/50 mt-1">Task Management Platform</p>
+                    <h1 className="text-2xl font-bold text-white heading-serif">Academic Projects</h1>
+                    <p className="text-sm text-white/50 mt-1">Research Project Manager</p>
                   </motion.div>
 
                   {/* Card glow */}
@@ -539,12 +546,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                         transition={{ delay: 0.3 }}
                       >
                         <div className="relative group">
-                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[var(--brand-sky)] transition-colors" />
+                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-[var(--brand-sky)] transition-colors" aria-hidden="true" />
                           <input
-                            type="text"
+                            type="search"
                             placeholder="Search team..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            aria-label="Search team members"
                             className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-sky)]/30 focus:border-[var(--brand-sky)]/40 transition-all"
                           />
                         </div>
@@ -558,6 +566,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
+                        role="list"
+                        aria-label="Team members"
                       >
                         <div className="space-y-2">
                           {filteredUsers.map((user, index) => (
@@ -578,8 +588,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                         className="px-8 py-12 text-center"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
+                        role="status"
+                        aria-live="polite"
                       >
-                        <Search className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                        <Search className="w-10 h-10 text-white/20 mx-auto mb-3" aria-hidden="true" />
                         <p className="text-white/40 text-sm">No results for &ldquo;{searchQuery}&rdquo;</p>
                       </motion.div>
                     )}
@@ -731,7 +743,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
             >
-              Bealer Agency &copy; {new Date().getFullYear()}
+              Academic Project Manager &copy; {new Date().getFullYear()}
             </motion.p>
           </div>
         </div>
@@ -745,7 +757,8 @@ function UserCard({ user, onSelect, delay = 0 }: { user: AuthUser; onSelect: (us
   return (
     <motion.button
       onClick={() => onSelect(user)}
-      className="group w-full flex items-center gap-4 p-3 rounded-xl hover:bg-white/[0.08] active:bg-white/10 transition-all text-left border border-transparent hover:border-white/10"
+      aria-label={`Sign in as ${user.name}${user.last_login ? `, last active ${new Date(user.last_login).toLocaleDateString()}` : ''}`}
+      className="group w-full flex items-center gap-4 p-3 rounded-xl hover:bg-white/[0.08] active:bg-white/10 transition-all text-left border border-transparent hover:border-white/10 focus-visible:ring-2 focus-visible:ring-[var(--brand-sky)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-navy)]"
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
@@ -755,10 +768,12 @@ function UserCard({ user, onSelect, delay = 0 }: { user: AuthUser; onSelect: (us
         <motion.div
           className="absolute inset-0 rounded-xl blur-md opacity-0 group-hover:opacity-50 transition-all duration-300"
           style={{ backgroundColor: user.color }}
+          aria-hidden="true"
         />
         <div
           className="relative w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-lg ring-1 ring-white/10 group-hover:ring-white/20 transition-all"
           style={{ backgroundColor: user.color }}
+          aria-hidden="true"
         >
           {getUserInitials(user.name)}
         </div>
@@ -776,6 +791,7 @@ function UserCard({ user, onSelect, delay = 0 }: { user: AuthUser; onSelect: (us
       <motion.div
         className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/5 group-hover:bg-gradient-to-br group-hover:from-[var(--brand-sky-light)] group-hover:to-[var(--brand-sky)] flex items-center justify-center transition-all border border-white/5 group-hover:border-transparent"
         whileHover={{ scale: 1.1 }}
+        aria-hidden="true"
       >
         <Lock className="w-3.5 h-3.5 text-white/40 group-hover:text-[#00205B] transition-colors" />
       </motion.div>

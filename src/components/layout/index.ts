@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// LAYOUT COMPONENTS - Bealer Agency Task Manager
+// LAYOUT COMPONENTS - Academic Project Manager
 // A comprehensive, redesigned layout system for optimal UX
 // ═══════════════════════════════════════════════════════════════════════════
 

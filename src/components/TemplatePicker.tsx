@@ -246,7 +246,7 @@ export default function TemplatePicker({
                     darkMode
                       ? 'bg-slate-700 text-white placeholder-slate-400 border-slate-600'
                       : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200'
-                  } border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/20`}
+                  } border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/20`}
                 />
                 <textarea
                   value={newDescription}
@@ -257,7 +257,7 @@ export default function TemplatePicker({
                     darkMode
                       ? 'bg-slate-700 text-white placeholder-slate-400 border-slate-600'
                       : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200'
-                  } border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/20`}
+                  } border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/20`}
                 />
                 <div className="flex gap-2 mb-2">
                   <select
@@ -308,7 +308,7 @@ export default function TemplatePicker({
                   <button
                     type="submit"
                     disabled={!newName.trim() || isSaving}
-                    className="px-4 py-2 rounded-lg bg-[#0033A0] text-white text-sm font-medium hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] touch-manipulation"
+                    className="px-4 py-2 rounded-lg bg-[#2c5282] text-white text-sm font-medium hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px] touch-manipulation"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create'}
                   </button>

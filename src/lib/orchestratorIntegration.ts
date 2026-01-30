@@ -71,59 +71,59 @@ const TASK_KEYWORDS: Record<AgentType, string[]> = {
   ux: ['design', 'wireframe', 'prototype', 'user experience', 'usability'],
 };
 
-// Insurance-specific task categories for agency workflows
-export type InsuranceTaskCategory =
-  | 'policy_review'
-  | 'follow_up'
-  | 'vehicle_add'
-  | 'payment'
-  | 'endorsement'
-  | 'claim'
-  | 'quote'
-  | 'documentation'
-  | 'new_client'
-  | 'cancellation';
+// Academic task categories for research and coursework workflows
+export type AcademicTaskCategory =
+  | 'research'
+  | 'meeting'
+  | 'analysis'
+  | 'submission'
+  | 'revision'
+  | 'presentation'
+  | 'writing'
+  | 'reading'
+  | 'coursework'
+  | 'admin';
 
-const INSURANCE_TASK_KEYWORDS: Record<InsuranceTaskCategory, string[]> = {
-  policy_review: ['review policy', 'policy check', 'renewal', 'review coverage', 'annual review'],
-  follow_up: ['follow up', 'call back', 'check in', 'reach out', 'contact'],
-  vehicle_add: ['add vehicle', 'new vehicle', 'car add', 'auto add'],
-  payment: ['payment', 'billing', 'premium', 'invoice', 'collect'],
-  endorsement: ['endorsement', 'change coverage', 'add coverage', 'modify policy'],
-  claim: ['claim', 'accident', 'damage', 'incident', 'loss'],
-  quote: ['quote', 'estimate', 'proposal', 'pricing'],
-  documentation: ['document', 'paperwork', 'form', 'sign', 'upload'],
-  new_client: ['new client', 'new customer', 'onboard', 'welcome'],
-  cancellation: ['cancel', 'terminate', 'stop coverage', 'non-renew'],
+const ACADEMIC_TASK_KEYWORDS: Record<AcademicTaskCategory, string[]> = {
+  research: ['literature review', 'data collection', 'experiment', 'study', 'hypothesis', 'methodology', 'participant'],
+  writing: ['draft', 'paper', 'manuscript', 'thesis', 'dissertation', 'abstract', 'write introduction', 'write methods'],
+  analysis: ['statistics', 'data analysis', 'results', 'R script', 'python', 'SPSS', 'regression', 'visualization'],
+  submission: ['submit', 'deadline', 'conference', 'journal', 'camera ready', 'supplementary'],
+  meeting: ['advisor', 'committee', 'lab meeting', 'seminar', 'office hours', 'supervisor', 'mentor'],
+  presentation: ['defense', 'poster', 'talk', 'slides', 'conference presentation', 'present'],
+  reading: ['article', 'chapter', 'textbook', 'review paper', 'read paper', 'annotate'],
+  coursework: ['assignment', 'homework', 'exam', 'quiz', 'grade', 'problem set', 'lab report'],
+  revision: ['revise', 'edits', 'feedback', 'reviewer comments', 'resubmit', 'corrections'],
+  admin: ['forms', 'registration', 'IRB', 'grant administration', 'reimbursement', 'travel form'],
 };
 
-export interface InsuranceTaskAnalysis {
-  category: InsuranceTaskCategory | null;
+export interface AcademicTaskAnalysis {
+  category: AcademicTaskCategory | null;
   urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
   suggestedPriority: 'low' | 'medium' | 'high' | 'urgent';
-  isClientFacing: boolean;
+  isCollaborative: boolean;
   requiresFollowUp: boolean;
   estimatedDuration: 'quick' | 'standard' | 'extended';
 }
 
 /**
- * Analyze a task for insurance-specific patterns.
- * Useful for the agency lead to understand workload distribution.
+ * Analyze a task for academic-specific patterns.
+ * Useful for understanding workload distribution in research/academic context.
  */
-export function analyzeInsuranceTask(taskText: string, dueDate?: string | null): InsuranceTaskAnalysis {
+export function analyzeAcademicTask(taskText: string, dueDate?: string | null): AcademicTaskAnalysis {
   const text = taskText.toLowerCase();
 
   // Detect category
-  let category: InsuranceTaskCategory | null = null;
-  for (const [cat, keywords] of Object.entries(INSURANCE_TASK_KEYWORDS)) {
+  let category: AcademicTaskCategory | null = null;
+  for (const [cat, keywords] of Object.entries(ACADEMIC_TASK_KEYWORDS)) {
     if (keywords.some(kw => text.includes(kw))) {
-      category = cat as InsuranceTaskCategory;
+      category = cat as AcademicTaskCategory;
       break;
     }
   }
 
   // Determine urgency based on category and due date
-  let urgencyLevel: InsuranceTaskAnalysis['urgencyLevel'] = 'medium';
+  let urgencyLevel: AcademicTaskAnalysis['urgencyLevel'] = 'medium';
 
   if (dueDate) {
     const due = new Date(dueDate);
@@ -136,32 +136,32 @@ export function analyzeInsuranceTask(taskText: string, dueDate?: string | null):
     else urgencyLevel = 'low';
   }
 
-  // High-urgency categories
-  if (category === 'claim' || category === 'cancellation') {
+  // High-urgency categories (deadlines, defenses)
+  if (category === 'submission' || category === 'presentation') {
     urgencyLevel = urgencyLevel === 'low' ? 'medium' : urgencyLevel;
   }
 
   // Map urgency to priority
-  const priorityMap: Record<InsuranceTaskAnalysis['urgencyLevel'], InsuranceTaskAnalysis['suggestedPriority']> = {
+  const priorityMap: Record<AcademicTaskAnalysis['urgencyLevel'], AcademicTaskAnalysis['suggestedPriority']> = {
     critical: 'urgent',
     high: 'high',
     medium: 'medium',
     low: 'low',
   };
 
-  // Client-facing detection
-  const clientFacingKeywords = ['call', 'email', 'meet', 'contact', 'client', 'customer', 'speak'];
-  const isClientFacing = clientFacingKeywords.some(kw => text.includes(kw));
+  // Collaborative task detection (involves others)
+  const collaborativeKeywords = ['advisor', 'committee', 'meeting', 'lab', 'team', 'coauthor', 'collaborator', 'present'];
+  const isCollaborative = collaborativeKeywords.some(kw => text.includes(kw));
 
   // Follow-up detection
-  const followUpKeywords = ['follow', 'check', 'confirm', 'verify', 'remind'];
+  const followUpKeywords = ['follow', 'check', 'confirm', 'verify', 'remind', 'wait for', 'response'];
   const requiresFollowUp = followUpKeywords.some(kw => text.includes(kw));
 
   // Duration estimation
-  let estimatedDuration: InsuranceTaskAnalysis['estimatedDuration'] = 'standard';
-  if (category === 'quote' || category === 'new_client' || category === 'claim') {
+  let estimatedDuration: AcademicTaskAnalysis['estimatedDuration'] = 'standard';
+  if (category === 'writing' || category === 'research' || category === 'analysis') {
     estimatedDuration = 'extended';
-  } else if (category === 'follow_up' || category === 'payment') {
+  } else if (category === 'reading' || category === 'admin') {
     estimatedDuration = 'quick';
   }
 
@@ -169,33 +169,33 @@ export function analyzeInsuranceTask(taskText: string, dueDate?: string | null):
     category,
     urgencyLevel,
     suggestedPriority: priorityMap[urgencyLevel],
-    isClientFacing,
+    isCollaborative,
     requiresFollowUp,
     estimatedDuration,
   };
 }
 
 /**
- * Get workload summary by insurance task category.
+ * Get workload summary by academic task category.
  */
-export function getInsuranceWorkloadSummary(todos: Todo[]): Record<InsuranceTaskCategory, { active: number; completed: number; overdue: number }> {
-  const summary: Record<InsuranceTaskCategory, { active: number; completed: number; overdue: number }> = {
-    policy_review: { active: 0, completed: 0, overdue: 0 },
-    follow_up: { active: 0, completed: 0, overdue: 0 },
-    vehicle_add: { active: 0, completed: 0, overdue: 0 },
-    payment: { active: 0, completed: 0, overdue: 0 },
-    endorsement: { active: 0, completed: 0, overdue: 0 },
-    claim: { active: 0, completed: 0, overdue: 0 },
-    quote: { active: 0, completed: 0, overdue: 0 },
-    documentation: { active: 0, completed: 0, overdue: 0 },
-    new_client: { active: 0, completed: 0, overdue: 0 },
-    cancellation: { active: 0, completed: 0, overdue: 0 },
+export function getAcademicWorkloadSummary(todos: Todo[]): Record<AcademicTaskCategory, { active: number; completed: number; overdue: number }> {
+  const summary: Record<AcademicTaskCategory, { active: number; completed: number; overdue: number }> = {
+    research: { active: 0, completed: 0, overdue: 0 },
+    meeting: { active: 0, completed: 0, overdue: 0 },
+    analysis: { active: 0, completed: 0, overdue: 0 },
+    submission: { active: 0, completed: 0, overdue: 0 },
+    revision: { active: 0, completed: 0, overdue: 0 },
+    presentation: { active: 0, completed: 0, overdue: 0 },
+    writing: { active: 0, completed: 0, overdue: 0 },
+    reading: { active: 0, completed: 0, overdue: 0 },
+    coursework: { active: 0, completed: 0, overdue: 0 },
+    admin: { active: 0, completed: 0, overdue: 0 },
   };
 
   const now = new Date();
 
   for (const todo of todos) {
-    const analysis = analyzeInsuranceTask(todo.text, todo.due_date);
+    const analysis = analyzeAcademicTask(todo.text, todo.due_date);
     if (!analysis.category) continue;
 
     const cat = summary[analysis.category];

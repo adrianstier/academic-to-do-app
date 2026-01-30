@@ -34,6 +34,13 @@ import {
   Zap,
   Sun,
   Coffee,
+  // Academic icons
+  FlaskConical,
+  FileText,
+  GraduationCap,
+  BookOpen,
+  Microscope,
+  PenTool,
 } from 'lucide-react';
 import {
   StrategicGoal,
@@ -56,6 +63,7 @@ interface StrategicDashboardProps {
 type ViewMode = 'list' | 'board' | 'table';
 
 const categoryIcons: Record<string, React.ReactNode> = {
+  // Legacy insurance icons (kept for backward compatibility)
   'trending-up': <TrendingUp className="w-4 h-4" />,
   'users': <Users className="w-4 h-4" />,
   'award': <Award className="w-4 h-4" />,
@@ -63,6 +71,14 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'megaphone': <Megaphone className="w-4 h-4" />,
   'shield': <Shield className="w-4 h-4" />,
   'target': <Target className="w-4 h-4" />,
+  // Academic icons
+  'flask': <FlaskConical className="w-4 h-4" />,
+  'flask-conical': <FlaskConical className="w-4 h-4" />,
+  'file-text': <FileText className="w-4 h-4" />,
+  'graduation-cap': <GraduationCap className="w-4 h-4" />,
+  'book-open': <BookOpen className="w-4 h-4" />,
+  'microscope': <Microscope className="w-4 h-4" />,
+  'pen-tool': <PenTool className="w-4 h-4" />,
 };
 
 const statusIcons: Record<GoalStatus, React.ReactNode> = {
@@ -293,8 +309,8 @@ export default function StrategicDashboard({
         >
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
-              <div className="w-12 h-12 border-4 border-[#0033A0]/20 rounded-full" />
-              <div className="absolute inset-0 w-12 h-12 border-4 border-[#0033A0] border-t-transparent rounded-full animate-spin" />
+              <div className="w-12 h-12 border-4 border-[#2c5282]/20 rounded-full" />
+              <div className="absolute inset-0 w-12 h-12 border-4 border-[#2c5282] border-t-transparent rounded-full animate-spin" />
             </div>
             <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
               Loading your goals...
@@ -321,7 +337,7 @@ export default function StrategicDashboard({
         }`}>
           <div className={`p-4 border-b ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-[#0033A0] to-[#0033A0]/70 shadow-lg shadow-[#0033A0]/20">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#2c5282] to-[#2c5282]/70 shadow-lg shadow-[#2c5282]/20">
                 <Target className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -329,7 +345,7 @@ export default function StrategicDashboard({
                   Goals
                 </h2>
                 <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
-                  Strategic Planning
+                  Research & Academic Progress
                 </p>
               </div>
             </div>
@@ -348,7 +364,7 @@ export default function StrategicDashboard({
                 <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Done</p>
               </div>
               <div className="text-center p-2">
-                <p className="text-2xl font-bold text-[#0033A0]">{stats.inProgress}</p>
+                <p className="text-2xl font-bold text-[#2c5282]">{stats.inProgress}</p>
                 <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Active</p>
               </div>
               <div className="text-center p-2">
@@ -373,7 +389,7 @@ export default function StrategicDashboard({
                   !selectedCategory
                     ? darkMode
                       ? 'bg-slate-800 text-white'
-                      : 'bg-[#0033A0]/10 text-[#0033A0]'
+                      : 'bg-[#2c5282]/10 text-[#2c5282]'
                     : darkMode
                       ? 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -406,7 +422,7 @@ export default function StrategicDashboard({
                         selectedCategory === category.id
                           ? darkMode
                             ? 'bg-slate-800 text-white'
-                            : 'bg-[#0033A0]/10 text-[#0033A0]'
+                            : 'bg-[#2c5282]/10 text-[#2c5282]'
                           : darkMode
                             ? 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                             : 'text-slate-600 hover:bg-slate-100'
@@ -447,7 +463,7 @@ export default function StrategicDashboard({
                         statusFilter === status
                           ? darkMode
                             ? 'bg-slate-800 text-white'
-                            : 'bg-[#0033A0]/10 text-[#0033A0]'
+                            : 'bg-[#2c5282]/10 text-[#2c5282]'
                           : darkMode
                             ? 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                             : 'text-slate-600 hover:bg-slate-100'
@@ -478,7 +494,7 @@ export default function StrategicDashboard({
           <div className={`p-3 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <button
               onClick={() => setShowAddGoal(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0033A0] text-white text-sm font-medium rounded-xl hover:bg-[#002878] transition-all shadow-lg shadow-[#0033A0]/20"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#2c5282] text-white text-sm font-medium rounded-xl hover:bg-[#002878] transition-all shadow-lg shadow-[#2c5282]/20"
             >
               <Plus className="w-4 h-4" />
               New Goal
@@ -493,7 +509,7 @@ export default function StrategicDashboard({
           }`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className={`${darkMode ? 'text-[#D4A853]' : 'text-[#0033A0]'}`}>
+                <span className={`${darkMode ? 'text-[#D4A853]' : 'text-[#2c5282]'}`}>
                   {greeting.icon}
                 </span>
                 <div>
@@ -503,7 +519,7 @@ export default function StrategicDashboard({
                   <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                     {selectedCategory
                       ? categories.find(c => c.id === selectedCategory)?.name
-                      : 'All your strategic goals'}
+                      : 'All your research and academic goals'}
                   </p>
                 </div>
               </div>
@@ -531,7 +547,7 @@ export default function StrategicDashboard({
                     darkMode
                       ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500'
                       : 'bg-slate-100 border-slate-200 text-slate-800 placeholder-slate-400'
-                  } border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                  } border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                 />
               </div>
 
@@ -571,8 +587,8 @@ export default function StrategicDashboard({
                 <motion.div
                   className={`p-5 rounded-2xl mb-5 ${
                     darkMode
-                      ? 'bg-gradient-to-br from-[#0033A0]/20 to-[#0033A0]/10 border border-[#0033A0]/30'
-                      : 'bg-gradient-to-br from-[#0033A0]/10 to-[#0033A0]/5 border border-[#0033A0]/20'
+                      ? 'bg-gradient-to-br from-[#2c5282]/20 to-[#2c5282]/10 border border-[#2c5282]/30'
+                      : 'bg-gradient-to-br from-[#2c5282]/10 to-[#2c5282]/5 border border-[#2c5282]/20'
                   }`}
                   animate={{ scale: [1, 1.03, 1] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -580,16 +596,16 @@ export default function StrategicDashboard({
                   {searchQuery ? (
                     <Search className={`w-12 h-12 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                   ) : (
-                    <Target className={`w-12 h-12 ${darkMode ? 'text-[#0033A0]/70' : 'text-[#0033A0]'}`} />
+                    <Target className={`w-12 h-12 ${darkMode ? 'text-[#2c5282]/70' : 'text-[#2c5282]'}`} />
                   )}
                 </motion.div>
                 <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
-                  {searchQuery ? 'No goals found' : 'Set your strategic goals'}
+                  {searchQuery ? 'No goals found' : 'Set your research goals'}
                 </h3>
                 <p className={`text-sm mb-5 max-w-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   {searchQuery
                     ? 'Try adjusting your search or filters to find what you are looking for'
-                    : 'Define your objectives and track progress toward achieving your strategic vision'}
+                    : 'Define your research objectives and track progress toward publications, grants, and academic milestones'}
                 </p>
                 {searchQuery ? (
                   <button
@@ -608,7 +624,7 @@ export default function StrategicDashboard({
                 ) : (
                   <button
                     onClick={() => setShowAddGoal(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-[#0033A0] text-white text-sm font-medium rounded-lg hover:bg-[#002878] transition-colors shadow-lg shadow-[#0033A0]/20"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#2c5282] text-white text-sm font-medium rounded-lg hover:bg-[#002878] transition-colors shadow-lg shadow-[#2c5282]/20"
                   >
                     <Plus className="w-4 h-4" />
                     Create your first goal
@@ -824,7 +840,7 @@ function ListView({
 
                     {goal.target_value && (
                       <span className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
-                        darkMode ? 'bg-[#D4A853]/10 text-[#D4A853]' : 'bg-[#0033A0]/10 text-[#0033A0]'
+                        darkMode ? 'bg-[#D4A853]/10 text-[#D4A853]' : 'bg-[#2c5282]/10 text-[#2c5282]'
                       }`}>
                         <ArrowUpRight className="w-3 h-3" />
                         {goal.target_value}
@@ -858,7 +874,7 @@ function ListView({
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${goal.progress_percent}%` }}
-                          className="h-full rounded-full bg-gradient-to-r from-[#0033A0] to-[#D4A853]"
+                          className="h-full rounded-full bg-gradient-to-r from-[#2c5282] to-[#D4A853]"
                         />
                       </div>
                     </div>
@@ -964,7 +980,7 @@ function BoardView({ goalsByStatus, categories, darkMode, onEdit }: BoardViewPro
                           darkMode ? 'bg-slate-700' : 'bg-slate-200'
                         }`}>
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-[#0033A0] to-[#D4A853]"
+                            className="h-full rounded-full bg-gradient-to-r from-[#2c5282] to-[#D4A853]"
                             style={{ width: `${goal.progress_percent}%` }}
                           />
                         </div>
@@ -1076,7 +1092,7 @@ function TableView({ goals, categories, darkMode, onEdit, onStatusChange }: Tabl
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className={`w-16 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}>
-                      <div className="h-full rounded-full bg-gradient-to-r from-[#0033A0] to-[#D4A853]" style={{ width: `${goal.progress_percent}%` }} />
+                      <div className="h-full rounded-full bg-gradient-to-r from-[#2c5282] to-[#D4A853]" style={{ width: `${goal.progress_percent}%` }} />
                     </div>
                     <span className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{goal.progress_percent}%</span>
                   </div>
@@ -1111,7 +1127,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
       >
         <div className={`px-6 py-4 border-b flex items-center justify-between ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-[#0033A0] to-[#0033A0]/70">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-[#2c5282] to-[#2c5282]/70">
               <Zap className="w-4 h-4 text-white" />
             </div>
             <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>New Goal</h2>
@@ -1129,7 +1145,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
             placeholder="What's your goal?"
             className={`w-full px-4 py-3 rounded-xl text-lg font-medium ${
               darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
-            } border-2 focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30 focus:border-[#0033A0]`}
+            } border-2 focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30 focus:border-[#2c5282]`}
             autoFocus
           />
 
@@ -1140,7 +1156,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
             rows={3}
             className={`w-full px-4 py-3 rounded-xl text-sm resize-none ${
               darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
-            } border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+            } border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -1149,7 +1165,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
               <select
                 value={newGoal.category_id}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, category_id: e.target.value }))}
-                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
               >
                 <option value="">No Category</option>
                 {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
@@ -1161,7 +1177,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
               <select
                 value={newGoal.priority}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, priority: e.target.value as GoalPriority }))}
-                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
               >
                 {(Object.keys(GOAL_PRIORITY_CONFIG) as GoalPriority[]).map(priority => (
                   <option key={priority} value={priority}>{GOAL_PRIORITY_CONFIG[priority].label}</option>
@@ -1175,7 +1191,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
                 type="date"
                 value={newGoal.target_date}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, target_date: e.target.value }))}
-                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
               />
             </div>
 
@@ -1185,8 +1201,8 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
                 type="text"
                 value={newGoal.target_value}
                 onChange={(e) => setNewGoal(prev => ({ ...prev, target_value: e.target.value }))}
-                placeholder="e.g., $1M revenue"
-                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                placeholder="e.g., 3 publications, $50K grant"
+                className={`w-full px-3 py-2 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
               />
             </div>
           </div>
@@ -1199,7 +1215,7 @@ function AddGoalModal({ categories, darkMode, newGoal, setNewGoal, onClose, onCr
           <button
             onClick={onCreate}
             disabled={!newGoal.title.trim()}
-            className="px-4 py-2 bg-[#0033A0] text-white text-sm font-medium rounded-lg hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#0033A0]/20"
+            className="px-4 py-2 bg-[#2c5282] text-white text-sm font-medium rounded-lg hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#2c5282]/20"
           >
             Create Goal
           </button>
@@ -1277,7 +1293,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.id
-                    ? darkMode ? 'bg-slate-800 text-white' : 'bg-[#0033A0]/10 text-[#0033A0]'
+                    ? darkMode ? 'bg-slate-800 text-white' : 'bg-[#2c5282]/10 text-[#2c5282]'
                     : darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}
               >
@@ -1296,7 +1312,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl text-lg font-medium ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                  className={`w-full px-4 py-3 rounded-xl text-lg font-medium ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                 />
               </div>
 
@@ -1306,7 +1322,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className={`w-full px-4 py-3 rounded-xl text-sm resize-none ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                  className={`w-full px-4 py-3 rounded-xl text-sm resize-none ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                 />
               </div>
 
@@ -1316,7 +1332,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                   <select
                     value={formData.category_id}
                     onChange={(e) => setFormData(prev => ({ ...prev, category_id: e.target.value }))}
-                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   >
                     <option value="">No Category</option>
                     {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
@@ -1328,7 +1344,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as GoalStatus }))}
-                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   >
                     {(Object.keys(GOAL_STATUS_CONFIG) as GoalStatus[]).map(status => (
                       <option key={status} value={status}>{GOAL_STATUS_CONFIG[status].label}</option>
@@ -1341,7 +1357,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as GoalPriority }))}
-                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   >
                     {(Object.keys(GOAL_PRIORITY_CONFIG) as GoalPriority[]).map(priority => (
                       <option key={priority} value={priority}>{GOAL_PRIORITY_CONFIG[priority].label}</option>
@@ -1355,7 +1371,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                     type="date"
                     value={formData.target_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, target_date: e.target.value }))}
-                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   />
                 </div>
 
@@ -1365,8 +1381,8 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                     type="text"
                     value={formData.target_value}
                     onChange={(e) => setFormData(prev => ({ ...prev, target_value: e.target.value }))}
-                    placeholder="e.g., $1M revenue"
-                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    placeholder="e.g., 3 publications, $50K grant"
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   />
                 </div>
 
@@ -1376,8 +1392,8 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                     type="text"
                     value={formData.current_value}
                     onChange={(e) => setFormData(prev => ({ ...prev, current_value: e.target.value }))}
-                    placeholder="e.g., $500K"
-                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    placeholder="e.g., 1 publication, $20K"
+                    className={`w-full px-3 py-2.5 rounded-lg text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   />
                 </div>
               </div>
@@ -1389,7 +1405,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                   onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
                   placeholder="Additional notes..."
-                  className={`w-full px-4 py-3 rounded-xl text-sm resize-none ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                  className={`w-full px-4 py-3 rounded-xl text-sm resize-none ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                 />
               </div>
             </div>
@@ -1407,7 +1423,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${milestones.length > 0 ? (completedMilestones / milestones.length) * 100 : 0}%` }}
-                      className="h-full rounded-full bg-gradient-to-r from-[#0033A0] to-[#D4A853]"
+                      className="h-full rounded-full bg-gradient-to-r from-[#2c5282] to-[#D4A853]"
                     />
                   </div>
                 </div>
@@ -1446,7 +1462,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                       }
                     }}
                     placeholder="Add a milestone..."
-                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#0033A0]/30`}
+                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm ${darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'} border focus:outline-none focus:ring-2 focus:ring-[#2c5282]/30`}
                   />
                   <button
                     onClick={() => {
@@ -1456,7 +1472,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                       }
                     }}
                     disabled={!newMilestone.trim()}
-                    className="p-2.5 bg-[#0033A0] text-white rounded-xl hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="p-2.5 bg-[#2c5282] text-white rounded-xl hover:bg-[#002878] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -1484,7 +1500,7 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
                 notes: formData.notes || null,
               } as Partial<StrategicGoal>);
             }}
-            className="px-4 py-2 bg-[#0033A0] text-white text-sm font-medium rounded-lg hover:bg-[#002878] transition-all shadow-lg shadow-[#0033A0]/20"
+            className="px-4 py-2 bg-[#2c5282] text-white text-sm font-medium rounded-lg hover:bg-[#002878] transition-all shadow-lg shadow-[#2c5282]/20"
           >
             Save Changes
           </button>

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { isFeatureEnabled } from '@/lib/featureFlags';
-import type { AgencyInvitation, Agency } from '@/types/agency';
+import type { TeamInvitation as AgencyInvitation, Team as Agency } from '@/types/team';
 
 // ============================================
 // Types
@@ -216,7 +216,7 @@ export default function JoinInvitationPage({
           name: userName.trim(),
           email: invitation?.invitation.email || null,
           pin_hash: pinHash,
-          color: invitation?.agency.primary_color || '#0033A0',
+          color: invitation?.agency.primary_color || '#1e3a5f',
           global_role: 'user',
         })
         .select()
@@ -343,12 +343,12 @@ export default function JoinInvitationPage({
         <div className="inline-flex items-center gap-2 mb-2">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-            style={{ backgroundColor: invitation?.agency.primary_color || '#0033A0' }}
+            style={{ backgroundColor: invitation?.agency.primary_color || '#1e3a5f' }}
           >
             {invitation?.agency.name.charAt(0) || 'A'}
           </div>
           <span className="text-2xl font-bold text-gray-900 dark:text-white">
-            {invitation?.agency.name || 'Agency'}
+            {invitation?.agency.name || 'Team'}
           </span>
         </div>
         <p className="text-gray-500 dark:text-gray-400">

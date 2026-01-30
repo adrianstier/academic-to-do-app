@@ -22,34 +22,34 @@ interface StatCardProps {
 
 const variantStyles: Record<StatCardVariant, { iconBg: string; iconColor: string; trendPositive: string; trendNegative: string }> = {
   default: {
-    iconBg: 'bg-blue-500/10 dark:bg-blue-400/20',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-    trendPositive: 'text-emerald-600 dark:text-emerald-400',
-    trendNegative: 'text-red-500 dark:text-red-400',
+    iconBg: 'bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20',
+    iconColor: 'text-[var(--brand-blue)] dark:text-[var(--brand-sky)]',
+    trendPositive: 'text-[var(--success)] dark:text-[var(--success-vivid)]',
+    trendNegative: 'text-[var(--danger)] dark:text-[var(--danger)]',
   },
   success: {
-    iconBg: 'bg-emerald-500/10 dark:bg-emerald-400/20',
-    iconColor: 'text-emerald-600 dark:text-emerald-400',
-    trendPositive: 'text-emerald-600 dark:text-emerald-400',
-    trendNegative: 'text-red-500 dark:text-red-400',
+    iconBg: 'bg-[var(--success-light)] dark:bg-[var(--success)]/20',
+    iconColor: 'text-[var(--success)] dark:text-[var(--success-vivid)]',
+    trendPositive: 'text-[var(--success)] dark:text-[var(--success-vivid)]',
+    trendNegative: 'text-[var(--danger)] dark:text-[var(--danger)]',
   },
   warning: {
-    iconBg: 'bg-amber-500/10 dark:bg-amber-400/20',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    trendPositive: 'text-emerald-600 dark:text-emerald-400',
-    trendNegative: 'text-red-500 dark:text-red-400',
+    iconBg: 'bg-[var(--warning-light)] dark:bg-[var(--warning)]/20',
+    iconColor: 'text-[var(--warning)] dark:text-[var(--warning)]',
+    trendPositive: 'text-[var(--success)] dark:text-[var(--success-vivid)]',
+    trendNegative: 'text-[var(--danger)] dark:text-[var(--danger)]',
   },
   danger: {
-    iconBg: 'bg-red-500/10 dark:bg-red-400/20',
-    iconColor: 'text-red-600 dark:text-red-400',
-    trendPositive: 'text-emerald-600 dark:text-emerald-400',
-    trendNegative: 'text-red-500 dark:text-red-400',
+    iconBg: 'bg-[var(--danger-light)] dark:bg-[var(--danger)]/20',
+    iconColor: 'text-[var(--danger)] dark:text-[var(--danger)]',
+    trendPositive: 'text-[var(--success)] dark:text-[var(--success-vivid)]',
+    trendNegative: 'text-[var(--danger)] dark:text-[var(--danger)]',
   },
   info: {
     iconBg: 'bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20',
     iconColor: 'text-[var(--brand-blue)] dark:text-[var(--brand-sky)]',
-    trendPositive: 'text-emerald-600 dark:text-emerald-400',
-    trendNegative: 'text-red-500 dark:text-red-400',
+    trendPositive: 'text-[var(--success)] dark:text-[var(--success-vivid)]',
+    trendNegative: 'text-[var(--danger)] dark:text-[var(--danger)]',
   },
 };
 

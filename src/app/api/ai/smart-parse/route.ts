@@ -49,52 +49,59 @@ export async function POST(request: NextRequest) {
     const hasNumberedList = /\d+[.)]\s/.test(text);
     const isComplex = wordCount > 15 || hasMultipleLines || hasBulletPoints || hasNumberedList;
 
-    // Insurance-specific context for better parsing
-    const insuranceContext = `
-INSURANCE AGENCY CONTEXT:
-You are parsing tasks for an Allstate insurance agency. Common task types and terminology include:
+    // Academic/research context for better parsing
+    const academicContext = `
+ACADEMIC RESEARCH CONTEXT:
+You are parsing tasks for an academic research team. Common task types and terminology include:
 
-POLICY OPERATIONS:
-- Policy reviews/renewals (usually has customer name, policy number)
-- Endorsements (adding/changing coverage, adjusting limits)
-- Cancellations/non-renewals
-- "Dec page" = declarations page (policy summary document)
-- "Binder" = temporary proof of insurance
+RESEARCH OPERATIONS:
+- Literature reviews (searching, reading, synthesizing papers)
+- Data collection (surveys, experiments, fieldwork, interviews)
+- Data analysis (statistical analysis, coding, visualization)
+- Experiment design and execution
+- IRB/Ethics submissions and amendments
 
-VEHICLE OPERATIONS:
-- Adding vehicle to policy (needs VIN, year/make/model)
-- Removing vehicle from policy
-- Vehicle replacement
-- "Add a driver" = adding someone to auto policy
+WRITING OPERATIONS:
+- Manuscript drafting (introduction, methods, results, discussion)
+- Revisions and edits (responding to reviewer comments)
+- Grant proposals and applications
+- Conference abstracts and presentations
+- Thesis/dissertation chapters
 
-CLIENT OPERATIONS:
-- New client onboarding (gather info, quote, bind)
-- Annual reviews with existing clients
-- Cross-sell opportunities
-- "Pull MVR" = motor vehicle record check
+ACADEMIC DEADLINES:
+- Conference submission deadlines (papers, abstracts, posters)
+- Journal submission and revision deadlines
+- Grant application deadlines (NSF, NIH, foundations)
+- Course-related deadlines (syllabi, grades, evaluations)
 
-CLAIMS:
-- New claim filing
-- Claim follow-up
-- Adjuster coordination
+MEETINGS:
+- Advisor/mentor meetings
+- Lab meetings and journal clubs
+- Committee meetings (thesis, qualifying exam)
+- Seminars and colloquia
+- Collaborator meetings
 
-DOCUMENTATION:
-- "COI" = certificate of insurance
-- "Loss runs" = claims history report
-- "ID cards" = insurance identification cards
+TEACHING & SERVICE:
+- Course preparation (lectures, assignments, exams)
+- Grading and feedback
+- Office hours
+- Student advising
+- Peer review assignments
+- Committee service
 
 PRIORITY HINTS:
-- Claims and time-sensitive requests are usually high/urgent
-- Policy renewals have specific dates - use them as due dates
-- New client onboarding should be high priority
-- Quote requests are typically medium priority
+- Conference and grant deadlines are usually high/urgent
+- Responding to reviewers should be high priority
+- IRB submissions have specific deadlines - use them as due dates
+- Advisor meeting prep should be prioritized
+- Grading deadlines are typically non-negotiable
 
 When parsing, detect these patterns and set appropriate priority, subtasks, and due dates.
 `;
 
-    const prompt = `You are a smart task parser for an insurance agency team. Analyze the user's input and extract a clean, actionable task with optional subtasks.
+    const prompt = `You are a smart task parser for an academic research team. Analyze the user's input and extract a clean, actionable task with optional subtasks.
 
-${insuranceContext}
+${academicContext}
 
 User's input:
 """

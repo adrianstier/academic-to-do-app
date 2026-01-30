@@ -100,8 +100,8 @@ export default function DashboardPage({
           className="absolute inset-0"
           style={{
             background: darkMode
-              ? 'linear-gradient(135deg, #0A1628 0%, #0033A0 50%, #1E3A5F 100%)'
-              : 'linear-gradient(135deg, #0033A0 0%, #0047CC 50%, #1E3A5F 100%)',
+              ? 'linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy) 50%, #1E3A5F 100%)'
+              : 'linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-blue) 50%, #1E3A5F 100%)',
           }}
         />
         <div className="relative px-6 py-8 max-w-7xl mx-auto">
@@ -124,7 +124,7 @@ export default function DashboardPage({
             <button
               onClick={onFilterOverdue}
               aria-label={`View ${stats.overdue} overdue task${stats.overdue !== 1 ? 's' : ''}`}
-              className={`p-4 rounded-xl text-left transition-all duration-200 min-h-[92px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0033A0] ${
+              className={`p-4 rounded-xl text-left transition-all duration-200 min-h-[92px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-navy)] ${
                 stats.overdue > 0
                   ? 'bg-gradient-to-br from-red-500/25 to-red-500/10 hover:from-red-500/30 hover:to-red-500/15 border-2 border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.15)]'
                   : 'bg-white/10 hover:bg-white/15 border border-white/10'
@@ -144,7 +144,7 @@ export default function DashboardPage({
             <button
               onClick={onFilterDueToday}
               aria-label={`View ${stats.dueToday} task${stats.dueToday !== 1 ? 's' : ''} due today`}
-              className={`p-4 rounded-xl text-left transition-all duration-200 min-h-[92px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0033A0] ${
+              className={`p-4 rounded-xl text-left transition-all duration-200 min-h-[92px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--brand-navy)] ${
                 stats.dueToday > 0
                   ? 'bg-gradient-to-br from-amber-500/20 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 border border-amber-500/30'
                   : 'bg-white/10 hover:bg-white/15 border border-white/10'

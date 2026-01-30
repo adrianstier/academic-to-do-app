@@ -30,7 +30,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
       {/* Subtle background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-[#0033A0]/5 dark:bg-[#0033A0]/10 rounded-full blur-3xl"
+          className="absolute -top-40 -right-40 w-96 h-96 bg-[#2c5282]/5 dark:bg-[#2c5282]/10 rounded-full blur-3xl"
           animate={{
             scale: [1, 1.1, 1],
             opacity: [0.3, 0.4, 0.3],
@@ -42,7 +42,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
           }}
         />
         <motion.div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#0033A0]/5 dark:bg-[#0033A0]/10 rounded-full blur-3xl"
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#2c5282]/5 dark:bg-[#2c5282]/10 rounded-full blur-3xl"
           animate={{
             scale: [1.1, 1, 1.1],
             opacity: [0.4, 0.3, 0.4],
@@ -63,8 +63,8 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
       >
         {/* Card */}
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
-          {/* Allstate Blue Header Bar */}
-          <div className="h-2 bg-[#0033A0]" />
+          {/* Academic Blue Header Bar */}
+          <div className="h-2 bg-[#2c5282]" />
 
           {/* Header */}
           <div className="px-8 pt-8 pb-6 text-center">
@@ -72,7 +72,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#0033A0] shadow-lg shadow-[#0033A0]/20 mb-6"
+              className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#2c5282] shadow-lg shadow-[#2c5282]/20 mb-6"
             >
               <Shield className="w-8 h-8 text-white" />
             </motion.div>
@@ -83,14 +83,14 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
               transition={{ delay: 0.3 }}
               className="text-2xl font-bold text-slate-900 dark:text-white mb-1"
             >
-              Bealer Agency
+              Academic Projects
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="text-sm font-medium text-[#0033A0] dark:text-blue-400 mb-3"
+              className="text-sm font-medium text-[#2c5282] dark:text-blue-400 mb-3"
             >
               Task Management System
             </motion.p>
@@ -121,8 +121,8 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
                   transition={{ delay: 0.5 + index * 0.1 }}
                   className="flex flex-col items-center gap-2"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-[#0033A0]/10 dark:bg-[#0033A0]/20 flex items-center justify-center">
-                    <feature.icon className="w-5 h-5 text-[#0033A0] dark:text-blue-400" />
+                  <div className="w-10 h-10 rounded-lg bg-[#2c5282]/10 dark:bg-[#2c5282]/20 flex items-center justify-center">
+                    <feature.icon className="w-5 h-5 text-[#2c5282] dark:text-blue-400" />
                   </div>
                   <span className="text-xs text-slate-600 dark:text-slate-400 text-center font-medium">
                     {feature.text}
@@ -145,7 +145,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
                   animate={{
                     top: isFocused || name ? '0px' : '50%',
                     fontSize: isFocused || name ? '12px' : '16px',
-                    color: isFocused ? '#0033A0' : '#64748b',
+                    color: isFocused ? '#2c5282' : '#64748b',
                   }}
                   className="absolute left-4 -translate-y-1/2 px-1 bg-white dark:bg-slate-900 pointer-events-none transition-all z-10 font-medium"
                 >
@@ -157,7 +157,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
                   onChange={(e) => setName(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  className="w-full px-4 py-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-lg focus:outline-none focus:border-[#0033A0] dark:focus:border-[#0033A0] transition-colors"
+                  className="w-full px-4 py-4 rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-lg focus:outline-none focus:border-[#2c5282] dark:focus:border-[#2c5282] transition-colors"
                   autoFocus
                 />
               </div>
@@ -169,7 +169,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
                 whileTap={{ scale: name.trim() ? 0.99 : 1 }}
                 className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-all ${
                   name.trim()
-                    ? 'bg-[#0033A0] hover:bg-[#002878] text-white shadow-lg shadow-[#0033A0]/20'
+                    ? 'bg-[#2c5282] hover:bg-[#002878] text-white shadow-lg shadow-[#2c5282]/20'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                 }`}
               >
@@ -187,7 +187,7 @@ export default function UserSetup({ onSetUser }: UserSetupProps) {
           transition={{ delay: 0.8 }}
           className="text-center mt-6 text-sm text-slate-400 dark:text-slate-500"
         >
-          Powered by Allstate
+          Academic Project Manager
         </motion.p>
       </motion.div>
     </div>

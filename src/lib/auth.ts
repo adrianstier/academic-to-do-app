@@ -1,4 +1,6 @@
-// Auth utilities for PIN-based authentication
+// Auth utilities
+// NOTE: PIN-based authentication is deprecated. Use Google OAuth instead.
+// PIN functions are kept for backward compatibility during migration.
 
 export interface AuthUser {
   id: string;
@@ -21,7 +23,10 @@ export interface StoredSession {
 const SESSION_KEY = 'todoSession';
 const LOCKOUT_KEY = 'authLockout';
 
-// Hash PIN using SHA-256
+/**
+ * Hash PIN using SHA-256
+ * @deprecated PIN authentication is deprecated. Use Google OAuth instead.
+ */
 export async function hashPin(pin: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(pin);
@@ -30,7 +35,10 @@ export async function hashPin(pin: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Verify PIN against hash
+/**
+ * Verify PIN against hash
+ * @deprecated PIN authentication is deprecated. Use Google OAuth instead.
+ */
 export async function verifyPin(pin: string, hash: string): Promise<boolean> {
   const inputHash = await hashPin(pin);
   return inputHash === hash;
@@ -64,7 +72,10 @@ export function clearStoredSession(): void {
   localStorage.removeItem('userName');
 }
 
-// Lockout management for rate limiting
+/**
+ * Lockout management for rate limiting
+ * @deprecated PIN lockout is deprecated. OAuth uses Google's security.
+ */
 interface LockoutState {
   attempts: number;
   lockedUntil?: string;
@@ -121,14 +132,14 @@ export function isLockedOut(userId: string): { locked: boolean; remainingSeconds
 
 // Generate a random color for new users
 const USER_COLORS = [
-  '#0033A0', // Allstate Blue
+  '#4F46E5', // Indigo (Academic Primary)
   '#059669', // Green
   '#7c3aed', // Purple
-  '#dc2626', // Red
+  '#0284C7', // Sky Blue
   '#ea580c', // Orange
   '#0891b2', // Cyan
   '#be185d', // Pink
-  '#4f46e5', // Indigo
+  '#2563EB', // Blue
 ];
 
 export function getRandomUserColor(): string {
@@ -144,7 +155,10 @@ export function getUserInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-// Validate PIN format (4 digits)
+/**
+ * Validate PIN format (4 digits)
+ * @deprecated PIN authentication is deprecated. Use Google OAuth instead.
+ */
 export function isValidPin(pin: string): boolean {
   return /^\d{4}$/.test(pin);
 }

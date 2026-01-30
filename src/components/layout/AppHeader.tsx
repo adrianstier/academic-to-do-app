@@ -73,22 +73,22 @@ export default function AppHeader({
               </button>
             )}
 
-            {/* Logo */}
+            {/* Logo - Academic styled */}
             <div
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center flex-shrink-0 shadow-lg"
-              style={{ boxShadow: '0 4px 12px rgba(0, 51, 160, 0.35)' }}
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-navy)] flex items-center justify-center flex-shrink-0 shadow-lg"
+              style={{ boxShadow: '0 4px 12px rgba(30, 58, 95, 0.35)' }}
             >
-              <span className="text-white font-bold text-base">B</span>
+              <span className="text-white font-bold text-base font-serif">A</span>
             </div>
 
             {/* Title & Stats */}
             <div className="min-w-0">
               <h1
-                className={`text-base font-bold truncate tracking-tight ${
+                className={`text-base font-bold truncate tracking-tight font-serif ${
                   darkMode ? 'text-white' : 'text-[var(--brand-navy)]'
                 }`}
               >
-                Bealer Agency
+                Academic Projects
               </h1>
               {!focusMode && (
                 <p

@@ -7,19 +7,20 @@ import {
   X,
   ChevronUp,
   ChevronDown,
-  ClipboardList,
-  Phone,
-  Car,
-  CreditCard,
+  BookOpen,
   FileText,
-  AlertCircle,
-  DollarSign,
-  UserPlus,
-  FileX,
+  BarChart3,
   Send,
+  Users,
+  Presentation,
+  PenTool,
+  BookMarked,
+  GraduationCap,
+  ClipboardList,
+  RotateCcw,
 } from 'lucide-react';
-import { QuickTaskTemplate, TaskPattern, INSURANCE_QUICK_TASKS, TaskCategory } from '@/types/todo';
-import { CATEGORY_COMPLETION_RATES } from '@/lib/insurancePatterns';
+import { QuickTaskTemplate, TaskPattern, ACADEMIC_QUICK_TASKS, TaskCategory } from '@/types/todo';
+import { CATEGORY_COMPLETION_RATES } from '@/lib/academicPatterns';
 import { fetchWithCsrf } from '@/lib/csrf';
 
 interface QuickTaskButtonsProps {
@@ -31,53 +32,53 @@ interface QuickTaskButtonsProps {
 }
 
 /**
- * Category icon mapping using Lucide icons
+ * Category icon mapping using Lucide icons for academic tasks
  */
 const CATEGORY_ICONS: Record<TaskCategory, React.ElementType> = {
-  policy_review: ClipboardList,
-  follow_up: Phone,
-  vehicle_add: Car,
-  payment: CreditCard,
-  endorsement: FileText,
-  documentation: Send,
-  claim: AlertCircle,
-  quote: DollarSign,
-  cancellation: FileX,
-  new_client: UserPlus,
+  research: BookOpen,
+  meeting: Users,
+  analysis: BarChart3,
+  submission: Send,
+  revision: RotateCcw,
+  presentation: Presentation,
+  writing: PenTool,
+  reading: BookMarked,
+  coursework: GraduationCap,
+  admin: ClipboardList,
   other: FileText,
 };
 
 /**
- * Category color mapping using CSS variables
+ * Category color mapping using CSS variables for academic tasks
  */
 const CATEGORY_COLORS: Record<TaskCategory, { icon: string; bg: string }> = {
-  policy_review: { icon: 'var(--accent)', bg: 'var(--accent-light)' },
-  follow_up: { icon: '#E87722', bg: 'rgba(232, 119, 34, 0.12)' },
-  vehicle_add: { icon: '#DC2626', bg: 'rgba(220, 38, 38, 0.12)' },
-  payment: { icon: '#059669', bg: 'rgba(5, 150, 105, 0.12)' },
-  endorsement: { icon: '#7C3AED', bg: 'rgba(124, 58, 237, 0.12)' },
-  documentation: { icon: 'var(--accent)', bg: 'var(--accent-light)' },
-  claim: { icon: '#DC2626', bg: 'rgba(220, 38, 38, 0.12)' },
-  quote: { icon: '#D97706', bg: 'rgba(217, 119, 6, 0.12)' },
-  cancellation: { icon: '#DC2626', bg: 'rgba(220, 38, 38, 0.12)' },
-  new_client: { icon: '#059669', bg: 'rgba(5, 150, 105, 0.12)' },
+  research: { icon: '#7C3AED', bg: 'rgba(124, 58, 237, 0.12)' },       // Purple - discovery
+  meeting: { icon: '#0891B2', bg: 'rgba(8, 145, 178, 0.12)' },         // Cyan - collaboration
+  analysis: { icon: '#059669', bg: 'rgba(5, 150, 105, 0.12)' },        // Green - data
+  submission: { icon: '#DC2626', bg: 'rgba(220, 38, 38, 0.12)' },      // Red - urgent deadlines
+  revision: { icon: '#D97706', bg: 'rgba(217, 119, 6, 0.12)' },        // Amber - refinement
+  presentation: { icon: '#E87722', bg: 'rgba(232, 119, 34, 0.12)' },   // Orange - performance
+  writing: { icon: 'var(--accent)', bg: 'var(--accent-light)' },       // Brand blue - core work
+  reading: { icon: '#6366F1', bg: 'rgba(99, 102, 241, 0.12)' },        // Indigo - learning
+  coursework: { icon: '#EC4899', bg: 'rgba(236, 72, 153, 0.12)' },     // Pink - academic
+  admin: { icon: '#64748B', bg: 'rgba(100, 116, 139, 0.12)' },         // Slate - administrative
   other: { icon: 'var(--text-muted)', bg: 'var(--surface-2)' },
 };
 
 /**
- * Short, readable labels for each category
+ * Short, readable labels for each academic category
  */
 const CATEGORY_LABELS: Record<TaskCategory, string> = {
-  policy_review: 'Policy Review',
-  follow_up: 'Follow Up',
-  vehicle_add: 'Add Vehicle',
-  payment: 'Payment',
-  endorsement: 'Endorsement',
-  documentation: 'Documents',
-  claim: 'Claim',
-  quote: 'Quote',
-  cancellation: 'Cancel',
-  new_client: 'New Client',
+  research: 'Research',
+  meeting: 'Meeting',
+  analysis: 'Analysis',
+  submission: 'Submit',
+  revision: 'Revision',
+  presentation: 'Present',
+  writing: 'Writing',
+  reading: 'Reading',
+  coursework: 'Coursework',
+  admin: 'Admin',
   other: 'Other',
 };
 
@@ -93,10 +94,11 @@ function getCompletionIndicator(category: TaskCategory): 'high' | 'low' | null {
 }
 
 /**
- * Check if a category is quote-related with low completion
+ * Check if a category is writing-related with low completion
+ * Writing tasks historically have lower completion rates and benefit from extra guidance
  */
-function isLowCompletionQuote(category: TaskCategory): boolean {
-  return category === 'quote' && CATEGORY_COMPLETION_RATES.quote < 60;
+function isLowCompletionWriting(category: TaskCategory): boolean {
+  return category === 'writing' && CATEGORY_COMPLETION_RATES.writing < 70;
 }
 
 export function QuickTaskButtons({
@@ -109,9 +111,9 @@ export function QuickTaskButtons({
   const [showQuoteWarning, setShowQuoteWarning] = useState(false);
   const [pendingTemplate, setPendingTemplate] = useState<QuickTaskTemplate | null>(null);
 
-  // Handle template selection with quote warning
+  // Handle template selection with writing warning
   const handleTemplateSelect = useCallback((template: QuickTaskTemplate) => {
-    if (isLowCompletionQuote(template.category)) {
+    if (isLowCompletionWriting(template.category)) {
       setPendingTemplate(template);
       setShowQuoteWarning(true);
     } else {
@@ -134,9 +136,9 @@ export function QuickTaskButtons({
     setPendingTemplate(null);
   }, []);
 
-  // Combine hardcoded insurance tasks with learned patterns
+  // Combine hardcoded academic tasks with learned patterns
   const allTemplates: QuickTaskTemplate[] = [
-    ...INSURANCE_QUICK_TASKS,
+    ...ACADEMIC_QUICK_TASKS,
     ...patterns
       .filter(p => p.occurrence_count >= 3)
       .map(p => ({
@@ -237,7 +239,7 @@ export function QuickTaskButtons({
                 <AlertTriangle className="w-4 h-4 text-[var(--warning)] flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-[var(--foreground)]">
-                    Quote tasks have a 50% completion rate
+                    Writing tasks have a 65% completion rate
                   </p>
                   <div className="flex gap-2 mt-2">
                     <button
@@ -324,10 +326,10 @@ export function QuickTaskButtons({
                     <AlertTriangle className="w-5 h-5 text-[var(--warning)] flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[var(--foreground)]">
-                        Quote tasks have a 50% completion rate
+                        Writing tasks have a 65% completion rate
                       </p>
                       <p className="text-xs text-[var(--text-muted)] mt-1">
-                        Subtasks will be added to help break this into smaller steps.
+                        Subtasks will be added to help break this into manageable chunks.
                       </p>
                       <div className="flex gap-2 mt-3">
                         <button

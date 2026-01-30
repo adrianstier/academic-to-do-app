@@ -65,7 +65,7 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
   template_used: { icon: Activity, label: 'used template', color: '#3b82f6', verb: 'used template on' },
   attachment_added: { icon: Paperclip, label: 'added attachment', color: '#10b981', verb: 'attached to' },
   attachment_removed: { icon: Paperclip, label: 'removed attachment', color: '#ef4444', verb: 'removed attachment from' },
-  tasks_merged: { icon: GitMerge, label: 'merged tasks', color: '#0033A0', verb: 'merged' },
+  tasks_merged: { icon: GitMerge, label: 'merged tasks', color: '#2c5282', verb: 'merged' },
   reminder_added: { icon: Bell, label: 'added reminder', color: '#8b5cf6', verb: 'set reminder for' },
   reminder_removed: { icon: BellOff, label: 'removed reminder', color: '#ef4444', verb: 'removed reminder from' },
   reminder_sent: { icon: BellRing, label: 'sent reminder', color: '#10b981', verb: 'reminder sent for' },

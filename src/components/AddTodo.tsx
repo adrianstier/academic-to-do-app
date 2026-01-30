@@ -11,7 +11,7 @@ import { QuickTaskButtons, useTaskPatterns } from './QuickTaskButtons';
 import { CategoryConfidenceIndicator } from './CategoryConfidenceIndicator';
 import { TodoPriority, Subtask, PRIORITY_CONFIG, QuickTaskTemplate } from '@/types/todo';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
-import { analyzeTaskPattern } from '@/lib/insurancePatterns';
+import { analyzeTaskPattern } from '@/lib/academicPatterns';
 import { logger } from '@/lib/logger';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { useToast } from './ui/Toast';
@@ -484,6 +484,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        role="form"
+        aria-label="Create new task"
         className={`rounded-[var(--radius-xl)] border-2 shadow-[var(--shadow-md)] overflow-hidden transition-all duration-300 relative bg-[var(--surface)] border-[var(--accent)]/25 ${
           isDraggingFile ? 'ring-2 ring-[var(--accent)] border-[var(--accent)]' : 'hover:shadow-[var(--shadow-lg)] hover:border-[var(--accent)]/40 focus-within:border-[var(--accent)]/60 focus-within:shadow-[var(--shadow-lg)]'
         }`}
@@ -492,9 +494,14 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
         <div className="h-1 bg-gradient-to-r from-[var(--brand-blue)] via-[var(--brand-sky)] to-[var(--brand-blue)]" />
         {/* File drop overlay */}
         {isDraggingFile && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-xl)] bg-[var(--accent-light)] backdrop-blur-sm">
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-xl)] bg-[var(--accent-light)] backdrop-blur-sm"
+            role="status"
+            aria-live="polite"
+            aria-label="Drop zone active - release to import file"
+          >
             <div className="text-center">
-              <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--accent)]" />
+              <Upload className="w-8 h-8 mx-auto mb-2 text-[var(--accent)]" aria-hidden="true" />
               <p className="font-medium text-sm text-[var(--accent)]">
                 Drop to import file
               </p>
@@ -536,11 +543,11 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="absolute right-3 top-3 p-1.5 rounded-full text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition-all"
-                  aria-label="Clear form"
-                  title="Clear form"
+                  className="absolute right-3 top-3 p-1.5 rounded-full text-[var(--text-light)] hover:text-[var(--text-muted)] hover:bg-[var(--surface-2)] transition-all focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+                  aria-label="Clear form and reset all fields"
+                  title="Clear form (Esc)"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -609,10 +616,11 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
               <button
                 type="submit"
                 disabled={!text.trim() || isProcessing}
-                className="px-5 py-2.5 rounded-full bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-blue-light)] hover:from-[var(--brand-navy)] hover:to-[var(--brand-blue)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-all duration-200 min-h-[48px] flex items-center gap-2 touch-manipulation shadow-[0_2px_8px_rgba(0,51,160,0.35)] hover:shadow-[0_4px_12px_rgba(0,51,160,0.45)] active:scale-95"
-                aria-label="Add task"
+                className="px-5 py-2.5 rounded-full bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-blue-light)] hover:from-[var(--brand-navy)] hover:to-[var(--brand-blue)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold transition-all duration-200 min-h-[48px] flex items-center gap-2 touch-manipulation shadow-[0_2px_8px_rgba(0,51,160,0.35)] hover:shadow-[0_4px_12px_rgba(0,51,160,0.45)] active:scale-95 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+                aria-label={text.trim() ? `Add task: ${text.substring(0, 50)}${text.length > 50 ? '...' : ''}` : 'Add task (enter task description first)'}
+                aria-disabled={!text.trim() || isProcessing}
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5" aria-hidden="true" />
                 <span className="hidden sm:inline tracking-tight">Add</span>
               </button>
             </div>
@@ -727,29 +735,30 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
         {/* Suggested Subtasks with visual hierarchy */}
         {suggestedSubtasks.length > 0 && (
-          <div className="px-5 pb-5 border-t border-[var(--border-subtle)]">
+          <div className="px-5 pb-5 border-t border-[var(--border-subtle)]" role="region" aria-label="Suggested subtasks">
             <div className="flex items-center justify-between mb-4 pt-4">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
-                <span className="text-sm font-semibold text-[var(--foreground)]">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+                <span className="text-sm font-semibold text-[var(--foreground)]" id="subtasks-heading">
                   Suggested Subtasks
                 </span>
-                <span className="text-xs text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full">
+                <span className="text-xs text-[var(--text-muted)] bg-[var(--surface-2)] px-2 py-0.5 rounded-full" aria-label={`${suggestedSubtasks.length} subtasks`}>
                   {suggestedSubtasks.length}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setSuggestedSubtasks([])}
-                className="text-xs text-[var(--text-light)] hover:text-[var(--danger)] transition-colors flex items-center gap-1"
+                className="text-xs text-[var(--text-light)] hover:text-[var(--danger)] transition-colors flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1 rounded px-1"
+                aria-label="Clear all suggested subtasks"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3 h-3" aria-hidden="true" />
                 Clear all
               </button>
             </div>
-            <div className="space-y-2.5">
+            <ul className="space-y-2.5" aria-labelledby="subtasks-heading" role="list">
               {suggestedSubtasks.map((subtask, index) => (
-                <div
+                <li
                   key={index}
                   className="flex items-center gap-3 text-sm px-4 py-3 rounded-xl border-l-3 transition-all hover:bg-[var(--surface-2)]"
                   style={{
@@ -757,17 +766,17 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                     background: `linear-gradient(90deg, rgba(0, 51, 160, 0.03) 0%, transparent 50%)`
                   }}
                 >
-                  <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 shadow-sm" aria-hidden="true">
                     {index + 1}
                   </span>
                   <span className="flex-1 text-[var(--foreground)]">{subtask}</span>
-                </div>
+                </li>
               ))}
-              <p className="text-xs text-[var(--text-muted)] mt-3 flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-[var(--accent)]" />
-                These will be added automatically when you create the task
-              </p>
-            </div>
+            </ul>
+            <p className="text-xs text-[var(--text-muted)] mt-3 flex items-center gap-1.5" role="note">
+              <Sparkles className="w-3 h-3 text-[var(--accent)]" aria-hidden="true" />
+              These will be added automatically when you create the task
+            </p>
           </div>
         )}
       </form>
@@ -789,21 +798,21 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
       {/* Loading modal with brand personality */}
       {showModal && !parsedResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Processing">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="ai-processing-title" aria-describedby="ai-processing-desc">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
           <div className="relative rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)] p-8 bg-[var(--surface)] min-w-[280px]">
             <div className="text-center space-y-4">
               {/* Animated brand rings */}
-              <div className="relative mx-auto w-16 h-16">
+              <div className="relative mx-auto w-16 h-16" aria-hidden="true">
                 <div className="absolute inset-0 rounded-full border-2 border-[var(--brand-sky)] animate-ping opacity-20" />
                 <div className="absolute inset-2 rounded-full border-2 border-[var(--brand-blue)] animate-ping opacity-30 animation-delay-150" />
                 <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center shadow-[var(--shadow-blue)]">
                   <Sparkles className="w-7 h-7 text-white animate-pulse" />
                 </div>
               </div>
-              <div>
-                <p className="font-semibold text-[var(--foreground)]">Understanding your task...</p>
-                <p className="text-sm text-[var(--text-muted)] mt-1">We'll suggest subtasks and priority</p>
+              <div role="status" aria-live="polite">
+                <p id="ai-processing-title" className="font-semibold text-[var(--foreground)]">Understanding your task...</p>
+                <p id="ai-processing-desc" className="text-sm text-[var(--text-muted)] mt-1">We'll suggest subtasks and priority</p>
               </div>
             </div>
           </div>

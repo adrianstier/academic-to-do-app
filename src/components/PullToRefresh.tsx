@@ -122,7 +122,7 @@ export default function PullToRefresh({
                 <RefreshCw
                   className={`w-5 h-5 ${
                     shouldTrigger || isRefreshing
-                      ? 'text-[#0033A0]'
+                      ? 'text-[#2c5282]'
                       : darkMode
                         ? 'text-slate-400'
                         : 'text-slate-500'

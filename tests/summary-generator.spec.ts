@@ -5,7 +5,8 @@
  * Tests all summary format generators: Plain Text, Markdown, CSV, JSON
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate } from './fixtures/helpers';
 
 // Mock Todo data for testing
 const mockTodo = {
@@ -92,45 +93,23 @@ test.describe('Summary Generator - Unit Tests', () => {
 
 test.describe('Summary Generator - Integration Tests', () => {
   test('Task completion modal appears and shows summary', async ({ page }) => {
-    // Register and login
-    const userName = `User${Date.now()}`;
-    await page.goto('/');
+    // Login using shared auth fixture
+    await setupAndNavigate(page);
 
-    // Wait for login screen
-    const header = page.locator('h1').filter({ hasText: 'Bealer Agency' });
-    await expect(header).toBeVisible({ timeout: 15000 });
-
-    // Click Add New User button
-    const addUserBtn = page.getByRole('button', { name: 'Add New User' });
-    await addUserBtn.click();
-
-    // Fill registration
-    const nameInput = page.locator('input[placeholder="Enter name"]').or(page.locator('input[type="text"]').first());
-    await expect(nameInput).toBeVisible({ timeout: 5000 });
-    await nameInput.fill(userName);
-
-    // Enter PIN
-    const pinInputs = page.locator('input[type="password"]');
-    for (let i = 0; i < 4; i++) {
-      await pinInputs.nth(i).fill('1');
-    }
-    for (let i = 4; i < 8; i++) {
-      await pinInputs.nth(i).fill('1');
-    }
-
-    // Create account
-    const createBtn = page.getByRole('button', { name: 'Create Account' });
-    await createBtn.click();
-
-    // Wait for main app
-    const todoInput = page.locator('textarea[placeholder="What needs to be done?"]');
-    await expect(todoInput).toBeVisible({ timeout: 15000 });
+    const todoInput = page.locator('textarea').first();
 
     // Create a task
     const taskName = `Summary Test Task ${Date.now()}`;
     await todoInput.click();
     await todoInput.fill(taskName);
-    await page.keyboard.press('Enter');
+
+    // Click Add button or press Enter
+    const addButton = page.locator('button').filter({ hasText: /^Add$|^\+ Add$/i }).first();
+    if (await addButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await addButton.click();
+    } else {
+      await page.keyboard.press('Enter');
+    }
 
     // Wait for task to appear
     await page.waitForTimeout(2000);

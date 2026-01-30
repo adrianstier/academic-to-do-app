@@ -35,9 +35,9 @@ export default function AnimatedProgressRing({
         className="transform -rotate-90"
       >
         <defs>
-          {/* Brand colors: Allstate Blue (#0033A0) to Sky Blue (#72B5E8) */}
+          {/* Brand colors: Academic Blue (#2c5282) to Sky Blue (#72B5E8) */}
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={darkMode ? '#0047CC' : '#0033A0'} />
+            <stop offset="0%" stopColor={darkMode ? '#3b6ea8' : '#2c5282'} />
             <stop offset="50%" stopColor={darkMode ? '#3B82F6' : '#0066CC'} />
             <stop offset="100%" stopColor={darkMode ? '#72B5E8' : '#72B5E8'} />
           </linearGradient>

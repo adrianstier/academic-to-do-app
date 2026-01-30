@@ -344,7 +344,7 @@ export default function DashboardModal({
                   style={{
                     background: darkMode
                       ? 'linear-gradient(135deg, var(--background) 0%, var(--brand-blue) 50%, #1E3A5F 100%)'
-                      : 'linear-gradient(135deg, var(--brand-blue) 0%, #0047CC 50%, #1E3A5F 100%)',
+                      : 'linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue) 50%, #1E3A5F 100%)',
                   }}
                 />
 
@@ -842,8 +842,8 @@ export default function DashboardModal({
                       {/* Productivity Tips */}
                       <div className={`rounded-xl p-4 ${
                         darkMode
-                          ? 'bg-gradient-to-br from-[#0033A0]/15 to-[#0047CC]/15 border border-[var(--accent)]/20'
-                          : 'bg-gradient-to-br from-[var(--accent)]/5 to-[#0047CC]/5 border border-[var(--accent)]/20'
+                          ? 'bg-gradient-to-br from-[var(--brand-navy)]/15 to-[var(--brand-blue)]/15 border border-[var(--accent)]/20'
+                          : 'bg-gradient-to-br from-[var(--accent)]/5 to-[var(--brand-blue)]/5 border border-[var(--accent)]/20'
                       }`}>
                         <div className="flex items-center gap-2 mb-2">
                           <Lightbulb className="w-4 h-4 text-[var(--accent)]" />
@@ -1036,8 +1036,8 @@ export default function DashboardModal({
                       {managerData.delegationStats.totalDelegated > 0 && (
                         <div className={`rounded-xl p-4 ${
                           darkMode
-                            ? 'bg-gradient-to-br from-[#0033A0]/15 to-[#0047CC]/15 border border-[var(--accent)]/20'
-                            : 'bg-gradient-to-br from-[var(--accent)]/5 to-[#0047CC]/5 border border-[var(--accent)]/20'
+                            ? 'bg-gradient-to-br from-[var(--brand-navy)]/15 to-[var(--brand-blue)]/15 border border-[var(--accent)]/20'
+                            : 'bg-gradient-to-br from-[var(--accent)]/5 to-[var(--brand-blue)]/5 border border-[var(--accent)]/20'
                         }`}>
                           <div className="flex items-center gap-2 mb-2">
                             <Send className="w-4 h-4 text-[var(--accent)]" />
@@ -1111,8 +1111,8 @@ export default function DashboardModal({
                       {complexTaskAnalysis.length > 0 && (
                         <div className={`rounded-xl p-4 ${
                           darkMode
-                            ? 'bg-gradient-to-br from-[#0033A0]/15 to-[#0047CC]/15 border border-[var(--accent)]/20'
-                            : 'bg-gradient-to-br from-[var(--accent)]/5 to-[#0047CC]/5 border border-[var(--accent)]/20'
+                            ? 'bg-gradient-to-br from-[var(--brand-navy)]/15 to-[var(--brand-blue)]/15 border border-[var(--accent)]/20'
+                            : 'bg-gradient-to-br from-[var(--accent)]/5 to-[var(--brand-blue)]/5 border border-[var(--accent)]/20'
                         }`}>
                           <div className="flex items-center gap-2 mb-3">
                             <Wand2 className="w-4 h-4 text-[var(--accent)]" />
@@ -1215,8 +1215,8 @@ export default function DashboardModal({
                           <motion.div
                             className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
                               darkMode
-                                ? 'bg-gradient-to-br from-[#0033A0]/20 to-[#0047CC]/10 border border-blue-500/30'
-                                : 'bg-gradient-to-br from-[#0033A0]/10 to-[#0047CC]/5 border border-blue-200'
+                                ? 'bg-gradient-to-br from-[var(--brand-navy)]/20 to-[var(--brand-blue)]/10 border border-blue-500/30'
+                                : 'bg-gradient-to-br from-[var(--brand-navy)]/10 to-[var(--brand-blue)]/5 border border-blue-200'
                             }`}
                             animate={{ y: [-2, 2, -2] }}
                             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}

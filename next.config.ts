@@ -38,7 +38,7 @@ const cspDirectives: Record<string, string[]> = {
   ],
   "frame-ancestors": ["'none'"], // Clickjacking protection
   "base-uri": ["'self'"],
-  "form-action": ["'self'"],
+  "form-action": ["'self'", "https://accounts.google.com"],
   "object-src": ["'none'"], // Prevent plugins like Flash
   "worker-src": ["'self'", "blob:"], // Service workers
   "child-src": ["'self'", "blob:"], // iframes and workers
@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   output: "standalone",
   turbopack: {
-    root: ".",
+    root: process.cwd(),
   },
   async headers() {
     return [

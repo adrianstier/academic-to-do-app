@@ -146,7 +146,7 @@ export default function WelcomeBackNotification({
             {/* Progress bar for auto-dismiss */}
             <div className="h-1 bg-slate-100 dark:bg-slate-700">
               <div
-                className="h-full bg-gradient-to-r from-[#0033A0] to-[#72B5E8] transition-all duration-50"
+                className="h-full bg-gradient-to-r from-[#2c5282] to-[#72B5E8] transition-all duration-50"
                 style={{ width: `${progress}%` }}
               />
             </div>

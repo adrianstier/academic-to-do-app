@@ -85,7 +85,7 @@ DROP POLICY IF EXISTS "Allow all operations on goal_categories" ON goal_categori
 DROP POLICY IF EXISTS "Allow all operations" ON task_templates;
 DROP POLICY IF EXISTS "Allow all operations on task_templates" ON task_templates;
 DROP POLICY IF EXISTS "Users can manage own device tokens" ON device_tokens;
-DROP POLICY IF EXISTS "Allow service role to manage leads" ON leads;
+-- Skip leads policy drop - leads table is not used in Academic Project Manager
 
 -- ============================================
 -- PART 4: USERS TABLE - Proper RLS Policies

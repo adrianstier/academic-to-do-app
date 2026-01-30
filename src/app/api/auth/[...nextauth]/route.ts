@@ -1,7 +1,5 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import AppleProvider from 'next-auth/providers/apple';
-import { SupabaseAdapter } from '@auth/supabase-adapter';
 import { logger } from '@/lib/logger';
 
 // Extend NextAuth types to include our custom fields
@@ -14,11 +12,6 @@ declare module 'next-auth' {
       image?: string | null;
       role?: string;
     };
-  }
-
-  interface User {
-    id: string;
-    role?: string;
   }
 }
 
@@ -35,46 +28,31 @@ const ALLOWED_EMAILS = (process.env.ALLOWED_OAUTH_EMAILS || '')
   .map(email => email.trim().toLowerCase())
   .filter(Boolean);
 
-// Check if OAuth is configured
-const isOAuthConfigured =
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.SUPABASE_SERVICE_ROLE_KEY &&
-  (process.env.GOOGLE_CLIENT_ID || process.env.APPLE_CLIENT_ID);
-
 export const authOptions: NextAuthOptions = {
-  adapter: isOAuthConfigured ? SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }) : undefined,
-
+  // No adapter - we use JWT sessions and manage users in our own database
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      allowDangerousEmailAccountLinking: true, // Allow linking with existing PIN accounts
-    }),
-    AppleProvider({
-      clientId: process.env.APPLE_CLIENT_ID || '',
-      clientSecret: process.env.APPLE_CLIENT_SECRET || '',
-      allowDangerousEmailAccountLinking: true,
     }),
   ],
 
-  pages: {
-    signIn: '/', // Custom sign-in page
-    error: '/', // Error page
-  },
+  // Use default NextAuth pages to see errors (can customize later)
+  // pages: {
+  //   signIn: '/',
+  //   error: '/',
+  // },
 
   callbacks: {
-    async session({ session, user }) {
-      // Add user ID and role to session
-      if (session.user) {
-        session.user.id = user.id;
-        session.user.role = user.role || 'member';
+    async session({ session, token }) {
+      // Add user ID and role to session from JWT token
+      if (session.user && token) {
+        session.user.id = token.sub || token.id || '';
+        session.user.role = (token.role as string) || 'member';
       }
 
       logger.info('Session created', {
-        userId: user.id,
+        userId: token?.sub || token?.id,
         action: 'session_created',
       });
 
@@ -113,7 +91,6 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role || 'member';
       }
       return token;
     },
@@ -133,7 +110,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // Enable debug to troubleshoot OAuth issues
 };
 
 const handler = NextAuth(authOptions);

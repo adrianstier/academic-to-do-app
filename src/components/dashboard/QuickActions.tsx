@@ -87,7 +87,7 @@ export default function QuickActions({
               text-sm font-medium
               transition-colors duration-150
               touch-manipulation
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c5282] focus-visible:ring-offset-2
               ${darkMode ? 'focus-visible:ring-offset-[#0A1628]' : 'focus-visible:ring-offset-white'}
               ${isPrimary
                 ? darkMode

@@ -1,7 +1,7 @@
 {
-  "name": "Bealer Agency Tasks",
-  "short_name": "BA Tasks",
-  "description": "Task management and collaboration for Bealer Agency",
+  "name": "Academic Project Manager",
+  "short_name": "Academic PM",
+  "description": "AI-powered task management for research teams",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A1628",
@@ -21,7 +21,7 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "business"],
+  "categories": ["productivity", "education"],
   "screenshots": [],
   "shortcuts": [
     {

@@ -489,9 +489,11 @@ export default function EmptyState({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="flex flex-col items-center justify-center py-16 px-6"
+      role="status"
+      aria-label={config.title}
     >
       {/* Background glow */}
-      <div className={`absolute inset-0 bg-gradient-radial ${config.gradient} opacity-30 blur-3xl pointer-events-none`} />
+      <div className={`absolute inset-0 bg-gradient-radial ${config.gradient} opacity-30 blur-3xl pointer-events-none`} aria-hidden="true" />
 
       {/* Illustration */}
       <motion.div
@@ -499,6 +501,7 @@ export default function EmptyState({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
         className="relative mb-2"
+        aria-hidden="true"
       >
         {renderIllustration()}
       </motion.div>
@@ -510,6 +513,7 @@ export default function EmptyState({
         transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 20 }}
         className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 relative"
         style={{ backgroundColor: config.bgColor }}
+        aria-hidden="true"
       >
         <div
           className="absolute inset-0 rounded-2xl blur-xl opacity-50"
@@ -524,6 +528,7 @@ export default function EmptyState({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35, duration: 0.4 }}
         className="text-xl font-semibold mb-2 text-[var(--foreground)]"
+        id="empty-state-title"
       >
         {variant === 'first-time' && userName ? `Welcome, ${userName}!` : config.title}
       </motion.h3>
@@ -534,6 +539,7 @@ export default function EmptyState({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.4 }}
         className="text-sm text-center max-w-xs text-[var(--text-muted)]"
+        id="empty-state-description"
       >
         {variant === 'no-results' && searchQuery
           ? `No tasks match "${searchQuery}"`
@@ -549,12 +555,13 @@ export default function EmptyState({
           whileHover={{ scale: 1.02, y: -1 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleAction}
-          className="mt-6 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 shadow-lg"
+          className="mt-6 px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 shadow-lg min-h-[44px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--accent)]"
           style={{
             backgroundColor: config.color,
             color: 'white',
             boxShadow: `0 4px 16px ${config.color}40`,
           }}
+          aria-describedby="empty-state-description"
         >
           {config.action}
         </motion.button>

@@ -96,7 +96,7 @@ function getInitials(name: string): string {
  */
 function stringToColor(str: string): string {
   const colors = [
-    '#0033A0', // Brand Blue
+    '#2c5282', // Brand Blue
     '#72B5E8', // Sky Blue
     '#C9A227', // Gold
     '#003D7A', // Navy

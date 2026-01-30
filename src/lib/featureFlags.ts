@@ -31,8 +31,10 @@ const FEATURE_FLAGS: Record<FeatureFlag, () => FeatureFlagConfig> = {
   }),
 
   oauth_login: () => ({
-    enabled: process.env.NEXT_PUBLIC_ENABLE_OAUTH === 'true' || process.env.NEXT_PUBLIC_USE_OAUTH === 'true',
-    description: 'OAuth 2.0 login (Google/Apple)',
+    // OAuth is now ENABLED by default for Academic Project Manager
+    // Set NEXT_PUBLIC_DISABLE_OAUTH=true to disable (not recommended)
+    enabled: process.env.NEXT_PUBLIC_DISABLE_OAUTH !== 'true',
+    description: 'OAuth 2.0 login (Google) - enabled by default',
   }),
 
   normalized_schema: () => ({
@@ -59,8 +61,10 @@ const FEATURE_FLAGS: Record<FeatureFlag, () => FeatureFlagConfig> = {
   }),
 
   multi_tenancy: () => ({
-    enabled: process.env.NEXT_PUBLIC_ENABLE_MULTI_TENANCY === 'true',
-    description: 'Multi-tenant support for multiple Allstate agencies',
+    // Check for test mode override to disable multi-tenancy during E2E tests
+    enabled: process.env.NEXT_PUBLIC_ENABLE_MULTI_TENANCY === 'true' &&
+      (typeof window === 'undefined' || localStorage.getItem('__disable_multi_tenancy__') !== 'true'),
+    description: 'Multi-tenant support for multiple research teams',
   }),
 };
 

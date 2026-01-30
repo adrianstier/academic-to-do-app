@@ -6,7 +6,7 @@ import { forwardRef, ReactNode, HTMLAttributes, createContext, useContext } from
 // TYPES & INTERFACES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type CardVariant = 'default' | 'elevated' | 'glass' | 'glassPremium';
+export type CardVariant = 'default' | 'elevated' | 'glass' | 'glassPremium' | 'academic';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 export type CardRadius = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -69,6 +69,7 @@ const variantClasses: Record<CardVariant, string> = {
   elevated: 'card-elevated',
   glass: 'glass-card card-base',
   glassPremium: 'glass-card-premium',
+  academic: 'card-elevated paper-texture academic-pattern',
 };
 
 const paddingClasses: Record<CardPadding, string> = {

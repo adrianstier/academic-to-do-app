@@ -11,29 +11,31 @@ interface TranslateRequest {
   targetLanguage: 'spanish';
 }
 
-const TRANSLATION_SYSTEM_PROMPT = `Eres un traductor profesional especializado en comunicaciones de seguros.
+const TRANSLATION_SYSTEM_PROMPT = `Eres un traductor profesional especializado en comunicaciones académicas.
 
-Tu trabajo es traducir correos electrónicos de agentes de seguros del inglés al español, manteniendo:
-- El tono profesional pero cálido
-- La terminología de seguros apropiada
+Tu trabajo es traducir correos electrónicos de investigadores académicos del inglés al español, manteniendo:
+- El tono profesional y colegial
+- La terminología académica apropiada
 - El estilo natural y conversacional
 - Los saltos de línea y formato
 
 TERMINOLOGÍA CLAVE:
-- policy → póliza
-- coverage → cobertura
-- premium → prima
-- claim → reclamación
-- quote → cotización
-- renewal → renovación
-- deductible → deducible
-- carrier → aseguradora
-- agent → agente
+- manuscript → manuscrito
+- submission → envío
+- revision → revisión
+- methodology → metodología
+- findings → hallazgos
+- analysis → análisis
+- research → investigación
+- deadline → fecha límite
+- grant → beca/subvención
+- advisor → asesor/director
+- conference → conferencia/congreso
 
 ESTILO:
 - Mantén el mismo nivel de formalidad que el original
 - Usa español latinoamericano neutral (no específico de un país)
-- Mantén los nombres de personas, empresas y marcas sin traducir
+- Mantén los nombres de personas, instituciones y publicaciones sin traducir
 - Traduce naturalmente, no palabra por palabra`;
 
 export async function POST(request: NextRequest) {
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     const anthropic = new Anthropic({ apiKey });
 
-    const prompt = `Traduce el siguiente correo electrónico del inglés al español, manteniendo el tono y estilo profesional de un agente de seguros:
+    const prompt = `Traduce el siguiente correo electrónico del inglés al español, manteniendo el tono y estilo profesional de correspondencia académica:
 
 ASUNTO:
 ${subject}

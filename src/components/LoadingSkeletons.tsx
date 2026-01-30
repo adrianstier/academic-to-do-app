@@ -248,8 +248,8 @@ export function DashboardModalSkeleton({ darkMode = true }: SkeletonProps) {
           className="absolute inset-0"
           style={{
             background: darkMode
-              ? 'linear-gradient(135deg, #0A1628 0%, #0033A0 50%, #1E3A5F 100%)'
-              : 'linear-gradient(135deg, #0033A0 0%, #0047CC 50%, #1E3A5F 100%)',
+              ? 'linear-gradient(135deg, #0A1628 0%, #2c5282 50%, #1E3A5F 100%)'
+              : 'linear-gradient(135deg, #2c5282 0%, #0047CC 50%, #1E3A5F 100%)',
           }}
         />
         <div className="relative px-6 py-8 max-w-7xl mx-auto">

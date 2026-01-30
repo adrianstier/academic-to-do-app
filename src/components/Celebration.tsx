@@ -24,13 +24,13 @@ interface Particle {
   isCircle: boolean;
 }
 
-const COLORS = ['#0033A0', '#D4A853', '#059669', '#f59e0b', '#ec4899', '#8b5cf6'];
+const COLORS = ['#2c5282', '#D4A853', '#059669', '#f59e0b', '#ec4899', '#8b5cf6'];
 const ICONS: { Icon: LucideIcon; color: string }[] = [
   { Icon: Sparkles, color: '#D4A853' },
   { Icon: PartyPopper, color: '#ec4899' },
   { Icon: Star, color: '#f59e0b' },
   { Icon: Zap, color: '#8b5cf6' },
-  { Icon: Award, color: '#0033A0' },
+  { Icon: Award, color: '#2c5282' },
 ];
 
 // Intensity configuration

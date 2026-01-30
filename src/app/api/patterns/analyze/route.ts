@@ -75,19 +75,20 @@ export async function POST() {
       messages: [
         {
           role: 'user',
-          content: `Analyze these insurance agency tasks and identify common patterns.
+          content: `Analyze these academic research team tasks and identify common patterns.
 
 Tasks:
 ${taskSummary}
 
-Categorize into these insurance-specific categories:
-- policy_review: Policy reviews, renewals, endorsements
-- vehicle_add: Adding/removing vehicles
-- new_client: New client onboarding
-- claim: Claims processing
-- payment: Payment issues, billing
-- quote: Quote requests
-- documentation: Document requests, certificates
+Categorize into these academic-specific categories:
+- research: Data collection, experiments, analysis
+- writing: Manuscripts, drafts, revisions, submissions
+- meeting: Advisor meetings, lab meetings, seminars, committees
+- teaching: Course prep, grading, office hours, student advising
+- deadline: Conference submissions, grant applications, journal deadlines
+- literature: Literature reviews, reading papers, citations
+- collaboration: Collaborator coordination, co-author communication
+- admin: Administrative tasks, IRB, travel, reimbursements
 - follow_up: General follow-ups
 - other: Miscellaneous
 

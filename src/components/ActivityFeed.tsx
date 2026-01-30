@@ -63,7 +63,7 @@ const ACTION_CONFIG: Record<ActivityAction, { icon: React.ElementType; label: st
   template_used: { icon: FileText, label: 'used template', color: '#3b82f6' },
   attachment_added: { icon: Paperclip, label: 'added attachment', color: '#10b981' },
   attachment_removed: { icon: Paperclip, label: 'removed attachment', color: '#ef4444' },
-  tasks_merged: { icon: GitMerge, label: 'merged tasks', color: '#0033A0' },
+  tasks_merged: { icon: GitMerge, label: 'merged tasks', color: '#2c5282' },
   reminder_added: { icon: Bell, label: 'added reminder', color: '#8b5cf6' },
   reminder_removed: { icon: BellOff, label: 'removed reminder', color: '#ef4444' },
   reminder_sent: { icon: BellRing, label: 'sent reminder', color: '#10b981' },
@@ -411,7 +411,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
             <label className="flex items-center justify-between cursor-pointer">
               <div className="flex items-center gap-2">
                 {notificationSettings.enabled ? (
-                  <Bell className={`w-4 h-4 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
+                  <Bell className={`w-4 h-4 ${darkMode ? 'text-[#72B5E8]' : 'text-[#2c5282]'}`} />
                 ) : (
                   <BellOff className={`w-4 h-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                 )}
@@ -423,7 +423,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
                 type="checkbox"
                 checked={notificationSettings.enabled}
                 onChange={(e) => handleNotificationSettingsChange('enabled', e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8]"
+                className="w-4 h-4 rounded border-slate-300 text-[#2c5282] focus:ring-[#72B5E8]"
               />
             </label>
 
@@ -431,7 +431,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
             <label className={`flex items-center justify-between cursor-pointer ${!notificationSettings.enabled ? 'opacity-50' : ''}`}>
               <div className="flex items-center gap-2">
                 {notificationSettings.soundEnabled ? (
-                  <Volume2 className={`w-4 h-4 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
+                  <Volume2 className={`w-4 h-4 ${darkMode ? 'text-[#72B5E8]' : 'text-[#2c5282]'}`} />
                 ) : (
                   <VolumeX className={`w-4 h-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`} />
                 )}
@@ -444,7 +444,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
                 checked={notificationSettings.soundEnabled}
                 onChange={(e) => handleNotificationSettingsChange('soundEnabled', e.target.checked)}
                 disabled={!notificationSettings.enabled}
-                className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8] disabled:opacity-50"
+                className="w-4 h-4 rounded border-slate-300 text-[#2c5282] focus:ring-[#72B5E8] disabled:opacity-50"
               />
             </label>
 
@@ -464,13 +464,13 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
                   checked={true}
                   onChange={() => handleNotificationSettingsChange('browserNotificationsEnabled', false)}
                   disabled={!notificationSettings.enabled}
-                  className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8] disabled:opacity-50"
+                  className="w-4 h-4 rounded border-slate-300 text-[#2c5282] focus:ring-[#72B5E8] disabled:opacity-50"
                 />
               ) : (
                 <button
                   onClick={requestBrowserNotificationPermission}
                   disabled={!notificationSettings.enabled}
-                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-[#0033A0] text-white hover:bg-[#00205B]' : 'bg-[#72B5E8]/20 text-[#0033A0] hover:bg-[#72B5E8]/30'} disabled:opacity-50`}
+                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-[#2c5282] text-white hover:bg-[#1e3a5f]' : 'bg-[#72B5E8]/20 text-[#2c5282] hover:bg-[#72B5E8]/30'} disabled:opacity-50`}
                 >
                   Enable
                 </button>
@@ -480,7 +480,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
             {/* Notify own actions (for testing) */}
             <label className={`flex items-center justify-between cursor-pointer ${!notificationSettings.enabled ? 'opacity-50' : ''}`}>
               <div className="flex items-center gap-2">
-                <User className={`w-4 h-4 ${notificationSettings.notifyOwnActions ? (darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]') : (darkMode ? 'text-slate-500' : 'text-slate-400')}`} />
+                <User className={`w-4 h-4 ${notificationSettings.notifyOwnActions ? (darkMode ? 'text-[#72B5E8]' : 'text-[#2c5282]') : (darkMode ? 'text-slate-500' : 'text-slate-400')}`} />
                 <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                   Notify my own actions
                 </span>
@@ -490,7 +490,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
                 checked={notificationSettings.notifyOwnActions}
                 onChange={(e) => handleNotificationSettingsChange('notifyOwnActions', e.target.checked)}
                 disabled={!notificationSettings.enabled}
-                className="w-4 h-4 rounded border-slate-300 text-[#0033A0] focus:ring-[#72B5E8] disabled:opacity-50"
+                className="w-4 h-4 rounded border-slate-300 text-[#2c5282] focus:ring-[#72B5E8] disabled:opacity-50"
               />
             </label>
           </div>

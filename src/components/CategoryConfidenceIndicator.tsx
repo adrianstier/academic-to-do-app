@@ -10,8 +10,8 @@ import {
   Lightbulb,
   ChevronRight
 } from 'lucide-react';
-import { TaskPatternMatch } from '@/lib/insurancePatterns';
-import { CATEGORY_COMPLETION_RATES } from '@/lib/insurancePatterns';
+import { TaskPatternMatch } from '@/lib/academicPatterns';
+import { CATEGORY_COMPLETION_RATES } from '@/lib/academicPatterns';
 
 interface CategoryConfidenceIndicatorProps {
   patternMatch: TaskPatternMatch | null;

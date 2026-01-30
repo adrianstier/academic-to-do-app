@@ -176,7 +176,7 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
               <button
                 onClick={onClose}
                 aria-label="Close progress summary"
-                className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/20 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0033A0]"
+                className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/20 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2c5282]"
               >
                 <X className="w-5 h-5" />
               </button>

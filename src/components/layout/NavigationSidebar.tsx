@@ -20,8 +20,8 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
 import { useAppShell, ActiveView } from './AppShell';
-import { useAgency } from '@/contexts/AgencyContext';
-import { AgencySwitcher } from '@/components/AgencySwitcher';
+import { useTeam } from '@/contexts/TeamContext';
+import { TeamSwitcher } from '@/components/TeamSwitcher';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // NAVIGATION SIDEBAR
@@ -75,7 +75,7 @@ export default function NavigationSidebar({
   } = useAppShell();
 
   // Multi-tenancy context
-  const { currentAgency, isMultiTenancyEnabled } = useAgency();
+  const { currentTeam, isMultiTenancyEnabled } = useTeam();
 
   const [hovering, setHovering] = useState(false);
 
@@ -145,26 +145,26 @@ export default function NavigationSidebar({
               exit={{ opacity: 0 }}
               className="flex items-center gap-2 overflow-hidden flex-1"
             >
-              {/* Show AgencySwitcher when multi-tenancy is enabled */}
+              {/* Show TeamSwitcher when multi-tenancy is enabled */}
               {isMultiTenancyEnabled ? (
-                <AgencySwitcher size="sm" showRole={false} />
+                <TeamSwitcher size="sm" showRole={false} />
               ) : (
                 <>
                   {/* Logo/Brand - fallback when multi-tenancy disabled */}
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: currentAgency?.primary_color || 'var(--brand-blue)' }}
+                    style={{ backgroundColor: currentTeam?.primary_color || 'var(--brand-navy)' }}
                   >
-                    <span className="text-white font-bold text-sm">
-                      {currentAgency?.name?.charAt(0) || 'B'}
+                    <span className="text-white font-bold text-sm font-serif">
+                      {currentTeam?.name?.charAt(0) || 'A'}
                     </span>
                   </div>
                   <div className="overflow-hidden">
-                    <h1 className={`font-semibold text-sm truncate ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
-                      {currentAgency?.name || 'Bealer Agency'}
+                    <h1 className={`font-semibold text-sm truncate font-serif ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
+                      {currentTeam?.name || 'Academic Projects'}
                     </h1>
                     <p className={`text-xs truncate ${darkMode ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
-                      Task Manager
+                      Research Manager
                     </p>
                   </div>
                 </>
@@ -177,10 +177,10 @@ export default function NavigationSidebar({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto"
-              style={{ backgroundColor: currentAgency?.primary_color || 'var(--brand-blue)' }}
+              style={{ backgroundColor: currentTeam?.primary_color || 'var(--brand-navy)' }}
             >
-              <span className="text-white font-bold text-sm">
-                {currentAgency?.name?.charAt(0) || 'B'}
+              <span className="text-white font-bold text-sm font-serif">
+                {currentTeam?.name?.charAt(0) || 'A'}
               </span>
             </motion.div>
           )}

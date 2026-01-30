@@ -41,21 +41,31 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `You are a task extraction assistant. Analyze this voicemail transcription and extract ALL distinct action items or tasks mentioned.
+          content: `You are a task extraction assistant for an academic research team. Analyze this voice message transcription and extract ALL distinct action items or tasks mentioned.
 
-Voicemail transcription:
+Voice message transcription:
 "${transcription}"
 
 Available team members: ${userList}
 Today's date: ${today}
 
 For each task found, provide:
-1. A clear, actionable task description (clean up the language, make it professional)
-2. Priority level (low, medium, high, urgent) - infer from context and urgency words
-3. Due date if mentioned (YYYY-MM-DD format) - interpret phrases like "by Friday", "next week", "tomorrow", "end of month"
+1. A clear, actionable task description (clean up the language, make it professional and academic)
+2. Priority level (low, medium, high, urgent) - infer from context, deadlines, and urgency words
+3. Due date if mentioned (YYYY-MM-DD format) - interpret phrases like "by Friday", "next week", "tomorrow", "before the conference"
 4. Suggested assignee from the team list if mentioned or implied
 
-IMPORTANT: Extract ALL separate tasks. A single voicemail might contain multiple unrelated action items.
+Common academic contexts to recognize:
+- Advisor/mentor requests or feedback
+- Student inquiries about research or coursework
+- Collaborator updates on shared projects
+- Conference or submission deadline reminders
+- Meeting scheduling (lab meetings, committee meetings, seminars)
+- Data collection or analysis requests
+- Manuscript revision or review tasks
+- Grant-related action items
+
+IMPORTANT: Extract ALL separate tasks. A single message might contain multiple unrelated action items.
 
 Respond ONLY with valid JSON in this exact format:
 {

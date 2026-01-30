@@ -7,7 +7,7 @@
 -- ============================================
 
 -- Update the rls_enabled function to default to TRUE for security
-CREATE OR REPLACE FUNCTION auth.rls_enabled()
+CREATE OR REPLACE FUNCTION public.rls_enabled()
 RETURNS BOOLEAN AS $$
   SELECT COALESCE(
     current_setting('app.enable_rls', true)::boolean,
@@ -15,7 +15,7 @@ RETURNS BOOLEAN AS $$
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
-COMMENT ON FUNCTION auth.rls_enabled() IS 'Check if RLS is enabled - defaults to TRUE for security';
+COMMENT ON FUNCTION public.rls_enabled() IS 'Check if RLS is enabled - defaults to TRUE for security';
 
 -- ============================================
 -- ADD USER ROLES
@@ -37,12 +37,12 @@ END $$;
 UPDATE users SET role = 'owner' WHERE name = 'Derrick' AND role = 'member';
 
 -- Update is_admin function to check for owner or admin role
-CREATE OR REPLACE FUNCTION auth.is_admin()
+CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
-  SELECT role IN ('owner', 'admin') FROM users WHERE id = auth.user_id();
+  SELECT role IN ('owner', 'admin') FROM users WHERE id = public.get_user_id();
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
-COMMENT ON FUNCTION auth.is_admin() IS 'Check if current user is owner or admin';
+COMMENT ON FUNCTION public.is_admin() IS 'Check if current user is owner or admin';
 
 -- ============================================
 -- ADD USER STORAGE QUOTAS
@@ -96,7 +96,7 @@ ALTER TABLE security_audit_log ENABLE ROW LEVEL SECURITY;
 -- Only admins can read audit log
 CREATE POLICY "rls_security_audit_select"
   ON security_audit_log FOR SELECT
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- System can insert audit entries
 CREATE POLICY "rls_security_audit_insert"
@@ -186,7 +186,7 @@ CREATE POLICY "rls_sessions_select"
   ON user_sessions FOR SELECT
   USING (
     CASE
-      WHEN auth.rls_enabled() THEN user_id = auth.user_id()
+      WHEN public.rls_enabled() THEN user_id = public.get_user_id()
       ELSE true
     END
   );
@@ -201,7 +201,7 @@ CREATE POLICY "rls_sessions_update"
   ON user_sessions FOR UPDATE
   USING (
     CASE
-      WHEN auth.rls_enabled() THEN user_id = auth.user_id()
+      WHEN public.rls_enabled() THEN user_id = public.get_user_id()
       ELSE true
     END
   );

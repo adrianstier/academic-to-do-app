@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { rateLimiters, withRateLimit, createRateLimitResponse } from '@/lib/rateLimit';
 
 /**
- * Security event logger for middleware
+ * Security event logger for proxy
  * Uses console directly to avoid import issues in Edge Runtime
  */
 function logSecurityEvent(event: string, details: Record<string, unknown>): void {
@@ -25,6 +25,7 @@ const AUTHENTICATED_ROUTES = [
  * Routes exempt from CSRF protection
  */
 const CSRF_EXEMPT_ROUTES = [
+  '/api/auth/', // NextAuth handles its own CSRF
   '/api/outlook/', // Uses API key auth
   '/api/digest/', // Uses API key auth (cron endpoints)
   '/api/reminders/', // Uses API key auth (cron endpoints)
@@ -122,10 +123,10 @@ async function validateSessionFromRequest(request: NextRequest): Promise<{
   return { valid: false, error: 'Invalid session' };
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static assets
+  // Skip proxy for static assets
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||

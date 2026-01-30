@@ -1,84 +1,22 @@
 import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate, createTask, uniqueTaskName } from './fixtures/helpers';
 
 /**
  * Attachment Feature Tests
  *
  * These tests verify the attachment upload functionality for todos.
- * They require a logged-in user to work properly.
- *
- * Prerequisites:
- * - Supabase database configured with users
- * - A test user with known PIN (default: any user with PIN 1234)
- * - Or configure PLAYWRIGHT_TEST_USER and PLAYWRIGHT_TEST_PIN env vars
+ * Uses test mode authentication bypass.
  */
 
-// Get test credentials from environment or use defaults
-const TEST_USER = process.env.PLAYWRIGHT_TEST_USER || 'Adrian';
-const TEST_PIN = process.env.PLAYWRIGHT_TEST_PIN || '1234';
-
-// Helper to login as an existing user
-async function loginAsExistingUser(page: Page): Promise<boolean> {
-  await page.goto('/');
-
-  // Wait for login screen to load
-  await expect(page.locator('h1:has-text("Bealer Agency")')).toBeVisible({ timeout: 15000 });
-
-  // Try to click on the test user
-  const userButton = page.locator(`button:has-text("${TEST_USER}")`).first();
-
-  // Check if user exists
-  const userExists = await userButton.isVisible({ timeout: 3000 }).catch(() => false);
-  if (!userExists) {
-    console.log(`Test user "${TEST_USER}" not found. Skipping test.`);
-    return false;
-  }
-
-  await userButton.click();
-
-  // Wait for PIN screen
-  await expect(page.locator('text=Enter your 4-digit PIN')).toBeVisible({ timeout: 5000 });
-
-  // Enter PIN
-  const pinInputs = page.locator('input[type="password"]');
-  for (let i = 0; i < 4; i++) {
-    await pinInputs.nth(i).fill(TEST_PIN[i]);
-  }
-
-  // Wait a moment for PIN validation
-  await page.waitForTimeout(500);
-
-  // Check if we got an error (wrong PIN)
-  const errorMessage = page.locator('text=Incorrect PIN');
-  const hasError = await errorMessage.isVisible({ timeout: 1000 }).catch(() => false);
-  if (hasError) {
-    console.log(`Incorrect PIN for user "${TEST_USER}". Set PLAYWRIGHT_TEST_PIN env var.`);
-    return false;
-  }
-
-  // Wait for app to load
-  try {
-    await expect(page.locator('textarea[placeholder*="task"]')).toBeVisible({ timeout: 15000 });
-    return true;
-  } catch {
-    console.log('Failed to load main app after login.');
-    return false;
-  }
-}
-
 test.describe('Attachment Feature', () => {
-  // Skip all tests if login fails
-  test.beforeEach(async ({ page }, testInfo) => {
-    const loggedIn = await loginAsExistingUser(page);
-    if (!loggedIn) {
-      testInfo.skip();
-    }
+  test.beforeEach(async ({ page }) => {
+    await setupAndNavigate(page);
   });
 
   test('should show attachments section when task is expanded', async ({ page }) => {
     // Add a task
     const taskText = `Task with attachments ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -94,8 +32,7 @@ test.describe('Attachment Feature', () => {
   test('should open attachment upload modal when clicking Add button', async ({ page }) => {
     // Add a task
     const taskText = `Test upload modal ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear and expand it
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -116,8 +53,7 @@ test.describe('Attachment Feature', () => {
   test('should display supported file types in upload modal', async ({ page }) => {
     // Add a task
     const taskText = `Test file types ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand it
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -138,8 +74,7 @@ test.describe('Attachment Feature', () => {
   test('should close upload modal when clicking X button', async ({ page }) => {
     // Add a task
     const taskText = `Test close modal ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand it
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -162,8 +97,7 @@ test.describe('Attachment Feature', () => {
   test('should show empty state message when no attachments', async ({ page }) => {
     // Add a task
     const taskText = `Test empty state ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand it
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -176,8 +110,7 @@ test.describe('Attachment Feature', () => {
   test('should show file size limit info in upload modal', async ({ page }) => {
     // Add a task
     const taskText = `Test size limit ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand it
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -194,8 +127,7 @@ test.describe('Attachment Feature', () => {
   test('should show remaining attachment slots', async ({ page }) => {
     // Add a task
     const taskText = `Test slots ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand it
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -211,18 +143,14 @@ test.describe('Attachment Feature', () => {
 });
 
 test.describe('Attachment Edge Cases', () => {
-  test.beforeEach(async ({ page }, testInfo) => {
-    const loggedIn = await loginAsExistingUser(page);
-    if (!loggedIn) {
-      testInfo.skip();
-    }
+  test.beforeEach(async ({ page }) => {
+    await setupAndNavigate(page);
   });
 
   test('should not show attachment section for completed tasks', async ({ page }) => {
     // Add and complete a task
     const taskText = `Completed task ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -245,8 +173,7 @@ test.describe('Attachment Edge Cases', () => {
   test('should handle attachment indicator badge correctly', async ({ page }) => {
     // Add a task
     const taskText = `Badge test ${Date.now()}`;
-    await page.locator('textarea[placeholder*="task"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });

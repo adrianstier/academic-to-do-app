@@ -214,7 +214,7 @@ export default function DoerDashboard({
         darkMode
           ? 'hover:bg-[#1A2840] hover:border-white/[0.12] hover:shadow-[0_4px_20px_rgba(0,0,0,0.35)] cursor-pointer'
           : 'hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:border-slate-300 cursor-pointer'
-      ) : ''} ${onClick ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A1628]' : ''} ${className}`}
+      ) : ''} ${onClick ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A1628]' : ''} ${className}`}
       onClick={onClick}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       role={onClick ? 'button' : undefined}
@@ -242,10 +242,10 @@ export default function DoerDashboard({
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
           darkMode
             ? 'bg-[var(--accent)]/15'
-            : 'bg-[#0033A0]/8'
+            : 'bg-[var(--brand-navy)]/8'
         }`}>
           <Icon className={`w-4 h-4 ${
-            darkMode ? 'text-[var(--accent)]' : 'text-[#0033A0]'
+            darkMode ? 'text-[var(--accent)]' : 'text-[var(--brand-navy)]'
           }`} />
         </div>
         <h2 className={`text-sm font-semibold ${
@@ -262,8 +262,8 @@ export default function DoerDashboard({
       {action && (
         <button
           onClick={action.onClick}
-          className={`text-xs font-medium px-3 py-2 -my-1 rounded-lg min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
-            darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] hover:bg-white/5 focus-visible:ring-offset-[#162236]' : 'text-[#0033A0] hover:text-[#0047CC] hover:bg-slate-50 focus-visible:ring-offset-white'
+          className={`text-xs font-medium px-3 py-2 -my-1 rounded-lg min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
+            darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] hover:bg-white/5 focus-visible:ring-offset-[#162236]' : 'text-[var(--brand-navy)] hover:text-[var(--brand-blue)] hover:bg-slate-50 focus-visible:ring-offset-white'
           }`}
         >
           {action.label}
@@ -315,10 +315,10 @@ export default function DoerDashboard({
             {/* AI Focus Suggestion */}
             {aiData.todaysFocus && (
               <div className={`flex items-start gap-3 p-3 rounded-xl mb-4 ${
-                darkMode ? 'bg-[#0033A0]/20 border border-[#0033A0]/30' : 'bg-blue-50 border border-blue-200'
+                darkMode ? 'bg-[var(--brand-navy)]/20 border border-[var(--brand-navy)]/30' : 'bg-blue-50 border border-blue-200'
               }`}>
-                <Brain className={`w-4 h-4 mt-0.5 flex-shrink-0 ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`} />
-                <p className={`text-sm ${darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]'}`}>
+                <Brain className={`w-4 h-4 mt-0.5 flex-shrink-0 ${darkMode ? 'text-[#72B5E8]' : 'text-[var(--brand-navy)]'}`} />
+                <p className={`text-sm ${darkMode ? 'text-[#72B5E8]' : 'text-[var(--brand-navy)]'}`}>
                   {aiData.todaysFocus}
                 </p>
               </div>
@@ -345,7 +345,7 @@ export default function DoerDashboard({
                     transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.05 }}
                     onClick={() => handleTaskClick(task.id)}
                     aria-label={`Open task: ${task.text}`}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
                       darkMode
                         ? 'hover:bg-white/[0.06] active:bg-white/[0.08] active:scale-[0.98] focus-visible:ring-offset-[#162236]'
                         : 'hover:bg-slate-50 active:bg-slate-100 active:scale-[0.98] focus-visible:ring-offset-white'
@@ -356,7 +356,7 @@ export default function DoerDashboard({
                         ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
                         : task.priority === 'high'
                           ? 'bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.4)]'
-                          : 'bg-[#0047CC]'
+                          : 'bg-[var(--brand-blue)]'
                     }`} />
                     <span className={`flex-1 text-sm font-medium truncate ${darkMode ? 'text-white/90' : 'text-slate-800'}`}>
                       {task.text}
@@ -372,8 +372,8 @@ export default function DoerDashboard({
                 {stats.dueToday > 5 && (
                   <button
                     onClick={handleFilterDueToday}
-                    className={`w-full text-center py-2 mt-1 text-xs font-medium min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
-                      darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] focus-visible:ring-offset-[#162236]' : 'text-[#0033A0] hover:text-[#0047CC] focus-visible:ring-offset-white'
+                    className={`w-full text-center py-2 mt-1 text-xs font-medium min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
+                      darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] focus-visible:ring-offset-[#162236]' : 'text-[var(--brand-navy)] hover:text-[var(--brand-blue)] focus-visible:ring-offset-white'
                     } hover:underline`}
                   >
                     +{stats.dueToday - 5} more due today
@@ -412,7 +412,7 @@ export default function DoerDashboard({
                       key={task.id}
                       onClick={() => handleTaskClick(task.id)}
                       aria-label={`Open upcoming task: ${task.text}`}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
                         darkMode ? 'hover:bg-white/5 focus-visible:ring-offset-[#162236]' : 'hover:bg-slate-50 focus-visible:ring-offset-white'
                       }`}
                     >
@@ -448,7 +448,7 @@ export default function DoerDashboard({
                       animate={{ opacity: 1, x: 0 }}
                       transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.05 }}
                       aria-label={`Open neglected task: ${item.todo.text}, ${item.daysSinceActivity} days without activity`}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
                         item.urgencyLevel === 'critical'
                           ? darkMode ? 'bg-red-500/10 hover:bg-red-500/15 border-l-4 border-l-red-500 focus-visible:ring-offset-[#162236]' : 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500 focus-visible:ring-offset-white'
                           : darkMode ? 'bg-white/5 hover:bg-white/10 focus-visible:ring-offset-[#162236]' : 'bg-slate-50 hover:bg-slate-100 focus-visible:ring-offset-white'
@@ -502,8 +502,8 @@ export default function DoerDashboard({
                       background: stats.weeklyRatio >= 80
                         ? 'linear-gradient(90deg, #059669 0%, #10B981 100%)'
                         : stats.weeklyRatio >= 50
-                          ? 'linear-gradient(90deg, #0033A0 0%, #0047CC 100%)'
-                          : 'linear-gradient(90deg, #0033A0 0%, #72B5E8 100%)'
+                          ? 'linear-gradient(90deg, var(--brand-navy) 0%, var(--brand-blue) 100%)'
+                          : 'linear-gradient(90deg, var(--brand-navy) 0%, #72B5E8 100%)'
                     }}
                   >
                     {/* Shimmer Effect */}

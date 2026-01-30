@@ -8,7 +8,7 @@
 -- ============================================
 
 -- Drop the feature flag function
-DROP FUNCTION IF EXISTS auth.rls_enabled() CASCADE;
+DROP FUNCTION IF EXISTS public.rls_enabled() CASCADE;
 
 -- ============================================
 -- STEP 2: RECREATE POLICIES WITHOUT FEATURE FLAG
@@ -39,33 +39,33 @@ DROP POLICY IF EXISTS "rls_users_delete" ON users;
 CREATE POLICY "todos_select_policy"
   ON todos FOR SELECT
   USING (
-    assigned_to = auth.user_name() OR
-    created_by = auth.user_name() OR
-    auth.is_admin()
+    assigned_to = public.get_user_name() OR
+    created_by = public.get_user_name() OR
+    public.is_admin()
   );
 
 CREATE POLICY "todos_insert_policy"
   ON todos FOR INSERT
-  WITH CHECK (created_by = auth.user_name());
+  WITH CHECK (created_by = public.get_user_name());
 
 CREATE POLICY "todos_update_policy"
   ON todos FOR UPDATE
   USING (
-    assigned_to = auth.user_name() OR
-    created_by = auth.user_name() OR
-    auth.is_admin()
+    assigned_to = public.get_user_name() OR
+    created_by = public.get_user_name() OR
+    public.is_admin()
   )
   WITH CHECK (
-    assigned_to = auth.user_name() OR
-    created_by = auth.user_name() OR
-    auth.is_admin()
+    assigned_to = public.get_user_name() OR
+    created_by = public.get_user_name() OR
+    public.is_admin()
   );
 
 CREATE POLICY "todos_delete_policy"
   ON todos FOR DELETE
   USING (
-    created_by = auth.user_name() OR
-    auth.is_admin()
+    created_by = public.get_user_name() OR
+    public.is_admin()
   );
 
 -- MESSAGES POLICIES (Always enforced)
@@ -73,67 +73,67 @@ CREATE POLICY "messages_select_policy"
   ON messages FOR SELECT
   USING (
     recipient IS NULL OR -- Team chat visible to all
-    recipient = auth.user_name() OR -- DM to me
-    created_by = auth.user_name() -- My messages
+    recipient = public.get_user_name() OR -- DM to me
+    created_by = public.get_user_name() -- My messages
   );
 
 CREATE POLICY "messages_insert_policy"
   ON messages FOR INSERT
-  WITH CHECK (created_by = auth.user_name());
+  WITH CHECK (created_by = public.get_user_name());
 
 CREATE POLICY "messages_update_policy"
   ON messages FOR UPDATE
-  USING (created_by = auth.user_name());
+  USING (created_by = public.get_user_name());
 
 CREATE POLICY "messages_delete_policy"
   ON messages FOR DELETE
   USING (
-    created_by = auth.user_name() OR
-    auth.is_admin()
+    created_by = public.get_user_name() OR
+    public.is_admin()
   );
 
 -- STRATEGIC GOALS POLICIES (Admin only, always enforced)
 CREATE POLICY "goals_select_policy"
   ON strategic_goals FOR SELECT
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 CREATE POLICY "goals_insert_policy"
   ON strategic_goals FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 CREATE POLICY "goals_update_policy"
   ON strategic_goals FOR UPDATE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 CREATE POLICY "goals_delete_policy"
   ON strategic_goals FOR DELETE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- GOAL MILESTONES POLICIES (Admin only)
 CREATE POLICY "milestones_select_policy"
   ON goal_milestones FOR SELECT
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 CREATE POLICY "milestones_insert_policy"
   ON goal_milestones FOR INSERT
-  WITH CHECK (auth.is_admin());
+  WITH CHECK (public.is_admin());
 
 CREATE POLICY "milestones_update_policy"
   ON goal_milestones FOR UPDATE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 CREATE POLICY "milestones_delete_policy"
   ON goal_milestones FOR DELETE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- USERS POLICIES (Always enforced)
 CREATE POLICY "users_update_policy"
   ON users FOR UPDATE
-  USING (id = auth.user_id());
+  USING (id = public.get_user_id());
 
 CREATE POLICY "users_delete_policy"
   ON users FOR DELETE
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- ============================================
 -- STEP 3: CREATE SECURITY AUDIT LOG TABLE
@@ -169,7 +169,7 @@ CREATE POLICY "security_audit_insert_only"
 
 CREATE POLICY "security_audit_select_admin"
   ON security_audit_log FOR SELECT
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- Explicitly deny updates and deletes
 CREATE POLICY "security_audit_no_update"
@@ -364,7 +364,7 @@ CREATE POLICY "auth_failure_insert_only"
 
 CREATE POLICY "auth_failure_select_admin"
   ON auth_failure_log FOR SELECT
-  USING (auth.is_admin());
+  USING (public.is_admin());
 
 -- ============================================
 -- STEP 8: COMMENTS

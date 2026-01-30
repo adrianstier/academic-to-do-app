@@ -157,11 +157,11 @@ export default function UtilitySidebar({
       <div className="p-4 border-b border-[var(--border-subtle)]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-base">B</span>
+            <span className="text-white font-bold text-base">A</span>
           </div>
           <div>
             <h1 className={`font-semibold text-sm ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`}>
-              Bealer Agency
+              Academic Projects
             </h1>
             <p className={`text-xs ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}`}>
               {format(new Date(), 'EEEE, MMM d')}

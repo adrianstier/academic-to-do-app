@@ -5,11 +5,11 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate } from '../fixtures/helpers';
 
-// Test page setup helper
+// Test page setup helper - use auth bypass to get past login screen
 async function setupTestPage(page: Page) {
-  await page.goto('/');
-  await page.waitForTimeout(1000);
+  await setupAndNavigate(page);
 }
 
 test.describe('useFocusTrap Hook', () => {

@@ -12,14 +12,15 @@ import {
   Brain,
   Users,
   FileText,
-  Phone,
-  DollarSign,
-  Shield,
-  Car,
   Clock,
   TrendingUp,
   AlertCircle,
   UserCheck,
+  BookOpen,
+  PenTool,
+  BarChart3,
+  Send,
+  GraduationCap,
 } from 'lucide-react';
 import { Todo, AuthUser, ActivityLogEntry } from '@/types/todo';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -32,8 +33,8 @@ import {
   generateManagerDashboardData,
 } from '@/lib/managerDashboardInsights';
 import {
-  getInsuranceWorkloadSummary,
-  InsuranceTaskCategory,
+  getAcademicWorkloadSummary,
+  AcademicTaskCategory,
 } from '@/lib/orchestratorIntegration';
 
 interface ManagerDashboardProps {
@@ -68,9 +69,9 @@ export default function ManagerDashboard({
     return generateManagerDashboardData(todos, currentUser.name, users);
   }, [todos, currentUser.name, users]);
 
-  // Generate insurance workload summary
-  const insuranceWorkload = useMemo(() => {
-    return getInsuranceWorkloadSummary(todos);
+  // Generate academic workload summary
+  const academicWorkload = useMemo(() => {
+    return getAcademicWorkloadSummary(todos);
   }, [todos]);
 
   // My personal tasks
@@ -200,7 +201,7 @@ export default function ManagerDashboard({
         darkMode
           ? 'hover:bg-[#1A2840] hover:border-white/[0.12] hover:shadow-[0_4px_20px_rgba(0,0,0,0.35)] cursor-pointer'
           : 'hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:border-slate-300 cursor-pointer'
-      ) : ''} ${onClick ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A1628]' : ''} ${className}`}
+      ) : ''} ${onClick ? 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0A1628]' : ''} ${className}`}
       onClick={onClick}
       onKeyDown={onClick ? (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -233,10 +234,10 @@ export default function ManagerDashboard({
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
           darkMode
             ? 'bg-[var(--accent)]/15'
-            : 'bg-[#0033A0]/8'
+            : 'bg-[var(--brand-navy)]/8'
         }`}>
           <Icon className={`w-4 h-4 ${
-            darkMode ? 'text-[var(--accent)]' : 'text-[#0033A0]'
+            darkMode ? 'text-[var(--accent)]' : 'text-[var(--brand-navy)]'
           }`} />
         </div>
         <h2 className={`text-sm font-semibold ${
@@ -253,8 +254,8 @@ export default function ManagerDashboard({
       {action && (
         <button
           onClick={action.onClick}
-          className={`text-xs font-medium px-3 py-2 -my-1 rounded-lg min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
-            darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] hover:bg-white/5 focus-visible:ring-offset-[#162236]' : 'text-[#0033A0] hover:text-[#0047CC] hover:bg-slate-50 focus-visible:ring-offset-white'
+          className={`text-xs font-medium px-3 py-2 -my-1 rounded-lg min-h-[36px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
+            darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] hover:bg-white/5 focus-visible:ring-offset-[#162236]' : 'text-[var(--brand-navy)] hover:text-[var(--brand-blue)] hover:bg-slate-50 focus-visible:ring-offset-white'
           }`}
         >
           {action.label}
@@ -397,7 +398,7 @@ export default function ManagerDashboard({
                 onClick={() => setShowAllTeamMembers(!showAllTeamMembers)}
                 aria-expanded={showAllTeamMembers}
                 aria-label={`${showAllTeamMembers ? 'Collapse' : 'Expand'} team workload list`}
-                className={`w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide mb-3 min-h-[44px] rounded-lg px-2 -mx-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${darkMode ? 'text-white/60 hover:text-white/80 focus-visible:ring-offset-[#162236]' : 'text-slate-500 hover:text-slate-700 focus-visible:ring-offset-white'}`}
+                className={`w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide mb-3 min-h-[44px] rounded-lg px-2 -mx-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${darkMode ? 'text-white/60 hover:text-white/80 focus-visible:ring-offset-[#162236]' : 'text-slate-500 hover:text-slate-700 focus-visible:ring-offset-white'}`}
               >
                 <span>Team Workload</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${showAllTeamMembers ? 'rotate-180' : ''}`} />
@@ -431,7 +432,7 @@ export default function ManagerDashboard({
                           className={`h-full rounded-full ${
                             member.workloadLevel === 'overloaded' ? 'bg-gradient-to-r from-red-500 to-red-400' :
                             member.workloadLevel === 'heavy' ? 'bg-gradient-to-r from-amber-500 to-amber-400' :
-                            member.workloadLevel === 'normal' ? 'bg-gradient-to-r from-[#0033A0] to-[#0047CC]' :
+                            member.workloadLevel === 'normal' ? 'bg-gradient-to-r from-[var(--brand-navy)] to-[var(--brand-blue)]' :
                             'bg-gradient-to-r from-emerald-500 to-emerald-400'
                           }`}
                         />
@@ -440,7 +441,7 @@ export default function ManagerDashboard({
                       <span className={`text-[10px] font-semibold w-16 text-center ${
                         member.workloadLevel === 'overloaded' ? 'text-red-500' :
                         member.workloadLevel === 'heavy' ? 'text-amber-500' :
-                        member.workloadLevel === 'normal' ? (darkMode ? 'text-[#72B5E8]' : 'text-[#0033A0]') :
+                        member.workloadLevel === 'normal' ? (darkMode ? 'text-[#72B5E8]' : 'text-[var(--brand-navy)]') :
                         'text-emerald-500'
                       }`}>
                         {member.workloadLevel === 'overloaded' ? 'OVER' :
@@ -461,8 +462,8 @@ export default function ManagerDashboard({
               {managerData.memberStats.length > 5 && !showAllTeamMembers && (
                 <button
                   onClick={() => setShowAllTeamMembers(true)}
-                  className={`w-full text-center py-2 mt-2 text-xs font-medium min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
-                    darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] focus-visible:ring-offset-[#162236]' : 'text-[#0033A0] hover:text-[#0047CC] focus-visible:ring-offset-white'
+                  className={`w-full text-center py-2 mt-2 text-xs font-medium min-h-[44px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
+                    darkMode ? 'text-[#72B5E8] hover:text-[#9DC8F0] focus-visible:ring-offset-[#162236]' : 'text-[var(--brand-navy)] hover:text-[var(--brand-blue)] focus-visible:ring-offset-white'
                   } hover:underline`}
                 >
                   Show all {managerData.memberStats.length} team members
@@ -471,34 +472,34 @@ export default function ManagerDashboard({
             </div>
           </Card>
 
-          {/* Insurance Workload Summary */}
+          {/* Academic Workload Summary */}
           <Card>
-            <SectionTitle icon={Shield} title="Insurance Tasks" badge={insuranceWorkload.claim.overdue + insuranceWorkload.follow_up.overdue + insuranceWorkload.payment.overdue} />
+            <SectionTitle icon={GraduationCap} title="Academic Tasks" badge={academicWorkload.submission.overdue + academicWorkload.writing.overdue + academicWorkload.meeting.overdue} />
 
             {(() => {
               const categories = [
-                { key: 'claim' as InsuranceTaskCategory, label: 'Claims', icon: FileText, color: 'text-red-500', bgColor: 'bg-red-500/10' },
-                { key: 'follow_up' as InsuranceTaskCategory, label: 'Follow-ups', icon: Phone, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-                { key: 'payment' as InsuranceTaskCategory, label: 'Payments', icon: DollarSign, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
-                { key: 'vehicle_add' as InsuranceTaskCategory, label: 'Vehicle Adds', icon: Car, color: 'text-[var(--accent)]', bgColor: 'bg-[var(--accent)]/10' },
-                { key: 'policy_review' as InsuranceTaskCategory, label: 'Policy Reviews', icon: Shield, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+                { key: 'submission' as AcademicTaskCategory, label: 'Submissions', icon: Send, color: 'text-red-500', bgColor: 'bg-red-500/10' },
+                { key: 'writing' as AcademicTaskCategory, label: 'Writing', icon: PenTool, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+                { key: 'meeting' as AcademicTaskCategory, label: 'Meetings', icon: Users, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+                { key: 'research' as AcademicTaskCategory, label: 'Research', icon: BookOpen, color: 'text-[var(--accent)]', bgColor: 'bg-[var(--accent)]/10' },
+                { key: 'analysis' as AcademicTaskCategory, label: 'Analysis', icon: BarChart3, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
               ];
 
               // Show categories with overdue first, then by active count
               const sortedCategories = [...categories].sort((a, b) => {
-                const aOverdue = insuranceWorkload[a.key].overdue;
-                const bOverdue = insuranceWorkload[b.key].overdue;
+                const aOverdue = academicWorkload[a.key].overdue;
+                const bOverdue = academicWorkload[b.key].overdue;
                 if (aOverdue !== bOverdue) return bOverdue - aOverdue;
-                return insuranceWorkload[b.key].active - insuranceWorkload[a.key].active;
+                return academicWorkload[b.key].active - academicWorkload[a.key].active;
               });
 
-              const hasAnyWork = sortedCategories.some(c => insuranceWorkload[c.key].active > 0);
+              const hasAnyWork = sortedCategories.some(c => academicWorkload[c.key].active > 0);
 
               if (!hasAnyWork) {
                 return (
                   <div className={`text-center py-6 ${darkMode ? 'text-white/40' : 'text-slate-400'}`}>
                     <CheckCircle2 className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">All insurance tasks completed</p>
+                    <p className="text-sm">All academic tasks completed</p>
                   </div>
                 );
               }
@@ -506,7 +507,7 @@ export default function ManagerDashboard({
               return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {sortedCategories.map(({ key, label, icon: Icon, color, bgColor }) => {
-                    const data = insuranceWorkload[key];
+                    const data = academicWorkload[key];
                     if (data.active === 0 && data.overdue === 0) return null;
 
                     return (
@@ -586,7 +587,7 @@ export default function ManagerDashboard({
                     transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.05 }}
                     onClick={() => handleTaskClick(task.id)}
                     aria-label={`Open task: ${task.text}`}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
                       darkMode
                         ? 'hover:bg-white/[0.06] active:bg-white/[0.08] active:scale-[0.98] focus-visible:ring-offset-[#162236]'
                         : 'hover:bg-slate-50 active:bg-slate-100 active:scale-[0.98] focus-visible:ring-offset-white'
@@ -597,7 +598,7 @@ export default function ManagerDashboard({
                         ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
                         : task.priority === 'high'
                           ? 'bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.4)]'
-                          : 'bg-[#0047CC]'
+                          : 'bg-[var(--brand-blue)]'
                     }`} />
                     <span className={`flex-1 text-sm font-medium truncate ${darkMode ? 'text-white/90' : 'text-slate-800'}`}>
                       {task.text}
@@ -656,7 +657,7 @@ export default function ManagerDashboard({
                       animate={{ opacity: 1, x: 0 }}
                       transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.05 }}
                       aria-label={`Open stalled task: ${item.todo.text}, ${item.daysSinceActivity} days without activity`}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0033A0] focus-visible:ring-offset-2 ${
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group min-h-[48px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-navy)] focus-visible:ring-offset-2 ${
                         item.urgencyLevel === 'critical'
                           ? darkMode ? 'bg-red-500/10 hover:bg-red-500/15 border-l-4 border-l-red-500 focus-visible:ring-offset-[#162236]' : 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500 focus-visible:ring-offset-white'
                           : darkMode ? 'bg-white/5 hover:bg-white/10 focus-visible:ring-offset-[#162236]' : 'bg-slate-50 hover:bg-slate-100 focus-visible:ring-offset-white'

@@ -86,7 +86,9 @@ export interface Todo {
   reminder_at?: string; // Simple single reminder timestamp
   reminder_sent?: boolean; // Whether simple reminder has been sent
   reminders?: TaskReminder[]; // Multiple reminders (from task_reminders table)
-  agency_id?: string; // Multi-tenancy: which agency this task belongs to
+  team_id?: string; // Multi-tenancy: which team this task belongs to
+  /** @deprecated Use team_id instead */
+  agency_id?: string;
 }
 
 // ============================================
@@ -205,9 +207,11 @@ export interface User {
 export type UserRole = 'owner' | 'admin' | 'member';
 export type GlobalRole = 'user' | 'super_admin';
 
-// Import agency types for re-export
-import type { AgencyMembership, AgencyRole, AgencyPermissions } from './agency';
-export type { AgencyMembership, AgencyRole, AgencyPermissions };
+// Import team types for re-export (uses Team terminology)
+import type { TeamMembership, TeamRole, TeamPermissions } from './team';
+export type { TeamMembership, TeamRole, TeamPermissions };
+// Backward compatibility aliases
+export type { TeamMembership as AgencyMembership, TeamRole as AgencyRole, TeamPermissions as AgencyPermissions };
 
 export interface AuthUser {
   id: string;
@@ -222,10 +226,18 @@ export interface AuthUser {
   streak_last_date?: string;
   welcome_shown_at?: string;
   // Multi-tenancy fields
-  agencies?: AgencyMembership[];
+  teams?: TeamMembership[];
+  current_team_id?: string;
+  current_team_role?: TeamRole;
+  current_team_permissions?: TeamPermissions;
+  /** @deprecated Use teams instead */
+  agencies?: TeamMembership[];
+  /** @deprecated Use current_team_id instead */
   current_agency_id?: string;
-  current_agency_role?: AgencyRole;
-  current_agency_permissions?: AgencyPermissions;
+  /** @deprecated Use current_team_role instead */
+  current_agency_role?: TeamRole;
+  /** @deprecated Use current_team_permissions instead */
+  current_agency_permissions?: TeamPermissions;
 }
 
 export const PRIORITY_CONFIG: Record<TodoPriority, { label: string; color: string; bgColor: string; icon: string }> = {
@@ -269,7 +281,9 @@ export interface ChatMessage {
   pinned_by?: string | null; // User who pinned the message
   pinned_at?: string | null; // When it was pinned
   mentions?: string[]; // Array of mentioned usernames
-  agency_id?: string; // Multi-tenancy: which agency this message belongs to
+  team_id?: string; // Multi-tenancy: which team this message belongs to
+  /** @deprecated Use team_id instead */
+  agency_id?: string;
 }
 
 // User presence status
@@ -311,7 +325,9 @@ export interface TaskTemplate {
   is_shared: boolean;
   created_at: string;
   updated_at: string;
-  agency_id?: string; // Multi-tenancy: which agency this template belongs to
+  team_id?: string; // Multi-tenancy: which team this template belongs to
+  /** @deprecated Use team_id instead */
+  agency_id?: string;
 }
 
 // Activity Log types
@@ -346,7 +362,9 @@ export interface ActivityLogEntry {
   user_name: string;
   details: Record<string, unknown>;
   created_at: string;
-  agency_id?: string; // Multi-tenancy: which agency this activity belongs to
+  team_id?: string; // Multi-tenancy: which team this activity belongs to
+  /** @deprecated Use team_id instead */
+  agency_id?: string;
 }
 
 // Activity feed is now accessible to all users (legacy constants kept for compatibility)
@@ -382,7 +400,9 @@ export interface GoalCategory {
   icon: string;
   display_order: number;
   created_at: string;
-  agency_id?: string; // Multi-tenancy: which agency this category belongs to
+  team_id?: string; // Multi-tenancy: which team this category belongs to
+  /** @deprecated Use team_id instead */
+  agency_id?: string;
 }
 
 export interface StrategicGoal {
@@ -401,7 +421,9 @@ export interface StrategicGoal {
   created_by: string;
   created_at: string;
   updated_at: string;
-  agency_id?: string; // Multi-tenancy: which agency this goal belongs to
+  team_id?: string; // Multi-tenancy: which team this goal belongs to
+  /** @deprecated Use team_id instead */
+  agency_id?: string;
   // Joined data
   category?: GoalCategory;
   milestones?: GoalMilestone[];
@@ -432,33 +454,32 @@ export const GOAL_PRIORITY_CONFIG: Record<GoalPriority, { label: string; color: 
   low: { label: 'Low', color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.1)' },
 };
 
-// Owner username for dashboard access
-// DEPRECATED: Use isOwner(user) or user.role === 'owner' instead
-// Kept for backward compatibility during migration
-export const OWNER_USERNAME = 'Derrick';
+// REMOVED: OWNER_USERNAME constant - use role-based checks instead
+// The isOwner() and isAdmin() functions now rely solely on the role field
 
 /**
  * Check if a user has owner privileges
  * Supports both single-tenant (legacy) and multi-tenant modes
  *
- * In multi-tenant mode, checks current_agency_role
+ * In multi-tenant mode, checks current_team_role (or legacy current_agency_role)
  * In single-tenant mode, checks role or falls back to name
  */
 export function isOwner(user: {
   role?: string;
   name?: string;
-  current_agency_role?: string;
+  current_team_role?: string;
+  current_agency_role?: string; // Backward compatibility
 } | null | undefined): boolean {
   if (!user) return false;
 
-  // Multi-tenant: check agency-specific role
+  // Multi-tenant: check team-specific role (new terminology)
+  if (user.current_team_role === 'owner') return true;
+
+  // Multi-tenant: check agency-specific role (backward compatibility)
   if (user.current_agency_role === 'owner') return true;
 
   // Single-tenant: use role from database
   if (user.role === 'owner') return true;
-
-  // Legacy fallback: check name (will be removed in future)
-  if (user.name === OWNER_USERNAME) return true;
 
   return false;
 }
@@ -470,18 +491,19 @@ export function isOwner(user: {
 export function isAdmin(user: {
   role?: string;
   name?: string;
-  current_agency_role?: string;
+  current_team_role?: string;
+  current_agency_role?: string; // Backward compatibility
 } | null | undefined): boolean {
   if (!user) return false;
 
-  // Multi-tenant: check agency-specific role
+  // Multi-tenant: check team-specific role (new terminology)
+  if (user.current_team_role === 'owner' || user.current_team_role === 'admin') return true;
+
+  // Multi-tenant: check agency-specific role (backward compatibility)
   if (user.current_agency_role === 'owner' || user.current_agency_role === 'admin') return true;
 
   // Single-tenant: use role from database
   if (user.role === 'owner' || user.role === 'admin') return true;
-
-  // Legacy fallback
-  if (user.name === OWNER_USERNAME) return true;
 
   return false;
 }
@@ -494,12 +516,17 @@ export function isAdmin(user: {
 export function canViewStrategicGoals(user: {
   role?: string;
   name?: string;
-  current_agency_role?: string;
-  current_agency_permissions?: { can_view_strategic_goals?: boolean };
+  current_team_role?: string;
+  current_team_permissions?: { can_view_strategic_goals?: boolean };
+  current_agency_role?: string; // Backward compatibility
+  current_agency_permissions?: { can_view_strategic_goals?: boolean }; // Backward compatibility
 } | null | undefined): boolean {
   if (!user) return false;
 
-  // Multi-tenant: check permissions
+  // Multi-tenant: check team permissions (new terminology)
+  if (user.current_team_permissions?.can_view_strategic_goals) return true;
+
+  // Multi-tenant: check agency permissions (backward compatibility)
   if (user.current_agency_permissions?.can_view_strategic_goals) return true;
 
   // Fall back to admin check
@@ -511,18 +538,18 @@ export function canViewStrategicGoals(user: {
 // ============================================
 
 // Task category for pattern analysis (Feature 4)
-// Based on data analysis: Policy (42%), Follow-up (40%), Vehicle (25%), Payment (18%), Endorsement (18%), Claims (10.5%), Quotes (10.5%)
+// Academic task categories for research and coursework management
 export type TaskCategory =
-  | 'policy_review'    // 42% - Policy reviews, renewals, coverage checks
-  | 'follow_up'        // 40% - Calls, callbacks, customer communication
-  | 'vehicle_add'      // 25% - Adding/removing vehicles, auto changes
-  | 'payment'          // 18% - Payment processing, billing issues (100% completion rate!)
-  | 'endorsement'      // 18% - Policy changes, endorsements
-  | 'claim'            // 10.5% - Claims processing (87.5% completion rate)
-  | 'quote'            // 10.5% - New quotes, proposals (50% completion rate - needs improvement)
-  | 'documentation'    // 12% - Sending docs, dec pages
-  | 'new_client'       // 2.6% - New client onboarding (100% completion rate)
-  | 'cancellation'     // 6.6% - Policy cancellations
+  | 'research'         // Literature review, data collection, experiments, studies
+  | 'meeting'          // Advisor meetings, committee, lab meetings, seminars, office hours
+  | 'analysis'         // Statistics, data analysis, results, R, Python, SPSS
+  | 'submission'       // Submit deadlines, conference, journal submissions
+  | 'revision'         // Revisions, edits, feedback, reviewer comments
+  | 'presentation'     // Defense, poster, talks, slides, conference presentations
+  | 'writing'          // Draft, paper, manuscript, thesis, dissertation, abstract
+  | 'reading'          // Articles, chapters, textbook, review papers
+  | 'coursework'       // Assignments, homework, exams, quizzes, grades
+  | 'admin'            // Forms, registration, IRB, grant administration
   | 'other';
 
 // Task pattern learned from historical data
@@ -574,143 +601,139 @@ export interface TaskCompletionSummaryData {
   transcription?: string;
 }
 
-// Insurance-specific quick task definitions
-// Based on task analysis: Policy (42%), Follow-up (40%), Vehicle (25%), Payment (18%), Claims (10.5%), Quotes (10.5%)
-export const INSURANCE_QUICK_TASKS: QuickTaskTemplate[] = [
-  // TOP CATEGORY: Policy Review/Renewal (42% of all tasks)
+// Academic quick task definitions for research and coursework management
+export const ACADEMIC_QUICK_TASKS: QuickTaskTemplate[] = [
+  // Research tasks - literature review, experiments, data collection
   {
-    text: 'Policy review for [customer]',
-    category: 'policy_review',
+    text: 'Literature review: [topic]',
+    category: 'research',
     defaultPriority: 'medium',
     suggestedSubtasks: [
-      'Review current coverage limits',
-      'Check for discount opportunities',
-      'Verify contact information',
-      'Prepare renewal quote if applicable',
+      'Search databases for relevant papers',
+      'Read and annotate key articles',
+      'Identify themes and gaps',
+      'Write synthesis summary',
     ],
-    icon: '📋',
+    icon: '🔬',
   },
-  // TOP CATEGORY: Follow-up/Communication (40% of all tasks - HIGHEST URGENCY)
+  // Writing tasks - papers, manuscripts, thesis
   {
-    text: 'Follow up call - [customer]',
-    category: 'follow_up',
+    text: 'Write [section] for [paper/thesis]',
+    category: 'writing',
     defaultPriority: 'high',
     suggestedSubtasks: [
-      'Review account notes before call',
-      'Make call or leave voicemail',
-      'Document conversation details',
-      'Schedule next follow-up if needed',
+      'Create outline',
+      'Write first draft',
+      'Add citations and references',
+      'Revise and edit',
     ],
-    icon: '📞',
+    icon: '✍️',
   },
-  // TOP CATEGORY: Vehicle/Auto Changes (25% of all tasks - 84% completion rate)
+  // Analysis tasks - data analysis, statistics
   {
-    text: 'Add vehicle to policy - [customer]',
-    category: 'vehicle_add',
-    defaultPriority: 'high',
-    suggestedSubtasks: [
-      'Collect VIN and vehicle information',
-      'Verify registration',
-      'Calculate premium change',
-      'Update policy and send new dec page',
-    ],
-    icon: '🚗',
-  },
-  // Payment/Billing (18% - 100% completion rate, best performing)
-  {
-    text: 'Payment/billing issue - [customer]',
-    category: 'payment',
-    defaultPriority: 'high',
-    suggestedSubtasks: [
-      'Review account status',
-      'Contact carrier if needed',
-      'Process payment or resolve issue',
-      'Confirm resolution with customer',
-    ],
-    icon: '💳',
-  },
-  // NEW: Endorsement/Policy Change (18% of all tasks)
-  {
-    text: 'Policy endorsement - [customer]',
-    category: 'endorsement',
+    text: 'Data analysis: [dataset/project]',
+    category: 'analysis',
     defaultPriority: 'medium',
     suggestedSubtasks: [
-      'Review requested change details',
-      'Calculate premium impact',
-      'Process endorsement with carrier',
-      'Send updated declarations page',
-    ],
-    icon: '📝',
-  },
-  // Claims (10.5% - 87.5% completion rate)
-  {
-    text: 'Process claim for [customer]',
-    category: 'claim',
-    defaultPriority: 'urgent',
-    suggestedSubtasks: [
-      'File claim with carrier',
-      'Document incident details',
-      'Coordinate with adjuster',
-      'Follow up on claim status',
-      'Update customer on progress',
-    ],
-    icon: '🚨',
-  },
-  // Quotes/Proposals (10.5% - LOWEST completion rate at 50%, needs better breakdown)
-  {
-    text: 'Quote request - [customer]',
-    category: 'quote',
-    defaultPriority: 'medium',
-    suggestedSubtasks: [
-      'Collect all required customer information',
-      'Pull MVR and claims history',
-      'Run quotes with multiple carriers',
-      'Compare coverage options and pricing',
-      'Prepare proposal document',
-      'Send quote and schedule follow-up',
+      'Clean and prepare data',
+      'Run statistical analyses',
+      'Create visualizations',
+      'Document results',
     ],
     icon: '📊',
   },
-  // New Client (2.6% but 100% completion rate - keep it)
+  // Submission tasks - conference, journal submissions
   {
-    text: 'New client onboarding - [customer]',
-    category: 'new_client',
+    text: 'Submit to [conference/journal]',
+    category: 'submission',
+    defaultPriority: 'urgent',
+    suggestedSubtasks: [
+      'Review submission guidelines',
+      'Format manuscript',
+      'Prepare supplementary materials',
+      'Complete submission form',
+      'Verify submission receipt',
+    ],
+    icon: '📤',
+  },
+  // Meeting tasks - advisor, committee, lab meetings
+  {
+    text: 'Meeting with [advisor/committee]',
+    category: 'meeting',
     defaultPriority: 'high',
     suggestedSubtasks: [
-      'Gather customer information',
-      'Pull MVR for all drivers',
-      'Run quotes with multiple carriers',
-      'Present options and bind coverage',
-      'Set up account in management system',
-      'Send welcome packet',
+      'Prepare agenda and materials',
+      'Review previous meeting notes',
+      'Prepare progress update',
+      'Document action items after meeting',
     ],
-    icon: '👋',
+    icon: '👥',
   },
-  // NEW: Documentation (12% of all tasks - 67% completion rate)
+  // Presentation tasks - defense, conference talks
   {
-    text: 'Send documents to [customer]',
-    category: 'documentation',
+    text: 'Prepare presentation: [topic]',
+    category: 'presentation',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Create slide deck',
+      'Prepare speaker notes',
+      'Practice presentation',
+      'Get feedback and revise',
+    ],
+    icon: '🎤',
+  },
+  // Reading tasks - articles, textbooks
+  {
+    text: 'Read [article/chapter]: [title]',
+    category: 'reading',
     defaultPriority: 'medium',
     suggestedSubtasks: [
-      'Locate requested documents',
-      'Verify document accuracy',
-      'Email documents to customer',
-      'Confirm receipt with customer',
+      'First pass reading',
+      'Take detailed notes',
+      'Identify key concepts',
+      'Summarize main findings',
     ],
-    icon: '📄',
+    icon: '📚',
   },
-  // NEW: Cancellation (6.6% - important to track)
+  // Coursework tasks - assignments, homework
   {
-    text: 'Process cancellation - [customer]',
-    category: 'other',
+    text: 'Complete [assignment] for [course]',
+    category: 'coursework',
     defaultPriority: 'high',
     suggestedSubtasks: [
-      'Verify cancellation request',
-      'Offer retention options if applicable',
-      'Process cancellation with carrier',
-      'Send confirmation to customer',
-      'Update account records',
+      'Review assignment requirements',
+      'Gather resources',
+      'Complete main work',
+      'Review and proofread',
+      'Submit before deadline',
     ],
-    icon: '❌',
+    icon: '📝',
+  },
+  // Revision tasks - paper revisions, reviewer comments
+  {
+    text: 'Address reviewer comments: [paper]',
+    category: 'revision',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Read all reviewer comments',
+      'Create response document',
+      'Make revisions to manuscript',
+      'Write point-by-point response',
+      'Submit revision',
+    ],
+    icon: '🔄',
+  },
+  // Admin tasks - forms, IRB, grants
+  {
+    text: 'Complete [form/application]',
+    category: 'admin',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Gather required information',
+      'Complete all sections',
+      'Get necessary signatures',
+      'Submit and confirm receipt',
+    ],
+    icon: '📋',
   },
 ];

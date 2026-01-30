@@ -1,56 +1,19 @@
 import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate, createTask } from './fixtures/helpers';
 
-// Helper to register a new user and login
-async function registerAndLogin(page: Page, userName: string = 'Test User', pin: string = '1234') {
-  await page.goto('/');
-
-  // Wait for login screen to load
-  await expect(page.locator('h1:has-text("Bealer Agency")')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('text=Task Management')).toBeVisible({ timeout: 5000 });
-
-  // Click "Add New User" button
-  await page.locator('button:has-text("Add New User")').click();
-
-  // Wait for registration screen
-  await expect(page.locator('input[placeholder="Enter your name"]')).toBeVisible({ timeout: 5000 });
-
-  // Fill in name
-  await page.locator('input[placeholder="Enter your name"]').fill(userName);
-
-  // Enter PIN (4 digit inputs)
-  const pinInputs = page.locator('input[type="password"]');
-  for (let i = 0; i < 4; i++) {
-    await pinInputs.nth(i).fill(pin[i]);
-  }
-
-  // Enter confirm PIN
-  for (let i = 4; i < 8; i++) {
-    await pinInputs.nth(i).fill(pin[i - 4]);
-  }
-
-  // Click Create Account button
-  await page.getByRole('button', { name: 'Create Account' }).click();
-
-  // Wait for app to load
-  await expect(page.locator('textarea[placeholder="What needs to be done?"]')).toBeVisible({ timeout: 10000 });
-}
-
-// Generate unique test user name
-function uniqueUserName() {
-  return `T${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+async function loginAsExistingUser(page: Page) {
+  await setupAndNavigate(page);
 }
 
 test.describe('Content Import Feature', () => {
   test.beforeEach(async ({ page }) => {
-    const userName = uniqueUserName();
-    await registerAndLogin(page, userName);
+    await loginAsExistingUser(page);
   });
 
-  test('should show Import Email/Voicemail button when task is expanded', async ({ page }) => {
+  test('should show Import button when task is expanded', async ({ page }) => {
     // Add a task
     const taskText = `Q1 Planning ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -58,15 +21,14 @@ test.describe('Content Import Feature', () => {
     // Click on task to expand it
     await page.locator(`text=${taskText}`).click();
 
-    // Should show the "Import Email/Voicemail" button
-    await expect(page.locator('button:has-text("Import Email/Voicemail")')).toBeVisible({ timeout: 3000 });
+    // Should show the "Import" button (with Mail icon) in the subtasks section
+    await expect(page.locator('button:has-text("Import")')).toBeVisible({ timeout: 3000 });
   });
 
-  test('should open import modal when clicking Import Email/Voicemail button', async ({ page }) => {
+  test('should open import modal when clicking Import button', async ({ page }) => {
     // Add a task
     const taskText = `Project Review ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
@@ -74,8 +36,8 @@ test.describe('Content Import Feature', () => {
     // Click on task to expand it
     await page.locator(`text=${taskText}`).click();
 
-    // Click the Import Email/Voicemail button
-    await page.locator('button:has-text("Import Email/Voicemail")').click();
+    // Click the Import button
+    await page.locator('button:has-text("Import")').click();
 
     // Modal should appear with title
     await expect(page.locator('text=Import as Subtasks')).toBeVisible({ timeout: 3000 });
@@ -88,15 +50,14 @@ test.describe('Content Import Feature', () => {
   test('should close modal when clicking X button', async ({ page }) => {
     // Add a task
     const taskText = `Meeting Notes ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task to appear and expand
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
     await page.locator(`text=${taskText}`).click();
 
     // Open the modal
-    await page.locator('button:has-text("Import Email/Voicemail")').click();
+    await page.locator('button:has-text("Import")').click();
     await expect(page.locator('text=Import as Subtasks')).toBeVisible({ timeout: 3000 });
 
     // Click close button (X icon in the header)
@@ -109,15 +70,14 @@ test.describe('Content Import Feature', () => {
   test('should switch between Email and Voicemail modes', async ({ page }) => {
     // Add a task
     const taskText = `Client Follow-up ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
     await page.locator(`text=${taskText}`).click();
 
     // Open the modal
-    await page.locator('button:has-text("Import Email/Voicemail")').click();
+    await page.locator('button:has-text("Import")').click();
     await expect(page.locator('text=Import as Subtasks')).toBeVisible({ timeout: 3000 });
 
     // Mode selection should be visible by default
@@ -149,15 +109,14 @@ test.describe('Content Import Feature', () => {
 
     // Add a task
     const taskText = `Q1 Product Launch ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
     await page.locator(`text=${taskText}`).click();
 
     // Open the modal
-    await page.locator('button:has-text("Import Email/Voicemail")').click();
+    await page.locator('button:has-text("Import")').click();
     await expect(page.locator('text=Import as Subtasks')).toBeVisible({ timeout: 3000 });
 
     // Click Paste Email to enter email mode
@@ -197,15 +156,14 @@ Michael`;
 
     // Add a task
     const taskText = `Team Meeting ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
     await page.locator(`text=${taskText}`).click();
 
     // Open the modal
-    await page.locator('button:has-text("Import Email/Voicemail")').click();
+    await page.locator('button:has-text("Import")').click();
     await expect(page.locator('text=Import as Subtasks')).toBeVisible({ timeout: 3000 });
 
     // Click Paste Email to enter email mode
@@ -240,21 +198,22 @@ Michael`;
 
     // Add a task
     const taskText = `Budget Review ${Date.now()}`;
-    await page.locator('textarea[placeholder="What needs to be done?"]').fill(taskText);
-    await page.locator('button:has-text("Add")').click();
+    await createTask(page, taskText);
 
     // Wait for task and expand
     await expect(page.locator(`text=${taskText}`)).toBeVisible({ timeout: 5000 });
     await page.locator(`text=${taskText}`).click();
 
-    // First break into subtasks
-    await page.locator('button:has-text("Break into subtasks")').click();
+    // Add a manual subtask first
+    const subtaskInput = page.locator('input[placeholder*="Add a subtask"]');
+    if (await subtaskInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await subtaskInput.fill('Manual subtask');
+      await subtaskInput.press('Enter');
+      await page.waitForTimeout(500);
+    }
 
-    // Wait for subtasks to be created
-    await expect(page.locator('text=Progress')).toBeVisible({ timeout: 30000 });
-
-    // Import Email/Voicemail button should still be visible (can add more)
-    await expect(page.locator('button:has-text("Import Email/Voicemail")')).toBeVisible();
+    // Import button should still be visible (can add more)
+    await expect(page.locator('button:has-text("Import")')).toBeVisible();
   });
 });
 

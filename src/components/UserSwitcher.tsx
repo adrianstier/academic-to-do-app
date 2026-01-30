@@ -296,8 +296,8 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
                         lockoutSeconds > 0
                           ? 'border-red-200 bg-red-50'
                           : digit
-                            ? 'border-[#0033A0] bg-[#0033A0]/5'
-                            : 'border-slate-200 focus:border-[#0033A0]'
+                            ? 'border-[#2c5282] bg-[#2c5282]/5'
+                            : 'border-slate-200 focus:border-[#2c5282]'
                       } text-slate-900`}
                     />
                   ))}

@@ -44,7 +44,7 @@ const typeStyles: Record<InsightType, {
     borderColor: 'border-l-amber-500',
   },
   tip: {
-    gradient: 'from-[var(--brand-blue)] to-[#0047CC]',
+    gradient: 'from-[var(--brand-blue)] to-[var(--brand-blue-light)]',
     iconBg: 'bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20',
     iconColor: 'text-[var(--brand-blue)] dark:text-[var(--brand-sky)]',
     borderColor: 'border-l-[var(--brand-blue)]',

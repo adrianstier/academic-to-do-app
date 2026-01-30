@@ -177,15 +177,15 @@ export default function Dashboard({
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-[#0A1628]' : 'bg-slate-50'}`}>
-      {/* Header */}
+    <div className={`min-h-screen ${darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]'}`}>
+      {/* Header - Academic gradient using brand colors */}
       <div className="relative overflow-hidden">
         <div
           className="absolute inset-0"
           style={{
             background: darkMode
-              ? 'linear-gradient(135deg, #0A1628 0%, #0033A0 50%, #1E3A5F 100%)'
-              : 'linear-gradient(135deg, #0033A0 0%, #0047CC 50%, #1E3A5F 100%)',
+              ? 'linear-gradient(135deg, var(--brand-navy) 0%, #2c5282 50%, #3b6ea8 100%)'
+              : 'linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-blue) 50%, var(--brand-blue-light) 100%)',
           }}
         />
 

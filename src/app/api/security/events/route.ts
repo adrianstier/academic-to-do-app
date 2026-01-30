@@ -18,6 +18,7 @@ const supabase = createClient(
 
 /**
  * Verify user has admin/owner access
+ * Relies solely on role-based permission system
  */
 async function verifyAdminAccess(userName: string): Promise<boolean> {
   try {
@@ -28,7 +29,7 @@ async function verifyAdminAccess(userName: string): Promise<boolean> {
       .single();
 
     if (error || !user) {
-      return userName === 'Derrick'; // Legacy fallback
+      return false;
     }
 
     return user.role === 'owner' || user.role === 'admin';

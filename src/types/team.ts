@@ -1,17 +1,17 @@
 /**
- * Agency Types for Multi-Tenancy
+ * Team Types for Multi-Tenancy
  *
- * These types support the multi-agency architecture allowing multiple
- * Allstate agencies to use the platform with complete data isolation.
+ * These types support the multi-team architecture allowing multiple
+ * research teams to use the platform with complete data isolation.
  */
 
 // ============================================
-// Core Agency Types
+// Core Team Types
 // ============================================
 
 export type SubscriptionTier = 'starter' | 'professional' | 'enterprise';
 
-export interface Agency {
+export interface Team {
   id: string;
   name: string;
   slug: string;
@@ -27,14 +27,14 @@ export interface Agency {
 }
 
 // ============================================
-// Agency Membership Types
+// Team Membership Types
 // ============================================
 
-export type AgencyRole = 'owner' | 'admin' | 'member';
+export type TeamRole = 'owner' | 'admin' | 'member';
 
 export type MemberStatus = 'active' | 'invited' | 'suspended';
 
-export interface AgencyPermissions {
+export interface TeamPermissions {
   can_create_tasks: boolean;
   can_delete_tasks: boolean;
   can_view_strategic_goals: boolean;
@@ -42,14 +42,14 @@ export interface AgencyPermissions {
   can_manage_templates: boolean;
 }
 
-export interface AgencyMember {
+export interface TeamMember {
   id: string;
-  agency_id: string;
+  team_id: string;
   user_id: string;
-  role: AgencyRole;
-  permissions: AgencyPermissions;
+  role: TeamRole;
+  permissions: TeamPermissions;
   status: MemberStatus;
-  is_default_agency: boolean;
+  is_default_team: boolean;
   joined_at: string;
   created_at: string;
   updated_at: string;
@@ -60,52 +60,55 @@ export interface AgencyMember {
     color: string;
     email?: string;
   };
-  agency?: Agency;
+  team?: Team;
 }
 
 // ============================================
-// Agency Invitation Types
+// Team Invitation Types
 // ============================================
 
-export interface AgencyInvitation {
+export interface TeamInvitation {
   id: string;
-  agency_id: string;
+  /** New terminology - use this when available */
+  team_id?: string;
+  /** @deprecated Use team_id instead - backward compatibility during migration */
+  agency_id?: string;
   email: string;
-  role: Exclude<AgencyRole, 'owner'>; // Can't invite as owner
+  role: Exclude<TeamRole, 'owner'>; // Can't invite as owner
   token: string;
   invited_by?: string;
   expires_at: string;
   accepted_at?: string;
   created_at: string;
   // Joined data
-  agency?: Agency;
+  team?: Team;
 }
 
 // ============================================
-// Agency Context Types
+// Team Context Types
 // ============================================
 
 /**
- * User's membership in an agency, used for agency switching
+ * User's membership in a team, used for team switching
  */
-export interface AgencyMembership {
-  agency_id: string;
-  agency_name: string;
-  agency_slug: string;
-  role: AgencyRole;
-  permissions: AgencyPermissions;
+export interface TeamMembership {
+  team_id: string;
+  team_name: string;
+  team_slug: string;
+  role: TeamRole;
+  permissions: TeamPermissions;
   is_default: boolean;
 }
 
 /**
- * Current agency context for the application
+ * Current team context for the application
  */
-export interface AgencyContext {
-  currentAgency: Agency | null;
-  currentAgencyId: string | null;
-  currentRole: AgencyRole | null;
-  currentPermissions: AgencyPermissions | null;
-  agencies: AgencyMembership[];
+export interface TeamContext {
+  currentTeam: Team | null;
+  currentTeamId: string | null;
+  currentRole: TeamRole | null;
+  currentPermissions: TeamPermissions | null;
+  teams: TeamMembership[];
   isLoading: boolean;
   error: string | null;
 }
@@ -114,7 +117,7 @@ export interface AgencyContext {
 // API Request/Response Types
 // ============================================
 
-export interface CreateAgencyRequest {
+export interface CreateTeamRequest {
   name: string;
   slug?: string; // Auto-generated from name if not provided
   logo_url?: string;
@@ -122,7 +125,7 @@ export interface CreateAgencyRequest {
   secondary_color?: string;
 }
 
-export interface UpdateAgencyRequest {
+export interface UpdateTeamRequest {
   name?: string;
   logo_url?: string;
   primary_color?: string;
@@ -131,12 +134,12 @@ export interface UpdateAgencyRequest {
 
 export interface InviteUserRequest {
   email: string;
-  role: Exclude<AgencyRole, 'owner'>;
+  role: Exclude<TeamRole, 'owner'>;
 }
 
 export interface UpdateMemberRequest {
-  role?: AgencyRole;
-  permissions?: Partial<AgencyPermissions>;
+  role?: TeamRole;
+  permissions?: Partial<TeamPermissions>;
   status?: MemberStatus;
 }
 
@@ -144,7 +147,7 @@ export interface UpdateMemberRequest {
 // Default Permissions by Role
 // ============================================
 
-export const DEFAULT_PERMISSIONS: Record<AgencyRole, AgencyPermissions> = {
+export const DEFAULT_PERMISSIONS: Record<TeamRole, TeamPermissions> = {
   owner: {
     can_create_tasks: true,
     can_delete_tasks: true,
@@ -183,28 +186,28 @@ export const SUBSCRIPTION_LIMITS: Record<SubscriptionTier, { users: number; stor
 // ============================================
 
 /**
- * Check if user has a specific permission in their current agency
+ * Check if user has a specific permission in their current team
  */
 export function hasPermission(
-  permissions: AgencyPermissions | null | undefined,
-  permission: keyof AgencyPermissions
+  permissions: TeamPermissions | null | undefined,
+  permission: keyof TeamPermissions
 ): boolean {
   if (!permissions) return false;
   return permissions[permission] === true;
 }
 
 /**
- * Check if user is agency owner
+ * Check if user is team owner
  */
-export function isAgencyOwner(membership: AgencyMembership | AgencyMember | null | undefined): boolean {
+export function isTeamOwner(membership: TeamMembership | TeamMember | null | undefined): boolean {
   if (!membership) return false;
   return membership.role === 'owner';
 }
 
 /**
- * Check if user is agency admin (owner or admin)
+ * Check if user is team admin (owner or admin)
  */
-export function isAgencyAdmin(membership: AgencyMembership | AgencyMember | null | undefined): boolean {
+export function isTeamAdmin(membership: TeamMembership | TeamMember | null | undefined): boolean {
   if (!membership) return false;
   return membership.role === 'owner' || membership.role === 'admin';
 }
@@ -212,9 +215,9 @@ export function isAgencyAdmin(membership: AgencyMembership | AgencyMember | null
 /**
  * Check if user can view strategic goals
  */
-export function canViewGoals(membership: AgencyMembership | AgencyMember | null | undefined): boolean {
+export function canViewGoals(membership: TeamMembership | TeamMember | null | undefined): boolean {
   if (!membership) return false;
-  if (isAgencyAdmin(membership)) return true;
+  if (isTeamAdmin(membership)) return true;
   const permissions = 'permissions' in membership ? membership.permissions : null;
   return hasPermission(permissions, 'can_view_strategic_goals');
 }
@@ -222,17 +225,17 @@ export function canViewGoals(membership: AgencyMembership | AgencyMember | null 
 /**
  * Check if user can invite other users
  */
-export function canInviteUsers(membership: AgencyMembership | AgencyMember | null | undefined): boolean {
+export function canInviteUsers(membership: TeamMembership | TeamMember | null | undefined): boolean {
   if (!membership) return false;
-  if (isAgencyAdmin(membership)) return true;
+  if (isTeamAdmin(membership)) return true;
   const permissions = 'permissions' in membership ? membership.permissions : null;
   return hasPermission(permissions, 'can_invite_users');
 }
 
 /**
- * Generate URL-friendly slug from agency name
+ * Generate URL-friendly slug from team name
  */
-export function generateAgencySlug(name: string): string {
+export function generateTeamSlug(name: string): string {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -243,7 +246,37 @@ export function generateAgencySlug(name: string): string {
 /**
  * Check if invitation is still valid (not expired and not accepted)
  */
-export function isInvitationValid(invitation: AgencyInvitation): boolean {
+export function isInvitationValid(invitation: TeamInvitation): boolean {
   if (invitation.accepted_at) return false;
   return new Date(invitation.expires_at) > new Date();
 }
+
+// ============================================
+// Backward Compatibility Aliases
+// ============================================
+// These aliases allow gradual migration from agency to team terminology
+
+/** @deprecated Use Team instead */
+export type Agency = Team;
+/** @deprecated Use TeamRole instead */
+export type AgencyRole = TeamRole;
+/** @deprecated Use TeamPermissions instead */
+export type AgencyPermissions = TeamPermissions;
+/** @deprecated Use TeamMember instead */
+export type AgencyMember = TeamMember;
+/** @deprecated Use TeamMembership instead */
+export type AgencyMembership = TeamMembership;
+/** @deprecated Use TeamInvitation instead */
+export type AgencyInvitation = TeamInvitation;
+/** @deprecated Use TeamContext instead */
+export type AgencyContext = TeamContext;
+/** @deprecated Use CreateTeamRequest instead */
+export type CreateAgencyRequest = CreateTeamRequest;
+/** @deprecated Use UpdateTeamRequest instead */
+export type UpdateAgencyRequest = UpdateTeamRequest;
+/** @deprecated Use isTeamOwner instead */
+export const isAgencyOwner = isTeamOwner;
+/** @deprecated Use isTeamAdmin instead */
+export const isAgencyAdmin = isTeamAdmin;
+/** @deprecated Use generateTeamSlug instead */
+export const generateAgencySlug = generateTeamSlug;

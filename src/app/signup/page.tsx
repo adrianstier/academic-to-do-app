@@ -14,14 +14,14 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { generateAgencySlug } from '@/types/agency';
+import { generateTeamSlug } from '@/types/team';
 import { isFeatureEnabled } from '@/lib/featureFlags';
 
 // ============================================
 // Types
 // ============================================
 
-type Step = 'account' | 'agency' | 'complete';
+type Step = 'account' | 'team' | 'complete';
 
 interface FormData {
   // Account info
@@ -29,9 +29,9 @@ interface FormData {
   email: string;
   pin: string;
   confirmPin: string;
-  // Agency info
-  agencyName: string;
-  agencySlug: string;
+  // Team info
+  teamName: string;
+  teamSlug: string;
 }
 
 // ============================================
@@ -48,8 +48,8 @@ export default function SignupPage() {
     email: '',
     pin: '',
     confirmPin: '',
-    agencyName: '',
-    agencySlug: '',
+    teamName: '',
+    teamSlug: '',
   });
 
   // Check if multi-tenancy is enabled
@@ -59,7 +59,7 @@ export default function SignupPage() {
         <div className="text-center">
           <Building2 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-            Multi-Agency Signup Not Available
+            Multi-Team Signup Not Available
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             This feature is not currently enabled.
@@ -79,9 +79,9 @@ export default function SignupPage() {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
 
-      // Auto-generate slug from agency name
-      if (field === 'agencyName') {
-        updated.agencySlug = generateAgencySlug(value);
+      // Auto-generate slug from team name
+      if (field === 'teamName') {
+        updated.teamSlug = generateTeamSlug(value);
       }
 
       return updated;
@@ -113,20 +113,20 @@ export default function SignupPage() {
     return true;
   };
 
-  const validateAgencyStep = (): boolean => {
-    if (!formData.agencyName.trim()) {
-      setError('Please enter an agency name');
+  const validateTeamStep = (): boolean => {
+    if (!formData.teamName.trim()) {
+      setError('Please enter a team name');
       return false;
     }
-    if (formData.agencyName.length < 3) {
-      setError('Agency name must be at least 3 characters');
+    if (formData.teamName.length < 3) {
+      setError('Team name must be at least 3 characters');
       return false;
     }
-    if (!formData.agencySlug.trim()) {
+    if (!formData.teamSlug.trim()) {
       setError('Please enter a URL slug');
       return false;
     }
-    if (!/^[a-z0-9-]+$/.test(formData.agencySlug)) {
+    if (!/^[a-z0-9-]+$/.test(formData.teamSlug)) {
       setError('Slug can only contain lowercase letters, numbers, and hyphens');
       return false;
     }
@@ -136,17 +136,17 @@ export default function SignupPage() {
   const handleNextStep = () => {
     if (step === 'account') {
       if (validateAccountStep()) {
-        setStep('agency');
+        setStep('team');
       }
-    } else if (step === 'agency') {
-      if (validateAgencyStep()) {
+    } else if (step === 'team') {
+      if (validateTeamStep()) {
         handleSignup();
       }
     }
   };
 
   const handlePrevStep = () => {
-    if (step === 'agency') {
+    if (step === 'team') {
       setStep('account');
     }
   };
@@ -180,15 +180,15 @@ export default function SignupPage() {
         return;
       }
 
-      // Check if agency slug is taken
-      const { data: existingAgency } = await supabase
+      // Check if team slug is taken
+      const { data: existingTeam } = await supabase
         .from('agencies')
         .select('id')
-        .eq('slug', formData.agencySlug)
+        .eq('slug', formData.teamSlug)
         .single();
 
-      if (existingAgency) {
-        setError('This agency URL is already taken. Please choose another.');
+      if (existingTeam) {
+        setError('This team URL is already taken. Please choose another.');
         setIsLoading(false);
         return;
       }
@@ -200,7 +200,7 @@ export default function SignupPage() {
           name: formData.userName.trim(),
           email: formData.email.trim() || null,
           pin_hash: pinHash,
-          color: '#0033A0', // Default Allstate blue
+          color: '#1e3a5f', // Default academic blue
           global_role: 'user',
         })
         .select()
@@ -208,17 +208,17 @@ export default function SignupPage() {
 
       if (userError) throw userError;
 
-      // Create agency with owner
-      const { data: agencyResult, error: agencyError } = await supabase
+      // Create team with owner
+      const { data: teamResult, error: teamError } = await supabase
         .rpc('create_agency_with_owner', {
-          p_name: formData.agencyName.trim(),
-          p_slug: formData.agencySlug.trim(),
+          p_name: formData.teamName.trim(),
+          p_slug: formData.teamSlug.trim(),
           p_user_id: newUser.id,
         });
 
-      if (agencyError) throw agencyError;
+      if (teamError) throw teamError;
 
-      console.log('Created agency:', agencyResult);
+      console.log('Created team:', teamResult);
 
       setStep('complete');
     } catch (err) {
@@ -236,7 +236,7 @@ export default function SignupPage() {
   // Step indicator
   const steps = [
     { key: 'account', label: 'Account' },
-    { key: 'agency', label: 'Agency' },
+    { key: 'team', label: 'Team' },
     { key: 'complete', label: 'Complete' },
   ];
 
@@ -247,11 +247,11 @@ export default function SignupPage() {
       {/* Logo */}
       <div className="mb-8 text-center">
         <div className="inline-flex items-center gap-2 mb-2">
-          <div className="w-10 h-10 bg-[#0033A0] rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-[#1e3a5f] rounded-lg flex items-center justify-center">
             <Building2 className="w-6 h-6 text-white" />
           </div>
           <span className="text-2xl font-bold text-gray-900 dark:text-white">
-            Allstate Agency
+            Academic Projects
           </span>
         </div>
         <p className="text-gray-500 dark:text-gray-400">
@@ -343,7 +343,7 @@ export default function SignupPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => updateFormData('email', e.target.value)}
-                    placeholder="john@allstate.com"
+                    placeholder="john@university.edu"
                     className="
                       w-full px-4 py-2.5 rounded-lg
                       border border-gray-300 dark:border-gray-600
@@ -412,29 +412,29 @@ export default function SignupPage() {
             </>
           )}
 
-          {/* Agency Step */}
-          {step === 'agency' && (
+          {/* Team Step */}
+          {step === 'team' && (
             <>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                Set Up Your Agency
+                Set Up Your Team
               </h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-                Create your agency workspace
+                Create your team workspace
               </p>
 
               <div className="space-y-4">
-                {/* Agency Name */}
+                {/* Team Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Agency Name
+                    Team Name
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      value={formData.agencyName}
-                      onChange={(e) => updateFormData('agencyName', e.target.value)}
-                      placeholder="e.g., Smith Insurance Agency"
+                      value={formData.teamName}
+                      onChange={(e) => updateFormData('teamName', e.target.value)}
+                      placeholder="e.g., Smith Research Lab"
                       className="
                         w-full pl-10 pr-4 py-2.5 rounded-lg
                         border border-gray-300 dark:border-gray-600
@@ -447,18 +447,18 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Agency Slug */}
+                {/* Team Slug */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Agency URL
+                    Team URL
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-400 text-sm">allstate-tasks.com/</span>
+                    <span className="text-gray-400 text-sm">academic-projects.app/</span>
                     <input
                       type="text"
-                      value={formData.agencySlug}
-                      onChange={(e) => updateFormData('agencySlug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      placeholder="smith-agency"
+                      value={formData.teamSlug}
+                      onChange={(e) => updateFormData('teamSlug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                      placeholder="smith-lab"
                       className="
                         flex-1 px-4 py-2.5 rounded-lg
                         border border-gray-300 dark:border-gray-600
@@ -471,7 +471,7 @@ export default function SignupPage() {
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-400">
-                    This will be your unique agency URL
+                    This will be your unique team URL
                   </p>
                 </div>
               </div>
@@ -485,10 +485,10 @@ export default function SignupPage() {
                 <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome to Allstate Tasks!
+                Welcome to Academic Project Manager!
               </h2>
               <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Your account and agency have been created successfully.
+                Your account and team have been created successfully.
               </p>
               <button
                 onClick={handleGoToLogin}
@@ -548,7 +548,7 @@ export default function SignupPage() {
                   </>
                 ) : (
                   <>
-                    {step === 'agency' ? 'Create Agency' : 'Next'}
+                    {step === 'team' ? 'Create Team' : 'Next'}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

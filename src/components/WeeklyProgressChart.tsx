@@ -307,7 +307,7 @@ export default function WeeklyProgressChart({
                       isToday
                         ? metGoal
                           ? 'bg-gradient-to-t from-emerald-600 to-emerald-400'
-                          : 'bg-gradient-to-t from-[var(--brand-blue)] to-[#0047CC]'
+                          : 'bg-gradient-to-t from-[var(--brand-blue)] to-[var(--brand-blue-light)]'
                         : day.completed > 0
                           ? metGoal
                             ? darkMode ? 'bg-emerald-500/40' : 'bg-emerald-500/30'

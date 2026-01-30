@@ -220,7 +220,7 @@ async function generateDigestForUser(
   );
 
   // Build the AI prompt
-  const prompt = `You are generating a personalized ${digestType} briefing for ${userName} at Bealer Agency (an Allstate insurance agency).
+  const prompt = `You are generating a personalized ${digestType} briefing for ${userName} on an academic research team.
 
 Today is ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
@@ -246,7 +246,7 @@ ${recentActivityTyped.length > 0
   ? recentActivityTyped.slice(0, 20).map(formatActivityForPrompt).join('\n')
   : 'No recent activity recorded.'}
 
-Based on this data, generate a personalized ${digestType} briefing. Be encouraging, professional, and insurance-industry aware.
+Based on this data, generate a personalized ${digestType} briefing. Be encouraging, professional, and aware of academic research workflows.
 
 Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
 {
@@ -259,7 +259,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
 
 Guidelines:
 - Keep summaries concise but warm and personalized
-- Use insurance terminology naturally when relevant (policies, claims, renewals, etc.)
+- Use academic terminology naturally when relevant (manuscripts, submissions, deadlines, data analysis, etc.)
 - If there are urgent/high priority overdue tasks, emphasize those
 - For focus suggestion, consider: urgent items first, then high priority, then by due date
 - Acknowledge team wins to boost morale

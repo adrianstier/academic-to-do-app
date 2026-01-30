@@ -301,7 +301,7 @@ function generateReport(analysis: AnalysisResult): string {
 
   lines.push('═'.repeat(70));
   lines.push('                    TASK ANALYSIS REPORT');
-  lines.push('                    Bealer Agency Todo App');
+  lines.push('                    Academic Project Manager');
   lines.push(`                    Generated: ${new Date().toLocaleString()}`);
   lines.push('═'.repeat(70));
   lines.push('');

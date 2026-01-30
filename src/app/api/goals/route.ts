@@ -6,12 +6,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Legacy owner name for backward compatibility
-const LEGACY_OWNER_NAME = 'Derrick';
-
 /**
  * Verify owner access by checking user's role in database
- * Falls back to name check for backward compatibility
+ * Relies solely on role-based permission system
  */
 async function verifyOwnerAccess(userName: string | null): Promise<boolean> {
   if (!userName) return false;
@@ -24,20 +21,12 @@ async function verifyOwnerAccess(userName: string | null): Promise<boolean> {
       .single();
 
     if (error || !user) {
-      // Fall back to legacy name check
-      return userName === LEGACY_OWNER_NAME;
+      return false;
     }
 
-    // Check role first, then fall back to legacy name check
-    if (user.role === 'owner' || user.role === 'admin') {
-      return true;
-    }
-
-    // Legacy fallback
-    return userName === LEGACY_OWNER_NAME;
+    return user.role === 'owner' || user.role === 'admin';
   } catch {
-    // On error, fall back to legacy check
-    return userName === LEGACY_OWNER_NAME;
+    return false;
   }
 }
 

@@ -2,17 +2,17 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, ChevronDown, Check, Plus, Shield, Crown, User } from 'lucide-react';
-import { useAgency } from '@/contexts/AgencyContext';
-import type { AgencyRole } from '@/types/agency';
+import { Users, ChevronDown, Check, Plus, Shield, Crown, User } from 'lucide-react';
+import { useTeam } from '@/contexts/TeamContext';
+import type { TeamRole } from '@/types/team';
 
 // ============================================
 // Types
 // ============================================
 
-interface AgencySwitcherProps {
-  /** Callback when "Create Agency" is clicked */
-  onCreateAgency?: () => void;
+interface TeamSwitcherProps {
+  /** Callback when "Create Team" is clicked */
+  onCreateTeam?: () => void;
   /** Size variant */
   size?: 'sm' | 'md' | 'lg';
   /** Show role badge */
@@ -25,7 +25,7 @@ interface AgencySwitcherProps {
 // Helper Functions
 // ============================================
 
-const getRoleIcon = (role: AgencyRole) => {
+const getRoleIcon = (role: TeamRole) => {
   switch (role) {
     case 'owner':
       return <Crown className="w-3 h-3" />;
@@ -36,7 +36,7 @@ const getRoleIcon = (role: AgencyRole) => {
   }
 };
 
-const getRoleLabel = (role: AgencyRole) => {
+const getRoleLabel = (role: TeamRole) => {
   switch (role) {
     case 'owner':
       return 'Owner';
@@ -47,7 +47,7 @@ const getRoleLabel = (role: AgencyRole) => {
   }
 };
 
-const getRoleColor = (role: AgencyRole) => {
+const getRoleColor = (role: TeamRole) => {
   switch (role) {
     case 'owner':
       return 'text-yellow-500';
@@ -62,20 +62,20 @@ const getRoleColor = (role: AgencyRole) => {
 // Component
 // ============================================
 
-export function AgencySwitcher({
-  onCreateAgency,
+export function TeamSwitcher({
+  onCreateTeam,
   size = 'md',
   showRole = true,
   className = '',
-}: AgencySwitcherProps) {
+}: TeamSwitcherProps) {
   const {
-    currentAgency,
+    currentTeam,
     currentRole,
-    agencies,
+    teams,
     isLoading,
     isMultiTenancyEnabled,
-    switchAgency,
-  } = useAgency();
+    switchTeam,
+  } = useTeam();
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -116,8 +116,8 @@ export function AgencySwitcher({
     lg: 'px-4 py-2.5 text-base',
   };
 
-  const handleSelectAgency = async (agencyId: string) => {
-    await switchAgency(agencyId);
+  const handleSelectTeam = async (teamId: string) => {
+    await switchTeam(teamId);
     setIsOpen(false);
   };
 
@@ -139,17 +139,17 @@ export function AgencySwitcher({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        {/* Agency Icon */}
+        {/* Team Icon */}
         <div
           className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
-          style={{ backgroundColor: currentAgency?.primary_color || '#0033A0' }}
+          style={{ backgroundColor: currentTeam?.primary_color || '#4F46E5' }}
         >
-          {currentAgency?.name?.charAt(0) || <Building2 className="w-4 h-4" />}
+          {currentTeam?.name?.charAt(0) || <Users className="w-4 h-4" />}
         </div>
 
-        {/* Agency Name */}
+        {/* Team Name */}
         <span className="font-medium text-gray-900 dark:text-white truncate max-w-[150px]">
-          {isLoading ? 'Loading...' : (currentAgency?.name || 'Select Agency')}
+          {isLoading ? 'Loading...' : (currentTeam?.name || 'Select Team')}
         </span>
 
         {/* Role Badge */}
@@ -185,48 +185,48 @@ export function AgencySwitcher({
             {/* Header */}
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Your Agencies
+                Your Teams
               </p>
             </div>
 
-            {/* Agency List */}
+            {/* Team List */}
             <div className="max-h-64 overflow-y-auto py-1">
-              {agencies.length === 0 ? (
+              {teams.length === 0 ? (
                 <div className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
-                  <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No agencies yet</p>
+                  <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No teams yet</p>
                 </div>
               ) : (
-                agencies.map((agency) => (
+                teams.map((team) => (
                   <button
-                    key={agency.agency_id}
-                    onClick={() => handleSelectAgency(agency.agency_id)}
+                    key={team.team_id}
+                    onClick={() => handleSelectTeam(team.team_id)}
                     className={`
                       w-full flex items-center gap-3 px-3 py-2
                       hover:bg-gray-50 dark:hover:bg-gray-700
                       transition-colors text-left
-                      ${agency.agency_id === currentAgency?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
+                      ${team.team_id === currentTeam?.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
                     `}
                     role="option"
-                    aria-selected={agency.agency_id === currentAgency?.id}
+                    aria-selected={team.team_id === currentTeam?.id}
                   >
-                    {/* Agency Icon */}
+                    {/* Team Icon */}
                     <div
                       className="w-8 h-8 rounded flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                      style={{ backgroundColor: '#0033A0' }} // Default color, could be stored per agency
+                      style={{ backgroundColor: '#1e3a5f' }} // Academic navy
                     >
-                      {agency.agency_name.charAt(0)}
+                      {team.team_name.charAt(0)}
                     </div>
 
-                    {/* Agency Info */}
+                    {/* Team Info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {agency.agency_name}
+                        {team.team_name}
                       </p>
-                      <p className={`text-xs flex items-center gap-1 ${getRoleColor(agency.role)}`}>
-                        {getRoleIcon(agency.role)}
-                        {getRoleLabel(agency.role)}
-                        {agency.is_default && (
+                      <p className={`text-xs flex items-center gap-1 ${getRoleColor(team.role)}`}>
+                        {getRoleIcon(team.role)}
+                        {getRoleLabel(team.role)}
+                        {team.is_default && (
                           <span className="text-gray-400 dark:text-gray-500 ml-1">
                             (Default)
                           </span>
@@ -235,7 +235,7 @@ export function AgencySwitcher({
                     </div>
 
                     {/* Selected Checkmark */}
-                    {agency.agency_id === currentAgency?.id && (
+                    {team.team_id === currentTeam?.id && (
                       <Check className="w-5 h-5 text-blue-500 flex-shrink-0" />
                     )}
                   </button>
@@ -243,14 +243,14 @@ export function AgencySwitcher({
               )}
             </div>
 
-            {/* Create Agency Button */}
-            {onCreateAgency && (
+            {/* Create Team Button */}
+            {onCreateTeam && (
               <>
                 <div className="border-t border-gray-200 dark:border-gray-700" />
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    onCreateAgency();
+                    onCreateTeam();
                   }}
                   className="
                     w-full flex items-center gap-2 px-3 py-2
@@ -260,7 +260,7 @@ export function AgencySwitcher({
                   "
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="text-sm font-medium">Create New Agency</span>
+                  <span className="text-sm font-medium">Create New Team</span>
                 </button>
               </>
             )}
@@ -275,14 +275,14 @@ export function AgencySwitcher({
 // Mini Variant for Compact Spaces
 // ============================================
 
-interface AgencySwitcherMiniProps {
+interface TeamSwitcherMiniProps {
   className?: string;
 }
 
-export function AgencySwitcherMini({ className = '' }: AgencySwitcherMiniProps) {
-  const { currentAgency, isMultiTenancyEnabled } = useAgency();
+export function TeamSwitcherMini({ className = '' }: TeamSwitcherMiniProps) {
+  const { currentTeam, isMultiTenancyEnabled } = useTeam();
 
-  if (!isMultiTenancyEnabled || !currentAgency) {
+  if (!isMultiTenancyEnabled || !currentTeam) {
     return null;
   }
 
@@ -297,13 +297,22 @@ export function AgencySwitcherMini({ className = '' }: AgencySwitcherMiniProps) 
     >
       <div
         className="w-4 h-4 rounded flex items-center justify-center text-white text-[10px] font-bold"
-        style={{ backgroundColor: currentAgency.primary_color || '#0033A0' }}
+        style={{ backgroundColor: currentTeam.primary_color || '#4F46E5' }}
       >
-        {currentAgency.name.charAt(0)}
+        {currentTeam.name.charAt(0)}
       </div>
-      <span className="truncate max-w-[100px]">{currentAgency.name}</span>
+      <span className="truncate max-w-[100px]">{currentTeam.name}</span>
     </div>
   );
 }
 
-export default AgencySwitcher;
+// ============================================
+// Backward Compatibility Aliases
+// ============================================
+
+/** @deprecated Use TeamSwitcher instead */
+export const AgencySwitcher = TeamSwitcher;
+/** @deprecated Use TeamSwitcherMini instead */
+export const AgencySwitcherMini = TeamSwitcherMini;
+
+export default TeamSwitcher;

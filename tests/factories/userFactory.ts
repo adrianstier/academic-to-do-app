@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { AuthUser, User } from '@/types/todo';
 
 const USER_COLORS = [
-  '#0033A0', // Allstate Blue
+  '#0033A0', // Academic Blue
   '#059669', // Green
   '#7c3aed', // Purple
   '#dc2626', // Red

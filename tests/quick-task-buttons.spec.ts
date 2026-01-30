@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate } from './fixtures/helpers';
 
 /**
  * E2E Tests for QuickTaskButtons Component
@@ -10,65 +11,10 @@ import { test, expect, Page } from '@playwright/test';
  * - Responsive grid behavior
  */
 
-// Helper to login with an existing user by selecting them and entering PIN
-async function loginAsExistingUser(page: Page, userName: string = 'Derrick', pin: string = '8008') {
-  await page.goto('/');
-
-  // Wait for login screen - look for "Welcome back" text which is always visible
-  const welcomeText = page.locator('text=Welcome back').first();
-  await expect(welcomeText).toBeVisible({ timeout: 15000 });
-
-  // Wait for users list to load
-  await page.waitForTimeout(1000);
-
-  // Click on the user card to select them
-  const userCard = page.locator('button').filter({ hasText: userName }).first();
-  await expect(userCard).toBeVisible({ timeout: 10000 });
-  await userCard.click();
-
-  // Wait for PIN entry screen
-  await page.waitForTimeout(500);
-
-  // Enter PIN - look for 4 password inputs
-  const pinInputs = page.locator('input[type="password"]');
-  await expect(pinInputs.first()).toBeVisible({ timeout: 5000 });
-
-  // Enter each digit of the PIN
-  for (let i = 0; i < 4; i++) {
-    await pinInputs.nth(i).fill(pin[i]);
-    await page.waitForTimeout(100); // Small delay between digits
-  }
-
-  // Wait for automatic login after PIN entry
-  await page.waitForTimeout(2000);
-
-  // Close welcome modal if present (click outside, X button, or View Tasks button)
-  const viewTasksBtn = page.locator('button').filter({ hasText: 'View Tasks' });
-  const closeModalBtn = page.locator('button[aria-label*="close"]').or(page.locator('button svg.lucide-x').locator('..'));
-
-  // Try clicking View Tasks first (most reliable)
-  if (await viewTasksBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await viewTasksBtn.click();
-    await page.waitForTimeout(500);
-  }
-  // Or try clicking the close button
-  else if (await closeModalBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await closeModalBtn.click();
-    await page.waitForTimeout(500);
-  }
-
-  // Wait for main app to load - use correct placeholder text
-  const todoInput = page.locator('textarea[placeholder*="Add a task"]')
-    .or(page.locator('textarea[placeholder*="task"]').first());
-  await expect(todoInput).toBeVisible({ timeout: 15000 });
-
-  return todoInput;
-}
-
 test.describe('QuickTaskButtons', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the app and log in
-    await loginAsExistingUser(page);
+    await setupAndNavigate(page);
   });
 
   test('displays quick task buttons section', async ({ page }) => {
@@ -203,7 +149,7 @@ test.describe('QuickTaskButtons Responsive Grid', () => {
   test('shows 6 templates on desktop', async ({ page }) => {
     // Set desktop viewport before navigation
     await page.setViewportSize({ width: 1280, height: 720 });
-    await loginAsExistingUser(page);
+    await setupAndNavigate(page);
 
     // Wait for templates
     await page.waitForSelector('text=Quick Add', { timeout: 10000 });
@@ -234,7 +180,7 @@ test.describe('QuickTaskButtons Responsive Grid', () => {
   test('shows 4 templates on mobile', async ({ page }) => {
     // Set mobile viewport before navigation
     await page.setViewportSize({ width: 375, height: 667 });
-    await loginAsExistingUser(page);
+    await setupAndNavigate(page);
 
     // Wait for templates
     await page.waitForSelector('text=Quick Add', { timeout: 10000 });
@@ -263,7 +209,7 @@ test.describe('QuickTaskButtons Responsive Grid', () => {
   test('grid has correct columns on desktop', async ({ page }) => {
     // Set desktop viewport before navigation
     await page.setViewportSize({ width: 1280, height: 720 });
-    await loginAsExistingUser(page);
+    await setupAndNavigate(page);
     await page.waitForSelector('text=Quick Add', { timeout: 10000 });
 
     // Check grid styling - should have grid-cols-3 on desktop

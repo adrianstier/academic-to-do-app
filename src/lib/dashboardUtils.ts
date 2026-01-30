@@ -4,8 +4,8 @@
  * while keeping the utility functions available synchronously.
  */
 
-const DAILY_VISIT_KEY = 'bealer-last-dashboard-visit';
-const DISABLE_AUTO_OPEN_KEY = 'bealer-disable-dashboard-auto-open';
+const DAILY_VISIT_KEY = 'academic-pm-last-dashboard-visit';
+const DISABLE_AUTO_OPEN_KEY = 'academic-pm-disable-dashboard-auto-open';
 
 /**
  * Check if the daily dashboard should be shown.

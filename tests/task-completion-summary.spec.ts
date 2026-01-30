@@ -6,73 +6,11 @@
  */
 
 import { test, expect, Page } from '@playwright/test';
+import { setupAndNavigate } from './fixtures/helpers';
 
-// Test user credentials - available for tests that need unique users
-const _TEST_USER = {
-  name: `TestUser${Date.now()}`,
-  pin: '1234',
-};
-
-// Helper to register and login a test user - available for tests
-async function _registerAndLogin(page: Page, userName: string, pin: string) {
-  await page.goto('/');
-
-  // Wait for login screen
-  const header = page.locator('h1').filter({ hasText: 'Bealer Agency' });
-  await expect(header).toBeVisible({ timeout: 15000 });
-
-  // Click Add New User button
-  const addUserBtn = page.getByRole('button', { name: 'Add New User' });
-  await addUserBtn.click();
-
-  // Fill registration
-  const nameInput = page.locator('input[placeholder="Enter name"]').or(page.locator('input[type="text"]').first());
-  await expect(nameInput).toBeVisible({ timeout: 5000 });
-  await nameInput.fill(userName);
-
-  // Enter PIN
-  const pinInputs = page.locator('input[type="password"]');
-  for (let i = 0; i < 4; i++) {
-    await pinInputs.nth(i).fill(pin[i] || '1');
-  }
-  // Confirm PIN
-  for (let i = 4; i < 8; i++) {
-    await pinInputs.nth(i).fill(pin[i - 4] || '1');
-  }
-
-  // Create account
-  const createBtn = page.getByRole('button', { name: 'Create Account' });
-  await createBtn.click();
-
-  // Wait for main app
-  const todoInput = page.locator('textarea[placeholder="What needs to be done?"]');
-  await expect(todoInput).toBeVisible({ timeout: 15000 });
-}
-
-// Helper to create and complete a task - available for tests
-async function _createAndCompleteTask(page: Page, taskName: string) {
-  const todoInput = page.locator('textarea[placeholder="What needs to be done?"]');
-  await todoInput.click();
-  await todoInput.fill(taskName);
-  await page.keyboard.press('Enter');
-
-  // Wait for task to appear
-  await page.waitForTimeout(1500);
-  await expect(page.locator(`text=${taskName}`).first()).toBeVisible({ timeout: 10000 });
-
-  // Find and click the checkbox to complete the task
-  const taskCheckbox = page.locator(`[data-testid="task-checkbox"]`).first();
-  if (await taskCheckbox.isVisible()) {
-    await taskCheckbox.click();
-  } else {
-    // Alternative: click on the task's completion area
-    const task = page.locator(`text=${taskName}`).first();
-    const taskContainer = task.locator('..').locator('..');
-    const checkbox = taskContainer.locator('button').first();
-    await checkbox.click();
-  }
-
-  await page.waitForTimeout(1000);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function loginAsExistingUser(page: Page) {
+  await setupAndNavigate(page);
 }
 
 test.describe('TaskCompletionSummary Component', () => {
