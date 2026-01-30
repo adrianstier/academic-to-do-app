@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, ReactNode, useCallback } from 'react';
+import { useEffect, useRef, useState, ReactNode, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import {
@@ -73,6 +74,11 @@ export function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const modalId = useRef(`modal-${Math.random().toString(36).slice(2, 9)}`);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const titleId = ariaLabelledBy || `${modalId.current}-title`;
   const descriptionId = ariaDescribedBy || `${modalId.current}-description`;
@@ -146,7 +152,7 @@ export function Modal({
   // Respect reduced motion preference
   const reducedMotion = prefersReducedMotion();
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -226,6 +232,13 @@ export function Modal({
       )}
     </AnimatePresence>
   );
+
+  // Portal to document.body to escape parent stacking contexts
+  if (mounted) {
+    return createPortal(modalContent, document.body);
+  }
+
+  return null;
 }
 
 /**

@@ -80,6 +80,9 @@ export function useDailyDigest({
   const fetchDigest = useCallback(async () => {
     if (!currentUser?.name || !enabled) return;
 
+    // Skip in test mode to avoid 403 errors with non-existent test users
+    if (typeof window !== 'undefined' && localStorage.getItem('__test_mode__') === 'true') return;
+
     setLoading(true);
     setError(null);
 

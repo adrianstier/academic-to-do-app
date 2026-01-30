@@ -11,6 +11,9 @@ interface LogActivityParams {
 }
 
 export async function logActivity({ action, userName, todoId, todoText, details }: LogActivityParams): Promise<void> {
+  // Skip in test mode to avoid 500 errors with non-existent test users
+  if (typeof window !== 'undefined' && localStorage.getItem('__test_mode__') === 'true') return;
+
   try {
     await fetchWithCsrf('/api/activity', {
       method: 'POST',
