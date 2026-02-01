@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 // Configure web-push with VAPID keys
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -151,7 +152,7 @@ async function sendToSubscription(
  *
  * Send web push notifications to specified users.
  */
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   // Validate VAPID configuration
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     return NextResponse.json(
@@ -261,4 +262,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

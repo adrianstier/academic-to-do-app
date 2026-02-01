@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 import type { Todo, ActivityLogEntry } from '@/types/todo';
 
 // Initialize Anthropic client
@@ -55,10 +56,6 @@ export interface DailyDigestResponse {
   };
   focusSuggestion: string;
   generatedAt: string;
-}
-
-interface RequestBody {
-  userName: string;
 }
 
 // Helper to get time of day greeting
@@ -121,64 +118,12 @@ function transformTask(task: Todo): DailyDigestTask {
   };
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   const startTime = Date.now();
 
   try {
-    // Parse and validate request body
-    let body: RequestBody;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-    const { userName } = body;
-
-    // Input validation: userName is required and must be a non-empty string
-    if (!userName || typeof userName !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'userName is required' },
-        { status: 400 }
-      );
-    }
-
-    // Input sanitization: trim whitespace and validate length/format
-    const sanitizedUserName = userName.trim();
-    if (sanitizedUserName.length === 0 || sanitizedUserName.length > 100) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid userName format' },
-        { status: 400 }
-      );
-    }
-
-    // Validate userName contains only allowed characters (alphanumeric, spaces, common punctuation)
-    const validUserNamePattern = /^[a-zA-Z0-9\s\-_.]+$/;
-    if (!validUserNamePattern.test(sanitizedUserName)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid userName format' },
-        { status: 400 }
-      );
-    }
-
-    // Authorization check: Verify the user exists in the database
-    // This prevents data enumeration and ensures only valid users can request digests
-    const supabaseForAuth = getSupabaseClient();
-    const { data: userRecord, error: userError } = await supabaseForAuth
-      .from('users')
-      .select('id, name')
-      .eq('name', sanitizedUserName)
-      .single();
-
-    if (userError || !userRecord) {
-      // Use generic error message to prevent user enumeration
-      return NextResponse.json(
-        { success: false, error: 'Unable to generate digest' },
-        { status: 403 }
-      );
-    }
+    // Use authenticated userName from context
+    const sanitizedUserName = context.userName;
 
     // Check for API key
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -202,6 +147,45 @@ export async function POST(request: NextRequest) {
 
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
+    // Build base queries with optional team_id filtering
+    let overdueQuery = supabase
+      .from('todos')
+      .select('*')
+      .lt('due_date', todayStart.toISOString())
+      .eq('completed', false)
+      .order('due_date', { ascending: true });
+
+    let todayQuery = supabase
+      .from('todos')
+      .select('*')
+      .gte('due_date', todayStart.toISOString())
+      .lt('due_date', todayEnd.toISOString())
+      .eq('completed', false)
+      .order('priority', { ascending: false });
+
+    let completedQuery = supabase
+      .from('todos')
+      .select('*')
+      .eq('completed', true)
+      .gte('updated_at', yesterdayStart.toISOString())
+      .lt('updated_at', todayStart.toISOString())
+      .order('updated_at', { ascending: false });
+
+    let activityQuery = supabase
+      .from('activity_log')
+      .select('*')
+      .gte('created_at', last24Hours.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    // Apply team_id filtering if multi-tenancy is active
+    if (context.teamId) {
+      overdueQuery = overdueQuery.eq('team_id', context.teamId);
+      todayQuery = todayQuery.eq('team_id', context.teamId);
+      completedQuery = completedQuery.eq('team_id', context.teamId);
+      activityQuery = activityQuery.eq('team_id', context.teamId);
+    }
+
     // Run all 4 database queries in parallel for better performance
     const [
       overdueResult,
@@ -209,39 +193,10 @@ export async function POST(request: NextRequest) {
       completedResult,
       activityResult,
     ] = await Promise.all([
-      // Query 1: Overdue tasks (due_date < today, not completed)
-      supabase
-        .from('todos')
-        .select('*')
-        .lt('due_date', todayStart.toISOString())
-        .eq('completed', false)
-        .order('due_date', { ascending: true }),
-
-      // Query 2: Tasks due today (not completed)
-      supabase
-        .from('todos')
-        .select('*')
-        .gte('due_date', todayStart.toISOString())
-        .lt('due_date', todayEnd.toISOString())
-        .eq('completed', false)
-        .order('priority', { ascending: false }),
-
-      // Query 3: Tasks completed yesterday by the team
-      supabase
-        .from('todos')
-        .select('*')
-        .eq('completed', true)
-        .gte('updated_at', yesterdayStart.toISOString())
-        .lt('updated_at', todayStart.toISOString())
-        .order('updated_at', { ascending: false }),
-
-      // Query 4: Recent activity log entries (last 24 hours)
-      supabase
-        .from('activity_log')
-        .select('*')
-        .gte('created_at', last24Hours.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(50),
+      overdueQuery,
+      todayQuery,
+      completedQuery,
+      activityQuery,
     ]);
 
     // Check for errors
@@ -420,4 +375,4 @@ Guidelines:
       { status: 500 }
     );
   }
-}
+});

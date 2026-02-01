@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 // Email translation endpoint
 // Translates existing emails from English to Spanish
@@ -38,7 +39,7 @@ ESTILO:
 - Mantén los nombres de personas, instituciones y publicaciones sin traducir
 - Traduce naturalmente, no palabra por palabra`;
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const body: TranslateRequest = await request.json();
     const { subject, body: emailBody, targetLanguage } = body;
@@ -108,4 +109,4 @@ Genera una respuesta JSON con:
       { status: 500 }
     );
   }
-}
+});

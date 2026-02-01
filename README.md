@@ -21,6 +21,12 @@ Security hardening has been completed to meet enterprise application requirement
 
 **To enable alerting:** Set `SECURITY_WEBHOOK_URL` env var to a Slack/Discord webhook.
 
+## Deferred Features
+
+The following features are planned but not yet implemented:
+
+- **Team invitation emails** — When inviting users to a team, invitation links must be copied and shared manually. Email delivery (via Resend or SendGrid) is not yet integrated. The integration point is `src/components/TeamManagement/TeamInviteSection.tsx`.
+
 ## Features
 
 ### Core Task Management

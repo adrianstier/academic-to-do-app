@@ -1,49 +1,26 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { withTeamAdminAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-/**
- * Verify owner access by checking user's role in database
- * Relies solely on role-based permission system
- */
-async function verifyOwnerAccess(userName: string | null): Promise<boolean> {
-  if (!userName) return false;
-
-  try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('role')
-      .eq('name', userName)
-      .single();
-
-    if (error || !user) {
-      return false;
-    }
-
-    return user.role === 'owner' || user.role === 'admin';
-  } catch {
-    return false;
-  }
-}
-
 // GET - Fetch all goal categories
-export async function GET(request: Request) {
+export const GET = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
-    const { searchParams } = new URL(request.url);
-    const userName = searchParams.get('userName');
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    const { data, error } = await supabase
+    let query = supabase
       .from('goal_categories')
       .select('*')
       .order('display_order', { ascending: true });
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -52,40 +29,47 @@ export async function GET(request: Request) {
     logger.error('Error fetching categories', error, { component: 'api/goals/categories', action: 'GET' });
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
   }
-}
+});
 
 // POST - Create a new category
-export async function POST(request: Request) {
+export const POST = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { name, color, icon, userName } = body;
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+    const { name, color, icon } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
     // Get max display_order
-    const { data: maxOrderData } = await supabase
+    let maxOrderQuery = supabase
       .from('goal_categories')
       .select('display_order')
       .order('display_order', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
+
+    if (context.teamId) {
+      maxOrderQuery = maxOrderQuery.eq('team_id', context.teamId);
+    }
+
+    const { data: maxOrderData } = await maxOrderQuery.single();
 
     const nextOrder = (maxOrderData?.display_order || 0) + 1;
 
+    const insertData: Record<string, unknown> = {
+      name,
+      color: color || '#6366f1',
+      icon: icon || 'target',
+      display_order: nextOrder,
+    };
+
+    if (context.teamId) {
+      insertData.team_id = context.teamId;
+    }
+
     const { data, error } = await supabase
       .from('goal_categories')
-      .insert({
-        name,
-        color: color || '#6366f1',
-        icon: icon || 'target',
-        display_order: nextOrder,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -96,17 +80,13 @@ export async function POST(request: Request) {
     logger.error('Error creating category', error, { component: 'api/goals/categories', action: 'POST' });
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });
   }
-}
+});
 
 // PUT - Update a category
-export async function PUT(request: Request) {
+export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { id, name, color, icon, display_order, userName } = body;
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+    const { id, name, color, icon, display_order } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -118,10 +98,17 @@ export async function PUT(request: Request) {
     if (icon !== undefined) updateData.icon = icon;
     if (display_order !== undefined) updateData.display_order = display_order;
 
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('goal_categories')
       .update(updateData)
-      .eq('id', id)
+      .eq('id', id);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      updateQuery = updateQuery.eq('team_id', context.teamId);
+    }
+
+    const { data, error } = await updateQuery
       .select()
       .single();
 
@@ -132,27 +119,29 @@ export async function PUT(request: Request) {
     logger.error('Error updating category', error, { component: 'api/goals/categories', action: 'PUT' });
     return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
   }
-}
+});
 
 // DELETE - Delete a category
-export async function DELETE(request: Request) {
+export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const userName = searchParams.get('userName');
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    let deleteQuery = supabase
       .from('goal_categories')
       .delete()
       .eq('id', id);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      deleteQuery = deleteQuery.eq('team_id', context.teamId);
+    }
+
+    const { error } = await deleteQuery;
 
     if (error) throw error;
 
@@ -161,4 +150,4 @@ export async function DELETE(request: Request) {
     logger.error('Error deleting category', error, { component: 'api/goals/categories', action: 'DELETE' });
     return NextResponse.json({ error: 'Failed to delete category' }, { status: 500 });
   }
-}
+});

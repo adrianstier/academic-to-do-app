@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 // Customer email generation endpoint
 // Generates professional update emails for internal staff to send to customers
@@ -114,7 +115,7 @@ También debes identificar problemas potenciales que el remitente debe revisar a
 - Noticias negativas que puedan necesitar una entrega más suave (notificaciones de rechazo, retrasos, problemas)
 - Menciones de financiamiento, presupuestos o asuntos financieros que deben ser verificados`;
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const body: EmailRequest = await request.json();
     const { customerName, customerEmail, customerPhone, tasks, tone, language = 'english', senderName, includeNextSteps } = body;
@@ -264,4 +265,4 @@ The warnings array should flag any items that need the sender's review before se
       { status: 500 }
     );
   }
-}
+});

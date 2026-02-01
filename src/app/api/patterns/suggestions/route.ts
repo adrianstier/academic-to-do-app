@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 /**
  * GET /api/patterns/suggestions
  *
  * Returns task patterns grouped by category for quick task buttons.
  */
-export async function GET() {
+export const GET = withTeamAuth(async (_request: NextRequest, _context: TeamAuthContext) => {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -59,4 +60,4 @@ export async function GET() {
       total: 0,
     });
   }
-}
+});

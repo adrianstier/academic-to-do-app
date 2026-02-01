@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
 import { analyzeTaskPattern, getAllPatternDefinitions, getCompletionRateWarning } from '@/lib/academicPatterns';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -13,7 +14,7 @@ export interface Subtask {
   estimatedMinutes?: number;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const body = await request.json();
     // Accept both 'text' and 'taskText' for compatibility
@@ -195,4 +196,4 @@ Respond with ONLY the JSON object, no other text.`;
       { status: 500 }
     );
   }
-}
+});

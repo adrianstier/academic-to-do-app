@@ -40,6 +40,14 @@ export interface TeamPermissions {
   can_view_strategic_goals: boolean;
   can_invite_users: boolean;
   can_manage_templates: boolean;
+  /** Only owner can manage team settings (name, slug, color) */
+  can_manage_team_settings: boolean;
+  /** Only owner can transfer ownership */
+  can_transfer_ownership: boolean;
+  /** Only owner can deactivate the team */
+  can_delete_team: boolean;
+  /** Owner and admin can manage member roles */
+  can_manage_roles: boolean;
 }
 
 export interface TeamMember {
@@ -154,6 +162,10 @@ export const DEFAULT_PERMISSIONS: Record<TeamRole, TeamPermissions> = {
     can_view_strategic_goals: true,
     can_invite_users: true,
     can_manage_templates: true,
+    can_manage_team_settings: true,
+    can_transfer_ownership: true,
+    can_delete_team: true,
+    can_manage_roles: true,
   },
   admin: {
     can_create_tasks: true,
@@ -161,6 +173,10 @@ export const DEFAULT_PERMISSIONS: Record<TeamRole, TeamPermissions> = {
     can_view_strategic_goals: true,
     can_invite_users: true,
     can_manage_templates: true,
+    can_manage_team_settings: false,
+    can_transfer_ownership: false,
+    can_delete_team: false,
+    can_manage_roles: true,
   },
   member: {
     can_create_tasks: true,
@@ -168,6 +184,10 @@ export const DEFAULT_PERMISSIONS: Record<TeamRole, TeamPermissions> = {
     can_view_strategic_goals: false,
     can_invite_users: false,
     can_manage_templates: false,
+    can_manage_team_settings: false,
+    can_transfer_ownership: false,
+    can_delete_team: false,
+    can_manage_roles: false,
   },
 };
 

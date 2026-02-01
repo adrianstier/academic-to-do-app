@@ -9,7 +9,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { extractUserName, validateUserName, verifyTodoAccess } from '@/lib/apiAuth';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
+import { verifyTodoAccess } from '@/lib/apiAuth';
 import type { TaskReminder, ReminderType } from '@/types/todo';
 
 // Create Supabase client lazily to avoid build-time errors
@@ -33,11 +34,7 @@ function getSupabaseClient() {
  * - userId: Fetch reminders for a specific user
  * - status: Filter by status ('pending', 'sent', 'failed', 'cancelled')
  */
-export async function GET(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const GET = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   const { searchParams } = new URL(request.url);
   const todoId = searchParams.get('todoId');
   const userId = searchParams.get('userId');
@@ -82,7 +79,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true, reminders: data || [] });
-}
+});
 
 /**
  * POST /api/reminders
@@ -95,11 +92,8 @@ export async function GET(request: NextRequest) {
  * - message?: Custom reminder message
  * - userId?: UUID of user to remind (default: assigned user)
  */
-export async function POST(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
+  const userName = context.userName;
   const supabase = getSupabaseClient();
 
   try {
@@ -153,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access to the todo
-    const { todo, error: accessError } = await verifyTodoAccess(todoId, userName!);
+    const { todo, error: accessError } = await verifyTodoAccess(todoId, userName);
     if (accessError) return accessError;
 
     // Check if task is already completed
@@ -214,7 +208,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/reminders
@@ -223,11 +217,8 @@ export async function POST(request: NextRequest) {
  * Query params:
  * - id: UUID of the reminder to delete
  */
-export async function DELETE(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
+  const userName = context.userName;
   const supabase = getSupabaseClient();
   const { searchParams } = new URL(request.url);
   const reminderId = searchParams.get('id');
@@ -283,7 +274,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
 
 /**
  * PATCH /api/reminders
@@ -295,11 +286,8 @@ export async function DELETE(request: NextRequest) {
  * - status?: New status ('cancelled' to cancel)
  * - message?: Updated message
  */
-export async function PATCH(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const PATCH = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
+  const userName = context.userName;
   const supabase = getSupabaseClient();
 
   try {
@@ -411,4 +399,4 @@ export async function PATCH(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

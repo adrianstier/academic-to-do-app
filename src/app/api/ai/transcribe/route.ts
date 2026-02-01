@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 // Audio file transcription endpoint using OpenAI Whisper + Claude for task parsing
 // Supports three modes:
@@ -29,7 +30,7 @@ const SUPPORTED_MIME_TYPES = [
 
 type ProcessingMode = 'transcribe' | 'tasks' | 'subtasks';
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File | null;
@@ -402,4 +403,4 @@ Rules:
       { status: 500 }
     );
   }
-}
+});

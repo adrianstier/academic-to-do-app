@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Source_Serif_4, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { TeamProvider } from "@/contexts/TeamContext";
 import { ToastProvider } from "@/components/ui";
 import { AuthProvider } from "@/components/AuthProvider";
 
@@ -59,9 +60,11 @@ export default function RootLayout({
       >
         <AuthProvider>
           <ThemeProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <TeamProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </TeamProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

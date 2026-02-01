@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -48,11 +49,14 @@ interface TeamContextType {
   isTeamOwner: boolean;
   /** Check if user is admin (owner or admin) of current team */
   isTeamAdmin: boolean;
+  /** Retry loading after error */
+  retry: () => Promise<void>;
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
 const CURRENT_TEAM_KEY = 'academic-current-team';
+const SESSION_KEY = 'todoSession';
 
 // ============================================
 // Provider Component
@@ -60,29 +64,77 @@ const CURRENT_TEAM_KEY = 'academic-current-team';
 
 interface TeamProviderProps {
   children: ReactNode;
+  /** Optional userId — if not provided, reads from stored session */
   userId?: string;
 }
 
-export function TeamProvider({ children, userId }: TeamProviderProps) {
+export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps) {
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
   const [currentMembership, setCurrentMembership] = useState<TeamMembership | null>(null);
   const [teams, setTeams] = useState<TeamMembership[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [resolvedUserId, setResolvedUserId] = useState<string | undefined>(userIdProp);
+  const refreshTeamsRef = useRef<(() => Promise<void>) | null>(null);
+  const retryCountRef = useRef(0);
 
   const isMultiTenancyEnabled = isFeatureEnabled('multi_tenancy');
 
-  // Load teams on mount or when userId changes
+  // Self-resolve userId from stored session if not provided as prop
   useEffect(() => {
     setMounted(true);
 
+    if (userIdProp) {
+      setResolvedUserId(userIdProp);
+      return;
+    }
+
+    // Read from stored session
+    try {
+      const stored = localStorage.getItem(SESSION_KEY);
+      if (stored) {
+        const session = JSON.parse(stored);
+        if (session.userId) {
+          setResolvedUserId(session.userId);
+        }
+      }
+    } catch {
+      // Invalid session data
+    }
+
+    // Listen for auth changes (dispatched by page.tsx on login/logout)
+    const handleAuthChange = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.userId) {
+        setResolvedUserId(detail.userId);
+      } else {
+        setResolvedUserId(undefined);
+        setTeams([]);
+        setCurrentTeam(null);
+        setCurrentMembership(null);
+      }
+    };
+
+    window.addEventListener('auth-change', handleAuthChange);
+    return () => window.removeEventListener('auth-change', handleAuthChange);
+  }, [userIdProp]);
+
+  // Update resolvedUserId when prop changes
+  useEffect(() => {
+    if (userIdProp !== undefined) {
+      setResolvedUserId(userIdProp);
+    }
+  }, [userIdProp]);
+
+  // Load teams on mount or when userId changes
+  useEffect(() => {
     if (!isMultiTenancyEnabled) {
       setIsLoading(false);
       return;
     }
 
-    if (!userId) {
+    if (!resolvedUserId) {
       setIsLoading(false);
       setTeams([]);
       setCurrentTeam(null);
@@ -90,8 +142,9 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
       return;
     }
 
-    loadUserTeams(userId);
-  }, [userId, isMultiTenancyEnabled]);
+    retryCountRef.current = 0;
+    loadUserTeams(resolvedUserId);
+  }, [resolvedUserId, isMultiTenancyEnabled]);
 
   // Load saved team selection from localStorage
   useEffect(() => {
@@ -115,8 +168,18 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
     }
   }, [mounted, teams, isMultiTenancyEnabled]);
 
+  // Sync currentMembership from teams array when it updates (fix stale permissions)
+  useEffect(() => {
+    if (!currentTeam || teams.length === 0) return;
+
+    const updatedMembership = teams.find(t => t.team_id === currentTeam.id);
+    if (updatedMembership && updatedMembership !== currentMembership) {
+      setCurrentMembership(updatedMembership);
+    }
+  }, [teams, currentTeam]);
+
   /**
-   * Load all teams the user belongs to
+   * Load all teams the user belongs to (with retry + exponential backoff)
    */
   const loadUserTeams = useCallback(async (uid: string) => {
     try {
@@ -210,8 +273,18 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
         }));
 
       setTeams(memberships);
+      retryCountRef.current = 0;
     } catch (err) {
       console.error('Failed to load teams:', err);
+
+      // Retry with exponential backoff (3 attempts: 1s, 2s, 4s)
+      if (retryCountRef.current < 3) {
+        const delay = Math.pow(2, retryCountRef.current) * 1000;
+        retryCountRef.current++;
+        setTimeout(() => loadUserTeams(uid), delay);
+        return;
+      }
+
       setError('Failed to load teams');
     } finally {
       setIsLoading(false);
@@ -286,10 +359,24 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
    * Refresh teams list
    */
   const refreshTeams = useCallback(async () => {
-    if (userId) {
-      await loadUserTeams(userId);
+    if (resolvedUserId) {
+      await loadUserTeams(resolvedUserId);
     }
-  }, [userId, loadUserTeams]);
+  }, [resolvedUserId, loadUserTeams]);
+
+  // Store refreshTeams in ref for subscription callback (avoids dep array issues)
+  refreshTeamsRef.current = refreshTeams;
+
+  /**
+   * Retry loading after error
+   */
+  const retry = useCallback(async () => {
+    retryCountRef.current = 0;
+    setError(null);
+    if (resolvedUserId) {
+      await loadUserTeams(resolvedUserId);
+    }
+  }, [resolvedUserId, loadUserTeams]);
 
   /**
    * Check if user has a specific permission
@@ -304,23 +391,28 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
   const isTeamOwner = currentMembership?.role === 'owner';
   const isTeamAdmin = currentMembership?.role === 'owner' || currentMembership?.role === 'admin';
 
-  // Subscribe to real-time team updates
+  // Subscribe to real-time team updates with unique channel name
   useEffect(() => {
-    if (!isMultiTenancyEnabled || !userId) return;
+    if (!isMultiTenancyEnabled || !resolvedUserId) return;
+
+    // Use unique channel name per team to avoid subscription conflicts
+    const channelName = currentTeam?.id
+      ? `team-updates-${currentTeam.id}-${resolvedUserId}`
+      : `team-updates-global-${resolvedUserId}`;
 
     const channel = supabase
-      .channel('team-updates')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'team_members',
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${resolvedUserId}`,
         },
         () => {
-          // Refresh teams when membership changes
-          refreshTeams();
+          // Use ref to avoid stale closure — refreshTeams won't cause re-subscription
+          refreshTeamsRef.current?.();
         }
       )
       .on(
@@ -343,7 +435,8 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, currentTeam, refreshTeams, isMultiTenancyEnabled]);
+    // Only re-subscribe when userId or currentTeam.id changes (not on every refreshTeams change)
+  }, [resolvedUserId, currentTeam?.id, isMultiTenancyEnabled]);
 
   const value: TeamContextType = {
     currentTeam,
@@ -359,6 +452,7 @@ export function TeamProvider({ children, userId }: TeamProviderProps) {
     hasPermission,
     isTeamOwner,
     isTeamAdmin,
+    retry,
   };
 
   // Don't render until mounted to prevent hydration issues

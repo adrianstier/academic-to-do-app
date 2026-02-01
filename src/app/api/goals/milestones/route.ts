@@ -1,45 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { withTeamAdminAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-/**
- * Verify owner access by checking user's role in database
- * Relies solely on role-based permission system
- */
-async function verifyOwnerAccess(userName: string | null): Promise<boolean> {
-  if (!userName) return false;
-
-  try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('role')
-      .eq('name', userName)
-      .single();
-
-    if (error || !user) {
-      return false;
-    }
-
-    return user.role === 'owner' || user.role === 'admin';
-  } catch {
-    return false;
-  }
-}
-
 // GET - Fetch milestones for a goal
-export async function GET(request: Request) {
+export const GET = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
-    const userName = searchParams.get('userName');
     const goalId = searchParams.get('goalId');
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     let query = supabase
       .from('goal_milestones')
@@ -48,6 +20,11 @@ export async function GET(request: Request) {
 
     if (goalId) {
       query = query.eq('goal_id', goalId);
+    }
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
     }
 
     const { data, error } = await query;
@@ -59,17 +36,13 @@ export async function GET(request: Request) {
     logger.error('Error fetching milestones', error, { component: 'api/goals/milestones', action: 'GET' });
     return NextResponse.json({ error: 'Failed to fetch milestones' }, { status: 500 });
   }
-}
+});
 
 // POST - Create a new milestone
-export async function POST(request: Request) {
+export const POST = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { goal_id, title, target_date, userName } = body;
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+    const { goal_id, title, target_date } = body;
 
     if (!goal_id || !title) {
       return NextResponse.json({ error: 'goal_id and title are required' }, { status: 400 });
@@ -86,14 +59,20 @@ export async function POST(request: Request) {
 
     const nextOrder = (maxOrderData?.display_order || 0) + 1;
 
+    const insertData: Record<string, unknown> = {
+      goal_id,
+      title,
+      target_date: target_date || null,
+      display_order: nextOrder,
+    };
+
+    if (context.teamId) {
+      insertData.team_id = context.teamId;
+    }
+
     const { data, error } = await supabase
       .from('goal_milestones')
-      .insert({
-        goal_id,
-        title,
-        target_date: target_date || null,
-        display_order: nextOrder,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -107,17 +86,13 @@ export async function POST(request: Request) {
     logger.error('Error creating milestone', error, { component: 'api/goals/milestones', action: 'POST' });
     return NextResponse.json({ error: 'Failed to create milestone' }, { status: 500 });
   }
-}
+});
 
 // PUT - Update a milestone
-export async function PUT(request: Request) {
+export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { id, title, completed, target_date, display_order, userName } = body;
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+    const { id, title, completed, target_date, display_order } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -129,10 +104,17 @@ export async function PUT(request: Request) {
     if (target_date !== undefined) updateData.target_date = target_date;
     if (display_order !== undefined) updateData.display_order = display_order;
 
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('goal_milestones')
       .update(updateData)
-      .eq('id', id)
+      .eq('id', id);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      updateQuery = updateQuery.eq('team_id', context.teamId);
+    }
+
+    const { data, error } = await updateQuery
       .select()
       .single();
 
@@ -148,18 +130,13 @@ export async function PUT(request: Request) {
     logger.error('Error updating milestone', error, { component: 'api/goals/milestones', action: 'PUT' });
     return NextResponse.json({ error: 'Failed to update milestone' }, { status: 500 });
   }
-}
+});
 
 // DELETE - Delete a milestone
-export async function DELETE(request: Request) {
+export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const userName = searchParams.get('userName');
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -172,10 +149,17 @@ export async function DELETE(request: Request) {
       .eq('id', id)
       .single();
 
-    const { error } = await supabase
+    let deleteQuery = supabase
       .from('goal_milestones')
       .delete()
       .eq('id', id);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      deleteQuery = deleteQuery.eq('team_id', context.teamId);
+    }
+
+    const { error } = await deleteQuery;
 
     if (error) throw error;
 
@@ -189,7 +173,7 @@ export async function DELETE(request: Request) {
     logger.error('Error deleting milestone', error, { component: 'api/goals/milestones', action: 'DELETE' });
     return NextResponse.json({ error: 'Failed to delete milestone' }, { status: 500 });
   }
-}
+});
 
 // Helper function to update goal progress based on milestones
 async function updateGoalProgress(goalId: string) {

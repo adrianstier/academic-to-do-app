@@ -1,45 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { withTeamAdminAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-/**
- * Verify owner access by checking user's role in database
- * Relies solely on role-based permission system
- */
-async function verifyOwnerAccess(userName: string | null): Promise<boolean> {
-  if (!userName) return false;
-
-  try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('role')
-      .eq('name', userName)
-      .single();
-
-    if (error || !user) {
-      return false;
-    }
-
-    return user.role === 'owner' || user.role === 'admin';
-  } catch {
-    return false;
-  }
-}
-
 // GET - Fetch all strategic goals with categories and milestones
-export async function GET(request: Request) {
+export const GET = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
-    const userName = searchParams.get('userName');
     const categoryId = searchParams.get('categoryId');
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     let query = supabase
       .from('strategic_goals')
@@ -54,6 +26,11 @@ export async function GET(request: Request) {
       query = query.eq('category_id', categoryId);
     }
 
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
+    }
+
     const { data, error } = await query;
 
     if (error) throw error;
@@ -63,10 +40,10 @@ export async function GET(request: Request) {
     logger.error('Error fetching goals', error, { component: 'api/goals', action: 'GET' });
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 });
   }
-}
+});
 
 // POST - Create a new strategic goal
-export async function POST(request: Request) {
+export const POST = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
     const {
@@ -78,41 +55,47 @@ export async function POST(request: Request) {
       target_date,
       target_value,
       notes,
-      created_by
     } = body;
 
-    if (!(await verifyOwnerAccess(created_by))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
-    if (!title || !created_by) {
-      return NextResponse.json({ error: 'title and created_by are required' }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: 'title is required' }, { status: 400 });
     }
 
     // Get max display_order for new goal
-    const { data: maxOrderData } = await supabase
+    let maxOrderQuery = supabase
       .from('strategic_goals')
       .select('display_order')
       .order('display_order', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
+
+    if (context.teamId) {
+      maxOrderQuery = maxOrderQuery.eq('team_id', context.teamId);
+    }
+
+    const { data: maxOrderData } = await maxOrderQuery.single();
 
     const nextOrder = (maxOrderData?.display_order || 0) + 1;
 
+    const insertData: Record<string, unknown> = {
+      title,
+      description: description || null,
+      category_id: category_id || null,
+      status: status || 'not_started',
+      priority: priority || 'medium',
+      target_date: target_date || null,
+      target_value: target_value || null,
+      notes: notes || null,
+      display_order: nextOrder,
+      created_by: context.userName,
+    };
+
+    if (context.teamId) {
+      insertData.team_id = context.teamId;
+    }
+
     const { data, error } = await supabase
       .from('strategic_goals')
-      .insert({
-        title,
-        description: description || null,
-        category_id: category_id || null,
-        status: status || 'not_started',
-        priority: priority || 'medium',
-        target_date: target_date || null,
-        target_value: target_value || null,
-        notes: notes || null,
-        display_order: nextOrder,
-        created_by,
-      })
+      .insert(insertData)
       .select(`
         *,
         category:goal_categories(*),
@@ -127,10 +110,10 @@ export async function POST(request: Request) {
     logger.error('Error creating goal', error, { component: 'api/goals', action: 'POST' });
     return NextResponse.json({ error: 'Failed to create goal' }, { status: 500 });
   }
-}
+});
 
 // PUT - Update a strategic goal
-export async function PUT(request: Request) {
+export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
     const {
@@ -146,12 +129,7 @@ export async function PUT(request: Request) {
       progress_percent,
       notes,
       display_order,
-      updated_by
     } = body;
-
-    if (!(await verifyOwnerAccess(updated_by))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -173,10 +151,17 @@ export async function PUT(request: Request) {
     if (notes !== undefined) updateData.notes = notes;
     if (display_order !== undefined) updateData.display_order = display_order;
 
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('strategic_goals')
       .update(updateData)
-      .eq('id', id)
+      .eq('id', id);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      updateQuery = updateQuery.eq('team_id', context.teamId);
+    }
+
+    const { data, error } = await updateQuery
       .select(`
         *,
         category:goal_categories(*),
@@ -191,27 +176,29 @@ export async function PUT(request: Request) {
     logger.error('Error updating goal', error, { component: 'api/goals', action: 'PUT' });
     return NextResponse.json({ error: 'Failed to update goal' }, { status: 500 });
   }
-}
+});
 
 // DELETE - Delete a strategic goal
-export async function DELETE(request: Request) {
+export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const userName = searchParams.get('userName');
-
-    if (!(await verifyOwnerAccess(userName))) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    let deleteQuery = supabase
       .from('strategic_goals')
       .delete()
       .eq('id', id);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      deleteQuery = deleteQuery.eq('team_id', context.teamId);
+    }
+
+    const { error } = await deleteQuery;
 
     if (error) throw error;
 
@@ -220,4 +207,4 @@ export async function DELETE(request: Request) {
     logger.error('Error deleting goal', error, { component: 'api/goals', action: 'DELETE' });
     return NextResponse.json({ error: 'Failed to delete goal' }, { status: 500 });
   }
-}
+});

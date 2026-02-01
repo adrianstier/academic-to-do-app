@@ -1,27 +1,28 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // GET - Fetch all templates (user's own + shared)
-export async function GET(request: Request) {
+export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
-    const { searchParams } = new URL(request.url);
-    const userName = searchParams.get('userName');
-
-    if (!userName) {
-      return NextResponse.json({ error: 'userName is required' }, { status: 400 });
-    }
-
     // Get user's own templates and shared templates
-    const { data, error } = await supabase
+    let query = supabase
       .from('task_templates')
       .select('*')
-      .or(`created_by.eq.${userName},is_shared.eq.true`)
+      .or(`created_by.eq.${context.userName},is_shared.eq.true`)
       .order('created_at', { ascending: false });
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -30,54 +31,65 @@ export async function GET(request: Request) {
     logger.error('Error fetching templates', error, { component: 'api/templates', action: 'GET' });
     return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
   }
-}
+});
 
 // POST - Create a new template
-export async function POST(request: Request) {
+export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { name, description, default_priority, default_assigned_to, subtasks, created_by, is_shared } = body;
+    const { name, description, default_priority, default_assigned_to, subtasks, is_shared } = body;
 
-    if (!name || !created_by) {
-      return NextResponse.json({ error: 'name and created_by are required' }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: 'name is required' }, { status: 400 });
+    }
+
+    const insertData: Record<string, unknown> = {
+      name,
+      description: description || null,
+      default_priority: default_priority || 'medium',
+      default_assigned_to: default_assigned_to || null,
+      subtasks: subtasks || [],
+      created_by: context.userName,
+      is_shared: is_shared || false,
+    };
+
+    if (context.teamId) {
+      insertData.team_id = context.teamId;
     }
 
     const { data, error } = await supabase
       .from('task_templates')
-      .insert({
-        name,
-        description: description || null,
-        default_priority: default_priority || 'medium',
-        default_assigned_to: default_assigned_to || null,
-        subtasks: subtasks || [],
-        created_by,
-        is_shared: is_shared || false,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) throw error;
 
     // Log activity
-    await supabase.from('activity_log').insert({
+    const activityData: Record<string, unknown> = {
       action: 'template_created',
-      user_name: created_by,
+      user_name: context.userName,
       details: { template_name: name, is_shared },
-    });
+    };
+
+    if (context.teamId) {
+      activityData.team_id = context.teamId;
+    }
+
+    await supabase.from('activity_log').insert(activityData);
 
     return NextResponse.json(data);
   } catch (error) {
     logger.error('Error creating template', error, { component: 'api/templates', action: 'POST' });
     return NextResponse.json({ error: 'Failed to create template' }, { status: 500 });
   }
-}
+});
 
 // DELETE - Delete a template
-export async function DELETE(request: Request) {
+export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    const userName = searchParams.get('userName');
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
@@ -88,7 +100,7 @@ export async function DELETE(request: Request) {
       .from('task_templates')
       .delete()
       .eq('id', id)
-      .eq('created_by', userName);
+      .eq('created_by', context.userName);
 
     if (error) throw error;
 
@@ -97,4 +109,4 @@ export async function DELETE(request: Request) {
     logger.error('Error deleting template', error, { component: 'api/templates', action: 'DELETE' });
     return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 });
   }
-}
+});

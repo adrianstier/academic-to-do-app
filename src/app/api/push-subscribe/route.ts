@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 // Create Supabase client lazily to avoid build-time initialization
 function getSupabase() {
@@ -13,31 +14,11 @@ function getSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-// Helper to extract user name from request
-function extractUserName(request: NextRequest): string | null {
-  return request.headers.get('X-User-Name');
-}
-
-// Validate user name is present
-function validateUserName(userName: string | null): NextResponse | null {
-  if (!userName) {
-    return NextResponse.json(
-      { success: false, error: 'X-User-Name header required' },
-      { status: 401 }
-    );
-  }
-  return null;
-}
-
 /**
  * POST /api/push-subscribe
  * Store a web push subscription for a user
  */
-export async function POST(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const POST = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   try {
     const body = await request.json();
     const { subscription, userId } = body;
@@ -92,17 +73,13 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/push-subscribe
  * Remove a web push subscription for a user
  */
-export async function DELETE(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const DELETE = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   try {
     const body = await request.json();
     const { subscription, userId } = body;
@@ -158,17 +135,13 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/push-subscribe
  * Check if user has an active web push subscription
  */
-export async function GET(request: NextRequest) {
-  const userName = extractUserName(request);
-  const authError = validateUserName(userName);
-  if (authError) return authError;
-
+export const GET = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
 
@@ -209,4 +182,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

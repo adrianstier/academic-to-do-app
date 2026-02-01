@@ -49,7 +49,9 @@ export function TeamSettingsModal({
   onClose,
   onTeamDeleted,
 }: TeamSettingsModalProps) {
-  const { currentTeam, isTeamOwner, refreshTeams } = useTeam();
+  const { currentTeam, isTeamOwner, hasPermission, refreshTeams } = useTeam();
+  const canManageSettings = isTeamOwner || hasPermission('can_manage_team_settings');
+  const canDeleteTeam = isTeamOwner || hasPermission('can_delete_team');
 
   // Form state
   const [name, setName] = useState('');
@@ -130,42 +132,7 @@ export function TeamSettingsModal({
     setSuccess(null);
 
     try {
-      // Check if slug is unique (if changed)
-      if (slug !== currentTeam.slug) {
-        // Try teams table first, fall back to agencies
-        let slugExists = false;
-
-        const { data: existingTeam } = await supabase
-          .from('teams')
-          .select('id')
-          .eq('slug', slug)
-          .neq('id', currentTeam.id)
-          .single();
-
-        if (existingTeam) {
-          slugExists = true;
-        } else {
-          // Try agencies table for backward compatibility
-          const { data: existingAgency } = await supabase
-            .from('agencies')
-            .select('id')
-            .eq('slug', slug)
-            .neq('id', currentTeam.id)
-            .single();
-
-          if (existingAgency) {
-            slugExists = true;
-          }
-        }
-
-        if (slugExists) {
-          setError('This URL is already taken. Please choose a different one.');
-          setIsSaving(false);
-          return;
-        }
-      }
-
-      // Update team
+      // Update team — slug uniqueness enforced by DB UNIQUE constraint
       const updateData = {
         name: name.trim(),
         slug: slug.trim(),
@@ -196,9 +163,15 @@ export function TeamSettingsModal({
 
       setSuccess('Team settings saved successfully');
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to save team settings:', err);
-      setError('Failed to save settings. Please try again.');
+      // Handle unique constraint violation on slug
+      const errorCode = (err as { code?: string })?.code;
+      if (errorCode === '23505') {
+        setError('This team URL is already taken. Please choose a different one.');
+      } else {
+        setError('Failed to save settings. Please try again.');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -421,8 +394,8 @@ export function TeamSettingsModal({
           </div>
         </div>
 
-        {/* Delete Team Section (Owner Only) */}
-        {isTeamOwner && (
+        {/* Delete (Deactivate) Team Section */}
+        {canDeleteTeam && (
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             {!showDeleteConfirm ? (
               <div className="flex items-start gap-3">
@@ -431,10 +404,10 @@ export function TeamSettingsModal({
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Delete Team
+                    Deactivate Team
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Permanently delete this team and all its data. This action cannot be undone.
+                    Deactivate this team. Members will lose access, but data is preserved for potential reactivation.
                   </p>
                   <Button
                     variant="danger"
@@ -442,7 +415,7 @@ export function TeamSettingsModal({
                     onClick={() => setShowDeleteConfirm(true)}
                     className="mt-3"
                   >
-                    Delete Team
+                    Deactivate Team
                   </Button>
                 </div>
               </div>
@@ -455,11 +428,11 @@ export function TeamSettingsModal({
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
                   <h3 className="font-medium text-red-800 dark:text-red-200">
-                    Confirm Deletion
+                    Confirm Deactivation
                   </h3>
                 </div>
                 <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                  Type <strong>{currentTeam?.name}</strong> to confirm deletion:
+                  Type <strong>{currentTeam?.name}</strong> to confirm deactivation:
                 </p>
                 <input
                   type="text"
@@ -493,7 +466,7 @@ export function TeamSettingsModal({
                     loading={isDeleting}
                     disabled={deleteConfirmText !== currentTeam?.name}
                   >
-                    Delete Permanently
+                    Deactivate Team
                   </Button>
                 </div>
               </motion.div>

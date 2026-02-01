@@ -2,13 +2,13 @@
  * Security Events API
  *
  * Provides access to security event data for monitoring dashboard.
- * Restricted to owner/admin users only.
+ * Restricted to owner/admin users only via withTeamAdminAuth.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
-import { validateSession } from '@/lib/sessionValidator';
+import { withTeamAdminAuth, TeamAuthContext } from '@/lib/teamAuth';
 import { securityMonitor } from '@/lib/securityMonitor';
 
 const supabase = createClient(
@@ -17,46 +17,9 @@ const supabase = createClient(
 );
 
 /**
- * Verify user has admin/owner access
- * Relies solely on role-based permission system
- */
-async function verifyAdminAccess(userName: string): Promise<boolean> {
-  try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('role')
-      .eq('name', userName)
-      .single();
-
-    if (error || !user) {
-      return false;
-    }
-
-    return user.role === 'owner' || user.role === 'admin';
-  } catch {
-    return false;
-  }
-}
-
-/**
  * GET /api/security/events - Get security event summary and recent events
  */
-export async function GET(request: NextRequest) {
-  // Validate session
-  const session = await validateSession(request);
-  if (!session.valid || !session.userName) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Verify admin access
-  if (!(await verifyAdminAccess(session.userName))) {
-    logger.security('Unauthorized access attempt to security events', {
-      userName: session.userName,
-      endpoint: '/api/security/events',
-    });
-    return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-  }
-
+export const GET = withTeamAdminAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const hours = parseInt(searchParams.get('hours') || '24', 10);
@@ -140,4 +103,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

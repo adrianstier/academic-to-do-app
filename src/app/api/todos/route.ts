@@ -3,18 +3,18 @@
  *
  * Server-side API for todo operations that handles:
  * - Field-level encryption for PII (transcription, notes)
- * - Proper session validation
+ * - Team-scoped access control via withTeamAuth
  * - Activity logging
  *
  * This API should be used instead of direct Supabase client calls
  * when handling sensitive data like transcriptions.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '@/lib/logger';
-import { validateSession } from '@/lib/sessionValidator';
+import { withTeamAuth } from '@/lib/teamAuth';
 import { encryptTodoPII, decryptTodoPII } from '@/lib/fieldEncryption';
 
 // Use service role key for server-side operations
@@ -26,19 +26,18 @@ const supabase = createClient(
 /**
  * GET /api/todos - Fetch todos with decrypted PII fields
  */
-export async function GET(request: NextRequest) {
-  // Validate session
-  const session = await validateSession(request);
-  if (!session.valid || !session.userName) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withTeamAuth(async (request, context) => {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const includeCompleted = searchParams.get('includeCompleted') === 'true';
 
     let query = supabase.from('todos').select('*');
+
+    // Team-scope the query when multi-tenancy is active
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
+    }
 
     if (id) {
       // Fetch single todo
@@ -74,18 +73,12 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/todos - Create a new todo with encrypted PII
  */
-export async function POST(request: NextRequest) {
-  // Validate session
-  const session = await validateSession(request);
-  if (!session.valid || !session.userName) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const body = await request.json();
     const {
@@ -109,21 +102,25 @@ export async function POST(request: NextRequest) {
     const taskId = uuidv4();
     const now = new Date().toISOString();
 
-    // Build task object
-    const task = {
+    // Build task object with team_id
+    const task: Record<string, unknown> = {
       id: taskId,
       text: text.trim(),
       completed: false,
       status,
       priority,
       created_at: now,
-      created_by: session.userName,
+      created_by: context.userName,
       assigned_to: assignedTo?.trim() || null,
       due_date: dueDate || null,
       notes: notes || null,
       transcription: transcription || null,
       subtasks: subtasks,
     };
+
+    if (context.teamId) {
+      task.team_id = context.teamId;
+    }
 
     // Encrypt PII fields before storage
     const encryptedTask = encryptTodoPII(task);
@@ -139,13 +136,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Log activity
-    await supabase.from('activity_log').insert({
+    const activityRecord: Record<string, unknown> = {
       action: 'task_created',
       todo_id: taskId,
       todo_text: text.trim().substring(0, 100),
-      user_name: session.userName,
+      user_name: context.userName,
       details: { priority, has_transcription: !!transcription },
-    });
+    };
+    if (context.teamId) {
+      activityRecord.team_id = context.teamId;
+    }
+    await supabase.from('activity_log').insert(activityRecord);
 
     logger.info('Todo created with encryption', {
       component: 'api/todos',
@@ -170,18 +171,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PUT /api/todos - Update a todo with encrypted PII
  */
-export async function PUT(request: NextRequest) {
-  // Validate session
-  const session = await validateSession(request);
-  if (!session.valid || !session.userName) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const PUT = withTeamAuth(async (request, context) => {
   try {
     const body = await request.json();
     const { id, ...updates } = body;
@@ -196,7 +191,7 @@ export async function PUT(request: NextRequest) {
     // Build update object
     const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
-      updated_by: session.userName,
+      updated_by: context.userName,
     };
 
     // Copy allowed fields
@@ -223,12 +218,17 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('todos')
       .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
+
+    // Team-scope the update
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
       throw error;
@@ -236,12 +236,16 @@ export async function PUT(request: NextRequest) {
 
     // Log activity for significant changes
     if (updates.completed !== undefined) {
-      await supabase.from('activity_log').insert({
+      const activityRecord: Record<string, unknown> = {
         action: updates.completed ? 'task_completed' : 'task_reopened',
         todo_id: id,
         todo_text: data.text?.substring(0, 100),
-        user_name: session.userName,
-      });
+        user_name: context.userName,
+      };
+      if (context.teamId) {
+        activityRecord.team_id = context.teamId;
+      }
+      await supabase.from('activity_log').insert(activityRecord);
     }
 
     logger.info('Todo updated with encryption', {
@@ -266,18 +270,12 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/todos - Delete a todo
  */
-export async function DELETE(request: NextRequest) {
-  // Validate session
-  const session = await validateSession(request);
-  if (!session.valid || !session.userName) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const DELETE = withTeamAuth(async (request, context) => {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -290,28 +288,39 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get todo text for activity log before deletion
-    const { data: todo } = await supabase
+    let todoQuery = supabase
       .from('todos')
       .select('text')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+    if (context.teamId) {
+      todoQuery = todoQuery.eq('team_id', context.teamId);
+    }
+    const { data: todo } = await todoQuery.single();
 
-    const { error } = await supabase
+    let deleteQuery = supabase
       .from('todos')
       .delete()
       .eq('id', id);
+    if (context.teamId) {
+      deleteQuery = deleteQuery.eq('team_id', context.teamId);
+    }
+    const { error } = await deleteQuery;
 
     if (error) {
       throw error;
     }
 
     // Log activity
-    await supabase.from('activity_log').insert({
+    const activityRecord: Record<string, unknown> = {
       action: 'task_deleted',
       todo_id: id,
       todo_text: todo?.text?.substring(0, 100),
-      user_name: session.userName,
-    });
+      user_name: context.userName,
+    };
+    if (context.teamId) {
+      activityRecord.team_id = context.teamId;
+    }
+    await supabase.from('activity_log').insert(activityRecord);
 
     logger.info('Todo deleted', {
       component: 'api/todos',
@@ -330,4 +339,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

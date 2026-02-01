@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 // Parse voicemail transcription to extract multiple tasks
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const body = await request.json();
     const { transcription, users } = body;
@@ -152,4 +153,4 @@ Leave assignedTo as empty string "" if no person is mentioned.`,
       { status: 500 }
     );
   }
-}
+});

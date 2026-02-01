@@ -110,6 +110,10 @@ export async function verifyTeamAccess(
           can_view_strategic_goals: session.userRole === 'owner' || session.userRole === 'admin',
           can_invite_users: session.userRole === 'owner' || session.userRole === 'admin',
           can_manage_templates: true,
+          can_manage_team_settings: session.userRole === 'owner',
+          can_transfer_ownership: session.userRole === 'owner',
+          can_delete_team: session.userRole === 'owner',
+          can_manage_roles: session.userRole === 'owner' || session.userRole === 'admin',
         },
       },
     };
@@ -117,6 +121,8 @@ export async function verifyTeamAccess(
 
   // Get team ID from options, header, or cookie
   // Support both new X-Team-Id and legacy X-Agency-Id headers
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   let teamId = options.teamId;
   if (!teamId) {
     teamId = request.headers.get('X-Team-Id') ||
@@ -124,6 +130,23 @@ export async function verifyTeamAccess(
              request.cookies.get('current_team_id')?.value ||
              request.cookies.get('current_agency_id')?.value ||
              undefined;
+  }
+
+  // Validate team ID format to prevent injection
+  if (teamId && !UUID_REGEX.test(teamId)) {
+    logger.security('Invalid team ID format rejected', {
+      userId: session.userId,
+      userName: session.userName,
+      teamId,
+    });
+    return {
+      success: false,
+      error: 'Invalid team ID format',
+      response: NextResponse.json(
+        { error: 'Bad request', message: 'Invalid team ID format' },
+        { status: 400 }
+      ),
+    };
   }
 
   // Check if user is super_admin (can bypass team check if allowed)
@@ -135,6 +158,12 @@ export async function verifyTeamAccess(
       .single();
 
     if (user?.global_role === 'super_admin') {
+      logger.security('Super admin bypass used', {
+        userId: session.userId,
+        userName: session.userName,
+        teamId: teamId || 'none',
+        route: request.nextUrl.pathname,
+      });
       // Super admin can access any team
       if (teamId) {
         const team = await getTeamById(teamId);
@@ -155,6 +184,10 @@ export async function verifyTeamAccess(
                 can_view_strategic_goals: true,
                 can_invite_users: true,
                 can_manage_templates: true,
+                can_manage_team_settings: true,
+                can_transfer_ownership: true,
+                can_delete_team: true,
+                can_manage_roles: true,
               },
             },
           };

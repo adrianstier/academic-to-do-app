@@ -9,7 +9,7 @@ import { AuthUser } from '@/types/todo';
 import { getStoredSession, setStoredSession, clearStoredSession } from '@/lib/auth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
-import { TeamProvider, useTeam } from '@/contexts/TeamContext';
+import { useTeam } from '@/contexts/TeamContext';
 
 // ============================================
 // Team-Aware App Wrapper
@@ -40,49 +40,32 @@ function TeamAwareApp({ currentUser, onUserChange, onTeamCreated }: TeamAwareApp
     onTeamCreated();
   };
 
-  // Show loading while checking teams
-  if (teamsLoading && isMultiTenancyEnabled) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--background)] relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-[var(--accent-gold)]/8 rounded-full blur-[120px]" />
-          <div className="absolute bottom-1/3 left-1/4 w-[400px] h-[400px] bg-[var(--accent)]/10 rounded-full blur-[100px]" />
-        </div>
-        <div className="relative z-10 flex flex-col items-center gap-5">
-          <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--brand-blue)] to-[var(--brand-sky)] flex items-center justify-center shadow-lg" style={{ boxShadow: '0 8px 24px rgba(0, 51, 160, 0.3)' }}>
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 11l3 3L22 4" />
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-              </svg>
-            </div>
-            <div className="absolute -inset-3 bg-[var(--accent-gold)]/20 rounded-3xl blur-xl animate-pulse" />
-          </div>
-          <div className="flex items-center gap-1.5">
+  return (
+    <>
+      <MainApp currentUser={currentUser} onUserChange={onUserChange} />
+
+      {/* Subtle overlay while teams are loading (no full-screen replacement) */}
+      {teamsLoading && isMultiTenancyEnabled && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
+          <div className="mt-2 px-4 py-2 bg-[var(--surface)]/90 backdrop-blur-sm rounded-full shadow-lg border border-[var(--border-subtle)] flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-bounce" style={{ animationDelay: '0ms' }} />
             <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-bounce" style={{ animationDelay: '150ms' }} />
             <div className="w-2 h-2 rounded-full bg-[var(--accent-gold)] animate-bounce" style={{ animationDelay: '300ms' }} />
+            <span className="text-xs text-[var(--text-muted)]">Loading team...</span>
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  // Show team onboarding modal if user has no teams
-  if (showOnboarding && isMultiTenancyEnabled) {
-    return (
-      <>
-        <MainApp currentUser={currentUser} onUserChange={onUserChange} />
+      {/* Show team onboarding modal if user has no teams */}
+      {showOnboarding && isMultiTenancyEnabled && (
         <TeamOnboardingModal
           userId={currentUser.id}
           userName={currentUser.name}
           onComplete={handleOnboardingComplete}
         />
-      </>
-    );
-  }
-
-  return <MainApp currentUser={currentUser} onUserChange={onUserChange} />;
+      )}
+    </>
+  );
 }
 
 export default function Home() {
@@ -208,15 +191,19 @@ export default function Home() {
   const handleLogin = (user: AuthUser) => {
     setStoredSession(user);
     setCurrentUser(user);
+    // Notify TeamProvider of auth change
+    window.dispatchEvent(new CustomEvent('auth-change', { detail: { userId: user.id } }));
   };
 
   const handleUserChange = (user: AuthUser | null) => {
     if (user) {
       setStoredSession(user);
       setCurrentUser(user);
+      window.dispatchEvent(new CustomEvent('auth-change', { detail: { userId: user.id } }));
     } else {
       clearStoredSession();
       setCurrentUser(null);
+      window.dispatchEvent(new CustomEvent('auth-change', { detail: null }));
     }
   };
 
@@ -261,12 +248,10 @@ export default function Home() {
   };
 
   return (
-    <TeamProvider userId={currentUser.id}>
-      <TeamAwareApp
-        currentUser={currentUser}
-        onUserChange={handleUserChange}
-        onTeamCreated={handleTeamCreated}
-      />
-    </TeamProvider>
+    <TeamAwareApp
+      currentUser={currentUser}
+      onUserChange={handleUserChange}
+      onTeamCreated={handleTeamCreated}
+    />
   );
 }

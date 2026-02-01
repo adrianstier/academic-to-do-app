@@ -30,6 +30,9 @@ This document provides comprehensive context for AI assistants (like Claude Code
 - ❌ **MFA** - PIN authentication retained per user request
 - ⚠️ **Webhook URL** - Set `SECURITY_WEBHOOK_URL` for Slack/Discord alerts
 
+### Deferred Features
+- ❌ **Team invitation emails** - Invitation links must be copied/shared manually. Email delivery (Resend/SendGrid) not yet integrated. Integration point: `src/components/TeamManagement/TeamInviteSection.tsx`
+
 ### Key Security Files
 ```
 src/lib/serverLockout.ts      # Redis login lockout

@@ -117,36 +117,7 @@ export default function TeamOnboardingModal({
     setError(null);
 
     try {
-      // Check if slug is already taken - try teams first, then agencies
-      let slugTaken = false;
-
-      const { data: existingTeam } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug.trim())
-        .single();
-
-      if (existingTeam) {
-        slugTaken = true;
-      } else {
-        // Also check agencies table for backward compatibility
-        const { data: existingAgency } = await supabase
-          .from('agencies')
-          .select('id')
-          .eq('slug', teamSlug.trim())
-          .single();
-
-        if (existingAgency) {
-          slugTaken = true;
-        }
-      }
-
-      if (slugTaken) {
-        setError('This team URL is already taken. Please choose another.');
-        setIsLoading(false);
-        return;
-      }
-
+      // Slug uniqueness enforced by DB UNIQUE constraint — no client-side race condition
       // Try to create team with the new RPC, fall back to agency RPC
       let teamId;
       let rpcError;
@@ -176,9 +147,14 @@ export default function TeamOnboardingModal({
 
       console.log('Created team:', teamId);
       setStep('complete');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error creating team:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create team');
+      const errorCode = (err as { code?: string })?.code;
+      if (errorCode === '23505') {
+        setError('This team URL is already taken. Please choose another.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create team');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -231,6 +207,61 @@ export default function TeamOnboardingModal({
     } catch (err) {
       console.error('Error joining team:', err);
       setError(err instanceof Error ? err.message : 'Failed to join team');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Auto-create a personal workspace team
+      const personalSlug = generateTeamSlug(`${userName}-workspace`);
+
+      let rpcError;
+      const teamResult = await supabase.rpc('create_team_with_owner', {
+        p_name: `${userName}'s Workspace`,
+        p_slug: personalSlug,
+        p_user_id: userId,
+      });
+
+      if (teamResult.error?.code === '42883') {
+        const agencyResult = await supabase.rpc('create_agency_with_owner', {
+          p_name: `${userName}'s Workspace`,
+          p_slug: personalSlug,
+          p_user_id: userId,
+        });
+        rpcError = agencyResult.error;
+      } else {
+        rpcError = teamResult.error;
+      }
+
+      if (rpcError) throw rpcError;
+      setStep('complete');
+    } catch (err: unknown) {
+      console.error('Error creating personal workspace:', err);
+      const errorCode = (err as { code?: string })?.code;
+      if (errorCode === '23505') {
+        // Slug collision — try with a random suffix
+        try {
+          const suffix = Math.random().toString(36).slice(2, 6);
+          const fallbackSlug = generateTeamSlug(`${userName}-workspace-${suffix}`);
+          const result = await supabase.rpc('create_team_with_owner', {
+            p_name: `${userName}'s Workspace`,
+            p_slug: fallbackSlug,
+            p_user_id: userId,
+          });
+          if (result.error) throw result.error;
+          setStep('complete');
+          return;
+        } catch {
+          setError('Failed to create personal workspace. Please try creating a team instead.');
+        }
+      } else {
+        setError('Failed to create personal workspace. Please try creating a team instead.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -313,6 +344,21 @@ export default function TeamOnboardingModal({
                   </p>
 
                   <div className="space-y-3">
+                    {/* Skip for now */}
+                    <button
+                      onClick={handleSkip}
+                      disabled={isLoading}
+                      className="
+                        w-full p-3 rounded-lg text-sm
+                        text-gray-500 dark:text-gray-400
+                        hover:bg-gray-100 dark:hover:bg-gray-700
+                        transition-colors text-center
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                      "
+                    >
+                      {isLoading ? 'Creating personal workspace...' : 'Skip for now (create personal workspace)'}
+                    </button>
+
                     {/* Create Team Option */}
                     <button
                       onClick={() => {

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 const anthropic = new Anthropic();
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -170,4 +171,4 @@ Respond with ONLY the JSON object, no other text.`,
       { status: 500 }
     );
   }
-}
+});

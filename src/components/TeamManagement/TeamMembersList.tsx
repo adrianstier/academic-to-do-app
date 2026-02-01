@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Check,
   MoreVertical,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -252,13 +253,16 @@ export function TeamMembersList({
   onMemberRemoved,
   onRoleChanged,
 }: TeamMembersListProps) {
-  const { currentTeam, currentTeamId, isTeamOwner, isTeamAdmin } = useTeam();
+  const { currentTeam, currentTeamId, isTeamOwner, isTeamAdmin, hasPermission } = useTeam();
+  const canManageRoles = hasPermission('can_manage_roles');
 
   const [members, setMembers] = useState<MemberWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const [confirmRemoveMember, setConfirmRemoveMember] = useState<MemberWithUser | null>(null);
+  const [confirmTransferMember, setConfirmTransferMember] = useState<MemberWithUser | null>(null);
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // Fetch team members
   const fetchMembers = useCallback(async () => {
@@ -504,6 +508,37 @@ export function TeamMembersList({
     }
   };
 
+  // Transfer ownership
+  const handleTransferOwnership = async (member: MemberWithUser) => {
+    if (!member || !currentTeamId || !isTeamOwner) return;
+
+    setIsTransferring(true);
+    setError(null);
+
+    try {
+      // Get current user ID from the owner member entry
+      const ownerMember = members.find((m) => m.role === 'owner');
+      if (!ownerMember) throw new Error('Owner not found');
+
+      const { error: rpcError } = await supabase.rpc('transfer_team_ownership', {
+        p_team_id: currentTeamId,
+        p_current_owner_id: ownerMember.user_id,
+        p_new_owner_id: member.user_id,
+      });
+
+      if (rpcError) throw rpcError;
+
+      // Refresh the members list
+      await fetchMembers();
+      setConfirmTransferMember(null);
+    } catch (err) {
+      console.error('Failed to transfer ownership:', err);
+      setError('Failed to transfer ownership. Please try again.');
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -595,7 +630,7 @@ export function TeamMembersList({
               </div>
 
               {/* Role Badge / Dropdown */}
-              {(isTeamOwner || isTeamAdmin) && member.role !== 'owner' ? (
+              {canManageRoles && member.role !== 'owner' ? (
                 <RoleDropdown
                   currentRole={member.role}
                   memberId={member.id}
@@ -611,8 +646,27 @@ export function TeamMembersList({
                 </Badge>
               )}
 
-              {/* Remove Button (admin/owner only, can't remove owner) */}
-              {(isTeamOwner || isTeamAdmin) && member.role !== 'owner' && (
+              {/* Transfer Ownership Button (owner only, for non-owner members) */}
+              {isTeamOwner && member.role !== 'owner' && (
+                <button
+                  onClick={() => setConfirmTransferMember(member)}
+                  disabled={removingMemberId === member.id || isTransferring}
+                  className="
+                    p-2 rounded-lg
+                    text-gray-400 hover:text-[#c9a227]
+                    hover:bg-[#c9a227]/10
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    transition-colors
+                  "
+                  aria-label={`Transfer ownership to ${member.user?.name}`}
+                  title="Transfer ownership"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* Suspend Button (admin/owner only, can't remove owner) */}
+              {canManageRoles && member.role !== 'owner' && (
                 <button
                   onClick={() => setConfirmRemoveMember(member)}
                   disabled={removingMemberId === member.id}
@@ -623,8 +677,8 @@ export function TeamMembersList({
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-colors
                   "
-                  aria-label={`Remove ${member.user?.name}`}
-                  title="Remove member"
+                  aria-label={`Suspend ${member.user?.name}`}
+                  title="Suspend member"
                 >
                   {removingMemberId === member.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -673,15 +727,15 @@ export function TeamMembersList({
                   <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Remove Member?
+                  Suspend Member?
                 </h3>
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Are you sure you want to remove{' '}
+                Are you sure you want to suspend{' '}
                 <strong>{confirmRemoveMember.user?.name}</strong> from{' '}
-                <strong>{currentTeam?.name}</strong>? They will lose access to all
-                team resources.
+                <strong>{currentTeam?.name}</strong>? They will lose access to team
+                resources until reactivated.
               </p>
 
               <div className="flex gap-3">
@@ -699,7 +753,66 @@ export function TeamMembersList({
                   onClick={() => handleRemoveMember(confirmRemoveMember)}
                   loading={removingMemberId === confirmRemoveMember.id}
                 >
-                  Remove
+                  Suspend
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transfer Ownership Confirmation Dialog */}
+      <AnimatePresence>
+        {confirmTransferMember && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="
+                w-full max-w-sm p-6 rounded-xl
+                bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700
+                shadow-xl
+              "
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#c9a227]/20 flex items-center justify-center">
+                  <ArrowRightLeft className="w-5 h-5 text-[#c9a227]" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Transfer Ownership?
+                </h3>
+              </div>
+
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Transfer ownership of{' '}
+                <strong>{currentTeam?.name}</strong> to{' '}
+                <strong>{confirmTransferMember.user?.name}</strong>?
+                You will be demoted to admin. This action cannot be undone.
+              </p>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setConfirmTransferMember(null)}
+                  disabled={isTransferring}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={() => handleTransferOwnership(confirmTransferMember)}
+                  loading={isTransferring}
+                >
+                  Transfer
                 </Button>
               </div>
             </motion.div>

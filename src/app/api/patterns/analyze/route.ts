@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 /**
  * POST /api/patterns/analyze
@@ -8,7 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
  * Analyzes completed tasks from the last 90 days to identify patterns
  * and update the task_patterns table for smart suggestions.
  */
-export async function POST() {
+export const POST = withTeamAuth(async (_request: NextRequest, _context: TeamAuthContext) => {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -170,4 +171,4 @@ Group similar tasks together and extract common subtask patterns. Only include p
       { status: 500 }
     );
   }
-}
+});

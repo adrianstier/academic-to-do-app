@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { isFeatureEnabled } from '@/lib/featureFlags';
+import { createSaltedHash, hashPinLegacy } from '@/lib/secureAuth';
 import type { TeamInvitation as AgencyInvitation, Team as Agency } from '@/types/team';
 
 // ============================================
@@ -66,12 +67,15 @@ export default function JoinInvitationPage({
 
   const loadInvitation = async () => {
     try {
-      // Get invitation with agency details
-      const { data, error: invError } = await supabase
-        .from('agency_invitations')
+      // Try team_invitations first, fall back to agency_invitations
+      let data;
+      let invError;
+
+      const teamResult = await supabase
+        .from('team_invitations')
         .select(`
           *,
-          agencies!inner (
+          teams!inner (
             id,
             name,
             slug,
@@ -81,6 +85,30 @@ export default function JoinInvitationPage({
         `)
         .eq('token', token)
         .single();
+
+      if (teamResult.error?.code === '42P01') {
+        // Table doesn't exist, fall back to agency_invitations
+        const agencyResult = await supabase
+          .from('agency_invitations')
+          .select(`
+            *,
+            agencies!inner (
+              id,
+              name,
+              slug,
+              primary_color,
+              is_active
+            )
+          `)
+          .eq('token', token)
+          .single();
+
+        data = agencyResult.data;
+        invError = agencyResult.error;
+      } else {
+        data = teamResult.data;
+        invError = teamResult.error;
+      }
 
       if (invError || !data) {
         setStep('invalid');
@@ -101,57 +129,38 @@ export default function JoinInvitationPage({
         return;
       }
 
-      if (!data.agencies.is_active) {
+      // Handle both team and agency nested data shapes
+      const teamOrAgency = data.teams || data.agencies;
+      if (!teamOrAgency?.is_active) {
         setStep('invalid');
-        setError('This agency is no longer active');
+        setError('This team is no longer active');
         return;
       }
 
-      // Type assertion for the joined data
-      interface JoinedInvitation {
-        id: string;
-        agency_id: string;
-        email: string;
-        role: 'admin' | 'member';
-        token: string;
-        invited_by: string;
-        expires_at: string;
-        accepted_at: string | null;
-        created_at: string;
-        agencies: {
-          id: string;
-          name: string;
-          slug: string;
-          primary_color: string;
-          is_active: boolean;
-        };
-      }
-
-      const joinedData = data as JoinedInvitation;
+      const teamId = data.team_id || data.agency_id;
 
       setInvitation({
         invitation: {
-          id: joinedData.id,
-          agency_id: joinedData.agency_id,
-          email: joinedData.email,
-          role: joinedData.role,
-          token: joinedData.token,
-          invited_by: joinedData.invited_by,
-          expires_at: joinedData.expires_at,
-          accepted_at: joinedData.accepted_at || undefined,
-          created_at: joinedData.created_at,
+          id: data.id,
+          agency_id: teamId,
+          email: data.email,
+          role: data.role,
+          token: data.token,
+          invited_by: data.invited_by,
+          expires_at: data.expires_at,
+          accepted_at: data.accepted_at || undefined,
+          created_at: data.created_at,
         },
         agency: {
-          id: joinedData.agencies.id,
-          name: joinedData.agencies.name,
-          slug: joinedData.agencies.slug,
-          primary_color: joinedData.agencies.primary_color,
-          // Fill in defaults for other required Agency fields
+          id: teamOrAgency.id,
+          name: teamOrAgency.name,
+          slug: teamOrAgency.slug,
+          primary_color: teamOrAgency.primary_color,
           secondary_color: '#72B5E8',
           subscription_tier: 'starter',
           max_users: 10,
           max_storage_mb: 1024,
-          is_active: joinedData.agencies.is_active,
+          is_active: teamOrAgency.is_active,
           created_at: '',
           updated_at: '',
         },
@@ -163,14 +172,6 @@ export default function JoinInvitationPage({
       setStep('invalid');
       setError('Failed to load invitation');
     }
-  };
-
-  const hashPin = async (pinValue: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(pinValue);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
   const handleCreateAccount = async () => {
@@ -192,7 +193,8 @@ export default function JoinInvitationPage({
     setError(null);
 
     try {
-      const pinHash = await hashPin(pin);
+      // Use salted hash for new accounts (more secure)
+      const pinHash = await createSaltedHash(pin);
 
       // Check if user already exists
       const { data: existingUser } = await supabase
@@ -224,12 +226,25 @@ export default function JoinInvitationPage({
 
       if (userError) throw userError;
 
-      // Accept invitation
-      const { error: acceptError } = await supabase
-        .rpc('accept_agency_invitation', {
+      // Accept invitation — try team RPC first, fall back to agency RPC
+      let acceptError;
+      const teamResult = await supabase
+        .rpc('accept_team_invitation', {
           p_token: token,
           p_user_id: newUser.id,
         });
+
+      if (teamResult.error?.code === '42883') {
+        // RPC doesn't exist, fall back to agency version
+        const agencyResult = await supabase
+          .rpc('accept_agency_invitation', {
+            p_token: token,
+            p_user_id: newUser.id,
+          });
+        acceptError = agencyResult.error;
+      } else {
+        acceptError = teamResult.error;
+      }
 
       if (acceptError) throw acceptError;
 
@@ -256,14 +271,11 @@ export default function JoinInvitationPage({
     setError(null);
 
     try {
-      const pinHash = await hashPin(existingUserPin);
-
-      // Verify user credentials
+      // Fetch user by name, then verify PIN (supports both legacy and salted hashes)
       const { data: user, error: userError } = await supabase
         .from('users')
-        .select('id, name')
+        .select('id, name, pin_hash')
         .eq('name', existingUserName.trim())
-        .eq('pin_hash', pinHash)
         .single();
 
       if (userError || !user) {
@@ -272,12 +284,36 @@ export default function JoinInvitationPage({
         return;
       }
 
-      // Accept invitation
-      const { error: acceptError } = await supabase
-        .rpc('accept_agency_invitation', {
+      // Verify PIN using the format-aware verifyPin function
+      const { valid: pinValid } = await import('@/lib/secureAuth').then(m =>
+        m.verifyPin(existingUserPin, user.pin_hash)
+      );
+
+      if (!pinValid) {
+        setError('Invalid name or PIN');
+        setIsLoading(false);
+        return;
+      }
+
+      // Accept invitation — try team RPC first, fall back to agency RPC
+      let acceptError;
+      const teamResult = await supabase
+        .rpc('accept_team_invitation', {
           p_token: token,
           p_user_id: user.id,
         });
+
+      if (teamResult.error?.code === '42883') {
+        // RPC doesn't exist, fall back to agency version
+        const agencyResult = await supabase
+          .rpc('accept_agency_invitation', {
+            p_token: token,
+            p_user_id: user.id,
+          });
+        acceptError = agencyResult.error;
+      } else {
+        acceptError = teamResult.error;
+      }
 
       if (acceptError) throw acceptError;
 

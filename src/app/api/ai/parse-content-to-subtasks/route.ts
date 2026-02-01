@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
+import { withTeamAuth } from '@/lib/teamAuth';
 
 export interface ParsedSubtask {
   text: string;
@@ -8,7 +9,7 @@ export interface ParsedSubtask {
   estimatedMinutes?: number;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context) => {
   try {
     const { content, contentType, parentTaskText } = await request.json();
 
@@ -157,4 +158,4 @@ Respond with ONLY the JSON object.`;
       { status: 500 }
     );
   }
-}
+});

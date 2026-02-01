@@ -8,9 +8,8 @@ import {
   Attachment
 } from '@/types/todo';
 import { logger } from '@/lib/logger';
+import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 import {
-  extractUserName,
-  validateUserName,
   verifyTodoAccess,
   extractTodoIdFromPath
 } from '@/lib/apiAuth';
@@ -66,26 +65,13 @@ async function ensureBucketExists() {
 }
 
 // POST - Upload a new attachment
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
-    // SECURITY: Validate session instead of trusting form data
-    // Extract userName from session validation (header or cookie)
-    const sessionUserName = extractUserName(request);
-    const authError = validateUserName(sessionUserName);
-    if (authError) {
-      logger.security('Attachment upload auth failure', {
-        endpoint: '/api/attachments',
-        ip: request.headers.get('x-forwarded-for') || 'unknown',
-      });
-      return authError;
-    }
+    const userName = context.userName;
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const todoId = formData.get('todoId') as string | null;
-    // Use validated session userName, not form data (which can be spoofed)
-    // validateUserName already verified userName is not null
-    const userName = sessionUserName!;
 
     if (!file) {
       return NextResponse.json(
@@ -102,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access to this todo before allowing upload
-    const { error: accessError } = await verifyTodoAccess(todoId, userName!);
+    const { error: accessError } = await verifyTodoAccess(todoId, userName);
     if (accessError) {
       logger.security('Attachment upload access denied', {
         endpoint: '/api/attachments',
@@ -281,10 +267,10 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE - Remove an attachment
-export async function DELETE(request: NextRequest) {
+export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const todoId = searchParams.get('todoId');
@@ -297,15 +283,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Extract and validate userName for authorization
-    const userName = extractUserName(request);
-    const authError = validateUserName(userName);
-    if (authError) {
-      return authError;
-    }
+    const userName = context.userName;
 
     // Verify user has access to this todo before allowing deletion
-    const { todo, error: accessError } = await verifyTodoAccess(todoId, userName!);
+    const { todo, error: accessError } = await verifyTodoAccess(todoId, userName);
     if (accessError) {
       return accessError;
     }
@@ -353,10 +334,10 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // GET - Get a signed URL for downloading
-export async function GET(request: NextRequest) {
+export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
     const storagePath = searchParams.get('path');
@@ -368,12 +349,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Extract and validate userName for authorization
-    const userName = extractUserName(request);
-    const authError = validateUserName(userName);
-    if (authError) {
-      return authError;
-    }
+    const userName = context.userName;
 
     // Extract todoId from storage path and verify access
     const todoId = extractTodoIdFromPath(storagePath);
@@ -385,7 +361,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user has access to this todo before generating signed URL
-    const { error: accessError } = await verifyTodoAccess(todoId, userName!);
+    const { error: accessError } = await verifyTodoAccess(todoId, userName);
     if (accessError) {
       return accessError;
     }
@@ -414,4 +390,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
