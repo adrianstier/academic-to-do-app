@@ -134,6 +134,7 @@ interface Todo {
   due_date: string | null;       // ISO timestamp
   notes: string | null;          // Additional notes
   recurrence: 'daily' | 'weekly' | 'monthly' | null;
+  display_order: number;         // Manual sort order (0-based, indexed)
   subtasks: Subtask[];           // JSONB array
   attachments: Attachment[];     // JSONB array
   transcription: string | null;  // Voice memo text
@@ -340,6 +341,7 @@ users (1) ──────────────< (N) device_tokens (user_id
 | `/api/templates` | GET/POST/DELETE | Template CRUD |
 | `/api/activity` | GET/POST | Activity log |
 | `/api/attachments` | POST | File upload |
+| `/api/todos/reorder` | POST | Task reordering (3 modes: position, up/down, swap) |
 | `/api/goals` | GET/POST/PUT/DELETE | Strategic goals |
 | `/api/goals/categories` | GET/POST | Goal categories |
 | `/api/goals/milestones` | GET/POST | Goal milestones |
@@ -1156,13 +1158,23 @@ find src -name "*.tsx" | head -20
 
 ## Version Info
 
-- **Last Updated**: 2026-01-20
-- **Document Version**: 3.0 (Multi-Agent Enhanced)
-- **App Version**: 2.1
+- **Last Updated**: 2026-02-03
+- **Document Version**: 3.1 (Task Reordering & UX Enhancements)
+- **App Version**: 2.4
 - **Next.js**: 16.0.10
 - **React**: 19.2.0
 - **TypeScript**: 5.9.3
 - **Supabase JS**: 2.48.0
+
+### Recent Updates (v2.4)
+- ✅ Task reordering API with 3 modes (`/api/todos/reorder`)
+- ✅ Database `display_order` column with migration
+- ✅ New UI components: SaveIndicator, Accordion, AIFeaturesMenu
+- ✅ Enhanced TaskDetailModal with visual cards
+- ✅ Template picker with `Cmd+T` shortcut
+- ✅ Keyboard shortcuts: `Cmd+A`, `?` global help
+- ✅ WCAG 2.1 compliance: 44px touch targets
+- ✅ Real-time subscription array normalization fix
 
 ---
 

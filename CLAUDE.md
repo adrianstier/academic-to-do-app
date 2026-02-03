@@ -259,12 +259,16 @@ CREATE TABLE todos (
   recurrence TEXT,  -- 'daily' | 'weekly' | 'monthly' | NULL
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_by TEXT,
+  display_order INTEGER NOT NULL DEFAULT 0,  -- Manual sort order for drag-and-drop (indexed)
   -- Advanced fields
   subtasks JSONB DEFAULT '[]'::jsonb,  -- Array of subtask objects
   attachments JSONB DEFAULT '[]'::jsonb,  -- Array of attachment metadata
   transcription TEXT,  -- Voicemail transcription
   merged_from UUID[]  -- IDs of tasks merged into this one
 );
+
+-- Index for efficient sorting by display_order
+CREATE INDEX idx_todos_display_order ON todos(display_order);
 ```
 
 **Subtask Structure (JSONB):**
@@ -346,6 +350,7 @@ CREATE TABLE activity_log (
 - `template_created`, `template_used`
 - `attachment_added`, `attachment_removed`
 - `tasks_merged`
+- `task_reordered`
 
 **Details Structure (JSONB) - varies by action:**
 ```json
@@ -512,7 +517,11 @@ App Entry: page.tsx (auth state)
         ├── KeyboardShortcutsModal.tsx
         ├── ConfirmDialog.tsx
         ├── EmptyState.tsx
-        └── CelebrationEffect.tsx
+        ├── CelebrationEffect.tsx
+        ├── SaveIndicator.tsx (ARIA-compliant save state)
+        ├── Accordion.tsx (Progressive disclosure)
+        ├── AIFeaturesMenu.tsx (AI dropdown with Portal)
+        └── Modal.tsx (2xl size variant added)
 ```
 
 ### Key Component Patterns
@@ -570,6 +579,256 @@ const handleComplete = useCallback(async (id: string) => {
     .eq('id', id);
 }, []);
 ```
+
+### New UI Components (January 2026)
+
+#### SaveIndicator Component
+**Purpose**: ARIA-compliant visual feedback for save states
+
+**Location**: `src/components/ui/SaveIndicator.tsx`
+
+**Usage**:
+```typescript
+import { SaveIndicator, SaveState } from '@/components/ui/SaveIndicator';
+
+function MyComponent() {
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+
+  return <SaveIndicator state={saveState} errorMessage="Failed to save" />;
+}
+```
+
+**States**:
+- `idle`: No active save operation
+- `saving`: Save in progress (animated spinner)
+- `saved`: Save successful (checkmark with fade)
+- `error`: Save failed (error icon with message)
+
+**Features**:
+- ARIA live region (`role="status"`, `aria-live="polite"`)
+- Framer Motion animations
+- Automatic fade-out after 2s for success state
+
+#### SimpleAccordion Component
+**Purpose**: Progressive disclosure for expandable sections
+
+**Location**: `src/components/ui/Accordion.tsx`
+
+**Usage**:
+```typescript
+import { SimpleAccordion } from '@/components/ui/Accordion';
+
+<SimpleAccordion
+  trigger={<span>Show more options</span>}
+  defaultOpen={false}
+  aria-label="Additional options"
+>
+  <div>Hidden content here</div>
+</SimpleAccordion>
+```
+
+**Features**:
+- Accessible (`aria-expanded`, `aria-label`)
+- Animated expand/collapse (Framer Motion)
+- Chevron rotation indicator
+- Keyboard navigation support
+
+#### AIFeaturesMenu Component
+**Purpose**: Consolidated AI features dropdown with smart positioning
+
+**Location**: `src/components/ui/AIFeaturesMenu.tsx`
+
+**Usage**:
+```typescript
+import { AIFeaturesMenu } from '@/components/ui/AIFeaturesMenu';
+
+<AIFeaturesMenu
+  onSmartParse={() => {}}
+  onVoiceInput={() => {}}
+  onFileImport={() => {}}
+  onEmailGenerate={() => {}}
+  voiceSupported={true}
+  showEmailOption={true}
+/>
+```
+
+**Features**:
+- React Portal for proper z-index stacking
+- Dynamic positioning (viewport-aware, prevents overflow)
+- Keyboard shortcuts (`Cmd+P`, `Cmd+V`, `Cmd+E`)
+- 44px touch targets (WCAG 2.1 AA compliant)
+- Shows shortcut hints on hover
+
+**Menu Items**:
+1. AI Parse Task (`Cmd+P`)
+2. Voice Input (`Cmd+V`) - conditional
+3. Import File
+4. Generate Email (`Cmd+E`) - conditional
+
+#### Modal Component Enhancement
+**New Feature**: Added `2xl` size variant for wider modals
+
+**Location**: `src/components/ui/Modal.tsx`
+
+**New Size**:
+```typescript
+size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+
+// 2xl = max-w-2xl (672px)
+```
+
+**Usage in TaskDetailModal**:
+```typescript
+<Modal size="2xl" className="flex flex-col h-[92vh] sm:h-[85vh]">
+  {/* More horizontal space for task details */}
+</Modal>
+```
+
+### Recent Component Enhancements (January 2026)
+
+#### TaskDetailModal Improvements
+**Location**: `src/components/task-detail/TaskDetailModal.tsx`
+
+**Enhancements**:
+1. **Visual Card Layout**: Notes, Subtasks, and Attachments wrapped in visual cards with subtle borders
+2. **Staggered Animations**: 40ms delay between sections using Framer Motion
+3. **Gradient Fade Hints**: Top and bottom gradient overlays indicate scrollable content
+4. **Improved Spacing**: Consistent 3-unit spacing between sections
+5. **Size Upgrade**: Uses new `2xl` modal size for better horizontal space
+
+**Animation Pattern**:
+```typescript
+const sectionStagger = {
+  hidden: { opacity: 0, y: 4 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: 0.04 * i, duration: 0.15 },
+  }),
+};
+
+<motion.div
+  custom={0}
+  initial="hidden"
+  animate="visible"
+  variants={sectionStagger}
+  className="bg-[var(--surface-2)]/30 rounded-xl p-4 border border-[var(--border)]/50"
+>
+  <NotesSection />
+</motion.div>
+```
+
+#### AddTodo Enhancements
+**Location**: `src/components/AddTodo.tsx`
+
+**New Features**:
+1. **Template Picker Integration**: `Cmd+T` shortcut opens template picker
+2. **Progressive Disclosure**: Advanced options hidden by default, expandable
+3. **Template Subtasks**: Automatically populates subtasks from selected template
+4. **Smart Defaults**: Template pre-fills text, priority, assignee, and subtasks
+
+**Usage**:
+```typescript
+// Cmd+T keyboard shortcut
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+      if (textareaRef.current === e.target) {
+        e.preventDefault();
+        setShowTemplatePicker(prev => !prev);
+      }
+    }
+  };
+  document.addEventListener('keydown', handleKeyDown);
+  return () => document.removeEventListener('keydown', handleKeyDown);
+}, []);
+```
+
+#### TodoList Improvements
+**Location**: `src/components/TodoList.tsx`
+
+**New Features**:
+1. **Select All**: `Cmd/Ctrl + A` selects all visible tasks
+2. **Improved ESC Priority**:
+   - Priority 1: Exit focus mode (if active)
+   - Priority 2: Clear bulk selection (if active)
+   - Priority 3: Clear search query
+3. **Better Bulk Actions**: Shows bulk action bar when tasks selected
+
+**Keyboard Handler**:
+```typescript
+// Cmd/Ctrl + A - select all visible todos
+if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+  e.preventDefault();
+  const visibleIds = visibleTodos.map(t => t.id);
+  selectAll(visibleIds);
+  if (visibleIds.length > 0) {
+    setShowBulkActions(true);
+  }
+  return;
+}
+```
+
+#### TodoFiltersBar Accessibility
+**Location**: `src/components/todo/TodoFiltersBar.tsx`
+
+**WCAG 2.1 Compliance**:
+1. **44px Touch Targets**: All buttons upgraded to `min-h-[44px]`
+2. **Touch Manipulation**: Added `touch-manipulation` class for better mobile response
+3. **Consistent Spacing**: `px-3` for horizontal padding
+4. **Mobile Optimization**: Hidden text on small screens, icons always visible
+
+**Before/After**:
+```typescript
+// Before: py-1.5 (approx 32px height - too small)
+<button className="py-1.5 px-3">Filter</button>
+
+// After: min-h-[44px] (WCAG compliant)
+<button className="min-h-[44px] px-3 touch-manipulation">Filter</button>
+```
+
+#### useTodoData Hook Fix
+**Location**: `src/hooks/useTodoData.ts`
+
+**Critical Bug Fix**: Array normalization in real-time subscriptions
+
+**Problem**: Real-time events could have `null` or `undefined` for `subtasks`/`attachments`, causing crashes when components called `.filter()` or `.map()`
+
+**Solution**: Normalize arrays on INSERT and UPDATE events
+```typescript
+if (payload.eventType === 'INSERT') {
+  const newTodo = payload.new as Todo;
+  const normalizedTodo = {
+    ...newTodo,
+    subtasks: Array.isArray(newTodo.subtasks) ? newTodo.subtasks : [],
+    attachments: Array.isArray(newTodo.attachments) ? newTodo.attachments : [],
+  };
+  // ... rest of handler
+}
+```
+
+#### AppShell Global Shortcuts
+**Location**: `src/components/layout/AppShell.tsx`
+
+**New Feature**: Global `?` keyboard shortcut
+
+**Implementation**:
+```typescript
+const handleKeyDown = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement;
+  const isInputField = target.tagName === 'INPUT' ||
+                       target.tagName === 'TEXTAREA' ||
+                       target.isContentEditable;
+
+  if (e.key === '?' && !isInputField) {
+    e.preventDefault();
+    setShowShortcuts(prev => !prev);
+    return;
+  }
+};
+```
+
+**Behavior**: Shows KeyboardShortcutsModal from anywhere in app (unless user is typing)
 
 ### Component File Sizes (Top 10)
 
@@ -867,6 +1126,53 @@ const handleComplete = useCallback(async (id: string) => {
   }
 }
 ```
+
+#### `POST /api/todos/reorder`
+- **Purpose**: Reorder tasks in the list view by updating display_order
+- **Auth**: None (internal)
+- **Request Options** (3 modes):
+
+**Mode 1: Move to specific position**
+```json
+{
+  "todoId": "uuid",
+  "newOrder": 3,
+  "userName": "Derrick"
+}
+```
+
+**Mode 2: Move up or down one position**
+```json
+{
+  "todoId": "uuid",
+  "direction": "up",  // or "down"
+  "userName": "Derrick"
+}
+```
+
+**Mode 3: Swap two tasks**
+```json
+{
+  "todoId": "uuid",
+  "targetTodoId": "other-uuid",
+  "userName": "Derrick"
+}
+```
+
+- **Response**:
+```json
+{
+  "success": true,
+  "updatedTasks": [
+    { "id": "uuid", "display_order": 3, ... },
+    { "id": "other-uuid", "display_order": 2, ... }
+  ]
+}
+```
+
+- **Activity Logging**: Automatically logs `task_reordered` action with `from` and `to` positions
+- **Implementation**: See [route.ts](src/app/api/todos/reorder/route.ts) for detailed logic
+- **Database**: Updates `display_order` column and `updated_at` timestamp
 
 #### Goal Endpoints
 - `GET /api/goals` - Fetch goals with categories and milestones
@@ -1238,6 +1544,42 @@ await logActivity({
   details: { priority: newTodo.priority }
 });
 ```
+
+### Keyboard Shortcuts Reference
+
+**Global Shortcuts** (work anywhere in app):
+- `?` - Show keyboard shortcuts modal
+- `N` - Focus new task input
+- `/` - Focus search
+- `Cmd/Ctrl + K` - Open command palette
+- `Cmd/Ctrl + B` - Toggle sidebar
+- `Esc` - Clear search & selection (priority: exit focus mode → clear bulk selection → clear search)
+
+**Quick Filters** (when not in input field):
+- `1` - Show all tasks
+- `2` - Show my tasks
+- `3` - Show due today
+- `4` - Show overdue tasks
+
+**Task Actions**:
+- `Enter` - Submit new task
+- `Cmd/Ctrl + Enter` - Submit with AI enhancement
+- `Cmd/Ctrl + T` - Open template picker
+- `Cmd/Ctrl + A` - Select all visible tasks
+
+**AI Features**:
+- `Cmd/Ctrl + P` - AI Parse Task
+- `Cmd/Ctrl + V` - Voice Input
+- `Cmd/Ctrl + E` - Generate Email (context-dependent)
+
+**View Modes**:
+- `Cmd/Ctrl + Shift + F` - Toggle focus mode
+
+**Implementation Notes**:
+- All shortcuts check if user is in input field before triggering
+- ESC key has priority hierarchy: focus mode → bulk selection → search
+- Shortcuts use platform detection (⌘ on Mac, Ctrl on Windows/Linux)
+- See [KeyboardShortcutsModal.tsx](src/components/KeyboardShortcutsModal.tsx) for complete list
 
 ---
 
@@ -1723,9 +2065,20 @@ await logActivity({
 
 ---
 
-**Last Updated:** 2026-01-20
-**Version:** 2.3 (Multi-Agent Enhanced)
+**Last Updated:** 2026-02-03
+**Version:** 2.4 (Task Reordering & UX Enhancements)
 **Maintained by:** Development Team
+
+### Changelog - Version 2.4
+- ✅ Added task reordering API with 3 modes (move to position, up/down, swap)
+- ✅ Added `display_order` column to todos table with migration
+- ✅ New UI components: SaveIndicator, Accordion, AIFeaturesMenu
+- ✅ Enhanced TaskDetailModal with visual cards and staggered animations
+- ✅ Added template picker integration with `Cmd+T` shortcut
+- ✅ Improved keyboard shortcuts: `Cmd+A` select all, `?` global help
+- ✅ WCAG 2.1 compliance: 44px touch targets in TodoFiltersBar
+- ✅ Fixed array normalization bug in real-time subscriptions
+- ✅ Added comprehensive keyboard shortcuts reference section
 
 ## Related Documentation
 
