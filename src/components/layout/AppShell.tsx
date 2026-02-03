@@ -142,6 +142,19 @@ export default function AppShell({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      const target = e.target as HTMLElement;
+      const isInputField = target.tagName === 'INPUT' ||
+                           target.tagName === 'TEXTAREA' ||
+                           target.isContentEditable;
+
+      // Show keyboard shortcuts: ? (Shift + /)
+      if (e.key === '?' && !isInputField) {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+        return;
+      }
+
       // Command palette: Cmd/Ctrl + K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -156,7 +169,9 @@ export default function AppShell({
 
       // Close panels on Escape
       if (e.key === 'Escape') {
-        if (commandPaletteOpen) {
+        if (showShortcuts) {
+          setShowShortcuts(false);
+        } else if (commandPaletteOpen) {
           setCommandPaletteOpen(false);
         } else if (rightPanel) {
           setRightPanel(null);
@@ -169,7 +184,7 @@ export default function AppShell({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [commandPaletteOpen, rightPanel, mobileSheetOpen]);
+  }, [commandPaletteOpen, rightPanel, mobileSheetOpen, showShortcuts]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => !prev);

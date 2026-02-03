@@ -56,6 +56,8 @@ const getShortcutGroups = (): ShortcutGroup[] => [
     shortcuts: [
       { keys: ['Enter'], description: 'Submit new task' },
       { keys: [getModifierKey(), 'Enter'], description: 'Submit with AI enhancement' },
+      { keys: [getModifierKey(), 'T'], description: 'Open template picker' },
+      { keys: [getModifierKey(), 'A'], description: 'Select all visible tasks' },
     ],
   },
   {

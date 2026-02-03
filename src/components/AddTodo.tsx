@@ -7,6 +7,7 @@ import SmartParseModal from './SmartParseModal';
 import ReminderPicker from './ReminderPicker';
 import VoiceRecordingIndicator from './VoiceRecordingIndicator';
 import FileImporter from './FileImporter';
+import TemplatePicker from './TemplatePicker';
 import { QuickTaskButtons, useTaskPatterns } from './QuickTaskButtons';
 import { CategoryConfidenceIndicator } from './CategoryConfidenceIndicator';
 import { TodoPriority, Subtask, PRIORITY_CONFIG, QuickTaskTemplate } from '@/types/todo';
@@ -15,9 +16,11 @@ import { analyzeTaskPattern } from '@/lib/academicPatterns';
 import { logger } from '@/lib/logger';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { useToast } from './ui/Toast';
+import { SimpleAccordion } from './ui/Accordion';
+import { AIFeaturesMenu } from './ui/AIFeaturesMenu';
 
 interface AddTodoProps {
-  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string) => void;
+  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null) => void;
   users: string[];
   darkMode?: boolean;
   currentUserId?: string;
@@ -104,6 +107,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
   });
   const [dueDate, setDueDate] = useState('');
   const [reminderAt, setReminderAt] = useState<string | null>(null);
+  const [notes, setNotes] = useState('');
+  const [recurrence, setRecurrence] = useState<'daily' | 'weekly' | 'monthly' | ''>('');
   const [assignedTo, setAssignedTo] = useState(() => {
     if (typeof window !== 'undefined' && currentUserId) {
       const prefs = getUserPreferences(currentUserId);
@@ -126,6 +131,10 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
   // File importer state
   const [showFileImporter, setShowFileImporter] = useState(false);
+
+  // Template picker state (Cmd+T quick-apply)
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [templateSubtasks, setTemplateSubtasks] = useState<Subtask[]>([]);
 
   // Quick task template state (Feature 4)
   const { patterns } = useTaskPatterns();
@@ -286,23 +295,28 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     e.preventDefault();
     if (!text.trim()) return;
 
-    // Convert suggested subtasks to proper Subtask objects
-    const subtasks: Subtask[] = suggestedSubtasks.length > 0
-      ? suggestedSubtasks.map((text, index) => ({
-          id: `subtask-${Date.now()}-${index}`,
-          text,
-          completed: false,
-          priority: 'medium' as TodoPriority,
-        }))
-      : undefined as unknown as Subtask[];
+    // Prioritize template subtasks (from Cmd+T) over suggested subtasks (from quick buttons)
+    let subtasks: Subtask[] | undefined;
+    if (templateSubtasks.length > 0) {
+      subtasks = templateSubtasks;
+    } else if (suggestedSubtasks.length > 0) {
+      // Convert suggested subtasks to proper Subtask objects
+      subtasks = suggestedSubtasks.map((text, index) => ({
+        id: `subtask-${Date.now()}-${index}`,
+        text,
+        completed: false,
+        priority: 'medium' as TodoPriority,
+      }));
+    }
 
-    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks || undefined, undefined, undefined, reminderAt || undefined);
+    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks, undefined, undefined, reminderAt || undefined, notes || undefined, recurrence || null);
     // Save preferences for next time
     if (currentUserId) {
       updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);
     }
     resetForm();
     setSuggestedSubtasks([]); // Clear suggested subtasks after creating
+    setTemplateSubtasks([]); // Clear template subtasks after creating
   };
 
   // Check if input might benefit from AI parsing
@@ -348,7 +362,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     taskAssignedTo?: string,
     subtasks?: Subtask[]
   ) => {
-    onAdd(taskText, taskPriority, taskDueDate, taskAssignedTo, subtasks);
+    onAdd(taskText, taskPriority, taskDueDate, taskAssignedTo, subtasks, undefined, undefined, undefined, notes || undefined, recurrence || null);
     // Save preferences for next time
     if (currentUserId) {
       updateLastTaskDefaults(currentUserId, taskPriority, taskAssignedTo);
@@ -369,9 +383,12 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     setDueDate('');
     setReminderAt(null);
     setAssignedTo('');
+    setNotes('');
+    setRecurrence('');
     setShowOptions(false);
     setParsedResult(null);
     setSuggestedSubtasks([]);
+    setTemplateSubtasks([]);
     setPatternDismissed(false); // Reset so new pattern can be detected on next input
   };
 
@@ -389,7 +406,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       if (text.trim() && !isProcessing) {
-        onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined);
+        onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, undefined, undefined, undefined, undefined, notes || undefined, recurrence || null);
         // Save preferences for next time
         if (currentUserId) {
           updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);
@@ -469,6 +486,55 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
       }
     }
   };
+
+  // Handle saved template selection from TemplatePicker (Cmd+T quick-apply)
+  const handleTemplateSelect = useCallback((
+    templateText: string,
+    templatePriority: TodoPriority,
+    templateAssignedTo?: string,
+    templateSubtasks?: Subtask[]
+  ) => {
+    setText(templateText);
+    setPriority(templatePriority);
+    if (templateAssignedTo && users.includes(templateAssignedTo)) {
+      setAssignedTo(templateAssignedTo);
+    }
+    if (templateSubtasks && templateSubtasks.length > 0) {
+      setTemplateSubtasks(templateSubtasks);
+    } else {
+      setTemplateSubtasks([]);
+    }
+    setShowOptions(true);
+    setShowTemplatePicker(false);
+
+    // Focus the textarea and expand options so user can review/edit
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+
+    toast.success('Template applied', {
+      description: 'Review and adjust fields as needed',
+    });
+  }, [users, toast]);
+
+  // Keyboard shortcut for template picker (Cmd+T)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+        const target = e.target as HTMLElement;
+        const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+        // Only trigger if we're inside the AddTodo form textarea
+        if (isInputField && textareaRef.current === target) {
+          e.preventDefault();
+          setShowTemplatePicker(prev => !prev);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <>
@@ -554,62 +620,26 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
             {/* Action buttons - grouped dock style */}
             <div className="flex gap-3 flex-shrink-0 items-center justify-between">
-              {/* Secondary actions grouped in a subtle container */}
-              <div className="flex items-center gap-0.5 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)]">
-                {/* File import button */}
-                <button
-                  type="button"
-                  onClick={() => setShowFileImporter(true)}
+              <div className="flex gap-2 items-center">
+                {/* AI Features Menu - consolidates Upload, Voice, and AI Parse */}
+                <AIFeaturesMenu
+                  onSmartParse={handleAiClick}
+                  onVoiceInput={toggleRecording}
+                  onFileImport={() => setShowFileImporter(true)}
                   disabled={isProcessing}
-                  className="p-2.5 rounded-full transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] active:scale-95 disabled:opacity-50"
-                  aria-label="Import file"
-                  title="Import voicemail, PDF, or image"
-                >
-                  <Upload className="w-4.5 h-4.5" />
-                </button>
+                  voiceSupported={speechSupported}
+                />
 
-                {/* Voice input - only show if supported */}
-                {speechSupported && (
-                  <button
-                    type="button"
-                    onClick={toggleRecording}
-                    disabled={isProcessing}
-                    className={`p-2.5 rounded-full transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
-                      isRecording
-                        ? 'bg-[var(--danger)] text-white animate-pulse'
-                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)]'
-                    } active:scale-95 disabled:opacity-50`}
-                    aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
-                    aria-pressed={isRecording}
-                  >
-                    {isRecording ? <MicOff className="w-4.5 h-4.5" /> : <Mic className="w-4.5 h-4.5" />}
-                  </button>
-                )}
-
-                {/* Separator and AI button when text is present */}
-                {text.trim() && (
-                  <>
-                    <div className="w-px h-6 bg-[var(--border)] mx-0.5" />
-                    <button
-                      type="button"
-                      onClick={handleAiClick}
-                      disabled={isProcessing}
-                      className={`p-2.5 rounded-full transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
-                        isComplexInput()
-                          ? 'bg-[var(--accent)] text-white shadow-sm'
-                          : 'text-[var(--accent)] hover:bg-[var(--accent-light)]'
-                      } active:scale-95 disabled:opacity-50`}
-                      aria-label="Parse with AI"
-                      title={isComplexInput() ? 'Complex input - AI can help organize' : 'Use AI to parse'}
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4.5 h-4.5" />
-                      )}
-                    </button>
-                  </>
-                )}
+                {/* Template Picker - Cmd+T quick-apply */}
+                <TemplatePicker
+                  currentUserName={currentUserId || ''}
+                  users={users}
+                  darkMode={darkMode}
+                  compact={true}
+                  isOpen={showTemplatePicker}
+                  onOpenChange={setShowTemplatePicker}
+                  onSelectTemplate={handleTemplateSelect}
+                />
               </div>
 
               {/* Primary Add button - elevated with shadow for prominence */}
@@ -730,6 +760,50 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                 compact
               />
             </div>
+
+            {/* Progressive Disclosure: Advanced Options */}
+            <SimpleAccordion
+              trigger="More options"
+              aria-label="Show additional task options"
+              className="px-5 mt-4"
+            >
+              <div className="space-y-4">
+                {/* Notes textarea */}
+                <div>
+                  <label htmlFor="task-notes" className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    id="task-notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Additional context or details..."
+                    rows={3}
+                    aria-label="Task notes"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+                  />
+                </div>
+
+                {/* Recurrence dropdown */}
+                <div>
+                  <label htmlFor="task-recurrence" className="block text-sm font-medium text-[var(--foreground)] mb-2">
+                    Repeat
+                  </label>
+                  <select
+                    id="task-recurrence"
+                    value={recurrence}
+                    onChange={(e) => setRecurrence(e.target.value as typeof recurrence)}
+                    aria-label="Task recurrence"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] cursor-pointer"
+                  >
+                    <option value="">No repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              </div>
+            </SimpleAccordion>
           </div>
         )}
 
@@ -827,7 +901,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
             setDraggedFile(null);
           }}
           onCreateTask={(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile) => {
-            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile);
+            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, undefined, notes || undefined, recurrence || null);
             setShowFileImporter(false);
             setDraggedFile(null);
           }}

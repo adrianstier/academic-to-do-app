@@ -242,6 +242,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     selectedTodos,
     showBulkActions,
     handleSelectTodo: hookHandleSelectTodo,
+    selectAll,
     clearSelection,
     setShowBulkActions,
     bulkDelete: hookBulkDelete,
@@ -404,17 +405,33 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         if (search) search.focus();
       }
 
+      // Cmd/Ctrl + A - select all visible todos
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        const visibleIds = visibleTodos.map(t => t.id);
+        selectAll(visibleIds);
+        if (visibleIds.length > 0) {
+          setShowBulkActions(true);
+        }
+        return;
+      }
+
       // 'Escape' - clear selection or exit focus mode
       if (e.key === 'Escape') {
-        // If in focus mode, exit it first
+        // Priority 1: Exit focus mode if active
         const currentFocusMode = useTodoStore.getState().ui.focusMode;
         if (currentFocusMode) {
           setFocusMode(false);
           return;
         }
-        clearSelection();
+        // Priority 2: Clear bulk selection if active
+        if (showBulkActions && selectedTodos.size > 0) {
+          clearSelection();
+          setShowBulkActions(false);
+          return;
+        }
+        // Priority 3: Clear search query
         setSearchQuery('');
-        setShowBulkActions(false);
       }
 
       // Cmd/Ctrl + Shift + F - toggle focus mode
@@ -478,7 +495,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   }, [fetchActivityLog]);
 
   // Check for duplicates and either show modal or create task directly
-  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string) => {
+  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null) => {
     // Check if we should look for duplicates
     const combinedText = `${text} ${transcription || ''}`;
     if (shouldCheckForDuplicates(combinedText)) {
@@ -490,11 +507,11 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       }
     }
     // No duplicates found, create directly
-    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt);
+    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence);
   };
 
   // Actually create the todo (called after duplicate check or when user confirms)
-  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string) => {
+  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null) => {
     const newTodo: Todo = {
       id: uuidv4(),
       text,
@@ -509,6 +526,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       transcription: transcription,
       reminder_at: reminderAt,
       reminder_sent: false,
+      notes: notes,
+      recurrence: recurrence || undefined,
     };
 
     // Optimistic update using store action
@@ -528,6 +547,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (newTodo.assigned_to) insertData.assigned_to = newTodo.assigned_to;
     if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;
     if (newTodo.transcription) insertData.transcription = newTodo.transcription;
+    if (newTodo.notes) insertData.notes = newTodo.notes;
+    if (newTodo.recurrence) insertData.recurrence = newTodo.recurrence;
     if (newTodo.reminder_at) {
       insertData.reminder_at = newTodo.reminder_at;
       insertData.reminder_sent = false;

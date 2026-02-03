@@ -52,9 +52,15 @@ export function useTodoData(currentUser: AuthUser) {
       logger.error('Error fetching todos', todosResult.error, { component: 'useTodoData' });
       setError('Failed to connect to database. Please check your Supabase configuration.');
     } else {
-      setTodos(todosResult.data || []);
+      // Normalize todos to ensure subtasks and attachments are always arrays
+      const fetchedTodos = (todosResult.data || []).map((todo: any) => ({
+        ...todo,
+        subtasks: Array.isArray(todo.subtasks) ? todo.subtasks : [],
+        attachments: Array.isArray(todo.attachments) ? todo.attachments : [],
+      }));
+      setTodos(fetchedTodos);
       const registeredUsers = (usersResult.data || []).map((u: { name: string }) => u.name);
-      const todoUsers = [...new Set((todosResult.data || []).map((t: Todo) => t.created_by).filter(Boolean))];
+      const todoUsers = [...new Set((fetchedTodos.map((t: Todo) => t.created_by).filter(Boolean)))];
       setUsers([...new Set([...registeredUsers, ...todoUsers])]);
       setUsersWithColors((usersResult.data || []).map((u: { name: string; color: string }) => ({
         name: u.name,
@@ -95,14 +101,27 @@ export function useTodoData(currentUser: AuthUser) {
           if (!isMounted) return;
           if (payload.eventType === 'INSERT') {
             const newTodo = payload.new as Todo;
+            // Normalize arrays to prevent filter/map errors
+            const normalizedTodo = {
+              ...newTodo,
+              subtasks: Array.isArray(newTodo.subtasks) ? newTodo.subtasks : [],
+              attachments: Array.isArray(newTodo.attachments) ? newTodo.attachments : [],
+            };
             // Check if todo already exists (to avoid duplicates from optimistic updates)
             const store = useTodoStore.getState();
-            const exists = store.todos.some((t) => t.id === newTodo.id);
+            const exists = store.todos.some((t) => t.id === normalizedTodo.id);
             if (!exists) {
-              addTodoToStore(newTodo);
+              addTodoToStore(normalizedTodo);
             }
           } else if (payload.eventType === 'UPDATE') {
-            updateTodoInStore(payload.new.id, payload.new as Todo);
+            const updatedTodo = payload.new as Todo;
+            // Normalize arrays to prevent filter/map errors
+            const normalizedTodo = {
+              ...updatedTodo,
+              subtasks: Array.isArray(updatedTodo.subtasks) ? updatedTodo.subtasks : [],
+              attachments: Array.isArray(updatedTodo.attachments) ? updatedTodo.attachments : [],
+            };
+            updateTodoInStore(payload.new.id, normalizedTodo);
           } else if (payload.eventType === 'DELETE') {
             deleteTodoFromStore(payload.old.id);
           }

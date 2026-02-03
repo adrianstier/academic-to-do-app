@@ -86,6 +86,7 @@ export interface Todo {
   reminder_at?: string; // Simple single reminder timestamp
   reminder_sent?: boolean; // Whether simple reminder has been sent
   reminders?: TaskReminder[]; // Multiple reminders (from task_reminders table)
+  display_order?: number; // Manual sort order for drag-and-drop (lower = higher in list)
   team_id?: string; // Multi-tenancy: which team this task belongs to
   /** @deprecated Use team_id instead */
   agency_id?: string;
@@ -350,6 +351,7 @@ export type ActivityAction =
   | 'attachment_added'
   | 'attachment_removed'
   | 'tasks_merged'
+  | 'task_reordered'
   | 'reminder_added'
   | 'reminder_removed'
   | 'reminder_sent';

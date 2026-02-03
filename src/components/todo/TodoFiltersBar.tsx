@@ -169,7 +169,7 @@ function TodoFiltersBar({
         <button
           type="button"
           onClick={() => setHighPriorityOnly(!highPriorityOnly)}
-          className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
+          className={`flex items-center gap-1 px-3 min-h-[44px] text-xs font-medium rounded-md transition-all touch-manipulation ${
             highPriorityOnly
               ? 'bg-[var(--danger)] text-white'
               : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
@@ -185,7 +185,7 @@ function TodoFiltersBar({
         <button
           type="button"
           onClick={() => setShowCompleted(!showCompleted)}
-          className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
+          className={`flex items-center gap-1 px-3 min-h-[44px] text-xs font-medium rounded-md transition-all touch-manipulation ${
             showCompleted
               ? 'bg-[var(--success)] text-white'
               : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
@@ -201,7 +201,7 @@ function TodoFiltersBar({
         <button
           type="button"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
+          className={`flex items-center gap-1 px-3 min-h-[44px] text-xs font-medium rounded-md transition-all touch-manipulation ${
             showAdvancedFilters || advancedFilterCount > 0
               ? 'bg-[var(--accent)] text-white'
               : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
@@ -223,7 +223,7 @@ function TodoFiltersBar({
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value as SortOption)}
             aria-label="Sort tasks"
-            className="appearance-none pl-2 pr-6 py-1.5 text-xs font-medium rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] cursor-pointer hover:bg-[var(--surface-3)] transition-colors"
+            className="appearance-none pl-3 pr-8 min-h-[44px] text-xs font-medium rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] cursor-pointer hover:bg-[var(--surface-3)] transition-colors touch-manipulation"
           >
             <option value="created">New</option>
             <option value="due_date">Due</option>
