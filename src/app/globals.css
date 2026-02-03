@@ -333,6 +333,60 @@ input[type="radio"]:focus-visible {
   top: 1rem;
 }
 
+/* ─── Disabled Button States (WCAG AA Compliant) ─── */
+/* Improve disabled button contrast - DO NOT use opacity alone */
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+  /* Use explicit colors instead of opacity for better contrast */
+}
+
+/* Light mode disabled states */
+button:disabled {
+  color: #6B7280 !important; /* 4.5:1 on light backgrounds */
+  background-color: #E5E7EB !important;
+  border-color: #D1D5DB !important;
+  opacity: 1 !important; /* Override Tailwind opacity */
+}
+
+/* Dark mode disabled states */
+:root.dark button:disabled,
+.dark button:disabled {
+  color: #9CA3AF !important; /* 4.5:1 on dark backgrounds */
+  background-color: #374151 !important;
+  border-color: #4B5563 !important;
+  opacity: 1 !important; /* Override Tailwind opacity */
+}
+
+/* Disabled primary buttons (with background) */
+button:disabled.bg-\[var\(--accent\)\],
+button:disabled[class*="bg-gradient"],
+button:disabled[class*="bg-blue"],
+button:disabled[class*="bg-gold"],
+button:disabled[class*="bg-\[#"] {
+  background: #E5E7EB !important;
+  color: #6B7280 !important;
+  box-shadow: none !important;
+}
+
+:root.dark button:disabled.bg-\[var\(--accent\)\],
+.dark button:disabled[class*="bg-gradient"],
+.dark button:disabled[class*="bg-blue"],
+.dark button:disabled[class*="bg-gold"],
+.dark button:disabled[class*="bg-\[#"] {
+  background: #374151 !important;
+  color: #9CA3AF !important;
+  box-shadow: none !important;
+}
+
+/* Ensure hover states don't override disabled */
+button:disabled:hover,
+button:disabled:active {
+  transform: none !important;
+  filter: none !important;
+  brightness: 1 !important;
+}
+
 /* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 10px;
@@ -728,10 +782,12 @@ input[type="radio"]:focus-visible {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ACCESSIBILITY: REDUCED MOTION
-   Respects user preference for reduced animations
+   Comprehensive prefers-reduced-motion support.
+   Disables all decorative animations while preserving essential visual states.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
+  /* ─── Global: Disable all animations and transitions ─── */
   *,
   *::before,
   *::after {
@@ -741,29 +797,110 @@ input[type="radio"]:focus-visible {
     scroll-behavior: auto !important;
   }
 
-  /* Preserve essential loading indicators but make them instant */
-  .loading-spinner {
-    animation: spin 0.01ms linear 1 !important;
-  }
-
-  /* Disable decorative animations */
-  .float,
-  .pulse-glow,
+  /* ─── Shimmer / Skeleton loading ─── */
   .shimmer,
-  .gradient-animate {
-    animation: none !important;
-  }
-
-  /* Keep opacity for shimmer visible without animation */
   .shimmer::after {
     animation: none !important;
     transform: none !important;
   }
+  .shimmer::after {
+    opacity: 0.3;
+  }
+  .skeleton {
+    animation: none !important;
+    background: var(--surface-2) !important;
+  }
 
-  /* Disable hover transforms */
+  /* ─── Pulse animations (priority badges, status dots, attention) ─── */
+  .pulse-glow,
+  .pulse-attention,
+  .animate-pulse-subtle,
+  .status-dot.online::after {
+    animation: none !important;
+  }
+
+  /* ─── Float animations (empty state illustrations) ─── */
+  .float {
+    animation: none !important;
+  }
+
+  /* ─── Spin animations (loading spinners) ─── */
+  .loading-spinner {
+    animation: none !important;
+    border-top-width: 3px;
+  }
+
+  /* ─── Shake / wiggle animations (form errors) ─── */
+  .animate-shake,
+  .wiggle {
+    animation: none !important;
+  }
+
+  /* ─── Gradient shift animations ─── */
+  .gradient-animate {
+    animation: none !important;
+    background-position: 0% 50% !important;
+  }
+
+  /* ─── Task priority pulse ─── */
+  .task-urgent:not(.task-completed) {
+    animation: none !important;
+    border-left-width: 5px !important;
+  }
+
+  /* ─── Progress bar shine ─── */
+  .progress-bar-fill::after {
+    animation: none !important;
+    display: none;
+  }
+
+  /* ─── Notification highlight ─── */
+  .notification-highlight {
+    animation: none !important;
+    box-shadow: 0 0 0 3px var(--accent) !important;
+  }
+
+  /* ─── Bounce / success animations ─── */
+  .bounce-success {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* ─── Stagger children fade ─── */
+  .stagger-children > * {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* ─── Fade slide up ─── */
+  .fade-slide-up {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* ─── Hover transforms (buttons, cards, lift effects) ─── */
   .btn-primary:hover,
   .btn-sky:hover,
-  .card-elevated:hover {
+  .btn-brand:hover,
+  .btn-success:hover,
+  .btn-gold:hover,
+  .card-elevated:hover,
+  .card-interactive:hover,
+  .card-hoverable:hover,
+  .task-card:hover,
+  .stat-card:hover,
+  .hover-lift:hover,
+  .quick-action-btn:hover,
+  .chart-bar:hover {
+    transform: none !important;
+  }
+
+  /* ─── Active/press transforms ─── */
+  .press-scale:active,
+  .btn-press:active,
+  .card-hoverable:active,
+  .task-card:active,
+  .quick-action-btn:active {
     transform: none !important;
   }
 }
@@ -1806,31 +1943,6 @@ input[type="radio"]:focus-visible {
 
   .touch-padding {
     padding: var(--space-3);
-  }
-}
-
-/* Reduce motion for accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .hover-lift:hover,
-  .press-scale:active {
-    transform: none;
-  }
-
-  .pulse-attention,
-  .wiggle,
-  .bounce-success,
-  .status-dot.online::after {
-    animation: none;
-  }
-
-  .skeleton {
-    animation: none;
-    background: var(--surface-2);
-  }
-
-  .progress-bar-fill::after {
-    animation: none;
-    display: none;
   }
 }
 
