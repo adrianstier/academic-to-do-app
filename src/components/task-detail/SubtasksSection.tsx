@@ -6,7 +6,6 @@ import CollapsibleSection from './CollapsibleSection';
 import SubtaskItem from './SubtaskItem';
 
 interface SubtasksSectionProps {
-  todoId: string;
   subtasks: Subtask[];
   completedSubtasks: number;
   subtaskProgress: number;

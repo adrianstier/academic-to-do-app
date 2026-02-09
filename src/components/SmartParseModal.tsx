@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Check, Clock, Flag, Calendar, User, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { TodoPriority, Subtask, PRIORITY_CONFIG } from '@/types/todo';
@@ -62,6 +62,17 @@ export default function SmartParseModal({
     parsedResult.subtasks.map(st => ({ ...st, included: true }))
   );
   const [showSubtasks, setShowSubtasks] = useState(true);
+
+  // Sync state when parsedResult changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setMainTaskText(parsedResult.mainTask.text);
+      setPriority(parsedResult.mainTask.priority);
+      setDueDate(parsedResult.mainTask.dueDate);
+      setAssignedTo(parsedResult.mainTask.assignedTo);
+      setSubtasks(parsedResult.subtasks.map(st => ({ ...st, included: true })));
+    }
+  }, [isOpen, parsedResult]);
 
   // Handle Escape key to close modal
   useEscapeKey(onClose, { enabled: isOpen });

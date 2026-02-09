@@ -140,6 +140,19 @@ interface SortableCardProps {
 function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPriority, onCardClick, showBulkActions, isSelected, onSelectTodo }: SortableCardProps) {
   const [showActions, setShowActions] = useState(false);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
+  const snoozeRef = useRef<HTMLDivElement>(null);
+
+  // Close snooze menu on click outside
+  useEffect(() => {
+    if (!showSnoozeMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (snoozeRef.current && !snoozeRef.current.contains(e.target as Node)) {
+        setShowSnoozeMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSnoozeMenu]);
 
   // Helper to get date offset for snooze
   const getSnoozeDate = (days: number) => {
@@ -363,7 +376,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
                 </select>
                 {/* Snooze button */}
                 {!todo.completed && (
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0" ref={snoozeRef}>
                     <motion.button
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={(e) => {

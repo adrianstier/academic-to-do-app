@@ -22,7 +22,6 @@ interface DuplicateDetectionModalProps {
   newTaskAssignedTo?: string;
   newTaskSubtasks?: Subtask[];
   newTaskTranscription?: string;
-  newTaskSourceFile?: File;
   duplicates: DuplicateMatch[];
   onCreateAnyway: () => void;
   onAddToExisting: (todoId: string) => void;

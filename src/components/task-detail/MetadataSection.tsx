@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { Clock, AlertTriangle } from 'lucide-react';
 import type { Todo, TodoPriority, TodoStatus } from '@/types/todo';
 
@@ -36,6 +37,20 @@ export default function MetadataSection({
   onToggleSnooze,
   onSnooze,
 }: MetadataSectionProps) {
+  const snoozeRef = useRef<HTMLDivElement>(null);
+
+  // Close snooze menu on click outside
+  useEffect(() => {
+    if (!showSnoozeMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (snoozeRef.current && !snoozeRef.current.contains(e.target as Node)) {
+        onToggleSnooze();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSnoozeMenu, onToggleSnooze]);
+
   const priority = todo.priority || 'medium';
   const status = todo.status || 'todo';
   const overdue = todo.due_date ? isOverdue(todo.due_date, todo.completed) : false;
@@ -101,7 +116,7 @@ export default function MetadataSection({
             }`}
           />
           {!todo.completed && (
-            <div className="relative">
+            <div className="relative" ref={snoozeRef}>
               <button
                 onClick={onToggleSnooze}
                 className="p-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] hover:text-[var(--warning)] hover:border-[var(--warning)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"

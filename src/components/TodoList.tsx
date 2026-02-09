@@ -38,7 +38,7 @@ import PullToRefresh from './PullToRefresh';
 import StatusLine from './StatusLine';
 import BottomTabs from './BottomTabs';
 import { ExitFocusModeButton } from './FocusModeToggle';
-import { LoadingState, ErrorState, ConnectionStatus, TodoHeader, TodoFiltersBar, TodoListContent, TodoModals } from './todo';
+import { LoadingState, ErrorState, ConnectionStatus, TodoHeader, TodoModals } from './todo';
 import TaskSections, { useShouldUseSections } from './TaskSections';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -2655,7 +2655,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           newTaskAssignedTo={pendingTask.assignedTo}
           newTaskSubtasks={pendingTask.subtasks}
           newTaskTranscription={pendingTask.transcription}
-          newTaskSourceFile={pendingTask.sourceFile}
           duplicates={duplicateMatches}
           onCreateAnyway={handleCreateTaskAnyway}
           onAddToExisting={handleAddToExistingTask}

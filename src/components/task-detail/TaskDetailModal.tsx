@@ -165,7 +165,6 @@ export default function TaskDetailModal({
                 className="bg-[var(--surface-2)]/30 rounded-xl p-4 border border-[var(--border)]/50"
               >
                 <SubtasksSection
-                  todoId={todo.id}
                   subtasks={state.subtasks}
                   completedSubtasks={state.completedSubtasks}
                   subtaskProgress={state.subtaskProgress}
@@ -191,7 +190,6 @@ export default function TaskDetailModal({
               >
                 <AttachmentsSection
                   todo={todo}
-                  currentUserName={currentUserName}
                   onUpdateAttachments={onUpdateAttachments}
                   onShowUpload={() => state.setShowAttachmentUpload(true)}
                 />

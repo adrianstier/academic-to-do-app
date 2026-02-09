@@ -301,7 +301,11 @@ export default function ArchiveView({
     if (!confirm(`Restore ${selectedIds.size} task(s) to active list?`)) return;
 
     for (const id of selectedIds) {
-      await handleRestore(id);
+      try {
+        await handleRestore(id);
+      } catch {
+        // Continue restoring remaining tasks even if one fails
+      }
     }
   }, [selectedIds, handleRestore]);
 
@@ -313,6 +317,8 @@ export default function ArchiveView({
       setIsDeleting(id);
       try {
         await onDelete(id);
+      } catch {
+        // Continue deleting remaining tasks even if one fails
       } finally {
         setIsDeleting(null);
       }

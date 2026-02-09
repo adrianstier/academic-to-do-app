@@ -16,7 +16,6 @@ interface StatCardProps {
     isPositive: boolean;
   };
   suffix?: string;
-  darkMode?: boolean;
   delay?: number;
 }
 
@@ -60,7 +59,6 @@ export default function StatCard({
   variant = 'default',
   trend,
   suffix = '',
-  darkMode = false,
   delay = 0,
 }: StatCardProps) {
   const styles = variantStyles[variant];
@@ -71,45 +69,25 @@ export default function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
       whileHover={{ y: -2, transition: { duration: 0.2 } }}
-      className={`
-        relative p-4 rounded-xl
-        ${darkMode
-          ? 'bg-[var(--surface-2)] border border-white/5'
-          : 'bg-white border border-[var(--border)]'
-        }
-        shadow-sm hover:shadow-md
-        transition-shadow duration-200
-      `}
+      className="relative p-4 rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className={`
-            text-sm font-medium mb-1
-            ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}
-          `}>
+          <p className="text-sm font-medium mb-1 text-[var(--text-muted)] dark:text-white/60">
             {label}
           </p>
           <div className="flex items-baseline gap-1">
-            <span className={`
-              text-3xl font-bold tracking-tight
-              ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}
-            `}>
+            <span className="text-3xl font-bold tracking-tight text-[var(--foreground)] dark:text-white">
               <CountUp end={value} duration={800} />
             </span>
             {suffix && (
-              <span className={`
-                text-lg font-medium
-                ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}
-              `}>
+              <span className="text-lg font-medium text-[var(--text-muted)] dark:text-white/60">
                 {suffix}
               </span>
             )}
           </div>
           {trend && (
-            <div className={`
-              flex items-center gap-1 mt-2 text-xs font-medium
-              ${trend.isPositive ? styles.trendPositive : styles.trendNegative}
-            `}>
+            <div className={`flex items-center gap-1 mt-2 text-xs font-medium ${trend.isPositive ? styles.trendPositive : styles.trendNegative}`}>
               {trend.isPositive ? (
                 <TrendingUp className="w-3 h-3" />
               ) : (
@@ -119,11 +97,8 @@ export default function StatCard({
             </div>
           )}
         </div>
-        <div className={`
-          p-2.5 rounded-lg
-          ${darkMode ? styles.iconBg.replace('dark:', '') : styles.iconBg.split(' ')[0]}
-        `}>
-          <Icon className={`w-5 h-5 ${darkMode ? styles.iconColor.split(' ')[1]?.replace('dark:', '') : styles.iconColor.split(' ')[0]}`} />
+        <div className={`p-2.5 rounded-lg ${styles.iconBg}`}>
+          <Icon className={`w-5 h-5 ${styles.iconColor}`} />
         </div>
       </div>
     </motion.div>

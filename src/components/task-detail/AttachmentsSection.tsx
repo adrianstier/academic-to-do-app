@@ -8,7 +8,6 @@ import CollapsibleSection from './CollapsibleSection';
 
 interface AttachmentsSectionProps {
   todo: Todo;
-  currentUserName: string;
   onUpdateAttachments: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
   onShowUpload: () => void;
 }
