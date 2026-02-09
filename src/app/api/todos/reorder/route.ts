@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { withTeamAuth, type TeamAuthContext } from '@/lib/teamAuth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,10 +23,12 @@ const supabase = createClient(
  * 3. Swap two tasks:
  *    { todoId: string, targetTodoId: string }
  */
-export async function POST(request: NextRequest) {
+export const POST = withTeamAuth(async (request, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { todoId, newOrder, direction, targetTodoId, userName } = body;
+    const { todoId, newOrder, direction, targetTodoId } = body;
+    const userName = context.userName;
+    const teamId = context.teamId;
 
     if (!todoId) {
       return NextResponse.json(
@@ -34,12 +37,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the current task
-    const { data: currentTask, error: fetchError } = await supabase
+    // Get the current task (team-scoped)
+    let fetchQuery = supabase
       .from('todos')
       .select('*')
-      .eq('id', todoId)
-      .single();
+      .eq('id', todoId);
+
+    if (teamId) {
+      fetchQuery = fetchQuery.eq('team_id', teamId);
+    }
+
+    const { data: currentTask, error: fetchError } = await fetchQuery.single();
 
     if (fetchError || !currentTask) {
       logger.error('Task not found for reordering', fetchError, { todoId });
@@ -54,13 +62,13 @@ export async function POST(request: NextRequest) {
     // Handle different reorder modes
     if (newOrder !== undefined) {
       // Mode 1: Move to specific position
-      updatedTasks = await moveToPosition(todoId, currentTask.display_order ?? 0, newOrder);
+      updatedTasks = await moveToPosition(todoId, currentTask.display_order ?? 0, newOrder, teamId);
     } else if (direction) {
       // Mode 2: Move up or down
-      updatedTasks = await moveUpOrDown(todoId, currentTask.display_order ?? 0, direction);
+      updatedTasks = await moveUpOrDown(todoId, currentTask.display_order ?? 0, direction, teamId);
     } else if (targetTodoId) {
       // Mode 3: Swap with target task
-      updatedTasks = await swapTasks(todoId, targetTodoId);
+      updatedTasks = await swapTasks(todoId, targetTodoId, teamId);
     } else {
       return NextResponse.json(
         { error: 'Must provide newOrder, direction, or targetTodoId' },
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     // Log activity
     if (userName) {
-      await supabase.from('activity_log').insert({
+      const activityRecord: Record<string, unknown> = {
         action: 'task_reordered',
         todo_id: todoId,
         todo_text: currentTask.text,
@@ -79,7 +87,11 @@ export async function POST(request: NextRequest) {
           from: currentTask.display_order ?? 0,
           to: updatedTasks.find(t => t.id === todoId)?.display_order ?? 0,
         },
-      });
+      };
+      if (teamId) {
+        activityRecord.team_id = teamId;
+      }
+      await supabase.from('activity_log').insert(activityRecord);
     }
 
     return NextResponse.json({
@@ -93,7 +105,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Move task to a specific position
@@ -101,13 +113,20 @@ export async function POST(request: NextRequest) {
 async function moveToPosition(
   todoId: string,
   currentOrder: number,
-  newOrder: number
+  newOrder: number,
+  teamId?: string
 ): Promise<any[]> {
-  // Get all tasks ordered by display_order
-  const { data: allTasks } = await supabase
+  // Get all tasks ordered by display_order (team-scoped)
+  let query = supabase
     .from('todos')
     .select('*')
     .order('display_order', { ascending: true, nullsFirst: false });
+
+  if (teamId) {
+    query = query.eq('team_id', teamId);
+  }
+
+  const { data: allTasks } = await query;
 
   if (!allTasks) return [];
 
@@ -152,7 +171,8 @@ async function moveToPosition(
 async function moveUpOrDown(
   todoId: string,
   currentOrder: number,
-  direction: 'up' | 'down'
+  direction: 'up' | 'down',
+  teamId?: string
 ): Promise<any[]> {
   const offset = direction === 'up' ? -1 : 1;
   const targetOrder = currentOrder + offset;
@@ -162,12 +182,17 @@ async function moveUpOrDown(
     return [];
   }
 
-  // Find the task at the target position
-  const { data: targetTask } = await supabase
+  // Find the task at the target position (team-scoped)
+  let query = supabase
     .from('todos')
     .select('*')
-    .eq('display_order', targetOrder)
-    .single();
+    .eq('display_order', targetOrder);
+
+  if (teamId) {
+    query = query.eq('team_id', teamId);
+  }
+
+  const { data: targetTask } = await query.single();
 
   if (!targetTask) {
     // No task at target position
@@ -208,11 +233,17 @@ async function moveUpOrDown(
 /**
  * Swap two tasks
  */
-async function swapTasks(todoId: string, targetTodoId: string): Promise<any[]> {
-  const { data: tasks } = await supabase
+async function swapTasks(todoId: string, targetTodoId: string, teamId?: string): Promise<any[]> {
+  let query = supabase
     .from('todos')
     .select('*')
     .in('id', [todoId, targetTodoId]);
+
+  if (teamId) {
+    query = query.eq('team_id', teamId);
+  }
+
+  const { data: tasks } = await query;
 
   if (!tasks || tasks.length !== 2) {
     return [];

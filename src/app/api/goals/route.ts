@@ -4,8 +4,8 @@ import { logger } from '@/lib/logger';
 import { withTeamAdminAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // GET - Fetch all strategic goals with categories and milestones
 export const GET = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {

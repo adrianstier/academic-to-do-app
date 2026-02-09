@@ -120,6 +120,10 @@ export function TeamSettingsModal({
   // Save changes
   const handleSave = async () => {
     if (!currentTeam) return;
+    if (!canManageSettings) {
+      setError('You do not have permission to modify team settings');
+      return;
+    }
 
     const validationError = validateForm();
     if (validationError) {

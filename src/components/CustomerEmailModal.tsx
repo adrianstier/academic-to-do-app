@@ -210,9 +210,21 @@ export default function CustomerEmailModal({
     const body = isEditingBody ? editedBody : generatedEmail?.body || '';
     const fullEmail = `Subject: ${subject}\n\n${body}`;
 
-    await navigator.clipboard.writeText(fullEmail);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(fullEmail);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: select text for manual copy
+      const textarea = document.createElement('textarea');
+      textarea.value = fullEmail;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const openInMailClient = () => {

@@ -18,10 +18,12 @@ function getSupabase() {
  * POST /api/push-subscribe
  * Store a web push subscription for a user
  */
-export const POST = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
+export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { subscription, userId } = body;
+    const { subscription } = body;
+    // Use authenticated userName from context instead of trusting client-provided userId
+    const userId = context.userName;
 
     if (!subscription || !userId) {
       return NextResponse.json(
@@ -79,10 +81,11 @@ export const POST = withTeamAuth(async (request: NextRequest, _context: TeamAuth
  * DELETE /api/push-subscribe
  * Remove a web push subscription for a user
  */
-export const DELETE = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
+export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const body = await request.json();
-    const { subscription, userId } = body;
+    const { subscription } = body;
+    const userId = context.userName;
 
     if (!userId) {
       return NextResponse.json(
@@ -141,9 +144,9 @@ export const DELETE = withTeamAuth(async (request: NextRequest, _context: TeamAu
  * GET /api/push-subscribe
  * Check if user has an active web push subscription
  */
-export const GET = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
+export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
+  // Use authenticated userName from context instead of trusting client-provided userId
+  const userId = context.userName;
 
   if (!userId) {
     return NextResponse.json(

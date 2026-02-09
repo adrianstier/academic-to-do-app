@@ -6,7 +6,7 @@ import TodoList from './TodoList';
 import { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboardUtils';
 import { DashboardModalSkeleton, ChatPanelSkeleton, AIInboxSkeleton, WeeklyProgressChartSkeleton } from './LoadingSkeletons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { AuthUser, Todo, QuickFilter } from '@/types/todo';
+import { AuthUser, Todo, QuickFilter, ActivityLogEntry } from '@/types/todo';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { AppShell, useAppShell, ActiveView } from './layout';
@@ -80,6 +80,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   const users = useTodoStore((state) => state.users);
 
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialFilter, setInitialFilter] = useState<QuickFilter | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -98,13 +99,23 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
       }
 
       try {
-        const todosResult = await supabase
-          .from('todos')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const [todosResult, activityResult] = await Promise.all([
+          supabase
+            .from('todos')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('activity_log')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(200),
+        ]);
 
         if (todosResult.data) {
           setTodos(todosResult.data);
+        }
+        if (activityResult.data) {
+          setActivityLog(activityResult.data as ActivityLogEntry[]);
         }
       } catch (error) {
         logger.error('Failed to fetch data', error, { component: 'MainApp' });
@@ -313,6 +324,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
             currentUser={currentUser}
             todos={todos}
             users={users}
+            activityLog={activityLog}
             onNavigateToTasks={() => handleNavigateToTasks()}
             onTaskClick={handleTaskLinkClick}
             onFilterOverdue={() => handleNavigateToTasks('overdue')}

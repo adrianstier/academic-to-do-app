@@ -45,10 +45,11 @@ export default function MetadataSection({
       {/* Status */}
       {onStatusChange && (
         <div>
-          <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">
+          <label htmlFor="task-status" className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">
             Status
           </label>
           <select
+            id="task-status"
             value={status}
             onChange={(e) => onStatusChange(todo.id, e.target.value as TodoStatus)}
             className="input-refined w-full text-sm px-3 py-2 text-[var(--foreground)] min-h-[44px]"
@@ -62,10 +63,11 @@ export default function MetadataSection({
 
       {/* Priority */}
       <div>
-        <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">
+        <label htmlFor="task-priority" className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">
           Priority
         </label>
         <select
+          id="task-priority"
           value={priority}
           onChange={(e) => onSetPriority(todo.id, e.target.value as TodoPriority)}
           className="input-refined w-full text-sm px-3 py-2 text-[var(--foreground)] min-h-[44px]"
@@ -79,7 +81,7 @@ export default function MetadataSection({
 
       {/* Due Date + Snooze */}
       <div>
-        <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+        <label htmlFor="task-due-date" className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
           Due Date
           {overdue && (
             <span className="inline-flex items-center gap-1 text-red-500">
@@ -90,6 +92,7 @@ export default function MetadataSection({
         </label>
         <div className="flex gap-1.5">
           <input
+            id="task-due-date"
             type="date"
             value={todo.due_date ? todo.due_date.split('T')[0] : ''}
             onChange={(e) => onSetDueDate(todo.id, e.target.value || null)}
@@ -134,10 +137,11 @@ export default function MetadataSection({
 
       {/* Assigned To */}
       <div>
-        <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">
+        <label htmlFor="task-assigned-to" className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block">
           Assigned To
         </label>
         <select
+          id="task-assigned-to"
           value={todo.assigned_to || ''}
           onChange={(e) => onAssign(todo.id, e.target.value || null)}
           className="input-refined w-full text-sm px-3 py-2 text-[var(--foreground)] min-h-[44px]"

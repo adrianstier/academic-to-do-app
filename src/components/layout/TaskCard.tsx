@@ -350,7 +350,6 @@ export default function TaskCard({
               {/* Mobile metadata toggle indicator - only on mobile when there's hidden metadata */}
               {(subtaskProgress || hasAttachments || hasNotes || hasTranscription || assignedUser) && (
                 <button
-                  onTouchEnd={handleMobileMetadataToggle}
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowMobileMetadata(prev => !prev);
@@ -448,8 +447,9 @@ export default function TaskCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Quick edit priority
+                onOpenDetail(task.id);
               }}
+              title="Edit priority"
               className={`
                 p-1.5 rounded-lg text-xs font-medium
                 transition-colors
@@ -464,8 +464,9 @@ export default function TaskCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Quick edit due date
+                onOpenDetail(task.id);
               }}
+              title="Edit due date"
               className={`
                 p-1.5 rounded-lg text-xs font-medium
                 transition-colors
@@ -480,8 +481,9 @@ export default function TaskCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Quick edit assignee
+                onOpenDetail(task.id);
               }}
+              title="Edit assignee"
               className={`
                 p-1.5 rounded-lg text-xs font-medium
                 transition-colors
@@ -496,8 +498,9 @@ export default function TaskCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // More options
+                onOpenDetail(task.id);
               }}
+              title="More options"
               className={`
                 p-1.5 rounded-lg text-xs font-medium
                 transition-colors

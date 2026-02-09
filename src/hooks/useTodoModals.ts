@@ -31,6 +31,9 @@ export interface PendingTaskData {
   subtasks?: Subtask[];
   transcription?: string;
   sourceFile?: File;
+  reminderAt?: string;
+  notes?: string;
+  recurrence?: 'daily' | 'weekly' | 'monthly' | null;
 }
 
 export interface ConfirmDialogState {

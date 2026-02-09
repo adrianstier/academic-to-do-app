@@ -62,33 +62,33 @@ function DigestContent({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-xl p-4 bg-red-500/10 border border-red-500/30"
+          className="rounded-xl p-4 bg-[var(--danger-light)] border border-[var(--danger)]/30"
         >
           <button
             onClick={onOverdueClick}
             aria-label={`View all ${digest.overdueTasks.count} overdue tasks`}
-            className="w-full flex items-center justify-between mb-3 group rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            className="w-full flex items-center justify-between mb-3 group rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
           >
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-500" aria-hidden="true" />
-              <h3 className="text-sm font-semibold text-red-400">
+              <AlertTriangle className="w-4 h-4 text-[var(--danger)]" aria-hidden="true" />
+              <h3 className="text-sm font-semibold text-[var(--danger)]">
                 Overdue Tasks ({digest.overdueTasks.count})
               </h3>
             </div>
-            <ChevronRight className="w-4 h-4 text-red-400 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+            <ChevronRight className="w-4 h-4 text-[var(--danger)] group-hover:translate-x-1 transition-transform" aria-hidden="true" />
           </button>
-          <p className="text-sm text-red-300/80 mb-3">{digest.overdueTasks.summary}</p>
+          <p className="text-sm text-[var(--danger)]/80 mb-3">{digest.overdueTasks.summary}</p>
           <div className="space-y-2">
             {digest.overdueTasks.tasks.slice(0, 3).map((task) => (
               <button
                 key={task.id}
                 onClick={() => onTaskClick?.(task.id)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[var(--danger)]/10 hover:bg-[var(--danger)]/20 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
               >
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getPriorityColor(task.priority)}`} />
-                <span className="flex-1 text-sm text-red-200 truncate">{task.text}</span>
+                <span className="flex-1 text-sm text-[var(--foreground)] truncate">{task.text}</span>
                 {task.due_date && (
-                  <span className="text-xs text-red-400/70 flex-shrink-0">
+                  <span className="text-xs text-[var(--danger)]/70 flex-shrink-0">
                     {formatDigestDueDate(task.due_date)}
                   </span>
                 )}
@@ -97,7 +97,7 @@ function DigestContent({
             {digest.overdueTasks.count > 3 && (
               <button
                 onClick={onOverdueClick}
-                className="w-full text-center py-2 text-xs text-red-400 hover:text-red-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                className="w-full text-center py-2 text-xs text-[var(--danger)] hover:text-[var(--danger)]/80 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
               >
                 +{digest.overdueTasks.count - 3} more overdue
               </button>
@@ -309,15 +309,15 @@ export default function DailyDigestPanel({
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30"
+                  className="flex items-start gap-3 p-4 rounded-xl bg-[var(--danger-light)] border border-[var(--danger)]/30"
                 >
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-[var(--danger)] flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-red-400">Unable to load digest</p>
-                    <p className="text-xs text-red-500/90 mt-1">{error}</p>
+                    <p className="text-sm font-medium text-[var(--danger)]">Unable to load digest</p>
+                    <p className="text-xs text-[var(--danger)]/90 mt-1">{error}</p>
                     <button
                       onClick={refetch}
-                      className="mt-2 text-xs text-red-400 hover:text-red-300 underline flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                      className="mt-2 text-xs text-[var(--danger)] hover:text-[var(--danger)]/80 underline flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger)]"
                     >
                       <RefreshCw className="w-3 h-3" />
                       Try again

@@ -4,8 +4,8 @@ import { logger } from '@/lib/logger';
 import { withTeamAdminAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // GET - Fetch milestones for a goal
 export const GET = withTeamAdminAuth(async (request: NextRequest, context: TeamAuthContext) => {
@@ -142,12 +142,17 @@ export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: Te
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    // Get goal_id before deleting
-    const { data: milestone } = await supabase
+    // Get goal_id before deleting (scoped to team)
+    let prefetchQuery = supabase
       .from('goal_milestones')
       .select('goal_id')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+
+    if (context.teamId) {
+      prefetchQuery = prefetchQuery.eq('team_id', context.teamId);
+    }
+
+    const { data: milestone } = await prefetchQuery.single();
 
     let deleteQuery = supabase
       .from('goal_milestones')

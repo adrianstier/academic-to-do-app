@@ -4,14 +4,14 @@ import { logger } from '@/lib/logger';
 import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // GET - Fetch activity log (accessible to all authenticated users)
 export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50') || 50, 200);
     const todoId = searchParams.get('todoId');
 
     let query = supabase

@@ -292,7 +292,7 @@ export default function AppShell({
         className={`
           min-h-screen min-h-[100dvh] flex flex-col
           transition-colors duration-200
-          ${darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]'}
+          bg-[var(--background)]
         `}
       >
         {/* Skip link for accessibility */}
@@ -332,7 +332,7 @@ export default function AppShell({
             {rightPanel && rightPanelContent && (
               <motion.aside
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 380, opacity: 1 }}
+                animate={{ width: 'auto', opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                 className={`

@@ -322,11 +322,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   useEffect(() => {
-    if (screen === 'pin' && pin.every((d) => d !== '') && !isSubmitting) {
+    if (screen === 'pin' && pin.every((d) => d !== '') && !isSubmitting && selectedUser && lockoutSeconds === 0) {
       handlePinSubmit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin, screen]);
+  }, [pin, screen, selectedUser, isSubmitting, lockoutSeconds]);
 
   if (loading) {
     return (

@@ -133,7 +133,7 @@ export default function TaskDetailPanel({
   }, [task.id, onUpdate]);
 
   const handleAssigneeChange = useCallback(async (assignedTo: string | null) => {
-    await onUpdate(task.id, { assigned_to: assignedTo || undefined });
+    await onUpdate(task.id, { assigned_to: assignedTo || '' });
   }, [task.id, onUpdate]);
 
   const handleAddSubtask = useCallback(async () => {
@@ -549,7 +549,7 @@ export default function TaskDetailPanel({
                   type="date"
                   value={task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : ''}
                   onChange={(e) => onUpdate(task.id, {
-                    due_date: e.target.value ? new Date(e.target.value).toISOString() : undefined
+                    due_date: e.target.value ? `${e.target.value}T12:00:00.000Z` : ''
                   })}
                   className={`
                     w-full px-3 py-2 rounded-lg border text-sm font-medium
@@ -1050,7 +1050,11 @@ export default function TaskDetailPanel({
         `}
       >
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={() => {
+            if (window.confirm('Are you sure you want to delete this task?')) {
+              onDelete(task.id);
+            }
+          }}
           className={`
             flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
             transition-colors
@@ -1066,6 +1070,10 @@ export default function TaskDetailPanel({
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => {
+              const url = `${window.location.origin}?task=${task.id}`;
+              navigator.clipboard.writeText(url).catch(() => {});
+            }}
             className={`
               p-2 rounded-lg transition-colors
               ${darkMode
@@ -1078,6 +1086,14 @@ export default function TaskDetailPanel({
             <Copy className="w-4 h-4" />
           </button>
           <button
+            onClick={() => {
+              const url = `${window.location.origin}?task=${task.id}`;
+              if (navigator.share) {
+                navigator.share({ title: task.text, url }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(url).catch(() => {});
+              }
+            }}
             className={`
               p-2 rounded-lg transition-colors
               ${darkMode

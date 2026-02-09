@@ -207,7 +207,7 @@ export default function DashboardModal({
     monday.setDate(today.getDate() - daysFromMonday);
     monday.setHours(0, 0, 0, 0);
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
       date.setHours(0, 0, 0, 0);

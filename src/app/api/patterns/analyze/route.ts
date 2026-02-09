@@ -9,7 +9,7 @@ import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
  * Analyzes completed tasks from the last 90 days to identify patterns
  * and update the task_patterns table for smart suggestions.
  */
-export const POST = withTeamAuth(async (_request: NextRequest, _context: TeamAuthContext) => {
+export const POST = withTeamAuth(async (_request: NextRequest, context: TeamAuthContext) => {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -33,13 +33,19 @@ export const POST = withTeamAuth(async (_request: NextRequest, _context: TeamAut
     // Fetch completed tasks from last 90 days
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: completedTasks, error: fetchError } = await supabase
+    let query = supabase
       .from('todos')
       .select('*')
       .eq('completed', true)
       .gte('created_at', ninetyDaysAgo)
       .order('created_at', { ascending: false })
       .limit(500);
+
+    if (context.teamId) {
+      query = query.eq('team_id', context.teamId);
+    }
+
+    const { data: completedTasks, error: fetchError } = await query;
 
     if (fetchError) {
       console.error('Failed to fetch completed tasks:', fetchError);

@@ -898,7 +898,7 @@ interface BoardViewProps {
   onStatusChange: (id: string, status: GoalStatus) => void;
 }
 
-function BoardView({ goalsByStatus, categories, darkMode, onEdit }: BoardViewProps) {
+function BoardView({ goalsByStatus, categories, darkMode, onEdit, onStatusChange }: BoardViewProps) {
   const visibleStatuses: GoalStatus[] = ['not_started', 'in_progress', 'completed'];
 
   return (
@@ -1266,8 +1266,15 @@ function EditGoalModal({ goal, categories, darkMode, onClose, onSave, onToggleMi
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
+                onClick={() => {
+                  const statuses: GoalStatus[] = ['not_started', 'in_progress', 'completed'];
+                  const currentIdx = statuses.indexOf(formData.status);
+                  const nextStatus = statuses[(currentIdx + 1) % statuses.length];
+                  setFormData(prev => ({ ...prev, status: nextStatus }));
+                }}
                 className="p-2 rounded-lg transition-all hover:scale-110"
                 style={{ backgroundColor: GOAL_STATUS_CONFIG[formData.status].bgColor, color: GOAL_STATUS_CONFIG[formData.status].color }}
+                title={`Status: ${GOAL_STATUS_CONFIG[formData.status].label} (click to change)`}
               >
                 {statusIcons[formData.status]}
               </button>

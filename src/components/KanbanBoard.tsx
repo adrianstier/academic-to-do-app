@@ -68,6 +68,7 @@ interface KanbanBoardProps {
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
   onEmailCustomer?: (todo: Todo) => void;
+  currentUserName?: string;
   // Selection support
   showBulkActions?: boolean;
   selectedTodos?: Set<string>;
@@ -522,6 +523,7 @@ export default function KanbanBoard({
   onUpdateAttachments,
   onSaveAsTemplate,
   onEmailCustomer,
+  currentUserName,
   showBulkActions,
   selectedTodos,
   onSelectTodo,
@@ -610,7 +612,7 @@ export default function KanbanBoard({
   };
 
   const dateSectionConfig: Record<DateSection, { label: string; color: string; bgColor: string; Icon: LucideIcon }> = {
-    overdue: { label: 'Overdue', color: 'var(--error)', bgColor: 'var(--error-light)', Icon: AlertTriangle },
+    overdue: { label: 'Overdue', color: 'var(--danger)', bgColor: 'var(--danger-light)', Icon: AlertTriangle },
     today: { label: 'Today', color: 'var(--accent)', bgColor: 'var(--accent-light)', Icon: Calendar },
     upcoming: { label: 'Upcoming', color: 'var(--success)', bgColor: 'var(--success-light)', Icon: CalendarClock },
     no_date: { label: 'No Date', color: 'var(--text-muted)', bgColor: 'var(--surface-2)', Icon: CalendarX },
@@ -891,7 +893,7 @@ export default function KanbanBoard({
           isOpen={!!selectedTodo}
           onClose={() => setSelectedTodo(null)}
           users={users}
-          currentUserName={users[0] || ''}
+          currentUserName={currentUserName || users[0] || ''}
           onToggle={onToggle || (() => {})}
           onDelete={onDelete}
           onAssign={onAssign}

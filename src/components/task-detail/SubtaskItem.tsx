@@ -35,7 +35,7 @@ export default function SubtaskItem({ subtask, onToggle, onDelete, onUpdate }: S
 
   return (
     <div
-      className={`flex items-center gap-2 sm:gap-3 p-2.5 rounded-[var(--radius-md)] transition-colors ${
+      className={`group flex items-center gap-2 sm:gap-3 p-2.5 rounded-[var(--radius-md)] transition-colors ${
         subtask.completed ? 'bg-[var(--surface-2)] opacity-60' : 'bg-[var(--surface)]'
       }`}
     >

@@ -34,7 +34,7 @@ function getSupabaseClient() {
  * - userId: Fetch reminders for a specific user
  * - status: Filter by status ('pending', 'sent', 'failed', 'cancelled')
  */
-export const GET = withTeamAuth(async (request: NextRequest, _context: TeamAuthContext) => {
+export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   const { searchParams } = new URL(request.url);
   const todoId = searchParams.get('todoId');
   const userId = searchParams.get('userId');
@@ -45,16 +45,22 @@ export const GET = withTeamAuth(async (request: NextRequest, _context: TeamAuthC
     .from('task_reminders')
     .select(`
       *,
-      todos:todo_id (
+      todos:todo_id!inner (
         id,
         text,
         priority,
         due_date,
         assigned_to,
-        completed
+        completed,
+        team_id
       )
     `)
     .order('reminder_time', { ascending: true });
+
+  // Scope to team via the joined todos table
+  if (context.teamId) {
+    query = query.eq('todos.team_id', context.teamId);
+  }
 
   if (todoId) {
     query = query.eq('todo_id', todoId);

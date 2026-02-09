@@ -57,7 +57,7 @@ export default function CommandPalette({
 }: CommandPaletteProps) {
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === 'dark';
-  const { setActiveView, openRightPanel } = useAppShell();
+  const { setActiveView, openRightPanel, openShortcuts, triggerNewTask } = useAppShell();
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -139,7 +139,7 @@ export default function CommandPalette({
       icon: Plus,
       category: 'actions',
       shortcut: 'N',
-      action: () => { setActiveView('tasks'); onClose(); /* TODO: focus add task input */ },
+      action: () => { setActiveView('tasks'); onClose(); triggerNewTask(); },
     },
     {
       id: 'action-filter-today',
@@ -182,9 +182,9 @@ export default function CommandPalette({
       icon: Keyboard,
       category: 'settings',
       shortcut: '?',
-      action: () => { onClose(); /* TODO: open shortcuts modal */ },
+      action: () => { onClose(); openShortcuts(); },
     },
-  ], [darkMode, toggleTheme, setActiveView, openRightPanel, onClose]);
+  ], [darkMode, toggleTheme, setActiveView, openRightPanel, onClose, openShortcuts, triggerNewTask]);
 
   // Filter commands based on query and user permissions
   const filteredCommands = useMemo(() => {
@@ -205,7 +205,7 @@ export default function CommandPalette({
           cmd.category.toLowerCase().includes(lowerQuery)
         );
       });
-  }, [commands, query, currentUser.name]);
+  }, [commands, query, currentUser]);
 
   // Group commands by category
   const groupedCommands = useMemo(() => {

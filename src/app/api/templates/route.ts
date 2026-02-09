@@ -4,8 +4,8 @@ import { logger } from '@/lib/logger';
 import { withTeamAuth, TeamAuthContext } from '@/lib/teamAuth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // GET - Fetch all templates (user's own + shared)
 export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
@@ -14,7 +14,7 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     let query = supabase
       .from('task_templates')
       .select('*')
-      .or(`created_by.eq.${context.userName},is_shared.eq.true`)
+      .or(`created_by.eq."${context.userName}",is_shared.eq.true`)
       .order('created_at', { ascending: false });
 
     // Scope to team if multi-tenancy is enabled

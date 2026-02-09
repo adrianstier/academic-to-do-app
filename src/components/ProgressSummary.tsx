@@ -59,8 +59,12 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
 
     const completedTodos = todos.filter(t => t.completed);
 
-    // Calculate completed today (approximation based on todos that are completed)
-    const completedToday = completedTodos.length;
+    // Calculate completed today by checking updated_at date
+    const completedToday = completedTodos.filter(t => {
+      if (!t.updated_at) return false;
+      const updatedDate = new Date(t.updated_at).toISOString().split('T')[0];
+      return updatedDate === todayStr;
+    }).length;
 
     const productivity = todos.length > 0
       ? Math.round((completedTodos.length / todos.length) * 100)

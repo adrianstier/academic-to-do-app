@@ -147,7 +147,7 @@ export default function FloatingChatButton({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser.name, lastConversation]);
+  }, [currentUser.name]); // eslint-disable-line react-hooks/exhaustive-deps -- lastConversation excluded to prevent subscription churn
 
   // Clear unread count when opening chat
   useEffect(() => {
@@ -164,26 +164,25 @@ export default function FloatingChatButton({
 
   return (
     <>
-      {/* Floating Action Button */}
-      <motion.button
-        onClick={() => setIsOpen(true)}
-        className={`
-          fixed bottom-6 right-6 z-40
-          w-14 h-14 rounded-full
-          flex items-center justify-center
-          shadow-lg hover:shadow-xl
-          transition-shadow duration-200
-          ${darkMode
-            ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
-            : 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
-          }
-        `}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label={`Open chat${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-      >
-        <MessageCircle className="w-6 h-6 text-white" />
-      </motion.button>
+      {/* Floating Action Button - hidden when chat is open */}
+      {!isOpen && (
+        <motion.button
+          onClick={() => setIsOpen(true)}
+          className={`
+            fixed bottom-6 right-6 z-40
+            w-14 h-14 rounded-full
+            flex items-center justify-center
+            shadow-lg hover:shadow-xl
+            transition-shadow duration-200
+            bg-[var(--accent)] hover:bg-[var(--accent)]/90
+          `}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label={`Open chat${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        >
+          <MessageCircle className="w-6 h-6 text-white" />
+        </motion.button>
+      )}
 
       {/* Chat Popup - Google Chat style */}
       <AnimatePresence>

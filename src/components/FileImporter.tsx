@@ -393,11 +393,10 @@ export default function FileImporter({
       await new Promise(resolve => setTimeout(resolve, 300));
       setStatus('ready');
     } catch (err) {
-      // Mark current step as error
-      const currentStep = processingSteps.find(s => s.status === 'active');
-      if (currentStep) {
-        updateStepStatus(currentStep.id, 'error');
-      }
+      // Mark current step as error (use setter callback to avoid stale closure)
+      setProcessingSteps(prev => prev.map(step =>
+        step.status === 'active' ? { ...step, status: 'error' as const } : step
+      ));
       setError(err instanceof Error ? err.message : 'Failed to process file');
       setStatus('error');
     }

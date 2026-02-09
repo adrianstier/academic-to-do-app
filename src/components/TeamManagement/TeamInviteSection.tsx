@@ -517,7 +517,6 @@ export function TeamInviteSection({
 
       // TODO: Actually send the invitation email via API
       // This would typically be handled by a server-side function
-      console.log('Would send email to:', trimmedEmail, 'with token:', token);
     } catch (err) {
       console.error('Failed to send invitation:', err);
       setError('Failed to send invitation. Please try again.');

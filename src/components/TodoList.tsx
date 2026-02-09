@@ -455,9 +455,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // These functions are stable (from hooks/stores) - we only want to register listener once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [visibleTodos, showBulkActions, selectedTodos, selectAll, clearSelection, setShowBulkActions, setSearchQuery, setFocusMode, toggleFocusMode, setQuickFilter, openShortcuts]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -502,7 +500,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       const duplicates = findPotentialDuplicates(combinedText, todos);
       if (duplicates.length > 0) {
         // Store pending task and show modal
-        openDuplicateModal({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile }, duplicates);
+        openDuplicateModal({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence }, duplicates);
         return;
       }
     }
@@ -644,7 +642,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         pendingTask.assignedTo,
         pendingTask.subtasks,
         pendingTask.transcription,
-        pendingTask.sourceFile
+        pendingTask.sourceFile,
+        pendingTask.reminderAt,
+        pendingTask.notes,
+        pendingTask.recurrence
       );
     }
     clearDuplicateState();
@@ -781,6 +782,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       id: newTodo.id,
       text: newTodo.text,
       completed: false,
+      status: 'todo',
       created_at: newTodo.created_at,
       created_by: newTodo.created_by,
     };
@@ -790,6 +792,9 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (newTodo.assigned_to) insertData.assigned_to = newTodo.assigned_to;
     if (newTodo.notes) insertData.notes = newTodo.notes;
     if (newTodo.recurrence) insertData.recurrence = newTodo.recurrence;
+    if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;
+    if (newTodo.transcription) insertData.transcription = newTodo.transcription;
+    if (newTodo.reminder_at) insertData.reminder_at = newTodo.reminder_at;
 
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
@@ -2220,6 +2225,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 todos={filteredAndSortedTodos}
                 users={users}
                 darkMode={darkMode}
+                currentUserName={userName}
                 onStatusChange={updateStatus}
                 onDelete={confirmDeleteTodo}
                 onAssign={assignTodo}
@@ -2482,14 +2488,16 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       )}
 
       {/* Save Template Modal */}
-      {templateTodo && (
-        <SaveTemplateModal
-          todo={templateTodo}
-          darkMode={darkMode}
-          onClose={() => closeTemplateModal()}
-          onSave={saveAsTemplate}
-        />
-      )}
+      <AnimatePresence>
+        {templateTodo && (
+          <SaveTemplateModal
+            todo={templateTodo}
+            darkMode={darkMode}
+            onClose={() => closeTemplateModal()}
+            onSave={saveAsTemplate}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Merge Tasks Modal */}
       {showMergeModal && mergeTargets.length >= 2 && (
@@ -2656,16 +2664,18 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       )}
 
       {/* Customer Email Modal */}
-      {showEmailModal && emailTargetTodos.length > 0 && (
-        <CustomerEmailModal
-          todos={emailTargetTodos}
-          currentUser={currentUser}
-          onClose={() => {
-            closeEmailModal();
-          }}
-          darkMode={darkMode}
-        />
-      )}
+      <AnimatePresence>
+        {showEmailModal && emailTargetTodos.length > 0 && (
+          <CustomerEmailModal
+            todos={emailTargetTodos}
+            currentUser={currentUser}
+            onClose={() => {
+              closeEmailModal();
+            }}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Enhanced Celebration Modal (Feature 3) */}
       {showEnhancedCelebration && celebrationData && (

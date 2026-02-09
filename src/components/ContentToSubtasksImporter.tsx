@@ -92,6 +92,15 @@ export default function ContentToSubtasksImporter({
   onAddSubtasks,
   parentTaskText
 }: ContentToSubtasksImporterProps) {
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const [mode, setMode] = useState<ImportMode>(null);
   const [emailContent, setEmailContent] = useState('');
   const [transcription, setTranscription] = useState('');
@@ -386,8 +395,8 @@ export default function ContentToSubtasksImporter({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label="Import as Subtasks">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">

@@ -152,11 +152,9 @@ export default function SignupPage() {
   };
 
   const hashPin = async (pin: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(pin);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // Use the same salted hash as the join flow for consistency
+    const { createSaltedHash } = await import('@/lib/secureAuth');
+    return createSaltedHash(pin);
   };
 
   const handleSignup = async () => {

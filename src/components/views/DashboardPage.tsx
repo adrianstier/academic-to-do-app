@@ -73,7 +73,8 @@ export default function DashboardPage({
     const dueToday = activeTodos.filter(t => {
       if (!t.due_date) return false;
       const dueDate = new Date(t.due_date);
-      return dueDate >= today && dueDate <= todayEnd;
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate.getTime() === today.getTime();
     });
 
     const nextWeek = new Date(today);

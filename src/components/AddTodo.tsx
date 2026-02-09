@@ -406,7 +406,19 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
       e.preventDefault();
       if (text.trim() && !isProcessing) {
-        onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, undefined, undefined, undefined, undefined, notes || undefined, recurrence || null);
+        // Build subtasks same as handleQuickAdd
+        let entrySubtasks: Subtask[] | undefined;
+        if (templateSubtasks.length > 0) {
+          entrySubtasks = templateSubtasks;
+        } else if (suggestedSubtasks.length > 0) {
+          entrySubtasks = suggestedSubtasks.map((st, index) => ({
+            id: `subtask-${Date.now()}-${index}`,
+            text: st,
+            completed: false,
+            priority: 'medium' as TodoPriority,
+          }));
+        }
+        onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, entrySubtasks, undefined, undefined, reminderAt || undefined, notes || undefined, recurrence || null);
         // Save preferences for next time
         if (currentUserId) {
           updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);

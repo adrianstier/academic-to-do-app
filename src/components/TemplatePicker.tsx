@@ -343,8 +343,7 @@ export default function TemplatePicker({
                   </p>
                   <button
                     onClick={() => {
-                      setIsOpen(false);
-                      // Trigger create template action - users can create from task menu
+                      setShowCreateForm(true);
                     }}
                     className={`mt-4 px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
                       darkMode

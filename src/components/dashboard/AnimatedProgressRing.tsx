@@ -24,7 +24,8 @@ export default function AnimatedProgressRing({
 }: AnimatedProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const clampedProgress = Math.max(0, Math.min(100, progress));
+  const strokeDashoffset = circumference - (clampedProgress / 100) * circumference;
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`}>
