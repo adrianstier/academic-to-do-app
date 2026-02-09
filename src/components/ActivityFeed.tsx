@@ -97,9 +97,22 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const lastActivityIdRef = useRef<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape key press
   useEscapeKey(() => onClose?.(), { enabled: !!onClose });
+
+  // Close filter menu on click outside
+  useEffect(() => {
+    if (!showFilterMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setShowFilterMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFilterMenu]);
 
   // Load notification settings on mount
   useEffect(() => {
@@ -347,7 +360,7 @@ export default function ActivityFeed({ currentUserName, darkMode: darkModeProp, 
           </span>
           
           {/* Filter dropdown */}
-          <div className="relative">
+          <div className="relative" ref={filterMenuRef}>
             <button
               onClick={() => setShowFilterMenu(!showFilterMenu)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${

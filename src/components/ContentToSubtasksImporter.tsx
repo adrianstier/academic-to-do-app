@@ -396,32 +396,32 @@ export default function ContentToSubtasksImporter({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label="Import as Subtasks">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-[var(--surface)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+        <div className="p-4 border-b border-slate-200 dark:border-[var(--border)] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
+            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-[var(--accent)]/20 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-indigo-600 dark:text-[var(--accent)]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-800">Import as Subtasks</h2>
-              <p className="text-sm text-slate-500">Extract action items from emails or voicemails</p>
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-[var(--foreground)]">Import as Subtasks</h2>
+              <p className="text-sm text-slate-500 dark:text-[var(--text-muted)]">Extract action items from emails or voicemails</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-[var(--surface-2)] rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-slate-500" />
+            <X className="w-5 h-5 text-slate-500 dark:text-[var(--text-muted)]" />
           </button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {/* Parent task context */}
-          <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-            <p className="text-xs text-slate-500 mb-1">Adding subtasks to:</p>
-            <p className="text-sm font-medium text-slate-700 truncate">{parentTaskText}</p>
+          <div className="mb-4 p-3 bg-slate-50 dark:bg-[var(--surface-2)] rounded-lg">
+            <p className="text-xs text-slate-500 dark:text-[var(--text-muted)] mb-1">Adding subtasks to:</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-[var(--foreground)] truncate">{parentTaskText}</p>
           </div>
 
           {/* Mode selection */}
@@ -429,27 +429,27 @@ export default function ContentToSubtasksImporter({
             <div className="grid grid-cols-3 gap-4">
               <button
                 onClick={() => setMode('email')}
-                className="p-6 border-2 border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-all group"
+                className="p-6 border-2 border-slate-200 dark:border-[var(--border)] rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-[var(--accent)]/10 transition-all group"
               >
-                <Mail className="w-10 h-10 text-slate-400 group-hover:text-indigo-500 mx-auto mb-3 transition-colors" />
-                <p className="font-medium text-slate-700 group-hover:text-indigo-700">Paste Email</p>
-                <p className="text-sm text-slate-500 mt-1">Paste text content</p>
+                <Mail className="w-10 h-10 text-slate-400 dark:text-[var(--text-muted)] group-hover:text-indigo-500 dark:group-hover:text-[var(--accent)] mx-auto mb-3 transition-colors" />
+                <p className="font-medium text-slate-700 dark:text-[var(--foreground)] group-hover:text-indigo-700">Paste Email</p>
+                <p className="text-sm text-slate-500 dark:text-[var(--text-muted)] mt-1">Paste text content</p>
               </button>
               <button
                 onClick={() => setMode('voicemail')}
-                className="p-6 border-2 border-slate-200 rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all group"
+                className="p-6 border-2 border-slate-200 dark:border-[var(--border)] rounded-xl hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 dark:hover:bg-[var(--accent)]/10 transition-all group"
               >
-                <FileAudio className="w-10 h-10 text-slate-400 group-hover:text-[var(--accent)] mx-auto mb-3 transition-colors" />
-                <p className="font-medium text-slate-700 group-hover:text-[var(--brand-navy)]">Upload Audio</p>
-                <p className="text-sm text-slate-500 mt-1">Upload audio file</p>
+                <FileAudio className="w-10 h-10 text-slate-400 dark:text-[var(--text-muted)] group-hover:text-[var(--accent)] mx-auto mb-3 transition-colors" />
+                <p className="font-medium text-slate-700 dark:text-[var(--foreground)] group-hover:text-[var(--brand-navy)]">Upload Audio</p>
+                <p className="text-sm text-slate-500 dark:text-[var(--text-muted)] mt-1">Upload audio file</p>
               </button>
               <button
                 onClick={() => setMode('live-mic')}
-                className="p-6 border-2 border-slate-200 rounded-xl hover:border-red-300 hover:bg-red-50/50 transition-all group"
+                className="p-6 border-2 border-slate-200 dark:border-[var(--border)] rounded-xl hover:border-red-300 hover:bg-red-50/50 dark:hover:bg-red-900/20 transition-all group"
               >
-                <Mic className="w-10 h-10 text-slate-400 group-hover:text-red-500 mx-auto mb-3 transition-colors" />
-                <p className="font-medium text-slate-700 group-hover:text-red-700">Live Mic</p>
-                <p className="text-sm text-slate-500 mt-1">Speak directly</p>
+                <Mic className="w-10 h-10 text-slate-400 dark:text-[var(--text-muted)] group-hover:text-red-500 mx-auto mb-3 transition-colors" />
+                <p className="font-medium text-slate-700 dark:text-[var(--foreground)] group-hover:text-red-700 dark:group-hover:text-red-400">Live Mic</p>
+                <p className="text-sm text-slate-500 dark:text-[var(--text-muted)] mt-1">Speak directly</p>
               </button>
             </div>
           )}
@@ -460,30 +460,30 @@ export default function ContentToSubtasksImporter({
               <div className="flex items-center justify-between">
                 <button
                   onClick={resetToModeSelection}
-                  className="text-sm text-slate-500 hover:text-slate-700"
+                  className="text-sm text-slate-500 dark:text-[var(--text-muted)] hover:text-slate-700 dark:hover:text-[var(--foreground)]"
                 >
                   &larr; Back
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-[var(--foreground)] mb-2">
                   Paste email or message content
                 </label>
                 <textarea
                   value={emailContent}
                   onChange={(e) => setEmailContent(e.target.value)}
                   placeholder="Paste the full email or message here..."
-                  className="w-full h-48 px-4 py-3 border border-slate-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-sm"
+                  className="w-full h-48 px-4 py-3 border border-slate-200 dark:border-[var(--border)] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-[var(--accent)]/30 focus:border-indigo-400 dark:focus:border-[var(--accent)] text-sm bg-white dark:bg-[var(--surface-2)] text-slate-800 dark:text-[var(--foreground)] placeholder:text-slate-400 dark:placeholder:text-[var(--text-muted)]"
                   disabled={status === 'parsing'}
                 />
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 dark:text-[var(--text-muted)] mt-1">
                   {emailContent.length} characters
                 </p>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}
@@ -491,7 +491,7 @@ export default function ContentToSubtasksImporter({
               <button
                 onClick={handleEmailParse}
                 disabled={!emailContent.trim() || status === 'parsing'}
-                className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-200 dark:disabled:bg-[var(--surface-2)] text-white disabled:text-slate-400 dark:disabled:text-[var(--text-muted)] rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
               >
                 {status === 'parsing' ? (
                   <>
@@ -514,7 +514,7 @@ export default function ContentToSubtasksImporter({
               <div className="flex items-center justify-between">
                 <button
                   onClick={resetToModeSelection}
-                  className="text-sm text-slate-500 hover:text-slate-700"
+                  className="text-sm text-slate-500 dark:text-[var(--text-muted)] hover:text-slate-700 dark:hover:text-[var(--foreground)]"
                 >
                   &larr; Back
                 </button>
@@ -523,11 +523,11 @@ export default function ContentToSubtasksImporter({
               {status === 'idle' && (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-colors cursor-pointer"
+                  className="border-2 border-dashed border-slate-300 dark:border-[var(--border)] rounded-xl p-8 text-center hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 dark:hover:bg-[var(--accent)]/10 transition-colors cursor-pointer"
                 >
-                  <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-                  <p className="font-medium text-slate-600">Click to upload audio file</p>
-                  <p className="text-sm text-slate-400 mt-1">MP3, WAV, M4A, OGG (max 25MB)</p>
+                  <Upload className="w-10 h-10 text-slate-400 dark:text-[var(--text-muted)] mx-auto mb-3" />
+                  <p className="font-medium text-slate-600 dark:text-[var(--foreground)]">Click to upload audio file</p>
+                  <p className="text-sm text-slate-400 dark:text-[var(--text-muted)] mt-1">MP3, WAV, M4A, OGG (max 25MB)</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -539,24 +539,24 @@ export default function ContentToSubtasksImporter({
               )}
 
               {(status === 'transcribing' || status === 'parsing') && (
-                <div className="p-6 bg-slate-50 rounded-xl text-center">
+                <div className="p-6 bg-slate-50 dark:bg-[var(--surface-2)] rounded-xl text-center">
                   <Loader2 className="w-8 h-8 text-[var(--accent)] animate-spin mx-auto mb-3" />
-                  <p className="font-medium text-slate-700">
+                  <p className="font-medium text-slate-700 dark:text-[var(--foreground)]">
                     {status === 'transcribing' ? 'Transcribing audio...' : 'Extracting action items...'}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">This may take a moment</p>
+                  <p className="text-sm text-slate-500 dark:text-[var(--text-muted)] mt-1">This may take a moment</p>
                 </div>
               )}
 
               {transcription && (
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Transcription:</p>
-                  <p className="text-sm text-slate-600 italic line-clamp-3">&ldquo;{transcription}&rdquo;</p>
+                <div className="p-3 bg-slate-50 dark:bg-[var(--surface-2)] rounded-lg">
+                  <p className="text-xs text-slate-500 dark:text-[var(--text-muted)] mb-1">Transcription:</p>
+                  <p className="text-sm text-slate-600 dark:text-[var(--text-secondary)] italic line-clamp-3">&ldquo;{transcription}&rdquo;</p>
                 </div>
               )}
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}
@@ -569,50 +569,50 @@ export default function ContentToSubtasksImporter({
               <div className="flex items-center justify-between">
                 <button
                   onClick={resetToModeSelection}
-                  className="text-sm text-slate-500 hover:text-slate-700"
+                  className="text-sm text-slate-500 dark:text-[var(--text-muted)] hover:text-slate-700 dark:hover:text-[var(--foreground)]"
                 >
                   &larr; Back
                 </button>
               </div>
 
               {/* Recording controls */}
-              <div className="p-6 bg-slate-50 rounded-xl text-center">
+              <div className="p-6 bg-slate-50 dark:bg-[var(--surface-2)] rounded-xl text-center">
                 <button
                   onClick={toggleRecording}
                   disabled={status === 'parsing'}
                   className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 transition-all ${
                     isRecording
                       ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                      : 'bg-slate-200 hover:bg-slate-300'
+                      : 'bg-slate-200 dark:bg-[var(--surface-3)] hover:bg-slate-300 dark:hover:bg-[var(--border)]'
                   } disabled:opacity-50`}
                 >
                   {isRecording ? (
                     <MicOff className="w-8 h-8 text-white" />
                   ) : (
-                    <Mic className="w-8 h-8 text-slate-600" />
+                    <Mic className="w-8 h-8 text-slate-600 dark:text-[var(--text-muted)]" />
                   )}
                 </button>
-                <p className="font-medium text-slate-700">
+                <p className="font-medium text-slate-700 dark:text-[var(--foreground)]">
                   {isRecording ? 'Recording... Click to stop' : 'Click to start recording'}
                 </p>
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 dark:text-[var(--text-muted)] mt-1">
                   {isRecording ? 'Speak clearly into your microphone' : 'Dictate action items for this task'}
                 </p>
               </div>
 
               {/* Live transcript display */}
               {liveTranscript && (
-                <div className="p-4 bg-white border border-slate-200 rounded-xl">
-                  <p className="text-xs text-slate-500 mb-2">Live Transcript:</p>
-                  <p className="text-sm text-slate-700">{liveTranscript}</p>
+                <div className="p-4 bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-[var(--border)] rounded-xl">
+                  <p className="text-xs text-slate-500 dark:text-[var(--text-muted)] mb-2">Live Transcript:</p>
+                  <p className="text-sm text-slate-700 dark:text-[var(--foreground)]">{liveTranscript}</p>
                 </div>
               )}
 
               {/* Processing indicator */}
               {status === 'parsing' && (
-                <div className="p-4 bg-indigo-50 rounded-xl text-center">
-                  <Loader2 className="w-6 h-6 text-indigo-500 animate-spin mx-auto mb-2" />
-                  <p className="text-sm text-indigo-700">Extracting action items...</p>
+                <div className="p-4 bg-indigo-50 dark:bg-[var(--accent)]/10 rounded-xl text-center">
+                  <Loader2 className="w-6 h-6 text-indigo-500 dark:text-[var(--accent)] animate-spin mx-auto mb-2" />
+                  <p className="text-sm text-indigo-700 dark:text-[var(--accent)]">Extracting action items...</p>
                 </div>
               )}
 
@@ -628,7 +628,7 @@ export default function ContentToSubtasksImporter({
               )}
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}
@@ -641,18 +641,18 @@ export default function ContentToSubtasksImporter({
               <div className="flex items-center justify-between">
                 <button
                   onClick={resetToModeSelection}
-                  className="text-sm text-slate-500 hover:text-slate-700"
+                  className="text-sm text-slate-500 dark:text-[var(--text-muted)] hover:text-slate-700 dark:hover:text-[var(--foreground)]"
                 >
                   &larr; Start over
                 </button>
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-500 dark:text-[var(--text-muted)]">
                   {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''} found
                 </span>
               </div>
 
               {summary && (
-                <div className="p-3 bg-indigo-50 rounded-lg">
-                  <p className="text-sm text-indigo-700">{summary}</p>
+                <div className="p-3 bg-indigo-50 dark:bg-[var(--accent)]/10 rounded-lg">
+                  <p className="text-sm text-indigo-700 dark:text-[var(--accent)]">{summary}</p>
                 </div>
               )}
 
@@ -663,8 +663,8 @@ export default function ContentToSubtasksImporter({
                     key={index}
                     className={`p-3 rounded-lg border transition-colors ${
                       subtask.selected
-                        ? 'border-indigo-200 bg-indigo-50/50'
-                        : 'border-slate-200 bg-slate-50 opacity-60'
+                        ? 'border-indigo-200 dark:border-[var(--accent)]/30 bg-indigo-50/50 dark:bg-[var(--accent)]/5'
+                        : 'border-slate-200 dark:border-[var(--border)] bg-slate-50 dark:bg-[var(--surface-2)] opacity-60'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -674,7 +674,7 @@ export default function ContentToSubtasksImporter({
                         className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                           subtask.selected
                             ? 'bg-indigo-500 border-indigo-500 text-white'
-                            : 'border-slate-300'
+                            : 'border-slate-300 dark:border-[var(--border)]'
                         }`}
                       >
                         {subtask.selected && <Check className="w-3 h-3" />}
@@ -686,17 +686,17 @@ export default function ContentToSubtasksImporter({
                           type="text"
                           value={subtask.text}
                           onChange={(e) => updateSubtask(index, { text: e.target.value })}
-                          className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                          className="w-full bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-slate-800 dark:text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-[var(--accent)]/30 focus:border-indigo-400 dark:focus:border-[var(--accent)]"
                         />
 
                         {/* Options row */}
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <div className="flex items-center gap-1">
-                            <Flag className="w-3 h-3 text-slate-400" />
+                            <Flag className="w-3 h-3 text-slate-400 dark:text-[var(--text-muted)]" />
                             <select
                               value={subtask.priority}
                               onChange={(e) => updateSubtask(index, { priority: e.target.value as TodoPriority })}
-                              className="text-xs px-2 py-1 rounded border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                              className="text-xs px-2 py-1 rounded border border-slate-200 dark:border-[var(--border)] bg-white dark:bg-[var(--surface-2)] text-slate-700 dark:text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-indigo-200 dark:focus:ring-[var(--accent)]/30"
                             >
                               <option value="low">Low</option>
                               <option value="medium">Medium</option>
@@ -706,7 +706,7 @@ export default function ContentToSubtasksImporter({
                           </div>
 
                           {subtask.estimatedMinutes && (
-                            <div className="flex items-center gap-1 text-xs text-slate-500">
+                            <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-[var(--text-muted)]">
                               <Clock className="w-3 h-3" />
                               {subtask.estimatedMinutes}m
                             </div>
@@ -717,7 +717,7 @@ export default function ContentToSubtasksImporter({
                       {/* Remove button */}
                       <button
                         onClick={() => removeSubtask(index)}
-                        className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-1 text-slate-400 dark:text-[var(--text-muted)] hover:text-red-500 dark:hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -727,7 +727,7 @@ export default function ContentToSubtasksImporter({
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}
@@ -736,12 +736,12 @@ export default function ContentToSubtasksImporter({
 
           {/* Empty state after processing */}
           {status === 'ready' && subtasks.length === 0 && (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-slate-400 dark:text-[var(--text-muted)]">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No action items found</p>
               <button
                 onClick={resetToModeSelection}
-                className="mt-2 text-indigo-500 hover:text-indigo-600 text-sm"
+                className="mt-2 text-indigo-500 dark:text-[var(--accent)] hover:text-indigo-600 dark:hover:text-[var(--accent-hover)] text-sm"
               >
                 Try again
               </button>
@@ -751,21 +751,21 @@ export default function ContentToSubtasksImporter({
 
         {/* Footer */}
         {status === 'ready' && subtasks.length > 0 && (
-          <div className="p-4 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
-            <span className="text-sm text-slate-500">
+          <div className="p-4 border-t border-slate-200 dark:border-[var(--border)] flex items-center justify-between flex-shrink-0">
+            <span className="text-sm text-slate-500 dark:text-[var(--text-muted)]">
               {totalSelected} subtask{totalSelected !== 1 ? 's' : ''} selected
             </span>
             <div className="flex gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                className="px-4 py-2 text-slate-600 dark:text-[var(--text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--surface-2)] rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddSelected}
                 disabled={totalSelected === 0}
-                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-200 dark:disabled:bg-[var(--surface-2)] text-white disabled:text-slate-400 dark:disabled:text-[var(--text-muted)] rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <Check className="w-4 h-4" />
                 Add {totalSelected} Subtask{totalSelected !== 1 ? 's' : ''}
