@@ -25,8 +25,8 @@ export default function TaskDetailFooter({
     return (
       <div className="p-4 sm:p-5 border-t border-[var(--border-subtle)] bg-[var(--surface-2)]">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center" aria-hidden="true">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
+          <div className="w-8 h-8 rounded-full bg-[var(--danger-light)] flex items-center justify-center" aria-hidden="true">
+            <AlertTriangle className="w-4 h-4 text-[var(--danger)]" />
           </div>
           <div>
             <p className="text-sm font-semibold text-[var(--foreground)]">Delete this task?</p>

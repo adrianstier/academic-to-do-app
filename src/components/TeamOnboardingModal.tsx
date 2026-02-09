@@ -145,7 +145,6 @@ export default function TeamOnboardingModal({
 
       if (rpcError) throw rpcError;
 
-      console.log('Created team:', teamId);
       setStep('complete');
     } catch (err: unknown) {
       console.error('Error creating team:', err);

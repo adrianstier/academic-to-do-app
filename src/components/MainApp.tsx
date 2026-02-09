@@ -296,19 +296,16 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
 
   // AI Inbox handlers - extracted to useCallback for memoization
   // NOTE: These must be defined BEFORE any conditional returns to follow Rules of Hooks
-  const handleAIAccept = useCallback(async (item: unknown, editedTask: unknown) => {
+  const handleAIAccept = useCallback(async (_item: unknown, _editedTask: unknown) => {
     // TODO: Implement accept logic - create task from AI suggestion
-    console.log('Accept AI item:', item, editedTask);
   }, []);
 
-  const handleAIDismiss = useCallback(async (itemId: string) => {
+  const handleAIDismiss = useCallback(async (_itemId: string) => {
     // TODO: Implement dismiss logic
-    console.log('Dismiss AI item:', itemId);
   }, []);
 
   const handleAIRefresh = useCallback(async () => {
     // TODO: Implement refresh logic - fetch new AI items
-    console.log('Refresh AI inbox');
   }, []);
 
   const handleArchiveClose = useCallback(() => setActiveView('tasks'), [setActiveView]);

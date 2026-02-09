@@ -569,7 +569,6 @@ export function TeamInviteSection({
       setTimeout(() => setSuccess(null), 3000);
 
       // TODO: Actually resend the email
-      console.log('Would resend email to:', invitation.email);
     } catch (err) {
       console.error('Failed to resend invitation:', err);
       setError('Failed to resend invitation. Please try again.');

@@ -153,7 +153,7 @@ export function TaskCompletionSummary({
       case 'success':
         return 'bg-green-500 hover:bg-green-600 text-white';
       case 'error':
-        return 'bg-red-500 hover:bg-red-600 text-white';
+        return 'bg-[var(--danger)] hover:bg-[var(--danger)]/90 text-white';
       default:
         return 'bg-blue-600 hover:bg-blue-700 text-white';
     }
