@@ -22,7 +22,7 @@ const supabase = createClient(
 export const GET = withTeamAdminAuth(async (request: NextRequest, _context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
-    const hours = parseInt(searchParams.get('hours') || '24', 10);
+    const hours = Math.min(parseInt(searchParams.get('hours') || '24', 10) || 24, 168);
 
     // Get in-memory event summary
     const eventSummary = securityMonitor.getRecentEventsSummary();

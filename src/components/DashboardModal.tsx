@@ -494,7 +494,16 @@ export default function DashboardModal({
                       <QuickActions
                         darkMode={darkMode}
                         onAddTask={() => handleAction(onAddTask)}
+                        onFilterOverdue={() => handleAction(onFilterOverdue)}
                         onOpenChat={onOpenChat ? () => handleAction(onOpenChat) : undefined}
+                        overdueCount={todos.filter(t => {
+                          if (!t.due_date || t.completed) return false;
+                          const dueDate = new Date(t.due_date);
+                          dueDate.setHours(0, 0, 0, 0);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          return dueDate < today;
+                        }).length}
                       />
 
                       {/* Today's Focus (AI Suggested) */}

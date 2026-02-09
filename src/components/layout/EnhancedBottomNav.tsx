@@ -28,7 +28,7 @@ import { useAppShell, ActiveView } from './AppShell';
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface NavTab {
-  id: ActiveView | 'add';
+  id: ActiveView | 'add' | 'more';
   label: string;
   icon: typeof CheckSquare;
   badge?: number;
@@ -75,18 +75,18 @@ export default function EnhancedBottomNav() {
       badge: stats.unreadMessages,
     },
     {
-      id: 'activity',
+      id: 'more',
       label: 'More',
       icon: Menu,
     },
   ];
 
-  const handleTabPress = (tabId: ActiveView | 'add') => {
+  const handleTabPress = (tabId: ActiveView | 'add' | 'more') => {
     if (tabId === 'add') {
       // Open quick add modal or focus task input
       setActiveView('tasks');
       // TODO: Trigger add task focus
-    } else if (tabId === 'activity') {
+    } else if (tabId === 'more') {
       // Open more menu sheet
       openMobileSheet('menu');
     } else {
@@ -112,7 +112,7 @@ export default function EnhancedBottomNav() {
           const Icon = tab.icon;
           const isActive = tab.id !== 'add' && activeView === tab.id;
           const isAddButton = tab.id === 'add';
-          const isMoreButton = tab.id === 'activity';
+          const isMoreButton = tab.id === 'more';
 
           // Floating add button in center
           if (isAddButton) {
