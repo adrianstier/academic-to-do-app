@@ -92,19 +92,19 @@ export default function SaveTemplateModal({
         animate={reducedMotion ? { opacity: 1 } : 'visible'}
         exit={reducedMotion ? { opacity: 0 } : 'exit'}
         transition={reducedMotion ? { duration: 0 } : modalTransition}
-        className={`relative w-full max-w-md rounded-2xl shadow-2xl ${darkMode ? 'bg-slate-800' : 'bg-white'}`}
+        className="relative w-full max-w-md rounded-2xl shadow-2xl bg-[var(--surface)]"
       >
         {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
-            <FileText className={`w-5 h-5 ${darkMode ? 'text-[#72B5E8]' : 'text-[var(--accent)]'}`} />
-            <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            <FileText className="w-5 h-5 text-[var(--accent)]" />
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">
               Save as Template
             </h2>
           </div>
           <button
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+            className="p-2 rounded-lg transition-colors hover:bg-[var(--surface-2)] text-[var(--text-muted)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -114,7 +114,7 @@ export default function SaveTemplateModal({
         <div className="p-4 space-y-4">
           {/* Template Name */}
           <div>
-            <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            <label className="block text-sm font-medium mb-1 text-[var(--foreground)]">
               Template Name
             </label>
             <input
@@ -122,24 +122,20 @@ export default function SaveTemplateModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter template name"
-              className={`w-full px-3 py-2 rounded-lg border text-sm ${
-                darkMode
-                  ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
-                  : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
-              } focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]`}
+              className="w-full px-3 py-2 rounded-lg border text-sm bg-[var(--surface-2)] border-[var(--border)] text-[var(--foreground)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)]"
               autoFocus
             />
           </div>
 
           {/* Preview */}
-          <div className={`p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-slate-50'}`}>
-            <p className={`text-xs font-medium uppercase tracking-wide mb-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          <div className="p-3 rounded-lg bg-[var(--surface-2)]">
+            <p className="text-xs font-medium uppercase tracking-wide mb-2 text-[var(--text-muted)]">
               Template Preview
             </p>
 
             <div className="space-y-2">
               {/* Task text */}
-              <p className={`text-sm ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              <p className="text-sm text-[var(--foreground)]">
                 {todo.text}
               </p>
 
@@ -153,13 +149,13 @@ export default function SaveTemplateModal({
                 </span>
 
                 {todo.assigned_to && (
-                  <span className={`text-xs px-2 py-0.5 rounded-md ${darkMode ? 'bg-slate-600 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-[var(--surface-2)] text-[var(--text-muted)]">
                     Assigned to: {todo.assigned_to}
                   </span>
                 )}
 
                 {subtasks.length > 0 && (
-                  <span className={`text-xs px-2 py-0.5 rounded-md ${darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-100 text-indigo-600'}`}>
+                  <span className="text-xs px-2 py-0.5 rounded-md bg-[var(--accent)]/10 text-[var(--accent)]">
                     {subtasks.length} subtask{subtasks.length !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -167,14 +163,14 @@ export default function SaveTemplateModal({
 
               {/* Subtasks preview */}
               {subtasks.length > 0 && (
-                <div className={`mt-2 pl-3 border-l-2 ${darkMode ? 'border-slate-600' : 'border-slate-200'}`}>
+                <div className="mt-2 pl-3 border-l-2 border-[var(--border)]">
                   {subtasks.slice(0, 3).map((st, i) => (
-                    <p key={i} className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <p key={i} className="text-xs text-[var(--text-muted)]">
                       • {st.text}
                     </p>
                   ))}
                   {subtasks.length > 3 && (
-                    <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <p className="text-xs text-[var(--text-light)]">
                       +{subtasks.length - 3} more...
                     </p>
                   )}
@@ -186,7 +182,7 @@ export default function SaveTemplateModal({
           {/* Share toggle */}
           <div className="flex items-center justify-between">
             <label
-              className={`flex items-center gap-2 cursor-pointer ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}
+              className="flex items-center gap-2 cursor-pointer text-[var(--foreground)]"
             >
               <input
                 type="checkbox"
@@ -209,21 +205,17 @@ export default function SaveTemplateModal({
           )}
 
           {/* Info */}
-          <p className={`text-xs ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+          <p className="text-xs text-[var(--text-light)]">
             Templates save the task description, priority, default assignee, and subtasks.
             {isShared ? ' Team members will be able to use this template.' : ' Only you will see this template.'}
           </p>
         </div>
 
         {/* Footer */}
-        <div className={`flex items-center justify-end gap-2 p-4 border-t ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-[var(--border)]">
           <button
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              darkMode
-                ? 'text-slate-300 hover:bg-slate-700'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-[var(--text-muted)] hover:bg-[var(--surface-2)]"
           >
             Cancel
           </button>

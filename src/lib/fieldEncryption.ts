@@ -306,8 +306,29 @@ export async function reEncryptField(
     throw new Error(`Failed to decrypt field ${fieldName} for re-encryption`);
   }
 
-  // Then encrypt with new key
-  // Note: This would require passing the new key explicitly
-  // For actual key rotation, use a dedicated migration script
-  return decrypted;
+  // BUG-API-31: Actually re-encrypt with the new key
+  try {
+    const fieldKey = deriveFieldKey(newKey, fieldName);
+    const iv = randomBytes(IV_LENGTH);
+    const cipher = createCipheriv(ALGORITHM, fieldKey, iv, { authTagLength: AUTH_TAG_LENGTH });
+
+    const encrypted = Buffer.concat([
+      cipher.update(decrypted!, 'utf8'),
+      cipher.final()
+    ]);
+
+    const authTag = cipher.getAuthTag();
+
+    return ENCRYPTED_PREFIX +
+      iv.toString('base64') + ':' +
+      authTag.toString('base64') + ':' +
+      encrypted.toString('base64');
+  } catch (error) {
+    logger.error('Re-encryption failed', error as Error, {
+      component: 'fieldEncryption',
+      action: 'reEncrypt',
+      fieldName,
+    });
+    throw new Error(`Failed to re-encrypt field ${fieldName}`);
+  }
 }

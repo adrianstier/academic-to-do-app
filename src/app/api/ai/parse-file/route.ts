@@ -3,9 +3,19 @@ import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
 import { withTeamAuth } from '@/lib/teamAuth';
 
-const anthropic = new Anthropic();
+// BUG-API-28: Graceful check for API key like other AI routes
+const apiKey = process.env.ANTHROPIC_API_KEY;
 
 export const POST = withTeamAuth(async (request, context) => {
+  if (!apiKey) {
+    return NextResponse.json(
+      { success: false, error: 'AI features are not configured. Please set ANTHROPIC_API_KEY.' },
+      { status: 503 }
+    );
+  }
+
+  const anthropic = new Anthropic({ apiKey });
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;

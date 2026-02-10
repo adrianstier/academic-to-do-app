@@ -28,9 +28,9 @@ export interface LogContext {
  * Sensitive data patterns to filter from logs
  */
 const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
-  // SSN patterns
+  // SSN patterns (with optional hyphens, e.g. 123-45-6789 or 123456789)
   { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN REDACTED]' },
-  { pattern: /\b\d{9}\b/g, replacement: '[POSSIBLE SSN REDACTED]' },
+  { pattern: /\b\d{3}-?\d{2}-?\d{4}\b/g, replacement: '[POSSIBLE SSN REDACTED]' },
   // Credit card patterns
   { pattern: /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/g, replacement: '[CARD REDACTED]' },
   // PIN patterns (4-6 digits that look like PINs)

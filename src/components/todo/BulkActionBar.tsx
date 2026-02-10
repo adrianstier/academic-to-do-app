@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { X, Trash2, Check, Calendar, User, GitMerge, Mail, Zap } from 'lucide-react';
 import { TodoPriority } from '@/types/todo';
 
@@ -32,6 +32,48 @@ function BulkActionBar({
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [showRescheduleDropdown, setShowRescheduleDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
+  const barRef = useRef<HTMLDivElement>(null!);
+
+  // Close all dropdowns
+  const closeAllDropdowns = useCallback(() => {
+    setShowAssignDropdown(false);
+    setShowRescheduleDropdown(false);
+    setShowPriorityDropdown(false);
+  }, []);
+
+  // Mutual exclusion: opening one dropdown closes others
+  const toggleAssignDropdown = useCallback(() => {
+    setShowRescheduleDropdown(false);
+    setShowPriorityDropdown(false);
+    setShowAssignDropdown(prev => !prev);
+  }, []);
+
+  const toggleRescheduleDropdown = useCallback(() => {
+    setShowAssignDropdown(false);
+    setShowPriorityDropdown(false);
+    setShowRescheduleDropdown(prev => !prev);
+  }, []);
+
+  const togglePriorityDropdown = useCallback(() => {
+    setShowAssignDropdown(false);
+    setShowRescheduleDropdown(false);
+    setShowPriorityDropdown(prev => !prev);
+  }, []);
+
+  // Click-outside handler to close dropdowns
+  useEffect(() => {
+    const anyOpen = showAssignDropdown || showRescheduleDropdown || showPriorityDropdown;
+    if (!anyOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (barRef.current && !barRef.current.contains(e.target as Node)) {
+        closeAllDropdowns();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAssignDropdown, showRescheduleDropdown, showPriorityDropdown, closeAllDropdowns]);
 
   // Helper to get date offset
   const getDateOffset = (days: number) => {
@@ -41,7 +83,7 @@ function BulkActionBar({
   };
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
+    <div ref={barRef} className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-[var(--shadow-xl)] px-4 py-3 flex items-center gap-3 backdrop-blur-xl">
         <div className="flex items-center gap-2 pr-3 border-r border-[var(--border)]">
           <button
@@ -70,7 +112,7 @@ function BulkActionBar({
           {/* Assign dropdown */}
           <div className="relative">
             <button
-              onClick={() => setShowAssignDropdown(!showAssignDropdown)}
+              onClick={toggleAssignDropdown}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--accent)] hover:bg-[var(--accent-light)] rounded-lg transition-colors"
               title="Assign to user"
             >
@@ -98,7 +140,7 @@ function BulkActionBar({
           {/* Reschedule dropdown */}
           <div className="relative">
             <button
-              onClick={() => setShowRescheduleDropdown(!showRescheduleDropdown)}
+              onClick={toggleRescheduleDropdown}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--warning)] hover:bg-[var(--warning-light)] rounded-lg transition-colors"
               title="Reschedule"
             >
@@ -141,7 +183,7 @@ function BulkActionBar({
           {/* Priority dropdown */}
           <div className="relative">
             <button
-              onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+              onClick={togglePriorityDropdown}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface-2)] rounded-lg transition-colors"
               title="Set priority"
             >

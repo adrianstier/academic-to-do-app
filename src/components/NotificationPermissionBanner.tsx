@@ -23,6 +23,8 @@ export default function NotificationPermissionBanner({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     // Check if we should show the banner
     const checkPermissionStatus = async () => {
       // Don't show if push not supported
@@ -54,10 +56,16 @@ export default function NotificationPermissionBanner({
       }
 
       // Show the banner after a short delay
-      setTimeout(() => setVisible(true), 2000);
+      timeoutId = setTimeout(() => setVisible(true), 2000);
     };
 
     checkPermissionStatus();
+
+    return () => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const handleEnable = useCallback(async () => {

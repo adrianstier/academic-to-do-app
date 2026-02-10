@@ -132,7 +132,7 @@ export default function TaskDetailPanel({
   }, [task.id, onUpdate]);
 
   const handleAssigneeChange = useCallback(async (assignedTo: string | null) => {
-    await onUpdate(task.id, { assigned_to: assignedTo || '' });
+    await onUpdate(task.id, { assigned_to: assignedTo || undefined });
   }, [task.id, onUpdate]);
 
   const handleAddSubtask = useCallback(async () => {

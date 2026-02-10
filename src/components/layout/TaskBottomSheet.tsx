@@ -412,6 +412,20 @@ export default function TaskBottomSheet({
                       </button>
                     )}
                     <button
+                      onClick={async () => {
+                        const text = [
+                          task.text,
+                          task.notes ? `\nNotes: ${task.notes}` : '',
+                          task.due_date ? `\nDue: ${format(new Date(task.due_date), 'MMM d, yyyy')}` : '',
+                          task.priority ? `\nPriority: ${task.priority}` : '',
+                        ].join('');
+                        try {
+                          await navigator.clipboard.writeText(text);
+                        } catch {
+                          // Clipboard API not available
+                        }
+                        setShowMoreActions(false);
+                      }}
                       className={`
                         flex flex-col items-center gap-1 p-2 rounded-xl touch-manipulation
                         ${darkMode ? 'active:bg-white/10' : 'active:bg-gray-200'}
@@ -427,6 +441,23 @@ export default function TaskBottomSheet({
                       </span>
                     </button>
                     <button
+                      onClick={async () => {
+                        const text = task.text;
+                        if (navigator.share) {
+                          try {
+                            await navigator.share({ title: 'Task', text });
+                          } catch {
+                            // User cancelled or share not available
+                          }
+                        } else {
+                          try {
+                            await navigator.clipboard.writeText(text);
+                          } catch {
+                            // Clipboard API not available
+                          }
+                        }
+                        setShowMoreActions(false);
+                      }}
                       className={`
                         flex flex-col items-center gap-1 p-2 rounded-xl touch-manipulation
                         ${darkMode ? 'active:bg-white/10' : 'active:bg-gray-200'}

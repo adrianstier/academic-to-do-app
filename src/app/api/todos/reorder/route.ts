@@ -61,9 +61,23 @@ export const POST = withTeamAuth(async (request, context: TeamAuthContext) => {
 
     // Handle different reorder modes
     if (newOrder !== undefined) {
+      // BUG-API-16: Validate newOrder is a non-negative integer
+      if (typeof newOrder !== 'number' || !Number.isInteger(newOrder) || newOrder < 0) {
+        return NextResponse.json(
+          { error: 'newOrder must be a non-negative integer' },
+          { status: 400 }
+        );
+      }
       // Mode 1: Move to specific position
       updatedTasks = await moveToPosition(todoId, currentTask.display_order ?? 0, newOrder, teamId);
     } else if (direction) {
+      // BUG-API-17: Validate direction is 'up' or 'down'
+      if (direction !== 'up' && direction !== 'down') {
+        return NextResponse.json(
+          { error: "direction must be 'up' or 'down'" },
+          { status: 400 }
+        );
+      }
       // Mode 2: Move up or down
       updatedTasks = await moveUpOrDown(todoId, currentTask.display_order ?? 0, direction, teamId);
     } else if (targetTodoId) {

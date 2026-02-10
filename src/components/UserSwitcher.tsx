@@ -45,7 +45,8 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
       }
     };
     fetchUsers();
-  }, [modalState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -252,16 +253,16 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
         >
           <div
             onClick={e => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-sm w-full overflow-hidden"
+            className="bg-white dark:bg-[var(--surface)] rounded-2xl shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-sm w-full overflow-hidden"
           >
             {/* Modal header */}
-            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-100">
-              <h3 className="text-base sm:text-lg font-semibold text-slate-900">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-100 dark:border-[var(--border)]">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--foreground)]">
                 Enter PIN
               </h3>
               <button
                 onClick={closeModal}
-                className="p-2 sm:p-1.5 rounded-lg hover:bg-slate-100 active:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center touch-manipulation"
+                className="p-2 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-200 dark:active:bg-white/20 text-slate-400 dark:text-[var(--text-muted)] hover:text-slate-600 dark:hover:text-[var(--foreground)] transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center touch-manipulation"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -276,8 +277,8 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
                   >
                     {getUserInitials(selectedUser.name)}
                   </div>
-                  <p className="font-medium text-slate-900">{selectedUser.name}</p>
-                  <p className="text-sm text-slate-400">Enter 4-digit PIN</p>
+                  <p className="font-medium text-slate-900 dark:text-[var(--foreground)]">{selectedUser.name}</p>
+                  <p className="text-sm text-slate-400 dark:text-[var(--text-muted)]">Enter 4-digit PIN</p>
                 </div>
 
                 <div className="flex justify-center gap-2 sm:gap-3 mb-4">
@@ -294,17 +295,17 @@ export default function UserSwitcher({ currentUser, onUserChange }: UserSwitcher
                       disabled={lockoutSeconds > 0 || isSubmitting}
                       className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 transition-all focus:outline-none touch-manipulation ${
                         lockoutSeconds > 0
-                          ? 'border-red-200 bg-red-50'
+                          ? 'border-red-200 bg-red-50 dark:border-red-500/40 dark:bg-red-500/10'
                           : digit
-                            ? 'border-[#2c5282] bg-[#2c5282]/5'
-                            : 'border-slate-200 focus:border-[#2c5282]'
-                      } text-slate-900`}
+                            ? 'border-[#2c5282] bg-[#2c5282]/5 dark:border-[var(--accent)] dark:bg-[var(--accent)]/10'
+                            : 'border-slate-200 dark:border-[var(--border)] focus:border-[#2c5282] dark:focus:border-[var(--accent)]'
+                      } text-slate-900 dark:text-[var(--foreground)] dark:bg-transparent`}
                     />
                   ))}
                 </div>
 
                 {(error || lockoutSeconds > 0) && (
-                  <div className="flex items-center justify-center gap-2 text-red-500 text-sm bg-red-50 py-2 px-4 rounded-lg">
+                  <div className="flex items-center justify-center gap-2 text-red-500 dark:text-red-400 text-sm bg-red-50 dark:bg-red-500/10 py-2 px-4 rounded-lg">
                     <AlertCircle className="w-4 h-4" />
                     {lockoutSeconds > 0 ? `Wait ${lockoutSeconds}s` : error}
                   </div>

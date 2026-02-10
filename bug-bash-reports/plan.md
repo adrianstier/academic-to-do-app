@@ -59,3 +59,10 @@
 2. Each agent: reads all files in scope, identifies bugs, writes report
 3. Spawn review agent to cross-check reports and run build
 4. Fix all found issues, commit, push
+
+## Wave 2 (Fix Wave)
+- Each agent reads its existing report from bug-bash-reports/<scope>.md
+- Focuses on FIXING the remaining unfixed bugs (not re-auditing)
+- Priority: Medium severity and above that are fixable code changes
+- Skips architectural items marked "Require Further Discussion"
+- Each agent writes fixes directly, no separate report needed

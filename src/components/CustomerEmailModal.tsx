@@ -215,13 +215,25 @@ export default function CustomerEmailModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: select text for manual copy
-      const textarea = document.createElement('textarea');
-      textarea.value = fullEmail;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      // Fallback for older browsers without clipboard API
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = fullEmail;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!success) {
+          throw new Error('execCommand copy failed');
+        }
+      } catch {
+        // If all copy methods fail, alert the user
+        window.prompt('Copy failed. Please copy manually:', fullEmail);
+        return;
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -247,7 +259,7 @@ export default function CustomerEmailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Generate Customer Email">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}

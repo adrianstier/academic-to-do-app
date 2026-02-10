@@ -214,6 +214,7 @@ export default function Dashboard({
         {/* Daily Digest Panel - auto-loads AI briefing */}
         <DailyDigestPanel
           currentUser={currentUser}
+          onNavigateToTask={() => onNavigateToTasks()}
           onFilterOverdue={onFilterOverdue}
           onFilterDueToday={onFilterDueToday}
           defaultExpanded={true}

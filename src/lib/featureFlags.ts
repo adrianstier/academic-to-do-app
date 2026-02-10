@@ -120,8 +120,11 @@ function simpleHash(str: string): number {
 }
 
 /**
- * Hook for using feature flags in React components
+ * Get the current value of a feature flag.
+ * Note: This is NOT a reactive React hook — it reads the current value
+ * from environment variables / localStorage at call time.
+ * Renamed from useFeatureFlag to avoid implying React hook semantics.
  */
-export function useFeatureFlag(flag: FeatureFlag, userId?: string): boolean {
+export function getFeatureFlag(flag: FeatureFlag, userId?: string): boolean {
   return isFeatureEnabled(flag, userId);
 }

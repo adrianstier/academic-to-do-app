@@ -50,7 +50,7 @@ export interface UseKeyboardShortcutsOptions {
 /**
  * Platform detection for cross-platform modifier key support
  */
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac');
 
 /**
  * Check if the event matches a shortcut configuration

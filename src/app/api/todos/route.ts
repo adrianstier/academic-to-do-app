@@ -35,7 +35,8 @@ export const GET = withTeamAuth(async (request, context) => {
     let query = supabase.from('todos').select('*');
 
     // Team-scope the query when multi-tenancy is active
-    if (context.teamId) {
+    // BUG-API-9: Also guard against empty string teamId to prevent returning all teams' data
+    if (context.teamId && context.teamId.trim() !== '') {
       query = query.eq('team_id', context.teamId);
     }
 
@@ -118,7 +119,7 @@ export const POST = withTeamAuth(async (request, context) => {
       subtasks: subtasks,
     };
 
-    if (context.teamId) {
+    if (context.teamId && context.teamId.trim() !== '') {
       task.team_id = context.teamId;
     }
 
@@ -143,7 +144,7 @@ export const POST = withTeamAuth(async (request, context) => {
       user_name: context.userName,
       details: { priority, has_transcription: !!transcription },
     };
-    if (context.teamId) {
+    if (context.teamId && context.teamId.trim() !== '') {
       activityRecord.team_id = context.teamId;
     }
     await supabase.from('activity_log').insert(activityRecord);
@@ -224,7 +225,7 @@ export const PUT = withTeamAuth(async (request, context) => {
       .eq('id', id);
 
     // Team-scope the update
-    if (context.teamId) {
+    if (context.teamId && context.teamId.trim() !== '') {
       query = query.eq('team_id', context.teamId);
     }
 
@@ -242,7 +243,7 @@ export const PUT = withTeamAuth(async (request, context) => {
         todo_text: data.text?.substring(0, 100),
         user_name: context.userName,
       };
-      if (context.teamId) {
+      if (context.teamId && context.teamId.trim() !== '') {
         activityRecord.team_id = context.teamId;
       }
       await supabase.from('activity_log').insert(activityRecord);
@@ -292,7 +293,7 @@ export const DELETE = withTeamAuth(async (request, context) => {
       .from('todos')
       .select('text')
       .eq('id', id);
-    if (context.teamId) {
+    if (context.teamId && context.teamId.trim() !== '') {
       todoQuery = todoQuery.eq('team_id', context.teamId);
     }
     const { data: todo } = await todoQuery.single();
@@ -301,7 +302,7 @@ export const DELETE = withTeamAuth(async (request, context) => {
       .from('todos')
       .delete()
       .eq('id', id);
-    if (context.teamId) {
+    if (context.teamId && context.teamId.trim() !== '') {
       deleteQuery = deleteQuery.eq('team_id', context.teamId);
     }
     const { error } = await deleteQuery;
@@ -317,7 +318,7 @@ export const DELETE = withTeamAuth(async (request, context) => {
       todo_text: todo?.text?.substring(0, 100),
       user_name: context.userName,
     };
-    if (context.teamId) {
+    if (context.teamId && context.teamId.trim() !== '') {
       activityRecord.team_id = context.teamId;
     }
     await supabase.from('activity_log').insert(activityRecord);

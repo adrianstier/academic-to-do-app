@@ -11,10 +11,14 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     // Get user's own templates and shared templates
+    // BUG-API-8: Sanitize userName for PostgREST filter to prevent filter injection.
+    // Escape characters that could alter the filter logic: double quotes, commas,
+    // parentheses, and backslashes in PostgREST filter expressions.
+    const safeUserName = context.userName.replace(/[",()\\]/g, '');
     let query = supabase
       .from('task_templates')
       .select('*')
-      .or(`created_by.eq."${context.userName}",is_shared.eq.true`)
+      .or(`created_by.eq.${safeUserName},is_shared.eq.true`)
       .order('created_at', { ascending: false });
 
     // Scope to team if multi-tenancy is enabled

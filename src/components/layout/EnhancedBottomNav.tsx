@@ -46,7 +46,9 @@ export default function EnhancedBottomNav() {
     triggerNewTask,
   } = useAppShell();
 
-  // Stats for badges (these would come from props or context in real implementation)
+  // TODO: Badge stats are hardcoded to zero. Wire these up to a shared context
+  // or chat subscription so unread message counts and overdue task counts are
+  // reflected in the bottom nav badges. Until then, badges will never appear.
   const [stats, setStats] = useState({
     unreadMessages: 0,
     overdueTasks: 0,
@@ -100,10 +102,11 @@ export default function EnhancedBottomNav() {
         fixed bottom-0 left-0 right-0 z-40 md:hidden
         pb-safe
         ${darkMode
-          ? 'bg-[var(--surface)]/95 backdrop-blur-xl border-t border-white/10'
+          ? 'backdrop-blur-xl border-t border-white/10'
           : 'bg-white/95 backdrop-blur-xl border-t border-[var(--border)]'
         }
       `}
+      style={darkMode ? { backgroundColor: 'color-mix(in srgb, var(--surface) 95%, transparent)' } : undefined}
       role="navigation"
       aria-label="Main navigation"
     >

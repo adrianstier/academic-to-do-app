@@ -263,7 +263,7 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
   } catch (error) {
     logger.error('Error handling attachment upload', error, { component: 'AttachmentsAPI' });
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -330,7 +330,7 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
   } catch (error) {
     logger.error('Error handling attachment deletion', error, { component: 'AttachmentsAPI' });
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -386,7 +386,7 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
   } catch (error) {
     logger.error('Error handling download request', error, { component: 'AttachmentsAPI' });
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

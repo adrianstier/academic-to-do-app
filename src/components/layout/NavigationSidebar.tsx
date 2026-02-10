@@ -83,7 +83,7 @@ export default function NavigationSidebar({
   const isExpanded = !sidebarCollapsed || hovering;
 
   // Keyboard shortcut hint
-  const shortcutKey = typeof navigator !== 'undefined' && navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+  const shortcutKey = typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac') ? '⌘' : 'Ctrl';
 
   const handleLogout = () => {
     if (onUserChange) {

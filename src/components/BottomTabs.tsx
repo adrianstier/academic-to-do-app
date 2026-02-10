@@ -100,9 +100,10 @@ export default function BottomTabs({
     <nav
       className={`fixed bottom-0 left-0 right-0 z-40 md:hidden border-t safe-area-inset-bottom ${
         darkMode
-          ? 'bg-[var(--surface)]/95 backdrop-blur-lg border-white/10'
+          ? 'backdrop-blur-lg border-white/10'
           : 'bg-white/95 backdrop-blur-lg border-[var(--border)]'
       }`}
+      style={darkMode ? { backgroundColor: 'color-mix(in srgb, var(--surface) 95%, transparent)' } : undefined}
       role="tablist"
       aria-label="Task filters"
     >

@@ -30,33 +30,33 @@ export default function QuickActions({
   overdueCount = 0,
 }: QuickActionsProps) {
   const actions: QuickAction[] = [
-    {
+    ...(onAddTask ? [{
       id: 'add-task',
       label: 'Add Task',
       icon: Plus,
-      onClick: onAddTask || (() => {}),
-      variant: 'primary',
-    },
-    {
+      onClick: onAddTask,
+      variant: 'primary' as const,
+    }] : []),
+    ...(onFilterOverdue ? [{
       id: 'my-overdue',
       label: 'My Overdue',
       icon: AlertCircle,
-      onClick: onFilterOverdue || (() => {}),
-      variant: overdueCount > 0 ? 'warning' : 'default',
+      onClick: onFilterOverdue,
+      variant: (overdueCount > 0 ? 'warning' : 'default') as 'warning' | 'default',
       badge: overdueCount > 0 ? overdueCount : undefined,
-    },
-    {
+    }] : []),
+    ...(onStartFocus ? [{
       id: 'start-focus',
       label: 'Start Focus',
       icon: Play,
-      onClick: onStartFocus || (() => {}),
-    },
-    {
+      onClick: onStartFocus,
+    }] : []),
+    ...(onOpenChat ? [{
       id: 'chat',
       label: 'Team Chat',
       icon: MessageCircle,
-      onClick: onOpenChat || (() => {}),
-    },
+      onClick: onOpenChat,
+    }] : []),
   ];
 
   return (

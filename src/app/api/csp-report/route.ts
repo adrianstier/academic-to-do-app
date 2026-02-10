@@ -97,10 +97,12 @@ export async function POST(request: NextRequest) {
 
 // Also handle OPTIONS for preflight requests
 export async function OPTIONS() {
+  // BUG-API-14: Restrict CORS to the app's own origin instead of wildcard
+  const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || '';
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },

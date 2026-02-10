@@ -1,3 +1,7 @@
+// TODO: This component appears to be dead code. It is not imported anywhere in the
+// codebase. AppShell uses FloatingChatButton instead, and TodoList has a comment
+// noting FloatingChat was removed. Consider deleting this file if no longer needed.
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

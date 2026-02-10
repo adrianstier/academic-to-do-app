@@ -122,8 +122,8 @@ export default function StrategicDashboard({
 
   const greeting = getGreeting();
 
-  // Close on Escape key press
-  useEscapeKey(onClose);
+  // Close on Escape key press (disabled when sub-modals are open)
+  useEscapeKey(onClose, { enabled: !showAddGoal && !editingGoal });
 
   const fetchData = useCallback(async () => {
     try {

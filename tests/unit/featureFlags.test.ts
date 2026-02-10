@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { isFeatureEnabled, getAllFeatureFlags, useFeatureFlag } from '@/lib/featureFlags';
+import { isFeatureEnabled, getAllFeatureFlags, getFeatureFlag } from '@/lib/featureFlags';
 import type { FeatureFlag } from '@/lib/featureFlags';
 
 describe('Feature Flags', () => {
@@ -281,15 +281,15 @@ describe('Feature Flags', () => {
     });
   });
 
-  describe('useFeatureFlag hook', () => {
+  describe('getFeatureFlag', () => {
     it('should return the same result as isFeatureEnabled', () => {
       vi.stubEnv('NEXT_PUBLIC_ENABLE_NEW_AUTH', 'true');
 
-      const hookResult = useFeatureFlag('new_auth_system');
+      const result = getFeatureFlag('new_auth_system');
       const directResult = isFeatureEnabled('new_auth_system');
 
-      expect(hookResult).toBe(directResult);
-      expect(hookResult).toBe(true);
+      expect(result).toBe(directResult);
+      expect(result).toBe(true);
     });
 
     it('should pass userId to isFeatureEnabled for A/B testing', () => {
@@ -297,25 +297,25 @@ describe('Feature Flags', () => {
       vi.stubEnv('NEXT_PUBLIC_NEW_COMPONENTS_ROLLOUT_PERCENT', '100');
 
       const userId = 'test-user';
-      const hookResult = useFeatureFlag('refactored_components', userId);
+      const result = getFeatureFlag('refactored_components', userId);
       const directResult = isFeatureEnabled('refactored_components', userId);
 
-      expect(hookResult).toBe(directResult);
-      expect(hookResult).toBe(true);
+      expect(result).toBe(directResult);
+      expect(result).toBe(true);
     });
 
     it('should work without userId parameter', () => {
       vi.stubEnv('NEXT_PUBLIC_ENABLE_OAUTH', 'true');
 
-      const hookResult = useFeatureFlag('oauth_login');
+      const result = getFeatureFlag('oauth_login');
 
-      expect(hookResult).toBe(true);
+      expect(result).toBe(true);
     });
 
     it('should return false for disabled flags', () => {
-      const hookResult = useFeatureFlag('normalized_schema');
+      const result = getFeatureFlag('normalized_schema');
 
-      expect(hookResult).toBe(false);
+      expect(result).toBe(false);
     });
 
     it('should handle all feature flags', () => {
@@ -329,7 +329,7 @@ describe('Feature Flags', () => {
       ];
 
       flags.forEach(flag => {
-        const result = useFeatureFlag(flag);
+        const result = getFeatureFlag(flag);
         expect(typeof result).toBe('boolean');
       });
     });

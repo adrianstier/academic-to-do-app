@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, Pencil, Trash2 } from 'lucide-react';
 import type { Subtask } from '@/types/todo';
 
@@ -14,6 +14,13 @@ interface SubtaskItemProps {
 export default function SubtaskItem({ subtask, onToggle, onDelete, onUpdate }: SubtaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(subtask.text);
+
+  // Sync editText when subtask.text changes externally (e.g., real-time updates)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditText(subtask.text);
+    }
+  }, [subtask.text, isEditing]);
 
   const handleSave = () => {
     if (editText.trim() && editText.trim() !== subtask.text) {
@@ -86,7 +93,7 @@ export default function SubtaskItem({ subtask, onToggle, onDelete, onUpdate }: S
       {!isEditing && !subtask.completed && (
         <button
           onClick={() => setIsEditing(true)}
-          className="p-1.5 -m-1 text-[var(--text-light)] hover:text-[var(--accent)] active:text-[var(--accent-hover)] rounded transition-colors touch-manipulation opacity-0 group-hover:opacity-100 sm:opacity-100"
+          className="p-1.5 -m-1 text-[var(--text-light)] hover:text-[var(--accent)] active:text-[var(--accent-hover)] rounded transition-colors touch-manipulation opacity-100"
           aria-label={`Edit subtask: ${subtask.text}`}
         >
           <Pencil className="w-3.5 h-3.5" />

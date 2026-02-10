@@ -179,6 +179,7 @@ export default function DashboardPage({
         {/* Daily Digest Panel - auto-loads AI briefing */}
         <DailyDigestPanel
           currentUser={currentUser}
+          onNavigateToTask={onTaskClick}
           onFilterOverdue={onFilterOverdue}
           onFilterDueToday={onFilterDueToday}
           defaultExpanded={true}

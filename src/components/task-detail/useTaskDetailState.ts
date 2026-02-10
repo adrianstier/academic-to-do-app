@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Todo, Subtask, PRIORITY_CONFIG } from '@/types/todo';
+import type { Todo, Subtask } from '@/types/todo';
 import { PRIORITY_CONFIG as PriorityConfig } from '@/types/todo';
 
 interface UseTaskDetailStateProps {
@@ -25,6 +25,7 @@ export function useTaskDetailState({
   const [showContentImporter, setShowContentImporter] = useState(false);
   const [showAttachmentUpload, setShowAttachmentUpload] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
 
   // Sync text when todo prop changes (real-time updates) and not actively editing
   useEffect(() => {
@@ -33,10 +34,12 @@ export function useTaskDetailState({
     }
   }, [todo.text, editingText]);
 
-  // Sync notes when todo prop changes
+  // Sync notes when todo prop changes (real-time updates) and not actively editing
   useEffect(() => {
-    setNotes(todo.notes || '');
-  }, [todo.notes]);
+    if (!editingNotes) {
+      setNotes(todo.notes || '');
+    }
+  }, [todo.notes, editingNotes]);
 
   // Derived values
   const subtasks = todo.subtasks || [];
@@ -129,6 +132,8 @@ export function useTaskDetailState({
     // Notes state
     notes,
     setNotes,
+    editingNotes,
+    setEditingNotes,
     handleSaveNotes,
 
     // Subtask state

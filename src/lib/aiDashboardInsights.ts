@@ -167,7 +167,8 @@ function generateTaskSuggestion(
   }
 
   const pool = suggestions[urgency];
-  return pool[Math.floor(Math.random() * pool.length)];
+  const hash = todo.id.charCodeAt(0) + new Date().getDate();
+  return pool[hash % pool.length];
 }
 
 // ============================================================================

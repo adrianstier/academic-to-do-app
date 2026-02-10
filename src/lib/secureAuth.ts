@@ -149,8 +149,16 @@ export async function verifyPin(pin: string, storedHash: string): Promise<{
   }
 
   // Legacy format: unsalted hash
+  // BUG-API-26: Use constant-time comparison for legacy path (same as salted path)
   const legacyHash = await hashPinLegacy(pin);
-  const valid = legacyHash === storedHash;
+  let valid = false;
+  if (legacyHash.length === storedHash.length) {
+    let result = 0;
+    for (let i = 0; i < legacyHash.length; i++) {
+      result |= legacyHash.charCodeAt(i) ^ storedHash.charCodeAt(i);
+    }
+    valid = result === 0;
+  }
   return { valid, needsUpgrade: valid }; // Only upgrade if PIN was correct
 }
 

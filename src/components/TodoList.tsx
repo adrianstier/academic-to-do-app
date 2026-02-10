@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listItemVariants, prefersReducedMotion, DURATION } from '@/lib/animations';
@@ -12,7 +12,7 @@ import AddTaskModal from './AddTaskModal';
 import KanbanBoard from './KanbanBoard';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
-import { useTodoData, useFilters, useBulkActions, useIsDesktopWide, useEscapeKey, useTodoModals } from '@/hooks';
+import { useTodoData, useFilters, useBulkActions, useIsDesktopWide, useEscapeKey, useTodoModals, useFocusTrap } from '@/hooks';
 import {
   DndContext,
   closestCenter,
@@ -339,6 +339,22 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     // Actions - Activity log
     setActivityLog,
   } = useTodoModals();
+
+  // Focus traps for inline modals (BUG-TM-13, BUG-TM-14)
+  const { containerRef: activityFeedRef } = useFocusTrap<HTMLDivElement>({
+    onEscape: () => { closeActivityFeed(); setActiveView('tasks'); },
+    enabled: showActivityFeed,
+  });
+
+  const { containerRef: archiveModalRef } = useFocusTrap<HTMLDivElement>({
+    onEscape: () => { closeArchiveView(); setActiveView('tasks'); },
+    enabled: showArchiveView && canViewArchive,
+  });
+
+  const { containerRef: mergeModalRef } = useFocusTrap<HTMLDivElement>({
+    onEscape: () => { if (!isMerging) closeMergeModal(); },
+    enabled: showMergeModal && mergeTargets.length >= 2,
+  });
 
   // Sync navigation activeView with internal panel states
   // This connects the sidebar navigation to the view panels
@@ -795,6 +811,10 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;
     if (newTodo.transcription) insertData.transcription = newTodo.transcription;
     if (newTodo.reminder_at) insertData.reminder_at = newTodo.reminder_at;
+    // Persist attachments to the duplicate's database record.
+    // Note: attachment files are shared (not duplicated in storage), so deleting
+    // the original task's storage files will break the duplicate's attachment links.
+    if (newTodo.attachments && newTodo.attachments.length > 0) insertData.attachments = newTodo.attachments;
 
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 
@@ -2328,7 +2348,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
       {/* Activity Feed - Full Page View */}
       {showActivityFeed && (
-        <div className="fixed inset-0 z-50 flex flex-col" role="dialog" aria-modal="true" aria-label="Activity Feed">
+        <div ref={activityFeedRef} className="fixed inset-0 z-50 flex flex-col" role="dialog" aria-modal="true" aria-label="Activity Feed">
           {/* Full-page container with proper spacing for navigation */}
           <div className={`flex-1 flex flex-col ${darkMode ? 'bg-[var(--background)]' : 'bg-[var(--background)]'}`}>
             {/* Header with back button */}
@@ -2376,7 +2396,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       )}
 
       {showArchiveView && canViewArchive && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Archived tasks">
+        <div ref={archiveModalRef} className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Archived tasks">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => { closeArchiveView(); setActiveView('tasks'); }}
@@ -2503,7 +2523,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
       {/* Merge Tasks Modal */}
       {showMergeModal && mergeTargets.length >= 2 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Merge Tasks">
+        <div ref={mergeModalRef} className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Merge Tasks">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => {

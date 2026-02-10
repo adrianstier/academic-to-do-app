@@ -240,7 +240,7 @@ Respond with ONLY the JSON object, no other text.`;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Error in smart parse', error, { component: 'SmartParseAPI', details: errorMessage });
     return NextResponse.json(
-      { success: false, error: 'Failed to parse content', details: errorMessage },
+      { success: false, error: 'Failed to parse content' },
       { status: 500 }
     );
   }

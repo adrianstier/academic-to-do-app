@@ -19,7 +19,7 @@ interface ShortcutGroup {
 /**
  * Platform detection for showing correct modifier key symbols
  */
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac');
 
 /**
  * Get platform-appropriate modifier symbol

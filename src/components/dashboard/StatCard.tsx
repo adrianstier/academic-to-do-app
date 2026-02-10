@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import CountUp from '@/components/ui/CountUp';
 
@@ -62,13 +62,14 @@ export default function StatCard({
   delay = 0,
 }: StatCardProps) {
   const styles = variantStyles[variant];
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ y: -2, transition: { duration: 0.2 } }}
+      transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
+      whileHover={prefersReducedMotion ? undefined : { y: -2, transition: { duration: 0.2 } }}
       className="relative p-4 rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex items-start justify-between">

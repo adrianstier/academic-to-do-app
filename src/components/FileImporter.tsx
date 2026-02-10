@@ -135,6 +135,13 @@ export default function FileImporter({
     }
   }, [initialFile]);
 
+  // Revoke ObjectURL on unmount or when audioUrl changes to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
+
   // Processing state
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [error, setError] = useState('');

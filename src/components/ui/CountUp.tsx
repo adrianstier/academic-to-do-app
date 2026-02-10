@@ -30,6 +30,8 @@ export default function CountUp({
   const [count, setCount] = useState(start);
   const startTimeRef = useRef<number | null>(null);
   const frameRef = useRef<number | null>(null);
+  const onCompleteRef = useRef<(() => void) | undefined>(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     startTimeRef.current = null;
@@ -49,7 +51,7 @@ export default function CountUp({
         frameRef.current = requestAnimationFrame(animate);
       } else {
         setCount(end);
-        onComplete?.();
+        onCompleteRef.current?.();
       }
     };
 
@@ -60,7 +62,7 @@ export default function CountUp({
         cancelAnimationFrame(frameRef.current);
       }
     };
-  }, [end, start, duration, onComplete]);
+  }, [end, start, duration]);
 
   const formattedValue = decimals > 0
     ? count.toFixed(decimals)
