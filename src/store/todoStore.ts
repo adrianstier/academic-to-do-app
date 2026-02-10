@@ -562,7 +562,7 @@ export const selectFilteredTodos = (
   // Apply sorting
   switch (filters.sortOption) {
     case 'priority':
-      filtered.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      filtered.sort((a, b) => priorityOrder[a.priority || 'medium'] - priorityOrder[b.priority || 'medium']);
       break;
     case 'due_date':
       filtered.sort((a, b) => {
@@ -589,7 +589,7 @@ export const selectFilteredTodos = (
         if (!aOverdue && bOverdue) return 1;
 
         // Then priority
-        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+        const priorityDiff = priorityOrder[a.priority || 'medium'] - priorityOrder[b.priority || 'medium'];
         if (priorityDiff !== 0) return priorityDiff;
 
         // Then due date

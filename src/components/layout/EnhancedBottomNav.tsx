@@ -43,6 +43,7 @@ export default function EnhancedBottomNav() {
     setActiveView,
     openMobileSheet,
     currentUser,
+    triggerNewTask,
   } = useAppShell();
 
   // Stats for badges (these would come from props or context in real implementation)
@@ -83,9 +84,8 @@ export default function EnhancedBottomNav() {
 
   const handleTabPress = (tabId: ActiveView | 'add' | 'more') => {
     if (tabId === 'add') {
-      // Open quick add modal or focus task input
       setActiveView('tasks');
-      // TODO: Trigger add task focus
+      triggerNewTask();
     } else if (tabId === 'more') {
       // Open more menu sheet
       openMobileSheet('menu');

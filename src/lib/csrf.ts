@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 
 const CSRF_COOKIE_NAME = 'csrf_token';
 const CSRF_HEADER_NAME = 'X-CSRF-Token';
@@ -49,10 +49,10 @@ export function validateCsrfToken(request: NextRequest): boolean {
   }
 
   // Constant-time comparison using hashes
-  const cookieHash = hashToken(cookieToken);
-  const headerHash = hashToken(headerToken);
+  const cookieHash = Buffer.from(hashToken(cookieToken), 'hex');
+  const headerHash = Buffer.from(hashToken(headerToken), 'hex');
 
-  return cookieHash === headerHash;
+  return timingSafeEqual(cookieHash, headerHash);
 }
 
 /**

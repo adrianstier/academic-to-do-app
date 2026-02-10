@@ -15,11 +15,6 @@ export async function GET() {
     NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    SUPABASE_SERVICE_ROLE_KEY_LENGTH: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
-    SUPABASE_SERVICE_ROLE_KEY_PREFIX: process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 10) || 'NOT_SET',
-
-    // Debug test
-    TEST_VAR: process.env.TEST_VAR || 'NOT_SET',
 
     // Optional
     OUTLOOK_ADDON_API_KEY: !!process.env.OUTLOOK_ADDON_API_KEY,
@@ -29,8 +24,6 @@ export async function GET() {
     // Node environment
     NODE_ENV: process.env.NODE_ENV || 'unknown',
 
-    // List all env var names containing SUPABASE (for debugging)
-    ALL_SUPABASE_VARS: Object.keys(process.env).filter(k => k.includes('SUPABASE')),
   };
 
   // Check if critical vars for daily digest are present

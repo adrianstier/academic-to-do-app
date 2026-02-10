@@ -96,10 +96,10 @@ export default function MetadataSection({
 
       {/* Due Date + Snooze */}
       <div>
-        <label htmlFor="task-due-date" className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+        <label htmlFor="task-due-date" className="text-xs font-medium text-[var(--text-muted)] mb-1.5 flex items-center gap-1.5">
           Due Date
           {overdue && (
-            <span className="inline-flex items-center gap-1 text-red-500">
+            <span className="inline-flex items-center gap-1 text-[var(--danger)]">
               <AlertTriangle className="w-3 h-3" />
               <span className="text-[10px] font-semibold">OVERDUE</span>
             </span>
@@ -112,7 +112,7 @@ export default function MetadataSection({
             value={todo.due_date ? todo.due_date.split('T')[0] : ''}
             onChange={(e) => onSetDueDate(todo.id, e.target.value || null)}
             className={`input-refined flex-1 min-w-0 text-sm px-3 py-2 text-[var(--foreground)] min-h-[44px] ${
-              overdue ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : ''
+              overdue ? 'border-[var(--danger)] bg-[var(--danger-light)]' : ''
             }`}
           />
           {!todo.completed && (

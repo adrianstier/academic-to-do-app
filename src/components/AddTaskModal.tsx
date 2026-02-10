@@ -17,7 +17,9 @@ interface AddTaskModalProps {
     subtasks?: Subtask[],
     transcription?: string,
     sourceFile?: File,
-    reminderAt?: string
+    reminderAt?: string,
+    notes?: string,
+    recurrence?: 'daily' | 'weekly' | 'monthly' | null
   ) => void;
   users: string[];
   darkMode?: boolean;
@@ -62,9 +64,11 @@ export default function AddTaskModal({
       subtasks?: Subtask[],
       transcription?: string,
       sourceFile?: File,
-      reminderAt?: string
+      reminderAt?: string,
+      notes?: string,
+      recurrence?: 'daily' | 'weekly' | 'monthly' | null
     ) => {
-      onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt);
+      onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence);
       onClose();
     },
     [onAdd, onClose]

@@ -102,7 +102,7 @@ export function AIFeaturesMenu({
           e.preventDefault();
           onSmartParse();
           setIsOpen(false);
-        } else if (e.key === 'v' && voiceSupported) {
+        } else if (e.key === 'j' && voiceSupported) {
           e.preventDefault();
           onVoiceInput();
           setIsOpen(false);
@@ -140,7 +140,7 @@ export function AIFeaturesMenu({
       id: 'voice',
       label: 'Voice Input',
       icon: Mic,
-      shortcut: '⌘V',
+      shortcut: '⌘J',
       onClick: () => {
         onVoiceInput();
         setIsOpen(false);

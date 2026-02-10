@@ -316,7 +316,7 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(
         )}
 
         {/* Visible avatars (reversed for proper stacking order) */}
-        {visibleChildren.reverse().map((child, index) => (
+        {[...visibleChildren].reverse().map((child, index) => (
           <div
             key={index}
             className="border-2 border-[var(--surface)] rounded-full"

@@ -36,7 +36,8 @@ export function createSupabaseClient(
   const shouldEnableRLS = enableRLS ?? isFeatureEnabled('normalized_schema');
 
   if (shouldEnableRLS && userId) {
-    // Set user context for RLS
+    // Set user context for RLS (fire-and-forget for sync callers)
+    // For proper isolation, use createSupabaseClientWithRLS() instead
     client.rpc('set_config', {
       name: 'app.user_id',
       value: userId,
@@ -49,7 +50,6 @@ export function createSupabaseClient(
       }
     });
 
-    // Enable RLS flag
     client.rpc('set_config', {
       name: 'app.enable_rls',
       value: 'true',
@@ -69,6 +69,43 @@ export function createSupabaseClient(
  * Default Supabase client (backward compatible)
  */
 export const supabase = createSupabaseClient();
+
+/**
+ * Create a Supabase client with RLS context (async - awaits RLS setup)
+ * Use this instead of createSupabaseClient when userId is provided
+ * to ensure RLS context is set before any queries execute.
+ */
+export async function createSupabaseClientWithRLS(
+  userId: string,
+  enableRLS?: boolean
+): Promise<SupabaseClient> {
+  if (!isSupabaseConfigured()) {
+    return createClient('https://placeholder.supabase.co', 'placeholder-key');
+  }
+
+  const client = createClient(supabaseUrl, supabaseAnonKey);
+  const shouldEnableRLS = enableRLS ?? isFeatureEnabled('normalized_schema');
+
+  if (shouldEnableRLS) {
+    const { error: userError } = await client.rpc('set_config', {
+      name: 'app.user_id',
+      value: userId,
+    });
+    if (userError) {
+      logger.warn('Failed to set user context for RLS', { userId, error: userError.message });
+    }
+
+    const { error: rlsError } = await client.rpc('set_config', {
+      name: 'app.enable_rls',
+      value: 'true',
+    });
+    if (rlsError) {
+      logger.warn('Failed to enable RLS flag', { error: rlsError.message });
+    }
+  }
+
+  return client;
+}
 
 /**
  * Create a server-side Supabase client with service role

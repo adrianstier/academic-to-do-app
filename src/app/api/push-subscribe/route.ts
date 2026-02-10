@@ -22,8 +22,8 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
   try {
     const body = await request.json();
     const { subscription } = body;
-    // Use authenticated userName from context instead of trusting client-provided userId
-    const userId = context.userName;
+    // Use authenticated userId from context instead of trusting client-provided userId
+    const userId = context.userId;
 
     if (!subscription || !userId) {
       return NextResponse.json(
@@ -85,7 +85,7 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
   try {
     const body = await request.json();
     const { subscription } = body;
-    const userId = context.userName;
+    const userId = context.userId;
 
     if (!userId) {
       return NextResponse.json(
@@ -145,8 +145,8 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
  * Check if user has an active web push subscription
  */
 export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
-  // Use authenticated userName from context instead of trusting client-provided userId
-  const userId = context.userName;
+  // Use authenticated userId from context
+  const userId = context.userId;
 
   if (!userId) {
     return NextResponse.json(

@@ -238,7 +238,9 @@ export default function WeeklyProgressChart({
               const barHeight = stats.maxCompleted > 0
                 ? Math.max((day.completed / stats.maxCompleted) * maxBarHeight, day.completed > 0 ? 8 : 4)
                 : 4;
-              const isToday = index === weekData.length - 1;
+              const todayDate = new Date();
+              todayDate.setHours(0, 0, 0, 0);
+              const isToday = day.date.getTime() === todayDate.getTime();
               const isHovered = hoveredDay === index;
               const metGoal = day.completed >= dailyGoal;
 
@@ -323,7 +325,9 @@ export default function WeeklyProgressChart({
           {/* Day labels */}
           <div className="flex justify-between">
             {weekData.map((day, index) => {
-              const isToday = index === weekData.length - 1;
+              const todayDate = new Date();
+              todayDate.setHours(0, 0, 0, 0);
+              const isToday = day.date.getTime() === todayDate.getTime();
               const isHovered = hoveredDay === index;
               return (
                 <div key={day.day} className="flex-1 text-center">

@@ -170,7 +170,11 @@ export default function StrategicDashboard({
     const inProgress = goals.filter(g => g.status === 'in_progress').length;
     const overdue = goals.filter(g => {
       if (!g.target_date || g.status === 'completed') return false;
-      return new Date(g.target_date) < new Date();
+      const targetDate = new Date(g.target_date);
+      targetDate.setHours(23, 59, 59, 999);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      return targetDate < now;
     }).length;
     return { total, completed, inProgress, overdue };
   }, [goals]);
@@ -829,9 +833,15 @@ function ListView({
 
                     {goal.target_date && (
                       <span className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs ${
-                        new Date(goal.target_date) < new Date() && goal.status !== 'completed'
-                          ? 'bg-red-500/10 text-red-500'
-                          : darkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'
+                        (() => {
+                          const td = new Date(goal.target_date!);
+                          td.setHours(23, 59, 59, 999);
+                          const n = new Date();
+                          n.setHours(0, 0, 0, 0);
+                          return td < n && goal.status !== 'completed';
+                        })()
+                          ? 'bg-[var(--danger-light)] text-[var(--danger)]'
+                          : 'bg-[var(--surface-2)] text-[var(--text-muted)]'
                       }`}>
                         <Calendar className="w-3 h-3" />
                         {new Date(goal.target_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

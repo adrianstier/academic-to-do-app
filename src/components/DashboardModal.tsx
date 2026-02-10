@@ -176,6 +176,7 @@ export default function DashboardModal({
     const dueToday = activeTodos.filter(t => {
       if (!t.due_date) return false;
       const dueDate = new Date(t.due_date);
+      dueDate.setHours(0, 0, 0, 0);
       return dueDate >= today && dueDate <= todayEnd;
     });
 
@@ -496,14 +497,7 @@ export default function DashboardModal({
                         onAddTask={() => handleAction(onAddTask)}
                         onFilterOverdue={() => handleAction(onFilterOverdue)}
                         onOpenChat={onOpenChat ? () => handleAction(onOpenChat) : undefined}
-                        overdueCount={todos.filter(t => {
-                          if (!t.due_date || t.completed) return false;
-                          const dueDate = new Date(t.due_date);
-                          dueDate.setHours(0, 0, 0, 0);
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          return dueDate < today;
-                        }).length}
+                        overdueCount={stats.overdue}
                       />
 
                       {/* Today's Focus (AI Suggested) */}
@@ -798,7 +792,7 @@ export default function DashboardModal({
 
                           <div className="space-y-3">
                             {aiData.insights.map((insight, index) => {
-                              const _IconComponent = getInsightIcon(insight.type);
+                              // getInsightIcon unused - using emoji icon instead
                               return (
                                 <motion.div
                                   key={index}

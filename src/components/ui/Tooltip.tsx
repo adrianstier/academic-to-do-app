@@ -4,6 +4,7 @@ import {
   useState,
   useRef,
   useEffect,
+  useId,
   forwardRef,
   cloneElement,
   isValidElement,
@@ -243,6 +244,7 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
     },
     ref
   ) => {
+    const tooltipId = useId();
     const [internalOpen, setInternalOpen] = useState(false);
     const [tooltipStyle, setTooltipStyle] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const [mounted, setMounted] = useState(false);
@@ -377,7 +379,7 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
             handleClose();
             childProps.onBlur?.(e);
           },
-          'aria-describedby': isOpen ? 'tooltip' : undefined,
+          'aria-describedby': isOpen ? tooltipId : undefined,
         } as Partial<HTMLAttributes<HTMLElement> & { ref: RefCallback<HTMLElement> }>)
       : children;
 
@@ -396,7 +398,7 @@ export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
                 ref.current = node;
               }
             }}
-            id="tooltip"
+            id={tooltipId}
             role="tooltip"
             aria-label={accessibleLabel}
             initial={reducedMotion ? { opacity: 0 } : animation.initial}

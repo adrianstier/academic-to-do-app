@@ -923,6 +923,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       status: 'todo',
       due_date: nextDue.toISOString().split('T')[0],
       created_at: new Date().toISOString(),
+      subtasks: completedTodo.subtasks?.map(st => ({ ...st, completed: false })),
     };
 
     // Optimistic update using store action
@@ -942,6 +943,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (newTodo.priority && newTodo.priority !== 'medium') insertData.priority = newTodo.priority;
     if (newTodo.assigned_to) insertData.assigned_to = newTodo.assigned_to;
     if (newTodo.notes) insertData.notes = newTodo.notes;
+    if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;
 
     const { error: insertError } = await supabase.from('todos').insert([insertData]);
 

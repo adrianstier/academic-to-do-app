@@ -112,6 +112,7 @@ export function sanitizePromptInput(
 
   // Remove prompt injection patterns
   for (const pattern of INJECTION_PATTERNS) {
+    pattern.lastIndex = 0;
     const matches = sanitized.match(pattern);
     if (matches) {
       blockedPatterns.push(...matches);
@@ -191,6 +192,7 @@ export function quickSanitize(input: string, maxLength = 10000): string {
  */
 export function isInputSafe(input: string): boolean {
   for (const pattern of INJECTION_PATTERNS) {
+    pattern.lastIndex = 0;
     if (pattern.test(input)) {
       return false;
     }

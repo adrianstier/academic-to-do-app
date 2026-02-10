@@ -86,9 +86,9 @@ export default function InsightCard({
       <div className="flex gap-3">
         <div className={`
           flex-shrink-0 p-2 rounded-lg
-          ${darkMode ? styles.iconBg.replace('dark:', '') : styles.iconBg.split(' ')[0]}
+          ${styles.iconBg}
         `}>
-          <Icon className={`w-5 h-5 ${darkMode ? styles.iconColor.split(' ')[1]?.replace('dark:', '') : styles.iconColor.split(' ')[0]}`} />
+          <Icon className={`w-5 h-5 ${styles.iconColor}`} />
         </div>
         <div className="flex-1 min-w-0">
           <h4 className={`

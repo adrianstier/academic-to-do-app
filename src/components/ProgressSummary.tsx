@@ -54,16 +54,19 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
   useEscapeKey(onClose, { enabled: show });
 
   const calculateAndUpdateStreak = async () => {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayLocal = new Date();
+    todayLocal.setHours(0, 0, 0, 0);
+    const todayEndLocal = new Date(todayLocal);
+    todayEndLocal.setHours(23, 59, 59, 999);
+    const todayStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
 
     const completedTodos = todos.filter(t => t.completed);
 
-    // Calculate completed today by checking updated_at date
+    // Calculate completed today by checking updated_at date (using local time)
     const completedToday = completedTodos.filter(t => {
       if (!t.updated_at) return false;
-      const updatedDate = new Date(t.updated_at).toISOString().split('T')[0];
-      return updatedDate === todayStr;
+      const updatedAt = new Date(t.updated_at);
+      return updatedAt >= todayLocal && updatedAt <= todayEndLocal;
     }).length;
 
     const productivity = todos.length > 0
@@ -78,8 +81,7 @@ export default function ProgressSummary({ show, onClose, todos, currentUser, onU
     if (lastStreakDate) {
       const lastDate = new Date(lastStreakDate);
       lastDate.setHours(0, 0, 0, 0);
-      const todayDate = new Date(todayStr);
-      todayDate.setHours(0, 0, 0, 0);
+      const todayDate = new Date(todayLocal);
 
       const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 

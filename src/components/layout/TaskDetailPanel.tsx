@@ -17,7 +17,6 @@ import {
   Trash2,
   Edit3,
   Save,
-  MoreHorizontal,
   ArrowRight,
   ListChecks,
   FileText,
@@ -270,7 +269,7 @@ export default function TaskDetailPanel({
     };
   })() : null;
 
-  const priorityConfig = PRIORITY_CONFIG[task.priority];
+  const priorityConfig = PRIORITY_CONFIG[task.priority || 'medium'];
   const statusConfig = STATUS_CONFIG[task.status];
   const assignedUser = users.find(u => u.name === task.assigned_to);
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
@@ -342,20 +341,6 @@ export default function TaskDetailPanel({
               <Archive className="w-5 h-5" />
             </button>
           )}
-
-          {/* More options */}
-          <button
-            aria-label="More options"
-            className={`
-              p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2
-              ${darkMode
-                ? 'text-white/60 hover:text-white hover:bg-white/10'
-                : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-              }
-            `}
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
 
           {/* Close button */}
           <button

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, createContext, useContext, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useRef, createContext, useContext, useCallback, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle2, AlertCircle, AlertTriangle, Info, Loader2 } from 'lucide-react';
 
@@ -120,6 +120,7 @@ function ToastItem({ toast, position, onDismiss }: ToastItemProps) {
   const animation = positionAnimations[position];
 
   // Auto-dismiss timer with progress
+  const frameRef = useRef<number>(0);
   useEffect(() => {
     if (duration === 0) return;
 
@@ -135,12 +136,14 @@ function ToastItem({ toast, position, onDismiss }: ToastItemProps) {
         onDismiss(toast.id);
       } else {
         setProgress(newProgress);
-        requestAnimationFrame(updateProgress);
+        frameRef.current = requestAnimationFrame(updateProgress);
       }
     };
 
-    const animationId = requestAnimationFrame(updateProgress);
-    return () => cancelAnimationFrame(animationId);
+    frameRef.current = requestAnimationFrame(updateProgress);
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
   }, [duration, toast.id, onDismiss]);
 
   return (

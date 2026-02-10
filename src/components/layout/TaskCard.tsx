@@ -143,7 +143,7 @@ export default function TaskCard({
       color = 'var(--warning)';
     } else {
       label = format(dueDate, 'MMM d');
-      color = darkMode ? 'var(--text-muted)' : 'var(--text-muted)';
+      color = 'var(--text-muted)';
     }
 
     return { label, color, urgent, isOverdue };
@@ -162,13 +162,6 @@ export default function TaskCard({
   const handleCardClick = useCallback(() => {
     onOpenDetail(task.id);
   }, [task.id, onOpenDetail]);
-
-  // Toggle mobile metadata visibility on tap
-  const handleMobileMetadataToggle = useCallback((e: React.TouchEvent) => {
-    // Prevent triggering card click when toggling metadata
-    e.stopPropagation();
-    setShowMobileMetadata(prev => !prev);
-  }, []);
 
   return (
     <motion.article
@@ -202,7 +195,6 @@ export default function TaskCard({
         background: task.completed ? undefined : priorityStyle.bgGradient,
         boxShadow: !task.completed && task.priority === 'urgent' ? priorityStyle.glow : undefined,
       }}
-      role="article"
       aria-label={`Task: ${task.text}`}
     >
       {/* Overdue corner indicator */}

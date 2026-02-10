@@ -156,13 +156,13 @@ export default function AppShell({
       }
 
       // Command palette: Cmd/Ctrl + K
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && !isInputField) {
         e.preventDefault();
         setCommandPaletteOpen(prev => !prev);
       }
 
       // Toggle sidebar: Cmd/Ctrl + B
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b' && !isInputField) {
         e.preventDefault();
         setSidebarCollapsed(prev => !prev);
       }

@@ -545,7 +545,8 @@ export default function KanbanBoard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   const [celebrating, setCelebrating] = useState(false);
-  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
+  const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null);
+  const selectedTodo = selectedTodoId ? todos.find(t => t.id === selectedTodoId) || null : null;
   const [dragAnnouncement, setDragAnnouncement] = useState<string>('');
 
   const sensors = useSensors(
@@ -816,7 +817,7 @@ export default function KanbanBoard({
                                       onAssign={onAssign}
                                       onSetDueDate={onSetDueDate}
                                       onSetPriority={onSetPriority}
-                                      onCardClick={setSelectedTodo}
+                                      onCardClick={(todo: Todo) => setSelectedTodoId(todo.id)}
                                       showBulkActions={showBulkActions}
                                       isSelected={selectedTodos?.has(todo.id)}
                                       onSelectTodo={onSelectTodo}
@@ -859,7 +860,7 @@ export default function KanbanBoard({
                             onAssign={onAssign}
                             onSetDueDate={onSetDueDate}
                             onSetPriority={onSetPriority}
-                            onCardClick={setSelectedTodo}
+                            onCardClick={(todo: Todo) => setSelectedTodoId(todo.id)}
                             showBulkActions={showBulkActions}
                             isSelected={selectedTodos?.has(todo.id)}
                             onSelectTodo={onSelectTodo}
@@ -904,7 +905,7 @@ export default function KanbanBoard({
         <TaskDetailModal
           todo={selectedTodo}
           isOpen={!!selectedTodo}
-          onClose={() => setSelectedTodo(null)}
+          onClose={() => setSelectedTodoId(null)}
           users={users}
           currentUserName={currentUserName || users[0] || ''}
           onToggle={onToggle || (() => {})}
