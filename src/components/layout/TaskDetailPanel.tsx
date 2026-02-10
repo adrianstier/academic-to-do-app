@@ -95,11 +95,15 @@ export default function TaskDetailPanel({
   // Close on Escape key press (only when not editing text/notes)
   useEscapeKey(onClose, { enabled: !isEditingText && !isEditingNotes });
 
-  // Update local state when task changes
+  // Update local state when task changes, but only if not actively editing
   useEffect(() => {
-    setEditedText(task.text);
-    setEditedNotes(task.notes || '');
-  }, [task.id, task.text, task.notes]);
+    if (!isEditingText) {
+      setEditedText(task.text);
+    }
+    if (!isEditingNotes) {
+      setEditedNotes(task.notes || '');
+    }
+  }, [task.id, task.text, task.notes, isEditingText, isEditingNotes]);
 
   const handleSaveText = useCallback(async () => {
     if (editedText.trim() && editedText !== task.text) {
@@ -320,6 +324,7 @@ export default function TaskDetailPanel({
                 }
               `}
               title="Generate customer email"
+              aria-label="Generate customer email"
             >
               <Mail className="w-5 h-5" />
             </button>
@@ -337,6 +342,7 @@ export default function TaskDetailPanel({
                 }
               `}
               title="Archive task"
+              aria-label="Archive task"
             >
               <Archive className="w-5 h-5" />
             </button>
@@ -534,7 +540,7 @@ export default function TaskDetailPanel({
                   type="date"
                   value={task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : ''}
                   onChange={(e) => onUpdate(task.id, {
-                    due_date: e.target.value ? `${e.target.value}T12:00:00.000Z` : ''
+                    due_date: e.target.value ? `${e.target.value}T12:00:00.000Z` : undefined
                   })}
                   className={`
                     w-full px-3 py-2 rounded-lg border text-sm font-medium
@@ -1067,6 +1073,7 @@ export default function TaskDetailPanel({
               }
             `}
             title="Copy link"
+            aria-label="Copy task link to clipboard"
           >
             <Copy className="w-4 h-4" />
           </button>
@@ -1087,6 +1094,7 @@ export default function TaskDetailPanel({
               }
             `}
             title="Share"
+            aria-label="Share task"
           >
             <Share2 className="w-4 h-4" />
           </button>

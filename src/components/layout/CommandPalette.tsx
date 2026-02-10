@@ -57,7 +57,7 @@ export default function CommandPalette({
 }: CommandPaletteProps) {
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === 'dark';
-  const { setActiveView, openRightPanel, openShortcuts, triggerNewTask } = useAppShell();
+  const { setActiveView, openShortcuts, triggerNewTask } = useAppShell();
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -184,7 +184,7 @@ export default function CommandPalette({
       shortcut: '?',
       action: () => { onClose(); openShortcuts(); },
     },
-  ], [darkMode, toggleTheme, setActiveView, openRightPanel, onClose, openShortcuts, triggerNewTask]);
+  ], [darkMode, toggleTheme, setActiveView, onClose, openShortcuts, triggerNewTask]);
 
   // Filter commands based on query and user permissions
   const filteredCommands = useMemo(() => {
@@ -275,8 +275,6 @@ export default function CommandPalette({
     actions: 'Actions',
     settings: 'Settings',
   };
-
-  if (!isOpen) return null;
 
   return (
     <AnimatePresence>

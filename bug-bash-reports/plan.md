@@ -60,9 +60,14 @@
 3. Spawn review agent to cross-check reports and run build
 4. Fix all found issues, commit, push
 
-## Wave 2 (Fix Wave)
-- Each agent reads its existing report from bug-bash-reports/<scope>.md
-- Focuses on FIXING the remaining unfixed bugs (not re-auditing)
-- Priority: Medium severity and above that are fixable code changes
-- Skips architectural items marked "Require Further Discussion"
-- Each agent writes fixes directly, no separate report needed
+## Wave 2 (Fix Wave) - COMPLETED
+- Each agent read its existing report from bug-bash-reports/<scope>.md
+- Applied 42 fixes across all 6 scopes
+- Commit: 66f4802
+
+## Wave 3 (Fresh Audit + Fix)
+- Fresh audit of the CURRENT codebase (post-82 fixes)
+- Each agent re-reads all files in scope with fresh eyes
+- Looks for: regressions from prior fixes, new bugs not caught before, edge cases, cross-cutting issues
+- Each agent FIXES bugs directly AND writes a brief report to bug-bash-reports/wave3-<scope>.md
+- Focus areas: runtime errors, logic bugs, data integrity, security gaps, broken UI interactions

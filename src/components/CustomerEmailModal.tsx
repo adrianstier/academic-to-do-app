@@ -276,20 +276,20 @@ export default function CustomerEmailModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className={`relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl ${
-          darkMode ? 'bg-[#1a1f2e] text-white' : 'bg-white text-gray-900'
+          darkMode ? 'bg-[var(--surface)] text-[var(--foreground)]' : 'bg-[var(--surface)] text-[var(--foreground)]'
         }`}
       >
         {/* Header */}
         <div className={`flex items-center justify-between p-4 border-b ${
-          darkMode ? 'border-white/10' : 'border-gray-200'
+          darkMode ? 'border-white/10' : 'border-[var(--border)]'
         }`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${darkMode ? 'bg-blue-500/20' : 'bg-blue-50'}`}>
-              <Mail className="w-5 h-5 text-blue-500" />
+            <div className={`p-2 rounded-xl ${darkMode ? 'bg-[var(--accent)]/20' : 'bg-[var(--accent)]/10'}`}>
+              <Mail className="w-5 h-5 text-[var(--accent)]" />
             </div>
             <div>
               <h2 className="text-lg font-semibold">Generate Customer Email</h2>
-              <p className={`text-sm ${darkMode ? 'text-white/60' : 'text-gray-500'}`}>
+              <p className={`text-sm ${darkMode ? 'text-white/60' : 'text-[var(--text-muted)]'}`}>
                 Create an update email for {taskSummary.total} task{taskSummary.total !== 1 ? 's' : ''}
               </p>
             </div>
@@ -298,7 +298,7 @@ export default function CustomerEmailModal({
             onClick={onClose}
             aria-label="Close modal"
             className={`p-2 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation ${
-              darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'
+              darkMode ? 'hover:bg-white/10' : 'hover:bg-[var(--surface-2)]'
             }`}
           >
             <X className="w-5 h-5" />

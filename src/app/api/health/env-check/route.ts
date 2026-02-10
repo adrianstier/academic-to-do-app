@@ -1,11 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Environment variable check endpoint
  * Returns which required environment variables are configured (without exposing values)
- * This helps diagnose deployment issues
+ * This helps diagnose deployment issues.
+ * Protected by API key to prevent information disclosure.
  */
-export async function GET() {
+const API_KEY = process.env.OUTLOOK_ADDON_API_KEY;
+
+export async function GET(request: NextRequest) {
+  // Require API key authentication to prevent information disclosure
+  const apiKey = request.headers.get('X-API-Key');
+  if (!API_KEY || apiKey !== API_KEY) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
   const envStatus = {
     // Required for AI features
     ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,

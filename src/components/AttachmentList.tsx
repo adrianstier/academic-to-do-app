@@ -148,6 +148,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
               onClick={handlePreview}
               className="p-1.5 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)] transition-colors"
               title="Preview"
+              aria-label={`Preview ${attachment.file_name}`}
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -157,6 +158,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
             disabled={downloading}
             className="p-1.5 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)] transition-colors disabled:opacity-50"
             title="Download"
+            aria-label={`Download ${attachment.file_name}`}
           >
             {downloading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -170,6 +172,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
               disabled={removing}
               className="p-1.5 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger-light)] transition-colors disabled:opacity-50"
               title="Remove"
+              aria-label={`Remove ${attachment.file_name}`}
             >
               {removing ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -207,6 +210,7 @@ function AttachmentItem({ attachment, todoId, onRemove, canRemove }: AttachmentI
                 <button
                   onClick={() => setShowPreview(false)}
                   className="p-1.5 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+                  aria-label="Close preview"
                 >
                   &times;
                 </button>

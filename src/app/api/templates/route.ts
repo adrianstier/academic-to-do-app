@@ -99,12 +99,19 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    // Only allow deletion by the creator
-    const { error } = await supabase
+    // Only allow deletion by the creator, scoped to team
+    let deleteQuery = supabase
       .from('task_templates')
       .delete()
       .eq('id', id)
       .eq('created_by', context.userName);
+
+    // Scope to team if multi-tenancy is enabled
+    if (context.teamId) {
+      deleteQuery = deleteQuery.eq('team_id', context.teamId);
+    }
+
+    const { error } = await deleteQuery;
 
     if (error) throw error;
 

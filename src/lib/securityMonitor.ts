@@ -471,7 +471,7 @@ class SecurityMonitor {
   /**
    * Get recent security events summary (for dashboard)
    */
-  getRecentEventsSummary(): Record<SecurityEventType, number> {
+  getRecentEventsSummary(): Partial<Record<SecurityEventType, number>> {
     const summary: Partial<Record<SecurityEventType, number>> = {};
     const windowMs = 3600000; // Last hour
 
@@ -482,7 +482,7 @@ class SecurityMonitor {
       }
     }
 
-    return summary as Record<SecurityEventType, number>;
+    return summary;
   }
 }
 

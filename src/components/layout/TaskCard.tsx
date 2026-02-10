@@ -147,7 +147,7 @@ export default function TaskCard({
     }
 
     return { label, color, urgent, isOverdue };
-  }, [task.due_date, task.completed, darkMode]);
+  }, [task.due_date, task.completed]);
 
   // Check if task has additional context
   const hasAttachments = task.attachments && task.attachments.length > 0;

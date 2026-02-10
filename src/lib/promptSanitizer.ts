@@ -129,6 +129,8 @@ export function sanitizePromptInput(
   // Check for sensitive data
   if (opts.checkSensitiveData) {
     for (const [type, pattern] of Object.entries(SENSITIVE_PATTERNS)) {
+      // Reset lastIndex before testing since patterns have the global flag
+      pattern.lastIndex = 0;
       if (pattern.test(sanitized)) {
         warnings.push({
           type: 'sensitive_data',

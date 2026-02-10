@@ -79,7 +79,7 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
     if (error) throw error;
 
     // Update goal progress based on milestones
-    await updateGoalProgress(goal_id);
+    await updateGoalProgress(goal_id, context.teamId);
 
     return NextResponse.json(data);
   } catch (error) {
@@ -122,7 +122,7 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
 
     // Update goal progress if completion changed
     if (completed !== undefined && data) {
-      await updateGoalProgress(data.goal_id);
+      await updateGoalProgress(data.goal_id, context.teamId);
     }
 
     return NextResponse.json(data);
@@ -170,7 +170,7 @@ export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: Te
 
     // Update goal progress
     if (milestone) {
-      await updateGoalProgress(milestone.goal_id);
+      await updateGoalProgress(milestone.goal_id, context.teamId);
     }
 
     return NextResponse.json({ success: true });
@@ -181,22 +181,34 @@ export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: Te
 });
 
 // Helper function to update goal progress based on milestones
-async function updateGoalProgress(goalId: string) {
-  const { data: milestones } = await supabase
+async function updateGoalProgress(goalId: string, teamId?: string) {
+  let milestoneQuery = supabase
     .from('goal_milestones')
     .select('completed')
     .eq('goal_id', goalId);
+
+  if (teamId) {
+    milestoneQuery = milestoneQuery.eq('team_id', teamId);
+  }
+
+  const { data: milestones } = await milestoneQuery;
 
   if (milestones && milestones.length > 0) {
     const completedCount = milestones.filter(m => m.completed).length;
     const progressPercent = Math.round((completedCount / milestones.length) * 100);
 
-    await supabase
+    let goalQuery = supabase
       .from('strategic_goals')
       .update({
         progress_percent: progressPercent,
         updated_at: new Date().toISOString(),
       })
       .eq('id', goalId);
+
+    if (teamId) {
+      goalQuery = goalQuery.eq('team_id', teamId);
+    }
+
+    await goalQuery;
   }
 }

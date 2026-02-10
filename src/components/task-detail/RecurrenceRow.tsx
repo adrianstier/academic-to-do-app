@@ -12,11 +12,12 @@ interface RecurrenceRowProps {
 export default function RecurrenceRow({ todoId, recurrence, onSetRecurrence }: RecurrenceRowProps) {
   return (
     <div>
-      <label className="text-xs font-medium text-[var(--text-muted)] mb-1.5 block flex items-center gap-1.5">
+      <label htmlFor={`recurrence-${todoId}`} className="text-xs font-medium text-[var(--text-muted)] mb-1.5 flex items-center gap-1.5">
         <Repeat className="w-3.5 h-3.5" />
         Repeat
       </label>
       <select
+        id={`recurrence-${todoId}`}
         value={recurrence || ''}
         onChange={(e) => onSetRecurrence(todoId, (e.target.value || null) as RecurrencePattern)}
         className="input-refined w-full text-sm px-3 py-2 text-[var(--foreground)] min-h-[44px]"

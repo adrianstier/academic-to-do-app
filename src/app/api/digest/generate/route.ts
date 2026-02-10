@@ -197,12 +197,14 @@ async function generateDigestForUser(
   ]);
 
   if (overdueResult.error || todayResult.error || completedResult.error || activityResult.error) {
-    logger.error('Database query error in digest generation', {
-      overdue: overdueResult.error,
-      today: todayResult.error,
-      completed: completedResult.error,
-      activity: activityResult.error,
-    }, { component: 'DigestGenerate' });
+    const firstError = overdueResult.error || todayResult.error || completedResult.error || activityResult.error;
+    logger.error('Database query error in digest generation', firstError as unknown as Error, {
+      component: 'DigestGenerate',
+      overdueError: overdueResult.error?.message,
+      todayError: todayResult.error?.message,
+      completedError: completedResult.error?.message,
+      activityError: activityResult.error?.message,
+    });
     return null;
   }
 
