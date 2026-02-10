@@ -3,29 +3,29 @@
 **Date:** 2026-02-09
 **Orchestrator:** Claude Opus 4.6
 **Architecture:** 6 parallel scope agents + orchestrator review
-**Waves:** 2 (Wave 1: orchestrator-applied, Wave 2: agent-applied)
+**Waves:** 3 (Wave 1: orchestrator-applied, Wave 2: agent-applied, Wave 3: fresh audit)
 
 ## Scope Coverage
 
-| Agent | Scope | Files Audited | Bugs Found | Wave 1 Fixed | Wave 2 Fixed | Total Fixed |
-|-------|-------|---------------|------------|-------------|-------------|-------------|
-| api-routes | API Routes + Auth/Security Libs | 30+ | 33 | 7 | 10 | 17 |
-| task-management | TodoList + Modals + Store | 23 | 15 | 5 | 5 | 10 |
-| task-detail | TaskDetail + Subtasks + Attachments | 20+ | 26 | 6 | 8 | 14 |
-| dashboard-views | Dashboards + Views + Analytics | 24 | 13 | 7 | 5 | 12 |
-| layout-navigation | App Shell + Nav + Chat + Team | 27 | 19 | 4 | 7 | 11 |
-| shared-libs-hooks | Shared Libs + Hooks + UI Primitives | 60+ | 18 | 11 | 7 | 18 |
-| **Total** | | **184+** | **124** | **40** | **42** | **82** |
+| Agent | Scope | Files Audited | Bugs Found | W1 Fixed | W2 Fixed | W3 Fixed | Total Fixed |
+|-------|-------|---------------|------------|----------|----------|----------|-------------|
+| api-routes | API Routes + Auth/Security Libs | 30+ | 33 | 7 | 10 | 8 | 25 |
+| task-management | TodoList + Modals + Store | 23 | 15 | 5 | 5 | 0 | 10 |
+| task-detail | TaskDetail + Subtasks + Attachments | 20+ | 26 | 6 | 8 | 6 | 20 |
+| dashboard-views | Dashboards + Views + Analytics | 24 | 13 | 7 | 5 | 0 | 12 |
+| layout-navigation | App Shell + Nav + Chat + Team | 27 | 19 | 4 | 7 | 2 | 13 |
+| shared-libs-hooks | Shared Libs + Hooks + UI Primitives | 60+ | 18 | 11 | 7 | 0 | 18 |
+| **Total** | | **184+** | **124** | **40** | **42** | **16** | **98** |
 
 ## Severity Distribution
 
 | Severity | Found | Fixed | Remaining |
 |----------|-------|-------|-----------|
-| Critical | 16 | 14 | 2 |
-| High | 28 | 24 | 4 |
-| Medium | 44 | 26 | 18 |
-| Low | 36 | 18 | 18 |
-| **Total** | **124** | **82** | **42** |
+| Critical | 16 | 16 | 0 |
+| High | 28 | 26 | 2 |
+| Medium | 44 | 32 | 12 |
+| Low | 36 | 24 | 12 |
+| **Total** | **124+** | **98** | **26** |
 
 ---
 
@@ -148,13 +148,41 @@
 - Additional focus trap coverage for inline modals
 - Various minor TypeScript type improvements
 
+## Wave 3 Fixes (Fresh audit, 16 fixes)
+
+### API Routes (8 fixes)
+77. **BUG-W3-API-1**: promptSanitizer SENSITIVE_PATTERNS lastIndex reset
+78. **BUG-W3-API-2**: Templates DELETE endpoint missing team_id scoping
+79. **BUG-W3-API-3**: apiAuth extractTodoIdFromPath always returned non-null
+80. **BUG-W3-API-4**: securityMonitor getRecentEventsSummary return type
+81. **BUG-W3-API-5**: env-check endpoint missing authentication
+82. **BUG-W3-API-6**: digest/generate logger.error wrong argument signature
+83. **BUG-W3-API-7**: push-send module-level env var non-null assertions
+84. **BUG-W3-API-8**: milestones updateGoalProgress missing team_id scoping
+
+### Task Detail (6 fixes)
+85. **BUG-W3-TD-1**: AttachmentList buttons missing aria-labels
+86. **BUG-W3-TD-2**: CustomerEmailModal hardcoded colors -> CSS variables
+87. **BUG-W3-TD-3**: SaveTemplateModal hardcoded colors -> CSS variables
+88. **BUG-W3-TD-4**: TaskCard useMemo had unnecessary darkMode dependency
+89. **BUG-W3-TD-5**: TaskDetailPanel text/notes sync overwrites during editing
+90. **BUG-W3-TD-6**: RecurrenceRow label missing htmlFor/id, conflicting block+flex
+
+### Layout/Navigation (2 fixes)
+91. **BUG-W3-LN-1**: CommandPalette early return prevented AnimatePresence exit animations
+92. **BUG-W3-LN-2**: CommandPalette unused openRightPanel import
+
+---
+
 ## Methodology
 1. Mapped repository into 6 independent modules
 2. **Wave 1**: Spawned 6 parallel scope agents for audit; orchestrator reviewed and applied 40 fixes in 3 sub-waves (data loss -> security -> UI/UX)
 3. **Wave 2**: Spawned 6 parallel fix agents targeting remaining unfixed bugs; each agent independently applied fixes in their scope (42 fixes total)
-4. Build verification after each wave (`npm run build` passed cleanly)
-5. All changes committed and pushed to `origin/main`
+4. **Wave 3**: Fresh audit of current codebase post-82 fixes; API routes agent + orchestrator manual audit found and fixed 16 additional bugs
+5. Build verification after each wave (`npm run build` passed cleanly)
+6. All changes committed and pushed to `origin/main`
 
 ## Commits
 - `73fd128` - Wave 1: 40 fixes (orchestrator-applied)
 - `66f4802` - Wave 2: 42 fixes (agent-applied)
+- `eeb0834` - Wave 3: 16 fixes (agent + orchestrator)
