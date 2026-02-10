@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { prefersReducedMotion, DURATION } from '@/lib/animations';
 import { QuickFilter, SortOption, TodoStatus } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
 import TemplatePicker from '../TemplatePicker';
 
 interface DateRange {
@@ -33,8 +34,6 @@ interface TodoFiltersBarProps {
   setStatusFilter: (status: TodoStatus | 'all') => void;
   assignedToFilter: string;
   setAssignedToFilter: (assignee: string) => void;
-  customerFilter: string;
-  setCustomerFilter: (customer: string) => void;
   hasAttachmentsFilter: boolean | null;
   setHasAttachmentsFilter: (value: boolean | null) => void;
   dateRangeFilter: DateRange;
@@ -66,10 +65,15 @@ interface TodoFiltersBarProps {
 
   // Data for dropdowns
   users: string[];
-  uniqueCustomers: string[];
 
   // Template callback
   onAddFromTemplate: (text: string, priority: 'low' | 'medium' | 'high' | 'urgent', assignedTo?: string, subtasks?: { id: string; text: string; completed: boolean }[]) => void;
+
+  // Project/Tag filters
+  projectFilter?: string | null;
+  setProjectFilter?: (projectId: string | null) => void;
+  tagFilter?: string[];
+  setTagFilter?: (tagIds: string[]) => void;
 
   // Theme
   darkMode: boolean;
@@ -89,8 +93,6 @@ function TodoFiltersBar({
   setStatusFilter,
   assignedToFilter,
   setAssignedToFilter,
-  customerFilter,
-  setCustomerFilter,
   hasAttachmentsFilter,
   setHasAttachmentsFilter,
   dateRangeFilter,
@@ -110,28 +112,37 @@ function TodoFiltersBar({
   setUseSectionedView,
   shouldUseSections,
   users,
-  uniqueCustomers,
   onAddFromTemplate,
+  projectFilter,
+  setProjectFilter,
+  tagFilter,
+  setTagFilter,
   darkMode,
   userName,
 }: TodoFiltersBarProps) {
+  // Access projects and tags from store
+  const storeProjects = useTodoStore(state => state.projects);
+  const storeTags = useTodoStore(state => state.tags);
+  const activeProjects = storeProjects.filter(p => p.status === 'active');
   const hasActiveFilters = quickFilter !== 'all' ||
     highPriorityOnly ||
     showCompleted ||
     searchQuery ||
     statusFilter !== 'all' ||
     assignedToFilter !== 'all' ||
-    customerFilter !== 'all' ||
     hasAttachmentsFilter !== null ||
     dateRangeFilter.start ||
-    dateRangeFilter.end;
+    dateRangeFilter.end ||
+    (projectFilter !== null && projectFilter !== undefined) ||
+    (tagFilter && tagFilter.length > 0);
 
   const advancedFilterCount = [
     statusFilter !== 'all',
     assignedToFilter !== 'all',
-    customerFilter !== 'all',
     hasAttachmentsFilter !== null,
-    dateRangeFilter.start || dateRangeFilter.end
+    dateRangeFilter.start || dateRangeFilter.end,
+    projectFilter !== null && projectFilter !== undefined,
+    tagFilter && tagFilter.length > 0,
   ].filter(Boolean).length;
 
   const clearAllFilters = () => {
@@ -141,9 +152,10 @@ function TodoFiltersBar({
     setSearchQuery('');
     setStatusFilter('all');
     setAssignedToFilter('all');
-    setCustomerFilter('all');
     setHasAttachmentsFilter(null);
     setDateRangeFilter({ start: '', end: '' });
+    if (setProjectFilter) setProjectFilter(null);
+    if (setTagFilter) setTagFilter([]);
   };
 
   return (
@@ -371,6 +383,60 @@ function TodoFiltersBar({
             className="overflow-hidden"
           >
             <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {/* Project filter */}
+              {activeProjects.length > 0 && setProjectFilter && (
+                <div>
+                  <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Project</label>
+                  <select
+                    value={projectFilter || ''}
+                    onChange={(e) => setProjectFilter(e.target.value || null)}
+                    className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
+                  >
+                    <option value="">All Projects</option>
+                    {activeProjects.map((project) => (
+                      <option key={project.id} value={project.id}>{project.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Tag filter */}
+              {storeTags.length > 0 && setTagFilter && (
+                <div>
+                  <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Tags</label>
+                  <div className="flex flex-wrap gap-1">
+                    {storeTags.map((tag) => {
+                      const isActive = tagFilter?.includes(tag.id) || false;
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => {
+                            if (isActive) {
+                              setTagFilter((tagFilter || []).filter(id => id !== tag.id));
+                            } else {
+                              setTagFilter([...(tagFilter || []), tag.id]);
+                            }
+                          }}
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                            isActive
+                              ? 'text-white'
+                              : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)]'
+                          }`}
+                          style={isActive ? { backgroundColor: tag.color } : undefined}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: isActive ? 'white' : tag.color }}
+                          />
+                          {tag.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Status filter */}
               <div>
                 <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Status</label>
@@ -398,21 +464,6 @@ function TodoFiltersBar({
                   <option value="unassigned">Unassigned</option>
                   {users.map((user) => (
                     <option key={user} value={user}>{user}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Customer filter */}
-              <div>
-                <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Customer</label>
-                <select
-                  value={customerFilter}
-                  onChange={(e) => setCustomerFilter(e.target.value)}
-                  className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
-                >
-                  <option value="all">All</option>
-                  {uniqueCustomers.map((customer) => (
-                    <option key={customer} value={customer}>{customer}</option>
                   ))}
                 </select>
               </div>

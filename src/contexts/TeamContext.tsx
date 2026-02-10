@@ -285,7 +285,7 @@ export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps
         return;
       }
 
-      setError('Failed to load teams');
+      setError('Failed to load labs');
     } finally {
       setIsLoading(false);
     }
@@ -338,7 +338,7 @@ export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps
       document.cookie = `current_team_id=${teamId}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
     } catch (err) {
       console.error('Failed to load team details:', err);
-      setError('Failed to load team');
+      setError('Failed to load lab details');
     }
   }, []);
 
@@ -348,7 +348,7 @@ export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps
   const switchTeam = useCallback(async (teamId: string) => {
     const membership = teams.find(t => t.team_id === teamId);
     if (!membership) {
-      setError('You are not a member of this team');
+      setError('You are not a member of this lab');
       return;
     }
 
@@ -516,17 +516,3 @@ export function useTeamScope(): { team_id?: string } {
   return { team_id: currentTeamId };
 }
 
-// ============================================
-// Backward Compatibility Aliases
-// ============================================
-
-/** @deprecated Use TeamProvider instead */
-export const AgencyProvider = TeamProvider;
-/** @deprecated Use useTeam instead */
-export const useAgency = useTeam;
-/** @deprecated Use useCurrentTeamId instead */
-export const useCurrentAgencyId = useCurrentTeamId;
-/** @deprecated Use useTeamPermission instead */
-export const useAgencyPermission = useTeamPermission;
-/** @deprecated Use useTeamScope instead */
-export const useAgencyScope = useTeamScope;

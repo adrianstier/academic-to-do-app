@@ -31,7 +31,6 @@ export interface TaskDetailModalProps {
   // Action handlers
   onDuplicate?: (todo: Todo) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
-  onEmailCustomer?: (todo: Todo) => void;
 }
 
 export interface CollapsibleSectionProps {

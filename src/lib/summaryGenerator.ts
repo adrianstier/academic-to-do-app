@@ -2,7 +2,7 @@
  * Task Completion Summary Generator
  *
  * Generates formatted text summaries of completed tasks that can be
- * copied and pasted into agent management systems or databases.
+ * copied and pasted into project management systems or databases.
  *
  * Supports multiple output formats: Plain Text, Markdown, CSV, and JSON.
  */

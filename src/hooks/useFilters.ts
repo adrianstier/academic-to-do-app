@@ -22,6 +22,8 @@ export interface FilterState {
   hasAttachmentsFilter: boolean | null;
   dateRangeFilter: { start: string; end: string };
   showAdvancedFilters: boolean;
+  projectFilter: string | null;
+  tagFilter: string[];
 }
 
 export function useFilters(userName: string) {
@@ -180,6 +182,20 @@ export function useFilters(userName: string) {
       });
     }
 
+    // Apply project filter
+    if (filters.projectFilter !== null && filters.projectFilter !== undefined) {
+      result = result.filter((todo) => todo.project_id === filters.projectFilter);
+    }
+
+    // Apply tag filter (todos must have ALL selected tags)
+    if (filters.tagFilter && filters.tagFilter.length > 0) {
+      result = result.filter((todo) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const todoTagIds: string[] = (todo as any).tag_ids || [];
+        return filters.tagFilter.every((tagId) => todoTagIds.includes(tagId));
+      });
+    }
+
     // Hide completed unless explicitly shown
     if (!filters.showCompleted) {
       result = result.filter((todo) => !todo.completed);
@@ -276,7 +292,9 @@ export function useFilters(userName: string) {
       filters.customerFilter !== 'all' ||
       filters.hasAttachmentsFilter !== null ||
       filters.dateRangeFilter.start !== '' ||
-      filters.dateRangeFilter.end !== ''
+      filters.dateRangeFilter.end !== '' ||
+      filters.projectFilter !== null ||
+      (filters.tagFilter && filters.tagFilter.length > 0)
     );
   }, [filters]);
 
@@ -301,6 +319,14 @@ export function useFilters(userName: string) {
     setFilters({ dateRangeFilter: value });
   }, [setFilters]);
 
+  const setProjectFilter = useCallback((value: string | null) => {
+    setFilters({ projectFilter: value });
+  }, [setFilters]);
+
+  const setTagFilter = useCallback((value: string[]) => {
+    setFilters({ tagFilter: value });
+  }, [setFilters]);
+
   // Clear all advanced filters
   const clearAdvancedFilters = useCallback(() => {
     setFilters({
@@ -309,6 +335,8 @@ export function useFilters(userName: string) {
       customerFilter: 'all',
       hasAttachmentsFilter: null,
       dateRangeFilter: { start: '', end: '' },
+      projectFilter: null,
+      tagFilter: [],
     });
   }, [setFilters]);
 
@@ -337,6 +365,8 @@ export function useFilters(userName: string) {
     setCustomerFilter,
     setHasAttachmentsFilter,
     setDateRangeFilter,
+    setProjectFilter,
+    setTagFilter,
 
     // Filter actions
     clearAdvancedFilters,

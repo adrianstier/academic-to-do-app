@@ -2,7 +2,7 @@
  * Manager Dashboard Insights
  *
  * Provides team-level analytics, workload distribution, delegation tracking,
- * and bottleneck detection for agency managers/owners.
+ * and bottleneck detection for team leads/PIs.
  */
 
 import { Todo, TodoPriority, ActivityLogEntry } from '@/types/todo';

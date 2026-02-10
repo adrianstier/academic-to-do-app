@@ -46,6 +46,7 @@ import {
   CalendarX,
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG, Subtask, RecurrencePattern, Attachment } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
 import Celebration from './Celebration';
 import { TaskDetailModal } from './task-detail';
 
@@ -67,7 +68,6 @@ interface KanbanBoardProps {
   onSetRecurrence?: (id: string, recurrence: RecurrencePattern) => void;
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
-  onEmailCustomer?: (todo: Todo) => void;
   currentUserName?: string;
   // Selection support
   showBulkActions?: boolean;
@@ -141,6 +141,8 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
   const [showActions, setShowActions] = useState(false);
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
   const snoozeRef = useRef<HTMLDivElement>(null);
+  const storeProjects = useTodoStore(state => state.projects);
+  const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
 
   // Close snooze menu on click outside
   useEffect(() => {
@@ -247,6 +249,21 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
 
           {/* PRIMARY ROW: Essential info always visible for quick scanning */}
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            {/* Project badge */}
+            {todoProject && (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium"
+                style={{ backgroundColor: todoProject.color + '18', color: todoProject.color }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: todoProject.color }}
+                  aria-hidden="true"
+                />
+                {todoProject.name}
+              </span>
+            )}
+
             {/* Priority */}
             <span
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium"
@@ -535,7 +552,6 @@ export default function KanbanBoard({
   onSetRecurrence,
   onUpdateAttachments,
   onSaveAsTemplate,
-  onEmailCustomer,
   currentUserName,
   showBulkActions,
   selectedTodos,
@@ -921,7 +937,6 @@ export default function KanbanBoard({
           onSetRecurrence={onSetRecurrence}
           onUpdateAttachments={onUpdateAttachments}
           onSaveAsTemplate={onSaveAsTemplate}
-          onEmailCustomer={onEmailCustomer}
           onSetReminder={onSetReminder}
         />
       )}

@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, Bell, Mail } from 'lucide-react';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, Bell } from 'lucide-react';
 import { Todo, TodoPriority, TodoStatus, PRIORITY_CONFIG, RecurrencePattern, Subtask, Attachment } from '@/types/todo';
 import { Badge, Button, IconButton } from '@/components/ui';
+import { useTodoStore } from '@/store/todoStore';
 import AttachmentList from './AttachmentList';
 import Celebration from './Celebration';
 import { TaskDetailModal } from './task-detail';
@@ -139,7 +140,6 @@ interface TodoItemProps {
   onUpdateSubtasks?: (id: string, subtasks: Subtask[]) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
-  onEmailCustomer?: (todo: Todo) => void;
   onSetReminder?: (id: string, reminderAt: string | null) => void;
 }
 
@@ -210,10 +210,11 @@ export default function TodoItem({
   onUpdateSubtasks,
   onSaveAsTemplate,
   onUpdateAttachments,
-  onEmailCustomer,
   onSetReminder,
 }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const storeProjects = useTodoStore(state => state.projects);
+  const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
 
   // Auto-expand when triggered from external navigation (e.g., dashboard task click)
   useEffect(() => {
@@ -475,8 +476,23 @@ export default function TodoItem({
 
           {/* Meta row - Progressive Disclosure: Essential info always visible */}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {/* PRIMARY ROW: Priority + Due Date + Assignee (always visible for quick scanning) */}
+            {/* PRIMARY ROW: Project + Priority + Due Date + Assignee (always visible for quick scanning) */}
             <div className="flex items-center gap-2">
+              {/* Project badge */}
+              {todoProject && (
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium"
+                  style={{ backgroundColor: todoProject.color + '18', color: todoProject.color }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: todoProject.color }}
+                    aria-hidden="true"
+                  />
+                  {todoProject.name}
+                </span>
+              )}
+
               {/* Priority badge */}
               <Badge
                 variant={PRIORITY_TO_BADGE_VARIANT[priority]}
@@ -801,17 +817,6 @@ export default function TodoItem({
                   </button>
                 )}
 
-                {/* Email Customer */}
-                {onEmailCustomer && (
-                  <button
-                    onClick={() => { onEmailCustomer(todo); setShowActionsMenu(false); }}
-                    className="w-full px-3 py-2 text-sm text-left hover:bg-[var(--surface-2)] text-[var(--foreground)] flex items-center gap-2"
-                  >
-                    <Mail className="w-4 h-4 text-[var(--text-muted)]" />
-                    Email Summary
-                  </button>
-                )}
-
                 <div className="h-px bg-[var(--border)] my-1" />
 
                 {/* Delete - shows confirmation */}
@@ -975,7 +980,6 @@ export default function TodoItem({
         onSetReminder={onSetReminder}
         onDuplicate={onDuplicate}
         onSaveAsTemplate={onSaveAsTemplate}
-        onEmailCustomer={onEmailCustomer}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState, useEffect, useRef, useCallback } from 'react';
-import { X, Trash2, Check, Calendar, User, GitMerge, Mail, Zap } from 'lucide-react';
+import { X, Trash2, Check, Calendar, User, GitMerge, Zap } from 'lucide-react';
 import { TodoPriority } from '@/types/todo';
 
 interface BulkActionBarProps {
@@ -14,7 +14,6 @@ interface BulkActionBarProps {
   onBulkReschedule: (date: string) => void;
   onBulkSetPriority: (priority: TodoPriority) => void;
   onInitiateMerge: () => void;
-  onGenerateEmail: () => void;
 }
 
 function BulkActionBar({
@@ -27,7 +26,6 @@ function BulkActionBar({
   onBulkReschedule,
   onBulkSetPriority,
   onInitiateMerge,
-  onGenerateEmail,
 }: BulkActionBarProps) {
   const [showAssignDropdown, setShowAssignDropdown] = useState(false);
   const [showRescheduleDropdown, setShowRescheduleDropdown] = useState(false);
@@ -243,16 +241,6 @@ function BulkActionBar({
               <span className="hidden sm:inline">Merge</span>
             </button>
           )}
-
-          {/* Generate Email */}
-          <button
-            onClick={onGenerateEmail}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface-2)] rounded-lg transition-colors"
-            title="Generate customer email"
-          >
-            <Mail className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Email</span>
-          </button>
 
           {/* Delete */}
           <button

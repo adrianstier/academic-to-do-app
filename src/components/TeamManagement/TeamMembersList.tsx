@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useTeam } from '@/contexts/TeamContext';
 import { supabase } from '@/lib/supabaseClient';
+import { getAcademicRoleLabel, getAcademicRoleShort } from '@/lib/academicRoles';
 import type { TeamMember, TeamRole } from '@/types/team';
 
 // ============================================
@@ -67,14 +68,11 @@ function getRoleBadgeVariant(role: TeamRole): 'warning' | 'info' | 'default' {
 }
 
 function getRoleLabel(role: TeamRole): string {
-  switch (role) {
-    case 'owner':
-      return 'Owner';
-    case 'admin':
-      return 'Admin';
-    default:
-      return 'Member';
-  }
+  return getAcademicRoleLabel(role);
+}
+
+function getRoleShortLabel(role: TeamRole): string {
+  return getAcademicRoleShort(role);
 }
 
 // ============================================
@@ -391,7 +389,7 @@ export function TeamMembersList({
       setMembers(transformed);
     } catch (err) {
       console.error('Failed to fetch team members:', err);
-      setError('Failed to load team members');
+      setError('Failed to load lab members');
     } finally {
       setIsLoading(false);
     }
@@ -545,7 +543,7 @@ export function TeamMembersList({
       <div className={`p-6 ${className}`}>
         <div className="flex items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span>Loading team members...</span>
+          <span>Loading lab members...</span>
         </div>
       </div>
     );
@@ -573,7 +571,7 @@ export function TeamMembersList({
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-[#1e3a5f] dark:text-[#c9a227]" />
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-            Team Members
+            Lab Members
           </h3>
           <Badge variant="default" size="sm">
             {members.length}
@@ -658,8 +656,8 @@ export function TeamMembersList({
                     disabled:opacity-50 disabled:cursor-not-allowed
                     transition-colors
                   "
-                  aria-label={`Transfer ownership to ${member.user?.name}`}
-                  title="Transfer ownership"
+                  aria-label={`Transfer PI role to ${member.user?.name}`}
+                  title="Transfer PI role"
                 >
                   <ArrowRightLeft className="w-4 h-4" />
                 </button>
@@ -697,7 +695,7 @@ export function TeamMembersList({
         <div className="py-8 text-center">
           <Users className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
           <p className="text-gray-500 dark:text-gray-400">
-            No team members yet
+            No lab members yet
           </p>
         </div>
       )}
@@ -736,7 +734,7 @@ export function TeamMembersList({
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Are you sure you want to suspend{' '}
                 <strong>{confirmRemoveMember.user?.name}</strong> from{' '}
-                <strong>{currentTeam?.name}</strong>? They will lose access to team
+                <strong>{currentTeam?.name}</strong>? They will lose access to lab
                 resources until reactivated.
               </p>
 
@@ -790,15 +788,15 @@ export function TeamMembersList({
                   <ArrowRightLeft className="w-5 h-5 text-[#c9a227]" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Transfer Ownership?
+                  Transfer PI Role?
                 </h3>
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Transfer ownership of{' '}
+                Transfer the Principal Investigator role for{' '}
                 <strong>{currentTeam?.name}</strong> to{' '}
                 <strong>{confirmTransferMember.user?.name}</strong>?
-                You will be demoted to admin. This action cannot be undone.
+                You will become a Lab Manager. This action cannot be undone.
               </p>
 
               <div className="flex gap-3">

@@ -6,7 +6,7 @@ import { forwardRef, ReactNode, HTMLAttributes, createContext, useContext } from
 // TYPES & INTERFACES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type CardVariant = 'default' | 'elevated' | 'glass' | 'glassPremium' | 'academic';
+export type CardVariant = 'default' | 'elevated' | 'glass' | 'glassElevated' | 'academic';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 export type CardRadius = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -68,7 +68,7 @@ const variantClasses: Record<CardVariant, string> = {
   default: 'card-base',
   elevated: 'card-elevated',
   glass: 'glass-card card-base',
-  glassPremium: 'glass-card-premium',
+  glassElevated: 'glass-card-premium',
   academic: 'card-elevated paper-texture academic-pattern',
 };
 
@@ -118,7 +118,7 @@ const radiusClasses: Record<CardRadius, string> = {
  * A versatile container component for grouping related content.
  *
  * Features:
- * - Multiple visual variants (default, elevated, glass, glassPremium)
+ * - Multiple visual variants (default, elevated, glass, glassElevated)
  * - Interactive mode with hover lift effect
  * - Selected state styling
  * - Configurable padding and border radius

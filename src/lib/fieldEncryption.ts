@@ -2,7 +2,7 @@
  * Field-Level Encryption for PII
  *
  * Provides AES-256-GCM encryption for sensitive fields like
- * transcriptions, notes, and messages that may contain customer PII.
+ * transcriptions, notes, and messages that may contain user PII.
  *
  * SECURITY REQUIREMENTS:
  * - Set FIELD_ENCRYPTION_KEY environment variable (32-byte hex string)

@@ -116,7 +116,7 @@ export function findPotentialDuplicates(
         tn.toLowerCase().includes(nn.toLowerCase())
       ));
       if (matchedName) {
-        reasons.push(`Same customer: ${matchedName}`);
+        reasons.push(`Same contact: ${matchedName}`);
       }
     }
 

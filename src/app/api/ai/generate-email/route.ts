@@ -3,8 +3,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { logger } from '@/lib/logger';
 import { withTeamAuth } from '@/lib/teamAuth';
 
-// Customer email generation endpoint
-// Generates professional update emails for internal staff to send to customers
+// Professional email generation endpoint
+// Generates professional update emails for team members to send to collaborators, advisors, and stakeholders
 
 interface TaskSummary {
   text: string;
@@ -19,7 +19,11 @@ interface TaskSummary {
 }
 
 interface EmailRequest {
-  customerName: string;
+  recipientName: string;
+  recipientEmail?: string;
+  recipientPhone?: string;
+  // Backward compatibility aliases
+  customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
   tasks: TaskSummary[];
@@ -118,11 +122,15 @@ También debes identificar problemas potenciales que el remitente debe revisar a
 export const POST = withTeamAuth(async (request, context) => {
   try {
     const body: EmailRequest = await request.json();
-    const { customerName, customerEmail, customerPhone, tasks, tone, language = 'english', senderName, includeNextSteps } = body;
+    // Support both new field names and backward-compatible old names
+    const recipientName = body.recipientName || body.customerName;
+    const recipientEmail = body.recipientEmail || body.customerEmail;
+    const recipientPhone = body.recipientPhone || body.customerPhone;
+    const { tasks, tone, language = 'english', senderName, includeNextSteps } = body;
 
-    if (!customerName || !tasks || tasks.length === 0) {
+    if (!recipientName || !tasks || tasks.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Customer name and at least one task are required' },
+        { success: false, error: 'Recipient name and at least one task are required' },
         { status: 400 }
       );
     }
@@ -157,7 +165,7 @@ export const POST = withTeamAuth(async (request, context) => {
 
     const toneInstructions = language === 'spanish' ? {
       formal: 'Usa un tono formal y profesional apropiado para correspondencia de negocios.',
-      friendly: 'Usa un tono cálido y amigable mientras te mantienes profesional. Esta es una agencia pequeña con relaciones personales.',
+      friendly: 'Usa un tono cálido y amigable mientras te mantienes profesional. Este es un equipo académico colaborativo.',
       brief: 'Manténlo muy corto y directo al grano - solo la actualización esencial en máximo 2-3 oraciones.',
     } : {
       formal: 'Use a formal, professional tone suitable for business correspondence.',
@@ -166,9 +174,9 @@ export const POST = withTeamAuth(async (request, context) => {
     };
 
     const promptDetails = language === 'spanish' ? `
-Nombre del Destinatario: ${customerName}
-${customerEmail ? `Email del Destinatario: ${customerEmail}` : ''}
-${customerPhone ? `Teléfono del Destinatario: ${customerPhone}` : ''}
+Nombre del Destinatario: ${recipientName}
+${recipientEmail ? `Email del Destinatario: ${recipientEmail}` : ''}
+${recipientPhone ? `Teléfono del Destinatario: ${recipientPhone}` : ''}
 Nombre del Remitente: ${senderName}
 Organizacion: Equipo de Investigacion Academica
 
@@ -176,7 +184,7 @@ Resumen de Tareas (${completed} completadas, ${inProgress} en progreso, ${pendin
 ${taskSummary}
 
 Tono: ${toneInstructions[tone]}
-${includeNextSteps ? 'Incluye próximos pasos específicos o qué puede esperar el destinatario.' : 'Mantén el enfoque solo en la actualización de estado.'}
+${includeNextSteps ? 'Incluye proximos pasos especificos o que puede esperar el destinatario.' : 'Manten el enfoque solo en la actualizacion de estado.'}
 
 IMPORTANTE: Revisa los detalles de las tareas cuidadosamente. Si se proporcionan notas de reuniones o transcripciones, úsalas para entender el contexto. Si se mencionan archivos adjuntos, reconócelos apropiadamente. Presta atención al progreso de las subtareas para mostrar minuciosidad.
 
@@ -195,9 +203,9 @@ Genera una respuesta JSON con:
 }
 
 El array de warnings debe señalar cualquier elemento que necesite la revisión del remitente antes de enviar. Solo incluye warnings si hay problemas reales para revisar.` : `
-Recipient Name: ${customerName}
-${customerEmail ? `Recipient Email: ${customerEmail}` : ''}
-${customerPhone ? `Recipient Phone: ${customerPhone}` : ''}
+Recipient Name: ${recipientName}
+${recipientEmail ? `Recipient Email: ${recipientEmail}` : ''}
+${recipientPhone ? `Recipient Phone: ${recipientPhone}` : ''}
 Sender Name: ${senderName}
 Organization: Academic Research Team
 

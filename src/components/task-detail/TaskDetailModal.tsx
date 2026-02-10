@@ -48,7 +48,6 @@ export default function TaskDetailModal({
   onSetReminder,
   onDuplicate,
   onSaveAsTemplate,
-  onEmailCustomer,
 }: TaskDetailModalProps) {
   const state = useTaskDetailState({
     todo,
@@ -93,7 +92,6 @@ export default function TaskDetailModal({
               onToggle={onToggle}
               onDuplicate={onDuplicate}
               onSaveAsTemplate={onSaveAsTemplate}
-              onEmailCustomer={onEmailCustomer}
             />
 
             {/* Divider */}

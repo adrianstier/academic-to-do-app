@@ -1,8 +1,9 @@
 /**
- * Team Authentication & Authorization
+ * Team (Lab) Authentication & Authorization
  *
  * Provides team-scoped access control for multi-tenant API routes.
- * Extends sessionValidator with team context verification.
+ * Extends sessionValidator with team/lab context verification.
+ * Internal data model uses 'team' terminology; UI displays academic labels.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -631,25 +632,3 @@ export function withTeamOwnerAuth(
   return withTeamAuth(handler, { requiredRoles: ['owner'] });
 }
 
-// ============================================
-// Backward Compatibility Aliases
-// ============================================
-
-/** @deprecated Use TeamAuthContext instead */
-export type AgencyAuthContext = TeamAuthContext;
-/** @deprecated Use TeamAuthResult instead */
-export type AgencyAuthResult = TeamAuthResult;
-/** @deprecated Use TeamAuthOptions instead */
-export type AgencyAuthOptions = TeamAuthOptions;
-/** @deprecated Use verifyTeamAccess instead */
-export const verifyAgencyAccess = verifyTeamAccess;
-/** @deprecated Use withTeamAuth instead */
-export const withAgencyAuth = withTeamAuth;
-/** @deprecated Use withTeamAdminAuth instead */
-export const withAgencyAdminAuth = withTeamAdminAuth;
-/** @deprecated Use withTeamOwnerAuth instead */
-export const withAgencyOwnerAuth = withTeamOwnerAuth;
-/** @deprecated Use getUserTeams instead */
-export const getUserAgencies = getUserTeams;
-/** @deprecated Use setTeamContext instead */
-export const setAgencyContext = setTeamContext;

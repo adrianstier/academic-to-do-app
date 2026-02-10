@@ -59,7 +59,6 @@ interface TodoListContentProps {
   onUpdateSubtasks: (id: string, subtasks: { id: string; text: string; completed: boolean }[]) => void;
   onUpdateAttachments: (id: string, attachments: unknown[]) => void;
   onSaveAsTemplate: (todo: Todo) => void;
-  onEmailCustomer: (todo: Todo) => void;
   onClearSearch: () => void;
   onAddTask: () => void;
 }
@@ -94,7 +93,6 @@ function TodoListContent({
   onUpdateSubtasks,
   onUpdateAttachments,
   onSaveAsTemplate,
-  onEmailCustomer,
   onClearSearch,
   onAddTask,
 }: TodoListContentProps) {
@@ -174,7 +172,6 @@ function TodoListContent({
         onUpdateSubtasks={onUpdateSubtasks}
         onUpdateAttachments={onUpdateAttachments}
         onSaveAsTemplate={onSaveAsTemplate}
-        onEmailCustomer={onEmailCustomer}
         isDragEnabled={isDragEnabled}
       />
     </motion.div>
@@ -249,7 +246,6 @@ function TodoListContent({
                   onUpdateSubtasks={onUpdateSubtasks}
                   onUpdateAttachments={onUpdateAttachments}
                   onSaveAsTemplate={onSaveAsTemplate}
-                  onEmailCustomer={onEmailCustomer}
                   isDragEnabled={isDragEnabled}
                   renderTodoItem={renderTodoItem}
                   emptyState={renderEmptyState()}
@@ -295,7 +291,6 @@ function TodoListContent({
             onSetRecurrence={onSetRecurrence}
             onUpdateAttachments={onUpdateAttachments}
             onSaveAsTemplate={onSaveAsTemplate}
-            onEmailCustomer={onEmailCustomer}
             showBulkActions={showBulkActions}
             selectedTodos={selectedTodos}
             onSelectTodo={onSelectTodo}

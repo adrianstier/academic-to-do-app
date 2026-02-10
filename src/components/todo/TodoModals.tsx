@@ -13,7 +13,6 @@ import AddTaskModal from '../AddTaskModal';
 import SaveTemplateModal from '../SaveTemplateModal';
 import ArchivedTaskModal from '../ArchivedTaskModal';
 import DuplicateDetectionModal from '../DuplicateDetectionModal';
-import CustomerEmailModal from '../CustomerEmailModal';
 import { CompletionCelebration } from '../CompletionCelebration';
 import { TaskCompletionSummary } from '../TaskCompletionSummary';
 import {
@@ -119,11 +118,6 @@ interface TodoModalsProps {
   onAddToExistingTask: (existingTodoId: string) => void;
   onCancelDuplicateDetection: () => void;
 
-  // Email
-  showEmailModal: boolean;
-  emailTargetTodos: Todo[];
-  closeEmailModal: () => void;
-
   // Archived Task Detail
   selectedArchivedTodo: Todo | null;
   selectArchivedTodo: (todo: Todo | null) => void;
@@ -173,9 +167,6 @@ function TodoModals({
   onCreateTaskAnyway,
   onAddToExistingTask,
   onCancelDuplicateDetection,
-  showEmailModal,
-  emailTargetTodos,
-  closeEmailModal,
   selectedArchivedTodo,
   selectArchivedTodo,
   onNextTaskClick,
@@ -265,16 +256,6 @@ function TodoModals({
           onCreateAnyway={onCreateTaskAnyway}
           onAddToExisting={onAddToExistingTask}
           onCancel={onCancelDuplicateDetection}
-        />
-      )}
-
-      {/* Customer Email Modal */}
-      {showEmailModal && emailTargetTodos.length > 0 && (
-        <CustomerEmailModal
-          todos={emailTargetTodos}
-          currentUser={currentUser}
-          onClose={closeEmailModal}
-          darkMode={darkMode}
         />
       )}
 

@@ -63,7 +63,7 @@ interface StrategicDashboardProps {
 type ViewMode = 'list' | 'board' | 'table';
 
 const categoryIcons: Record<string, React.ReactNode> = {
-  // Legacy insurance icons (kept for backward compatibility)
+  // General-purpose icons
   'trending-up': <TrendingUp className="w-4 h-4" />,
   'users': <Users className="w-4 h-4" />,
   'award': <Award className="w-4 h-4" />,

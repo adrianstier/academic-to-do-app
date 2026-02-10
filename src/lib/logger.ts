@@ -46,8 +46,8 @@ const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; replacement: string }> = [
   { pattern: /password['"]*\s*[:=]\s*['"][^'"]+['"]/gi, replacement: 'password=[REDACTED]' },
   // Email addresses (partial redaction)
   { pattern: /\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/g, replacement: '[EMAIL REDACTED]' },
-  // Policy numbers (common insurance format)
-  { pattern: /\b[A-Z]{2,3}\d{6,10}\b/g, replacement: '[POLICY# REDACTED]' },
+  // ID numbers (common institutional/policy format)
+  { pattern: /\b[A-Z]{2,3}\d{6,10}\b/g, replacement: '[ID# REDACTED]' },
   // Account numbers
   { pattern: /account[_\s]*(?:number|num|#)?['"]*\s*[:=]\s*['"]?\d{6,}['"]?/gi, replacement: 'account=[ACCT REDACTED]' },
 ];

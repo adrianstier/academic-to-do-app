@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Copy, FileText, Mail } from 'lucide-react';
+import { Check, Copy, FileText } from 'lucide-react';
 import { Button, IconButton } from '@/components/ui';
 import type { Todo } from '@/types/todo';
 
@@ -9,7 +9,6 @@ interface QuickActionsBarProps {
   onToggle: (id: string, completed: boolean) => void;
   onDuplicate?: (todo: Todo) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
-  onEmailCustomer?: (todo: Todo) => void;
 }
 
 export default function QuickActionsBar({
@@ -17,7 +16,6 @@ export default function QuickActionsBar({
   onToggle,
   onDuplicate,
   onSaveAsTemplate,
-  onEmailCustomer,
 }: QuickActionsBarProps) {
   return (
     <div className="flex items-center justify-between">
@@ -47,15 +45,6 @@ export default function QuickActionsBar({
             icon={<FileText className="w-4 h-4" />}
             onClick={() => onSaveAsTemplate(todo)}
             aria-label="Save as template"
-          />
-        )}
-        {onEmailCustomer && (
-          <IconButton
-            variant="ghost"
-            size="sm"
-            icon={<Mail className="w-4 h-4" />}
-            onClick={() => onEmailCustomer(todo)}
-            aria-label="Email summary"
           />
         )}
       </div>

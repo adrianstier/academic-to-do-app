@@ -16,7 +16,11 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { isFeatureEnabled } from '@/lib/featureFlags';
 import { createSaltedHash, hashPinLegacy } from '@/lib/secureAuth';
-import type { TeamInvitation as AgencyInvitation, Team as Agency } from '@/types/team';
+import type { TeamInvitation, Team } from '@/types/team';
+
+// Backward compatibility aliases for this file
+type AgencyInvitation = TeamInvitation;
+type Agency = Team;
 
 // ============================================
 // Types
@@ -142,7 +146,7 @@ export default function JoinInvitationPage({
       setInvitation({
         invitation: {
           id: data.id,
-          agency_id: teamId,
+          team_id: teamId,
           email: data.email,
           role: data.role,
           token: data.token,

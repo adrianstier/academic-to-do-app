@@ -91,6 +91,9 @@ export const POST = withTeamAuth(async (request, context) => {
       transcription,
       subtasks = [],
       status = 'todo',
+      project_id,
+      start_date,
+      tags,
     } = body;
 
     if (!text || !text.trim()) {
@@ -114,9 +117,11 @@ export const POST = withTeamAuth(async (request, context) => {
       created_by: context.userName,
       assigned_to: assignedTo?.trim() || null,
       due_date: dueDate || null,
+      start_date: start_date || null,
       notes: notes || null,
       transcription: transcription || null,
       subtasks: subtasks,
+      project_id: project_id || null,
     };
 
     if (context.teamId && context.teamId.trim() !== '') {
@@ -149,12 +154,33 @@ export const POST = withTeamAuth(async (request, context) => {
     }
     await supabase.from('activity_log').insert(activityRecord);
 
+    // Insert todo_tags if tags array is provided
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      const todoTagRecords = tags.map((tagId: string) => ({
+        todo_id: taskId,
+        tag_id: tagId,
+      }));
+      const { error: tagError } = await supabase
+        .from('todo_tags')
+        .insert(todoTagRecords);
+      if (tagError) {
+        logger.error('Error inserting todo tags', tagError as Error, {
+          component: 'api/todos',
+          action: 'POST',
+          todoId: taskId,
+        });
+        // Non-fatal: the todo was created, just tags failed
+      }
+    }
+
     logger.info('Todo created with encryption', {
       component: 'api/todos',
       action: 'POST',
       todoId: taskId,
       hasTranscription: !!transcription,
       hasNotes: !!notes,
+      hasProjectId: !!project_id,
+      tagCount: tags?.length || 0,
     });
 
     // Return decrypted data
@@ -198,8 +224,8 @@ export const PUT = withTeamAuth(async (request, context) => {
     // Copy allowed fields
     const allowedFields = [
       'text', 'completed', 'status', 'priority',
-      'assigned_to', 'due_date', 'notes', 'transcription',
-      'subtasks', 'recurrence',
+      'assigned_to', 'due_date', 'start_date', 'notes', 'transcription',
+      'subtasks', 'recurrence', 'project_id',
     ];
 
     for (const field of allowedFields) {
@@ -247,6 +273,30 @@ export const PUT = withTeamAuth(async (request, context) => {
         activityRecord.team_id = context.teamId;
       }
       await supabase.from('activity_log').insert(activityRecord);
+    }
+
+    // Update tags if provided (replace all tags for this todo)
+    if (updates.tags !== undefined && Array.isArray(updates.tags)) {
+      // Delete existing tags for this todo
+      await supabase.from('todo_tags').delete().eq('todo_id', id);
+
+      // Insert new tags
+      if (updates.tags.length > 0) {
+        const todoTagRecords = updates.tags.map((tagId: string) => ({
+          todo_id: id,
+          tag_id: tagId,
+        }));
+        const { error: tagError } = await supabase
+          .from('todo_tags')
+          .insert(todoTagRecords);
+        if (tagError) {
+          logger.error('Error updating todo tags', tagError as Error, {
+            component: 'api/todos',
+            action: 'PUT',
+            todoId: id,
+          });
+        }
+      }
     }
 
     logger.info('Todo updated with encryption', {

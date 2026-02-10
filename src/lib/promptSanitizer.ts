@@ -47,7 +47,7 @@ const SENSITIVE_PATTERNS = {
   ssn: /\b\d{3}-\d{2}-\d{4}\b/g,
   creditCard: /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,
   accountNumber: /\b(account\s*#?|acct\.?\s*#?)\s*\d{6,}\b/gi,
-  policyNumber: /\b(policy\s*#?|pol\.?\s*#?)\s*[A-Z0-9]{6,}\b/gi,
+  referenceNumber: /\b(policy\s*#?|pol\.?\s*#?|ref\.?\s*#?)\s*[A-Z0-9]{6,}\b/gi,
   password: /\b(password|passwd|pwd)\s*[:=]\s*\S+/gi,
   apiKey: /\b(api[_-]?key|secret[_-]?key|auth[_-]?token)\s*[:=]\s*\S+/gi,
 };
@@ -223,9 +223,9 @@ export function maskSensitiveData(input: string): string {
     '$1 ******'
   );
 
-  // Mask policy numbers
+  // Mask reference/policy numbers
   masked = masked.replace(
-    /\b(policy\s*#?|pol\.?\s*#?)\s*([A-Z0-9]{6,})\b/gi,
+    /\b(policy\s*#?|pol\.?\s*#?|ref\.?\s*#?)\s*([A-Z0-9]{6,})\b/gi,
     '$1 ******'
   );
 

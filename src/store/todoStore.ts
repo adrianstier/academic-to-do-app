@@ -12,6 +12,8 @@
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { Todo, TodoStatus, TodoPriority, QuickFilter, SortOption, ViewMode } from '@/types/todo';
+import type { Project } from '@/types/project';
+import type { Tag } from '@/types/tag';
 
 // Helper functions
 const isDueToday = (dueDate?: string) => {
@@ -50,6 +52,8 @@ export interface TodoFilters {
   customerFilter: string;
   hasAttachmentsFilter: boolean | null;
   dateRangeFilter: { start: string; end: string };
+  projectFilter: string | null; // project ID or null for all
+  tagFilter: string[]; // array of tag IDs
 }
 
 export interface BulkActionState {
@@ -83,6 +87,10 @@ export interface TodoState {
   loading: boolean;
   connected: boolean;
   error: string | null;
+
+  // Projects and Tags
+  projects: Project[];
+  tags: Tag[];
 
   // Filters
   filters: TodoFilters;
@@ -119,7 +127,13 @@ export interface TodoState {
   setCustomerFilter: (customer: string) => void;
   setHasAttachmentsFilter: (has: boolean | null) => void;
   setDateRangeFilter: (range: { start: string; end: string }) => void;
+  setProjectFilter: (projectId: string | null) => void;
+  setTagFilter: (tagIds: string[]) => void;
   resetFilters: () => void;
+
+  // Actions - Projects & Tags
+  setProjects: (projects: Project[]) => void;
+  setTags: (tags: Tag[]) => void;
 
   // Actions - Bulk
   setSelectedTodos: (ids: Set<string>) => void;
@@ -162,6 +176,8 @@ const defaultFilters: TodoFilters = {
   customerFilter: 'all',
   hasAttachmentsFilter: null,
   dateRangeFilter: { start: '', end: '' },
+  projectFilter: null,
+  tagFilter: [],
 };
 
 const defaultBulkActions: BulkActionState = {
@@ -197,6 +213,8 @@ export const useTodoStore = create<TodoState>()(
       loading: true,
       connected: false,
       error: null,
+      projects: [],
+      tags: [],
       filters: defaultFilters,
       bulkActions: defaultBulkActions,
       ui: defaultUI,
@@ -240,6 +258,10 @@ export const useTodoStore = create<TodoState>()(
       setLoading: (loading) => set({ loading }, false, 'setLoading'),
       setConnected: (connected) => set({ connected }, false, 'setConnected'),
       setError: (error) => set({ error }, false, 'setError'),
+
+      // Projects & Tags actions
+      setProjects: (projects) => set({ projects }, false, 'setProjects'),
+      setTags: (tags) => set({ tags }, false, 'setTags'),
 
       // Filter actions
       setFilters: (filterUpdates) => set(
@@ -306,6 +328,18 @@ export const useTodoStore = create<TodoState>()(
         (state) => ({ filters: { ...state.filters, dateRangeFilter } }),
         false,
         'setDateRangeFilter'
+      ),
+
+      setProjectFilter: (projectFilter) => set(
+        (state) => ({ filters: { ...state.filters, projectFilter } }),
+        false,
+        'setProjectFilter'
+      ),
+
+      setTagFilter: (tagFilter) => set(
+        (state) => ({ filters: { ...state.filters, tagFilter } }),
+        false,
+        'setTagFilter'
       ),
 
       resetFilters: () => set(
@@ -557,6 +591,21 @@ export const selectFilteredTodos = (
         ? (t.attachments?.length || 0) > 0
         : (t.attachments?.length || 0) === 0
     );
+  }
+
+  // Apply project filter
+  if (filters.projectFilter !== null) {
+    filtered = filtered.filter((t) => t.project_id === filters.projectFilter);
+  }
+
+  // Apply tag filter (todos must have ALL selected tags)
+  // Note: This requires todo objects to have a `tag_ids` property populated from todo_tags
+  if (filters.tagFilter.length > 0) {
+    filtered = filtered.filter((t) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const todoTagIds: string[] = (t as any).tag_ids || [];
+      return filters.tagFilter.every((tagId) => todoTagIds.includes(tagId));
+    });
   }
 
   // Apply sorting

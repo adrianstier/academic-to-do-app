@@ -59,7 +59,6 @@ import { sendTaskAssignmentNotification, sendTaskCompletionNotification, sendTas
 import { fetchWithCsrf } from '@/lib/csrf';
 import { getNextSuggestedTasks, calculateCompletionStreak, getEncouragementMessage } from '@/lib/taskSuggestions';
 import DuplicateDetectionModal from './DuplicateDetectionModal';
-import CustomerEmailModal from './CustomerEmailModal';
 import { CompletionCelebration } from './CompletionCelebration';
 import { TaskCompletionSummary } from './TaskCompletionSummary';
 import { CelebrationData, ActivityLogEntry } from '@/types/todo';
@@ -182,7 +181,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     visibleTodos,
     filteredAndSortedTodos: hookFilteredTodos,
     archivedTodos,
-    uniqueCustomers,
     setSearchQuery,
     setQuickFilter,
     setSortOption,
@@ -191,7 +189,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     setShowAdvancedFilters,
     setStatusFilter,
     setAssignedToFilter,
-    setCustomerFilter,
     setHasAttachmentsFilter,
     setDateRangeFilter,
     filterArchivedTodos,
@@ -206,7 +203,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     highPriorityOnly,
     statusFilter,
     assignedToFilter,
-    customerFilter,
     hasAttachmentsFilter,
     dateRangeFilter,
   } = filters;
@@ -278,9 +274,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     showDuplicateModal,
     duplicateMatches,
     pendingTask,
-    // Email modal state
-    showEmailModal,
-    emailTargetTodos,
     // Archive state
     showArchiveView,
     selectedArchivedTodo,
@@ -322,9 +315,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     // Actions - Duplicate detection
     openDuplicateModal,
     clearDuplicateState,
-    // Actions - Email
-    openEmailModal,
-    closeEmailModal,
     // Actions - Archive
     openArchiveView,
     closeArchiveView,
@@ -1636,7 +1626,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
             setSearchQuery('');
             setStatusFilter('all');
             setAssignedToFilter('all');
-            setCustomerFilter('all');
             setHasAttachmentsFilter(null);
             setDateRangeFilter({ start: '', end: '' });
           }}
@@ -1760,7 +1749,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               type="button"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all ${
-                showAdvancedFilters || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end
+                showAdvancedFilters || statusFilter !== 'all' || assignedToFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end
                   ? 'bg-[var(--accent)] text-white'
                   : 'bg-[var(--surface-2)] text-[var(--text-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--foreground)] border border-[var(--border)]'
               }`}
@@ -1768,9 +1757,9 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               title="More Filters"
             >
               <Filter className="w-3.5 h-3.5" />
-              {(statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
+              {(statusFilter !== 'all' || assignedToFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
                 <span className="px-1 py-0.5 text-[10px] rounded-full bg-white/20 leading-none">
-                  {[statusFilter !== 'all', assignedToFilter !== 'all', customerFilter !== 'all', hasAttachmentsFilter !== null, dateRangeFilter.start || dateRangeFilter.end].filter(Boolean).length}
+                  {[statusFilter !== 'all', assignedToFilter !== 'all', hasAttachmentsFilter !== null, dateRangeFilter.start || dateRangeFilter.end].filter(Boolean).length}
                 </span>
               )}
             </button>
@@ -1898,7 +1887,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
             </div>
 
             {/* Clear all - only when filters active */}
-            {(quickFilter !== 'all' || highPriorityOnly || showCompleted || searchQuery || statusFilter !== 'all' || assignedToFilter !== 'all' || customerFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
+            {(quickFilter !== 'all' || highPriorityOnly || showCompleted || searchQuery || statusFilter !== 'all' || assignedToFilter !== 'all' || hasAttachmentsFilter !== null || dateRangeFilter.start || dateRangeFilter.end) && (
               <button
                 type="button"
                 onClick={() => {
@@ -1908,7 +1897,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                   setSearchQuery('');
                   setStatusFilter('all');
                   setAssignedToFilter('all');
-                  setCustomerFilter('all');
                   setHasAttachmentsFilter(null);
                   setDateRangeFilter({ start: '', end: '' });
                 }}
@@ -1966,21 +1954,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                       <option value="unassigned">Unassigned</option>
                       {users.map((user) => (
                         <option key={user} value={user}>{user}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Customer filter */}
-                  <div>
-                    <label className="block text-[10px] font-medium text-[var(--text-light)] mb-1">Customer</label>
-                    <select
-                      value={customerFilter}
-                      onChange={(e) => setCustomerFilter(e.target.value)}
-                      className="w-full text-xs py-1.5 px-2 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)]"
-                    >
-                      <option value="all">All</option>
-                      {uniqueCustomers.map((customer) => (
-                        <option key={customer} value={customer}>{customer}</option>
                       ))}
                     </select>
                   </div>
@@ -2069,9 +2042,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                       onUpdateSubtasks={updateSubtasks}
                       onUpdateAttachments={updateAttachments}
                       onSaveAsTemplate={(t) => openTemplateModal(t)}
-                      onEmailCustomer={(todo) => {
-                        openEmailModal([todo]);
-                      }}
                       isDragEnabled={!showBulkActions && sortOption === 'custom'}
                       renderTodoItem={(todo, index) => (
                         <motion.div
@@ -2108,9 +2078,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                             onUpdateSubtasks={updateSubtasks}
                             onUpdateAttachments={updateAttachments}
                             onSaveAsTemplate={(t) => openTemplateModal(t)}
-                            onEmailCustomer={(todo) => {
-                              openEmailModal([todo]);
-                            }}
                             isDragEnabled={!showBulkActions && sortOption === 'custom'}
                           />
                         </motion.div>
@@ -2221,9 +2188,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                                 onUpdateSubtasks={updateSubtasks}
                                 onUpdateAttachments={updateAttachments}
                                 onSaveAsTemplate={(t) => openTemplateModal(t)}
-                                onEmailCustomer={(todo) => {
-                                  openEmailModal([todo]);
-                                }}
                                 isDragEnabled={!showBulkActions && sortOption === 'custom'}
                               />
                             </motion.div>
@@ -2262,9 +2226,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 onSetRecurrence={setRecurrence}
                 onUpdateAttachments={updateAttachments}
                 onSaveAsTemplate={(t) => openTemplateModal(t)}
-                onEmailCustomer={(todo) => {
-                  openEmailModal([todo]);
-                }}
                 showBulkActions={showBulkActions}
                 selectedTodos={selectedTodos}
                 onSelectTodo={handleSelectTodo}
@@ -2683,20 +2644,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           onCancel={handleCancelDuplicateDetection}
         />
       )}
-
-      {/* Customer Email Modal */}
-      <AnimatePresence>
-        {showEmailModal && emailTargetTodos.length > 0 && (
-          <CustomerEmailModal
-            todos={emailTargetTodos}
-            currentUser={currentUser}
-            onClose={() => {
-              closeEmailModal();
-            }}
-            darkMode={darkMode}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Enhanced Celebration Modal (Feature 3) */}
       {showEnhancedCelebration && celebrationData && (

@@ -21,7 +21,6 @@ import {
   ListChecks,
   FileText,
   Mic,
-  Mail,
   AlertTriangle,
   CheckCircle2,
   Circle,
@@ -37,6 +36,11 @@ import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { Todo, TodoPriority, TodoStatus, Subtask, User as UserType, PRIORITY_CONFIG, STATUS_CONFIG } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
+import ProjectSelector from '@/components/ProjectSelector';
+import TagPicker from '@/components/TagPicker';
+import LinksSection from '@/components/LinksSection';
+import type { TodoLink, TodoLinkType } from '@/types/tag';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { logger } from '@/lib/logger';
 import { sanitizeTranscription } from '@/lib/sanitize';
@@ -60,7 +64,6 @@ interface TaskDetailPanelProps {
   onUpdate: (taskId: string, updates: Partial<Todo>) => Promise<void>;
   onDelete: (taskId: string) => Promise<void>;
   onArchive?: (taskId: string) => Promise<void>;
-  onGenerateEmail?: (task: Todo) => void;
 }
 
 export default function TaskDetailPanel({
@@ -70,7 +73,6 @@ export default function TaskDetailPanel({
   onUpdate,
   onDelete,
   onArchive,
-  onGenerateEmail,
 }: TaskDetailPanelProps) {
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
@@ -85,6 +87,13 @@ export default function TaskDetailPanel({
   const [showAttachments, setShowAttachments] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Projects and Tags from store
+  const storeProjects = useTodoStore(state => state.projects);
+  const storeTags = useTodoStore(state => state.tags);
+
+  // Links state (local - would need API integration for persistence)
+  const [links, setLinks] = useState<TodoLink[]>([]);
 
   // AI Action states
   const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
@@ -312,24 +321,6 @@ export default function TaskDetailPanel({
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Generate email button */}
-          {onGenerateEmail && (
-            <button
-              onClick={() => onGenerateEmail(task)}
-              className={`
-                p-2 rounded-lg transition-colors
-                ${darkMode
-                  ? 'text-white/60 hover:text-white hover:bg-white/10'
-                  : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-                }
-              `}
-              title="Generate customer email"
-              aria-label="Generate customer email"
-            >
-              <Mail className="w-5 h-5" />
-            </button>
-          )}
-
           {/* Archive button */}
           {onArchive && (
             <button
@@ -558,6 +549,63 @@ export default function TaskDetailPanel({
               </div>
             </PropertyField>
           </section>
+
+          {/* Project */}
+          {storeProjects.length > 0 && (
+            <PropertyField
+              label="Project"
+              icon={<span className="w-4 h-4 flex items-center justify-center text-[var(--text-muted)]">P</span>}
+              darkMode={darkMode}
+            >
+              <ProjectSelector
+                value={task.project_id}
+                onChange={(projectId) => onUpdate(task.id, { project_id: projectId })}
+                projects={storeProjects}
+                className="w-full"
+              />
+            </PropertyField>
+          )}
+
+          {/* Tags */}
+          {storeTags.length > 0 && (
+            <section className="space-y-1.5">
+              <label className={`flex items-center gap-2 text-xs font-medium ${darkMode ? 'text-white/50' : 'text-[var(--text-muted)]'}`}>
+                Tags
+              </label>
+              <TagPicker
+                selectedTagIds={((task as unknown as Record<string, unknown>).tag_ids as string[]) || []}
+                onChange={() => {/* Tag updates would need API integration */}}
+                tags={storeTags}
+              />
+            </section>
+          )}
+
+          {/* Reference Links */}
+          <CollapsibleSection
+            title="Reference Links"
+            icon={<span className="w-4 h-4 text-[var(--text-muted)]">L</span>}
+            count={links.length > 0 ? links.length.toString() : undefined}
+            isOpen={true}
+            onToggle={() => {}}
+            darkMode={darkMode}
+          >
+            <LinksSection
+              links={links}
+              onAddLink={(url, label, type) => {
+                const newLink: TodoLink = {
+                  id: crypto.randomUUID(),
+                  todo_id: task.id,
+                  url,
+                  label,
+                  type,
+                };
+                setLinks(prev => [...prev, newLink]);
+              }}
+              onRemoveLink={(linkId) => {
+                setLinks(prev => prev.filter(l => l.id !== linkId));
+              }}
+            />
+          </CollapsibleSection>
 
           {/* Subtasks Section */}
           <CollapsibleSection
@@ -864,26 +912,6 @@ export default function TaskDetailPanel({
                   )}
                   <span className="truncate">Improve description</span>
                 </button>
-
-                {/* Draft email */}
-                {onGenerateEmail && (
-                  <button
-                    onClick={() => onGenerateEmail(task)}
-                    disabled={aiActionLoading !== null}
-                    className={`
-                      flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium
-                      transition-all
-                      ${darkMode
-                        ? 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10'
-                        : 'bg-[var(--surface-2)] text-[var(--foreground)] hover:bg-[var(--surface-3)] border border-[var(--border)]'
-                      }
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                    `}
-                  >
-                    <Mail className="w-4 h-4 text-[var(--accent)]" />
-                    <span className="truncate">Draft customer email</span>
-                  </button>
-                )}
 
                 {/* Find duplicates (placeholder - would need duplicate detection logic) */}
                 <button

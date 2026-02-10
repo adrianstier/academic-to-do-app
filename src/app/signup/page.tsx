@@ -179,6 +179,7 @@ export default function SignupPage() {
       }
 
       // Check if team slug is taken
+      // Note: 'agencies' is the database table name (legacy naming, maps to teams)
       const { data: existingTeam } = await supabase
         .from('agencies')
         .select('id')
@@ -207,6 +208,7 @@ export default function SignupPage() {
       if (userError) throw userError;
 
       // Create team with owner
+      // Note: 'create_agency_with_owner' is the database RPC name (legacy naming, creates team)
       const { data: teamResult, error: teamError } = await supabase
         .rpc('create_agency_with_owner', {
           p_name: formData.teamName.trim(),

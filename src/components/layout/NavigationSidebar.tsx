@@ -16,6 +16,7 @@ import {
   Inbox,
   BarChart2,
   Keyboard,
+  FolderKanban,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -50,6 +51,9 @@ const primaryNavItems: NavItem[] = [
   { id: 'ai_inbox', label: 'AI Inbox', icon: Inbox },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
+
+// Projects is rendered separately as it shares the 'tasks' view with project filter context
+const projectsNavItem = { label: 'Projects', icon: FolderKanban };
 
 const secondaryNavItems: NavItem[] = [
   { id: 'goals', label: 'Strategic Goals', icon: Target, ownerOnly: true },
@@ -244,6 +248,30 @@ export default function NavigationSidebar({
             </button>
           );
         })}
+
+        {/* Projects nav item */}
+        <button
+          onClick={() => setActiveView('tasks')}
+          className={`
+            group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
+            font-medium text-sm transition-all duration-150 cursor-pointer w-full
+            ${darkMode
+              ? 'text-white/60 hover:text-white hover:bg-white/5'
+              : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+            }
+          `}
+        >
+          <FolderKanban className={`
+            w-5 h-5 flex-shrink-0 transition-colors
+            ${darkMode
+              ? 'text-white/40 group-hover:text-white/70'
+              : 'text-[var(--text-muted)] group-hover:text-[var(--foreground)]'
+            }
+          `} />
+          {isExpanded && (
+            <span className="flex-1 text-left truncate">{projectsNavItem.label}</span>
+          )}
+        </button>
 
         {/* Divider */}
         <div className={`my-3 border-t ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}`} />

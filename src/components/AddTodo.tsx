@@ -11,6 +11,8 @@ import TemplatePicker from './TemplatePicker';
 import { QuickTaskButtons, useTaskPatterns } from './QuickTaskButtons';
 import { CategoryConfidenceIndicator } from './CategoryConfidenceIndicator';
 import { TodoPriority, Subtask, PRIORITY_CONFIG, QuickTaskTemplate } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
+import ProjectSelector from './ProjectSelector';
 import { getUserPreferences, updateLastTaskDefaults } from '@/lib/userPreferences';
 import { analyzeTaskPattern } from '@/lib/academicPatterns';
 import { logger } from '@/lib/logger';
@@ -109,6 +111,8 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
   const [reminderAt, setReminderAt] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [recurrence, setRecurrence] = useState<'daily' | 'weekly' | 'monthly' | ''>('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined);
+  const storeProjects = useTodoStore(state => state.projects);
   const [assignedTo, setAssignedTo] = useState(() => {
     if (typeof window !== 'undefined' && currentUserId) {
       const prefs = getUserPreferences(currentUserId);
@@ -385,6 +389,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     setAssignedTo('');
     setNotes('');
     setRecurrence('');
+    setSelectedProjectId(undefined);
     setShowOptions(false);
     setParsedResult(null);
     setSuggestedSubtasks([]);
@@ -487,7 +492,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     // Focus the textarea so user can edit the placeholder
     if (textareaRef.current) {
       textareaRef.current.focus();
-      // Select the [customer] placeholder if present
+      // Select the placeholder if present
       const placeholderMatch = template.text.match(/\[[\w\s]+\]/);
       if (placeholderMatch) {
         const start = template.text.indexOf(placeholderMatch[0]);
@@ -763,6 +768,22 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
                   ))}
                 </select>
               </div>
+
+              {/* Project selector */}
+              {storeProjects.length > 0 && (
+                <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full border-2 transition-all cursor-pointer hover:shadow-sm ${
+                  selectedProjectId
+                    ? 'border-[var(--accent)]/40 bg-[var(--accent-light)]'
+                    : 'border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-hover)]'
+                }`}>
+                  <ProjectSelector
+                    value={selectedProjectId}
+                    onChange={setSelectedProjectId}
+                    projects={storeProjects}
+                    placeholder="No Project"
+                  />
+                </div>
+              )}
 
               {/* Reminder - pill style */}
               <ReminderPicker

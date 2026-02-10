@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useTeam } from '@/contexts/TeamContext';
 import { supabase } from '@/lib/supabaseClient';
+import { getAcademicRoleLabel, ACADEMIC_ROLE_MAP } from '@/lib/academicRoles';
 import { isInvitationValid, type TeamInvitation, type TeamRole } from '@/types/team';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -38,7 +39,7 @@ interface TeamInviteSectionProps {
 // ============================================
 
 function getRoleLabel(role: Exclude<TeamRole, 'owner'>): string {
-  return role === 'admin' ? 'Admin' : 'Member';
+  return getAcademicRoleLabel(role);
 }
 
 // ============================================
@@ -57,13 +58,13 @@ function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
   const roles: Array<{ value: Exclude<TeamRole, 'owner'>; label: string; description: string }> = [
     {
       value: 'member',
-      label: 'Member',
-      description: 'Can view and create tasks',
+      label: ACADEMIC_ROLE_MAP.member.label,
+      description: ACADEMIC_ROLE_MAP.member.description,
     },
     {
       value: 'admin',
-      label: 'Admin',
-      description: 'Can manage members and settings',
+      label: ACADEMIC_ROLE_MAP.admin.label,
+      description: ACADEMIC_ROLE_MAP.admin.description,
     },
   ];
 
@@ -622,7 +623,7 @@ export function TeamInviteSection({
       <div className="flex items-center gap-2 mb-4">
         <UserPlus className="w-5 h-5 text-[#1e3a5f] dark:text-[#c9a227]" />
         <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-          Invite Members
+          Invite Lab Members
         </h3>
       </div>
 
@@ -759,7 +760,7 @@ export function TeamInviteSection({
             No pending invitations
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-            Invite team members using the form above
+            Invite lab members using the form above
           </p>
         </div>
       )}

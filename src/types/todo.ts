@@ -88,8 +88,8 @@ export interface Todo {
   reminders?: TaskReminder[]; // Multiple reminders (from task_reminders table)
   display_order?: number; // Manual sort order for drag-and-drop (lower = higher in list)
   team_id?: string; // Multi-tenancy: which team this task belongs to
-  /** @deprecated Use team_id instead */
-  agency_id?: string;
+  project_id?: string; // Which project this task belongs to
+  start_date?: string; // When work on this task should begin
 }
 
 // ============================================
@@ -211,8 +211,6 @@ export type GlobalRole = 'user' | 'super_admin';
 // Import team types for re-export (uses Team terminology)
 import type { TeamMembership, TeamRole, TeamPermissions } from './team';
 export type { TeamMembership, TeamRole, TeamPermissions };
-// Backward compatibility aliases
-export type { TeamMembership as AgencyMembership, TeamRole as AgencyRole, TeamPermissions as AgencyPermissions };
 
 export interface AuthUser {
   id: string;
@@ -231,14 +229,6 @@ export interface AuthUser {
   current_team_id?: string;
   current_team_role?: TeamRole;
   current_team_permissions?: TeamPermissions;
-  /** @deprecated Use teams instead */
-  agencies?: TeamMembership[];
-  /** @deprecated Use current_team_id instead */
-  current_agency_id?: string;
-  /** @deprecated Use current_team_role instead */
-  current_agency_role?: TeamRole;
-  /** @deprecated Use current_team_permissions instead */
-  current_agency_permissions?: TeamPermissions;
 }
 
 export const PRIORITY_CONFIG: Record<TodoPriority, { label: string; color: string; bgColor: string; icon: string }> = {
@@ -283,8 +273,6 @@ export interface ChatMessage {
   pinned_at?: string | null; // When it was pinned
   mentions?: string[]; // Array of mentioned usernames
   team_id?: string; // Multi-tenancy: which team this message belongs to
-  /** @deprecated Use team_id instead */
-  agency_id?: string;
 }
 
 // User presence status
@@ -327,8 +315,6 @@ export interface TaskTemplate {
   created_at: string;
   updated_at: string;
   team_id?: string; // Multi-tenancy: which team this template belongs to
-  /** @deprecated Use team_id instead */
-  agency_id?: string;
 }
 
 // Activity Log types
@@ -365,8 +351,6 @@ export interface ActivityLogEntry {
   details: Record<string, unknown>;
   created_at: string;
   team_id?: string; // Multi-tenancy: which team this activity belongs to
-  /** @deprecated Use team_id instead */
-  agency_id?: string;
 }
 
 // Activity feed is now accessible to all users (legacy constants kept for compatibility)
@@ -403,8 +387,6 @@ export interface GoalCategory {
   display_order: number;
   created_at: string;
   team_id?: string; // Multi-tenancy: which team this category belongs to
-  /** @deprecated Use team_id instead */
-  agency_id?: string;
 }
 
 export interface StrategicGoal {
@@ -424,8 +406,6 @@ export interface StrategicGoal {
   created_at: string;
   updated_at: string;
   team_id?: string; // Multi-tenancy: which team this goal belongs to
-  /** @deprecated Use team_id instead */
-  agency_id?: string;
   // Joined data
   category?: GoalCategory;
   milestones?: GoalMilestone[];
@@ -463,22 +443,18 @@ export const GOAL_PRIORITY_CONFIG: Record<GoalPriority, { label: string; color: 
  * Check if a user has owner privileges
  * Supports both single-tenant (legacy) and multi-tenant modes
  *
- * In multi-tenant mode, checks current_team_role (or legacy current_agency_role)
- * In single-tenant mode, checks role or falls back to name
+ * In multi-tenant mode, checks current_team_role
+ * In single-tenant mode, checks role
  */
 export function isOwner(user: {
   role?: string;
   name?: string;
   current_team_role?: string;
-  current_agency_role?: string; // Backward compatibility
 } | null | undefined): boolean {
   if (!user) return false;
 
-  // Multi-tenant: check team-specific role (new terminology)
+  // Multi-tenant: check team-specific role
   if (user.current_team_role === 'owner') return true;
-
-  // Multi-tenant: check agency-specific role (backward compatibility)
-  if (user.current_agency_role === 'owner') return true;
 
   // Single-tenant: use role from database
   if (user.role === 'owner') return true;
@@ -494,15 +470,11 @@ export function isAdmin(user: {
   role?: string;
   name?: string;
   current_team_role?: string;
-  current_agency_role?: string; // Backward compatibility
 } | null | undefined): boolean {
   if (!user) return false;
 
-  // Multi-tenant: check team-specific role (new terminology)
+  // Multi-tenant: check team-specific role
   if (user.current_team_role === 'owner' || user.current_team_role === 'admin') return true;
-
-  // Multi-tenant: check agency-specific role (backward compatibility)
-  if (user.current_agency_role === 'owner' || user.current_agency_role === 'admin') return true;
 
   // Single-tenant: use role from database
   if (user.role === 'owner' || user.role === 'admin') return true;
@@ -520,16 +492,11 @@ export function canViewStrategicGoals(user: {
   name?: string;
   current_team_role?: string;
   current_team_permissions?: { can_view_strategic_goals?: boolean };
-  current_agency_role?: string; // Backward compatibility
-  current_agency_permissions?: { can_view_strategic_goals?: boolean }; // Backward compatibility
 } | null | undefined): boolean {
   if (!user) return false;
 
-  // Multi-tenant: check team permissions (new terminology)
+  // Multi-tenant: check team permissions
   if (user.current_team_permissions?.can_view_strategic_goals) return true;
-
-  // Multi-tenant: check agency permissions (backward compatibility)
-  if (user.current_agency_permissions?.can_view_strategic_goals) return true;
 
   // Fall back to admin check
   return isAdmin(user);

@@ -77,10 +77,7 @@ export interface TeamMember {
 
 export interface TeamInvitation {
   id: string;
-  /** New terminology - use this when available */
-  team_id?: string;
-  /** @deprecated Use team_id instead - backward compatibility during migration */
-  agency_id?: string;
+  team_id: string;
   email: string;
   role: Exclude<TeamRole, 'owner'>; // Can't invite as owner
   token: string;
@@ -271,32 +268,3 @@ export function isInvitationValid(invitation: TeamInvitation): boolean {
   return new Date(invitation.expires_at) > new Date();
 }
 
-// ============================================
-// Backward Compatibility Aliases
-// ============================================
-// These aliases allow gradual migration from agency to team terminology
-
-/** @deprecated Use Team instead */
-export type Agency = Team;
-/** @deprecated Use TeamRole instead */
-export type AgencyRole = TeamRole;
-/** @deprecated Use TeamPermissions instead */
-export type AgencyPermissions = TeamPermissions;
-/** @deprecated Use TeamMember instead */
-export type AgencyMember = TeamMember;
-/** @deprecated Use TeamMembership instead */
-export type AgencyMembership = TeamMembership;
-/** @deprecated Use TeamInvitation instead */
-export type AgencyInvitation = TeamInvitation;
-/** @deprecated Use TeamContext instead */
-export type AgencyContext = TeamContext;
-/** @deprecated Use CreateTeamRequest instead */
-export type CreateAgencyRequest = CreateTeamRequest;
-/** @deprecated Use UpdateTeamRequest instead */
-export type UpdateAgencyRequest = UpdateTeamRequest;
-/** @deprecated Use isTeamOwner instead */
-export const isAgencyOwner = isTeamOwner;
-/** @deprecated Use isTeamAdmin instead */
-export const isAgencyAdmin = isTeamAdmin;
-/** @deprecated Use generateTeamSlug instead */
-export const generateAgencySlug = generateTeamSlug;

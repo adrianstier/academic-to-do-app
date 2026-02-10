@@ -100,19 +100,19 @@ export function TeamSettingsModal({
   // Validate form
   const validateForm = useCallback((): string | null => {
     if (!name.trim()) {
-      return 'Team name is required';
+      return 'Lab name is required';
     }
     if (name.trim().length < 2) {
-      return 'Team name must be at least 2 characters';
+      return 'Lab name must be at least 2 characters';
     }
     if (!slug.trim()) {
-      return 'Team URL is required';
+      return 'Lab URL is required';
     }
     if (slug.length < 2) {
-      return 'Team URL must be at least 2 characters';
+      return 'Lab URL must be at least 2 characters';
     }
     if (!/^[a-z0-9-]+$/.test(slug)) {
-      return 'Team URL can only contain lowercase letters, numbers, and hyphens';
+      return 'Lab URL can only contain lowercase letters, numbers, and hyphens';
     }
     return null;
   }, [name, slug]);
@@ -121,7 +121,7 @@ export function TeamSettingsModal({
   const handleSave = async () => {
     if (!currentTeam) return;
     if (!canManageSettings) {
-      setError('You do not have permission to modify team settings');
+      setError('You do not have permission to modify lab settings');
       return;
     }
 
@@ -165,14 +165,14 @@ export function TeamSettingsModal({
       // Refresh teams in context
       await refreshTeams();
 
-      setSuccess('Team settings saved successfully');
+      setSuccess('Lab settings saved successfully');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: unknown) {
       console.error('Failed to save team settings:', err);
       // Handle unique constraint violation on slug
       const errorCode = (err as { code?: string })?.code;
       if (errorCode === '23505') {
-        setError('This team URL is already taken. Please choose a different one.');
+        setError('This lab URL is already taken. Please choose a different one.');
       } else {
         setError('Failed to save settings. Please try again.');
       }
@@ -187,7 +187,7 @@ export function TeamSettingsModal({
 
     // Require typing team name to confirm
     if (deleteConfirmText !== currentTeam.name) {
-      setError('Please type the team name exactly to confirm deletion');
+      setError('Please type the lab name exactly to confirm deactivation');
       return;
     }
 
@@ -219,7 +219,7 @@ export function TeamSettingsModal({
       onTeamDeleted?.();
     } catch (err) {
       console.error('Failed to delete team:', err);
-      setError('Failed to delete team. Please try again.');
+      setError('Failed to deactivate lab. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -236,7 +236,7 @@ export function TeamSettingsModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Team Settings"
+      title="Lab Settings"
       size="lg"
     >
       <ModalHeader>
@@ -249,10 +249,10 @@ export function TeamSettingsModal({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Team Settings
+              Lab Settings
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Manage your team&apos;s profile and preferences
+              Manage your lab&apos;s profile and preferences
             </p>
           </div>
         </div>
@@ -288,14 +288,14 @@ export function TeamSettingsModal({
             htmlFor="team-name"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Team Name
+            Lab Name
           </label>
           <input
             id="team-name"
             type="text"
             value={name}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Enter team name"
+            placeholder="Enter lab name"
             className="
               w-full px-4 py-2.5 rounded-lg
               bg-white dark:bg-gray-800
@@ -317,7 +317,7 @@ export function TeamSettingsModal({
           >
             <span className="flex items-center gap-2">
               <Link className="w-4 h-4" />
-              Team URL
+              Lab URL
             </span>
           </label>
           <div className="flex items-center gap-2">
@@ -353,7 +353,7 @@ export function TeamSettingsModal({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             <span className="flex items-center gap-2">
               <Palette className="w-4 h-4" />
-              Team Color
+              Lab Color
             </span>
           </label>
           <div className="grid grid-cols-4 gap-2">
@@ -408,10 +408,10 @@ export function TeamSettingsModal({
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                    Deactivate Team
+                    Deactivate Lab
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Deactivate this team. Members will lose access, but data is preserved for potential reactivation.
+                    Deactivate this lab. Members will lose access, but data is preserved for potential reactivation.
                   </p>
                   <Button
                     variant="danger"
@@ -419,7 +419,7 @@ export function TeamSettingsModal({
                     onClick={() => setShowDeleteConfirm(true)}
                     className="mt-3"
                   >
-                    Deactivate Team
+                    Deactivate Lab
                   </Button>
                 </div>
               </div>
@@ -442,7 +442,7 @@ export function TeamSettingsModal({
                   type="text"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="Type team name..."
+                  placeholder="Type lab name..."
                   className="
                     w-full px-3 py-2 rounded-lg mb-3
                     bg-white dark:bg-gray-800
@@ -470,7 +470,7 @@ export function TeamSettingsModal({
                     loading={isDeleting}
                     disabled={deleteConfirmText !== currentTeam?.name}
                   >
-                    Deactivate Team
+                    Deactivate Lab
                   </Button>
                 </div>
               </motion.div>

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, ChevronDown, Check, Plus, Shield, Crown, User } from 'lucide-react';
 import { useTeam } from '@/contexts/TeamContext';
+import { getAcademicRoleLabel, getAcademicRoleShort } from '@/lib/academicRoles';
 import type { TeamRole } from '@/types/team';
 
 // ============================================
@@ -37,14 +38,7 @@ const getRoleIcon = (role: TeamRole) => {
 };
 
 const getRoleLabel = (role: TeamRole) => {
-  switch (role) {
-    case 'owner':
-      return 'Owner';
-    case 'admin':
-      return 'Admin';
-    default:
-      return 'Member';
-  }
+  return getAcademicRoleShort(role);
 };
 
 const getRoleColor = (role: TeamRole) => {
@@ -149,7 +143,7 @@ export function TeamSwitcher({
 
         {/* Team Name */}
         <span className="font-medium text-gray-900 dark:text-white truncate max-w-[150px]">
-          {isLoading ? 'Loading...' : (currentTeam?.name || 'Select Team')}
+          {isLoading ? 'Loading...' : (currentTeam?.name || 'Select Lab')}
         </span>
 
         {/* Role Badge */}
@@ -185,7 +179,7 @@ export function TeamSwitcher({
             {/* Header */}
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Your Teams
+                Your Labs
               </p>
             </div>
 
@@ -194,7 +188,7 @@ export function TeamSwitcher({
               {teams.length === 0 ? (
                 <div className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
                   <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No teams yet</p>
+                  <p className="text-sm">No labs yet</p>
                 </div>
               ) : (
                 teams.map((team) => (
@@ -260,7 +254,7 @@ export function TeamSwitcher({
                   "
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="text-sm font-medium">Create New Team</span>
+                  <span className="text-sm font-medium">Create New Lab</span>
                 </button>
               </>
             )}
@@ -305,14 +299,5 @@ export function TeamSwitcherMini({ className = '' }: TeamSwitcherMiniProps) {
     </div>
   );
 }
-
-// ============================================
-// Backward Compatibility Aliases
-// ============================================
-
-/** @deprecated Use TeamSwitcher instead */
-export const AgencySwitcher = TeamSwitcher;
-/** @deprecated Use TeamSwitcherMini instead */
-export const AgencySwitcherMini = TeamSwitcherMini;
 
 export default TeamSwitcher;

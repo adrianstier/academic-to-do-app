@@ -34,7 +34,6 @@ export interface SwipeableTodoItemProps {
   onUpdateSubtasks?: (id: string, subtasks: Subtask[]) => void;
   onSaveAsTemplate?: (todo: Todo) => void;
   onUpdateAttachments?: (id: string, attachments: Attachment[], skipDbUpdate?: boolean) => void;
-  onEmailCustomer?: (todo: Todo) => void;
   onSetReminder?: (id: string, reminderAt: string | null) => void;
   // Optional: callback when edit mode is requested via swipe
   onEditRequest?: (todo: Todo) => void;
@@ -74,7 +73,6 @@ export default function SwipeableTodoItem({
   onUpdateSubtasks,
   onSaveAsTemplate,
   onUpdateAttachments,
-  onEmailCustomer,
   onSetReminder,
   onEditRequest,
   children,
@@ -224,7 +222,6 @@ export default function SwipeableTodoItem({
         onUpdateSubtasks={onUpdateSubtasks}
         onSaveAsTemplate={onSaveAsTemplate}
         onUpdateAttachments={onUpdateAttachments}
-        onEmailCustomer={onEmailCustomer}
         onSetReminder={onSetReminder}
       />
     );

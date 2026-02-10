@@ -97,19 +97,19 @@ export default function TeamOnboardingModal({
   const handleCreateTeam = async () => {
     // Validation
     if (!teamName.trim()) {
-      setError('Please enter a team name');
+      setError('Please enter a lab name');
       return;
     }
     if (teamName.trim().length < 3) {
-      setError('Team name must be at least 3 characters');
+      setError('Lab name must be at least 3 characters');
       return;
     }
     if (!teamSlug.trim()) {
-      setError('Please enter a team URL');
+      setError('Please enter a lab URL');
       return;
     }
     if (!/^[a-z0-9-]+$/.test(teamSlug)) {
-      setError('Team URL can only contain lowercase letters, numbers, and hyphens');
+      setError('Lab URL can only contain lowercase letters, numbers, and hyphens');
       return;
     }
 
@@ -150,9 +150,9 @@ export default function TeamOnboardingModal({
       console.error('Error creating team:', err);
       const errorCode = (err as { code?: string })?.code;
       if (errorCode === '23505') {
-        setError('This team URL is already taken. Please choose another.');
+        setError('This lab URL is already taken. Please choose another.');
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to create team');
+        setError(err instanceof Error ? err.message : 'Failed to create lab');
       }
     } finally {
       setIsLoading(false);
@@ -205,7 +205,7 @@ export default function TeamOnboardingModal({
       setStep('complete');
     } catch (err) {
       console.error('Error joining team:', err);
-      setError(err instanceof Error ? err.message : 'Failed to join team');
+      setError(err instanceof Error ? err.message : 'Failed to join lab');
     } finally {
       setIsLoading(false);
     }
@@ -256,10 +256,10 @@ export default function TeamOnboardingModal({
           setStep('complete');
           return;
         } catch {
-          setError('Failed to create personal workspace. Please try creating a team instead.');
+          setError('Failed to create personal workspace. Please try creating a lab instead.');
         }
       } else {
-        setError('Failed to create personal workspace. Please try creating a team instead.');
+        setError('Failed to create personal workspace. Please try creating a lab instead.');
       }
     } finally {
       setIsLoading(false);
@@ -339,7 +339,7 @@ export default function TeamOnboardingModal({
                   transition={{ duration: 0.2 }}
                 >
                   <p className="text-gray-600 dark:text-gray-300 mb-6">
-                    To get started, you need to be part of a team. Would you like to create a new team or join an existing one?
+                    To get started, you need to be part of a research lab. Would you like to create a new lab or join an existing one?
                   </p>
 
                   <div className="space-y-3">
@@ -383,10 +383,10 @@ export default function TeamOnboardingModal({
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
-                            Create a New Team
+                            Create a New Lab
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Start fresh with your own research team
+                            Set up your research lab and invite members
                           </p>
                         </div>
                         <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#2c5282] dark:group-hover:text-[#6b9ac4] transition-colors" />
@@ -418,10 +418,10 @@ export default function TeamOnboardingModal({
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 dark:text-white">
-                            Join an Existing Team
+                            Join an Existing Lab
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Enter an invite code to join a team
+                            Enter an invite code to join a research lab
                           </p>
                         </div>
                         <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#c9a227] dark:group-hover:text-[#d4b84a] transition-colors" />
@@ -444,7 +444,7 @@ export default function TeamOnboardingModal({
                   <div className="flex items-center gap-2 mb-6">
                     <Building2 className="w-5 h-5 text-[#2c5282]" />
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Create Your Team
+                      Set Up Your Lab
                     </h3>
                   </div>
 
@@ -452,7 +452,7 @@ export default function TeamOnboardingModal({
                     {/* Team Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Team Name
+                        Lab Name
                       </label>
                       <div className="relative">
                         <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -480,7 +480,7 @@ export default function TeamOnboardingModal({
                     {/* Team URL */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Team URL
+                        Lab URL
                       </label>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-400 whitespace-nowrap">
@@ -509,7 +509,7 @@ export default function TeamOnboardingModal({
                         </div>
                       </div>
                       <p className="mt-1.5 text-xs text-gray-400">
-                        This will be your unique team identifier
+                        This will be your unique lab identifier
                       </p>
                     </div>
                   </div>
@@ -560,7 +560,7 @@ export default function TeamOnboardingModal({
                         </>
                       ) : (
                         <>
-                          Create Team
+                          Create Lab
                           <ArrowRight className="w-4 h-4" />
                         </>
                       )}
@@ -582,7 +582,7 @@ export default function TeamOnboardingModal({
                   <div className="flex items-center gap-2 mb-6">
                     <UserPlus className="w-5 h-5 text-[#c9a227]" />
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Join a Team
+                      Join a Lab
                     </h3>
                   </div>
 
@@ -590,7 +590,7 @@ export default function TeamOnboardingModal({
                     {/* Info Box */}
                     <div className="p-4 rounded-lg bg-[#c9a227]/10 dark:bg-[#c9a227]/20 border border-[#c9a227]/30">
                       <p className="text-sm text-gray-700 dark:text-gray-300">
-                        Ask your team administrator for an invite code. They can generate one from the team settings.
+                        Ask your lab manager or PI for an invite code. They can generate one from the lab settings.
                       </p>
                     </div>
 
@@ -667,7 +667,7 @@ export default function TeamOnboardingModal({
                         </>
                       ) : (
                         <>
-                          Join Team
+                          Join Lab
                           <ArrowRight className="w-4 h-4" />
                         </>
                       )}
@@ -701,7 +701,7 @@ export default function TeamOnboardingModal({
                     You&apos;re All Set!
                   </h3>
                   <p className="text-gray-500 dark:text-gray-400 mb-6">
-                    Your team is ready. Let&apos;s start managing your research projects.
+                    Your lab is ready. Let&apos;s start managing your research projects.
                   </p>
 
                   <button
