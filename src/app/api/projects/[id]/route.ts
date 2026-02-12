@@ -104,7 +104,7 @@ export const PUT = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     // Copy allowed fields
     const allowedFields = [
       'name', 'description', 'color', 'icon', 'status',
-      'pi_id', 'start_date', 'end_date',
+      'pi_id', 'start_date', 'end_date', 'custom_statuses',
     ];
 
     for (const field of allowedFields) {

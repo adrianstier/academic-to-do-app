@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, Bell } from 'lucide-react';
+import { Check, Trash2, Calendar, User, Flag, Copy, MessageSquare, ChevronDown, ChevronUp, Repeat, ListTree, Pencil, FileText, Paperclip, Music, Mic, Clock, MoreVertical, AlertTriangle, Bell, Lock } from 'lucide-react';
 import { Todo, TodoPriority, TodoStatus, PRIORITY_CONFIG, RecurrencePattern, Subtask, Attachment } from '@/types/todo';
 import { Badge, Button, IconButton } from '@/components/ui';
 import { useTodoStore } from '@/store/todoStore';
@@ -214,6 +214,8 @@ export default function TodoItem({
 }: TodoItemProps) {
   const [expanded, setExpanded] = useState(false);
   const storeProjects = useTodoStore(state => state.projects);
+  const storeDependencies = useTodoStore(state => state.dependencies[todo.id]);
+  const isBlocked = storeDependencies && storeDependencies.blockedBy.length > 0;
   const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
 
   // Auto-expand when triggered from external navigation (e.g., dashboard task click)
@@ -478,6 +480,17 @@ export default function TodoItem({
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             {/* PRIMARY ROW: Project + Priority + Due Date + Assignee (always visible for quick scanning) */}
             <div className="flex items-center gap-2">
+              {/* Blocked indicator */}
+              {isBlocked && !todo.completed && (
+                <Badge
+                  variant="danger"
+                  size="sm"
+                  icon={<Lock className="w-3 h-3" />}
+                >
+                  Blocked
+                </Badge>
+              )}
+
               {/* Project badge */}
               {todoProject && (
                 <span

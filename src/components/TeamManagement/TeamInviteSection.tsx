@@ -66,6 +66,11 @@ function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
       label: ACADEMIC_ROLE_MAP.admin.label,
       description: ACADEMIC_ROLE_MAP.admin.description,
     },
+    {
+      value: 'collaborator',
+      label: ACADEMIC_ROLE_MAP.collaborator.label,
+      description: ACADEMIC_ROLE_MAP.collaborator.description,
+    },
   ];
 
   const selectedRole = roles.find((r) => r.value === value);

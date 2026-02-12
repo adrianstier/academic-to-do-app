@@ -17,6 +17,7 @@ import {
   BarChart2,
   Keyboard,
   FolderKanban,
+  BookOpen,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -48,6 +49,7 @@ interface NavItem {
 
 const primaryNavItems: NavItem[] = [
   { id: 'tasks', label: 'Tasks', icon: CheckSquare },
+  { id: 'pipeline', label: 'Pipeline', icon: BookOpen },
   { id: 'ai_inbox', label: 'AI Inbox', icon: Inbox },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];

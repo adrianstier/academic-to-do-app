@@ -245,17 +245,15 @@ const TASK_PATTERNS: PatternDefinition[] = [
     tips: 'Address each reviewer comment systematically and professionally.',
   },
 
-  // 10. Admin - forms, registration, IRB, grants
+  // 10. Admin - forms, registration, IRB
   {
     category: 'admin',
-    keywords: ['forms', 'registration', 'IRB', 'grant administration', 'paperwork', 'reimbursement', 'travel', 'expense', 'application', 'administrative'],
+    keywords: ['forms', 'registration', 'IRB', 'paperwork', 'reimbursement', 'expense', 'application', 'administrative'],
     patterns: [
       /complete\s*(form|application|paperwork)/i,
       /IRB\s*(submission|amendment|renewal)/i,
-      /grant\s*(application|report|administration)/i,
       /(travel|expense)\s*reimbursement/i,
       /register\s*(for|course)/i,
-      /submit\s*(report|form)/i,
     ],
     defaultPriority: 'medium',
     subtasks: [
@@ -265,6 +263,78 @@ const TASK_PATTERNS: PatternDefinition[] = [
       { text: 'Submit and confirm receipt', estimatedMinutes: 10 },
     ],
     tips: 'Keep copies of all submitted forms and confirmation numbers.',
+  },
+
+  // 11. Grant - proposals, specific aims, budgets, progress reports
+  {
+    category: 'grant',
+    keywords: ['grant', 'proposal', 'specific aims', 'budget', 'NSF', 'NIH', 'funding', 'R01', 'CAREER', 'progress report', 'subaward'],
+    patterns: [
+      /grant\s*(proposal|application|submission)/i,
+      /specific\s*aims/i,
+      /budget\s*(justification|narrative)/i,
+      /(NSF|NIH|DOE|USDA|NOAA)\s*(grant|proposal|submission)/i,
+      /progress\s*report/i,
+      /funding\s*(application|opportunity|announcement)/i,
+      /\b(R01|R21|CAREER|RAPID)\b/i,
+    ],
+    defaultPriority: 'high',
+    subtasks: [
+      { text: 'Review funding opportunity announcement', estimatedMinutes: 30 },
+      { text: 'Draft specific aims and significance', estimatedMinutes: 120 },
+      { text: 'Write research strategy', estimatedMinutes: 180 },
+      { text: 'Prepare budget and justification', estimatedMinutes: 60 },
+      { text: 'Get feedback from mentor/collaborators', estimatedMinutes: 30 },
+      { text: 'Submit through grants portal', estimatedMinutes: 20 },
+    ],
+    tips: 'Start grant proposals well in advance - most take 4-8 weeks to complete.',
+  },
+
+  // 12. Teaching - lectures, grading, office hours, advising
+  {
+    category: 'teaching',
+    keywords: ['lecture', 'grading', 'grade', 'office hours', 'syllabus', 'teaching', 'course prep', 'students', 'TA', 'recitation', 'advising'],
+    patterns: [
+      /prepare\s*(lecture|slides|class)/i,
+      /grade\s*(assignment|paper|exam|homework)/i,
+      /office\s*hours/i,
+      /(update|prepare|write)\s*syllabus/i,
+      /teaching\s*(prep|preparation)/i,
+      /student\s*advising/i,
+      /course\s*(prep|design|planning)/i,
+    ],
+    defaultPriority: 'high',
+    subtasks: [
+      { text: 'Review and update lecture materials', estimatedMinutes: 45 },
+      { text: 'Prepare in-class activities', estimatedMinutes: 30 },
+      { text: 'Grade and provide feedback', estimatedMinutes: 90 },
+      { text: 'Enter grades in system', estimatedMinutes: 15 },
+    ],
+    tips: 'Batch grading sessions to maintain consistency across submissions.',
+  },
+
+  // 13. Fieldwork - data collection, equipment, travel, permits
+  {
+    category: 'fieldwork',
+    keywords: ['fieldwork', 'field site', 'field data', 'equipment', 'sampling', 'specimens', 'transect', 'survey', 'field permit', 'field season'],
+    patterns: [
+      /field\s*(work|data|collection|trip|season)/i,
+      /(collect|gather)\s*(samples|specimens|data)/i,
+      /equipment\s*(inventory|check|calibrat)/i,
+      /field\s*permit/i,
+      /(book|arrange)\s*travel/i,
+      /sampling\s*(protocol|trip|event)/i,
+      /transect/i,
+    ],
+    defaultPriority: 'high',
+    subtasks: [
+      { text: 'Review sampling protocol', estimatedMinutes: 20 },
+      { text: 'Check and prepare equipment', estimatedMinutes: 45 },
+      { text: 'Travel to field site', estimatedMinutes: 60 },
+      { text: 'Collect data and samples', estimatedMinutes: 120 },
+      { text: 'Back up data and label specimens', estimatedMinutes: 30 },
+    ],
+    tips: 'Always back up field data immediately and maintain detailed field notes.',
   },
 ];
 
@@ -349,10 +419,13 @@ export const CATEGORY_COMPLETION_RATES: Record<TaskCategory, number> = {
   meeting: 95,        // Meetings have fixed times, high completion
   submission: 90,     // Deadlines drive completion
   coursework: 88,     // Graded work gets done
+  teaching: 87,       // Scheduled class commitments drive completion
   presentation: 85,   // Events drive completion
-  reading: 75,        // Often gets deprioritized
   admin: 80,          // Required but not urgent
+  fieldwork: 80,      // Planned trips have high commitment
   revision: 78,       // Feedback-driven
+  grant: 76,          // Deadline-driven but complex
+  reading: 75,        // Often gets deprioritized
   analysis: 72,       // Can be open-ended
   writing: 65,        // Often delayed, hardest to complete
   research: 60,       // Can expand indefinitely

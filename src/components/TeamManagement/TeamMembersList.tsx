@@ -7,6 +7,7 @@ import {
   Crown,
   Shield,
   User,
+  Eye,
   ChevronDown,
   Trash2,
   Loader2,
@@ -51,6 +52,8 @@ function getRoleIcon(role: TeamRole) {
       return <Crown className="w-3.5 h-3.5" />;
     case 'admin':
       return <Shield className="w-3.5 h-3.5" />;
+    case 'collaborator':
+      return <Eye className="w-3.5 h-3.5" />;
     default:
       return <User className="w-3.5 h-3.5" />;
   }
@@ -66,6 +69,7 @@ function getRoleBadgeVariant(role: TeamRole): 'warning' | 'info' | 'default' {
       return 'default';
   }
 }
+
 
 function getRoleLabel(role: TeamRole): string {
   return getAcademicRoleLabel(role);
@@ -149,8 +153,8 @@ function RoleDropdown({
   }
 
   const availableRoles: TeamRole[] = isOwner
-    ? ['admin', 'member']
-    : ['member'];
+    ? ['admin', 'member', 'collaborator']
+    : ['member', 'collaborator'];
 
   const handleRoleChange = async (newRole: TeamRole) => {
     if (newRole === currentRole) {
@@ -380,9 +384,9 @@ export function TeamMembersList({
         user: m.users,
       }));
 
-      // Sort: owner first, then admin, then members
+      // Sort: owner first, then admin, then members, then collaborators
       transformed.sort((a, b) => {
-        const roleOrder = { owner: 0, admin: 1, member: 2 };
+        const roleOrder: Record<TeamRole, number> = { owner: 0, admin: 1, member: 2, collaborator: 3 };
         return roleOrder[a.role] - roleOrder[b.role];
       });
 

@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Command,
   CornerDownLeft,
+  BookOpen,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -121,6 +122,14 @@ export default function CommandPalette({
       shortcut: 'G G',
       action: () => { setActiveView('goals'); onClose(); },
       ownerOnly: true,
+    },
+    {
+      id: 'nav-pipeline',
+      label: 'Go to Pipeline',
+      description: 'Manuscript publication pipeline',
+      icon: BookOpen,
+      category: 'navigation',
+      action: () => { setActiveView('pipeline'); onClose(); },
     },
     {
       id: 'nav-archive',

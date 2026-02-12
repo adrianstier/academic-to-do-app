@@ -89,6 +89,7 @@ export interface Todo {
   display_order?: number; // Manual sort order for drag-and-drop (lower = higher in list)
   team_id?: string; // Multi-tenancy: which team this task belongs to
   project_id?: string; // Which project this task belongs to
+  custom_status?: string; // Custom workflow status ID (used when project has custom_statuses)
   start_date?: string; // When work on this task should begin
 }
 
@@ -192,7 +193,25 @@ export const REMINDER_PRESETS: Record<ReminderPreset, ReminderPresetConfig> = {
 export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical' | 'custom' | 'urgency';
 export type QuickFilter = 'all' | 'my_tasks' | 'due_today' | 'overdue';
 
-export type ViewMode = 'list' | 'kanban';
+export type ViewMode = 'list' | 'kanban' | 'pipeline';
+
+// ============================================
+// Task Dependency Types
+// ============================================
+
+export interface TodoDependency {
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+}
+
+// For UI display - enriched with task text
+export interface TodoDependencyDisplay {
+  blocker_id: string;
+  blocked_id: string;
+  task_text: string; // text of the related task
+  task_status: TodoStatus; // status of the related task
+}
 
 export interface User {
   id: string;
@@ -519,6 +538,9 @@ export type TaskCategory =
   | 'reading'          // Articles, chapters, textbook, review papers
   | 'coursework'       // Assignments, homework, exams, quizzes, grades
   | 'admin'            // Forms, registration, IRB, grant administration
+  | 'grant'            // Grant proposals, specific aims, budget justification, progress reports
+  | 'teaching'         // Lecture prep, grading, office hours, student advising
+  | 'fieldwork'        // Field data collection, equipment, travel, permits
   | 'other';
 
 // Task pattern learned from historical data
@@ -534,7 +556,7 @@ export interface TaskPattern {
   updated_at?: string;
 }
 
-// Quick task template for common insurance tasks
+// Quick task template for common academic research tasks
 export interface QuickTaskTemplate {
   text: string;
   category: TaskCategory;
@@ -692,7 +714,7 @@ export const ACADEMIC_QUICK_TASKS: QuickTaskTemplate[] = [
     ],
     icon: '🔄',
   },
-  // Admin tasks - forms, IRB, grants
+  // Admin tasks - forms, IRB
   {
     text: 'Complete [form/application]',
     category: 'admin',
@@ -704,5 +726,217 @@ export const ACADEMIC_QUICK_TASKS: QuickTaskTemplate[] = [
       'Submit and confirm receipt',
     ],
     icon: '📋',
+  },
+  // Experiment tasks - protocols, data collection, analysis
+  {
+    text: 'Set up experiment protocol',
+    category: 'research',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Define experimental design and variables',
+      'Prepare materials and equipment',
+      'Write detailed protocol document',
+      'Get IRB/ethics approval if needed',
+      'Run pilot test',
+    ],
+    icon: '🧪',
+  },
+  {
+    text: 'Collect field data',
+    category: 'fieldwork',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Review sampling protocol',
+      'Check and calibrate equipment',
+      'Travel to field site',
+      'Collect samples and record data',
+      'Back up data and label samples',
+    ],
+    icon: '🌿',
+  },
+  // Grant tasks - proposals, budgets, progress reports
+  {
+    text: 'Write specific aims: [grant]',
+    category: 'grant',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Review funding opportunity announcement',
+      'Draft specific aims and significance',
+      'Write research strategy overview',
+      'Get feedback from mentor/collaborators',
+      'Revise and finalize',
+    ],
+    icon: '💰',
+  },
+  {
+    text: 'Prepare budget justification: [grant]',
+    category: 'grant',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Itemize personnel costs and effort',
+      'Calculate equipment and supplies',
+      'Estimate travel and fieldwork costs',
+      'Write budget justification narrative',
+      'Review with grants office',
+    ],
+    icon: '💰',
+  },
+  {
+    text: 'Submit progress report: [grant]',
+    category: 'grant',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Compile accomplishments and milestones',
+      'Summarize publications and presentations',
+      'Update budget expenditure summary',
+      'Describe plans for next reporting period',
+      'Submit through grants portal',
+    ],
+    icon: '💰',
+  },
+  // Teaching tasks - lectures, grading, office hours
+  {
+    text: 'Prepare lecture slides: [topic]',
+    category: 'teaching',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Outline key concepts and learning objectives',
+      'Create or update slide deck',
+      'Prepare in-class activities or demos',
+      'Review and finalize materials',
+    ],
+    icon: '🎓',
+  },
+  {
+    text: 'Grade assignments: [course]',
+    category: 'teaching',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Review grading rubric',
+      'Grade all submissions',
+      'Write feedback comments',
+      'Enter grades in system',
+      'Return to students',
+    ],
+    icon: '🎓',
+  },
+  {
+    text: 'Hold office hours',
+    category: 'teaching',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Review upcoming assignment questions',
+      'Prepare common FAQs',
+      'Be available for student meetings',
+      'Follow up on student concerns',
+    ],
+    icon: '🎓',
+  },
+  // Fieldwork tasks - equipment, travel, permits
+  {
+    text: 'Check equipment inventory',
+    category: 'fieldwork',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Audit current equipment and supplies',
+      'Test and calibrate instruments',
+      'Order replacement parts or supplies',
+      'Update inventory log',
+    ],
+    icon: '🌿',
+  },
+  {
+    text: 'Book travel: [field site/conference]',
+    category: 'fieldwork',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Research flight and accommodation options',
+      'Submit travel authorization form',
+      'Book flights and lodging',
+      'Arrange ground transportation',
+      'Confirm all reservations',
+    ],
+    icon: '🌿',
+  },
+  {
+    text: 'Submit field permits',
+    category: 'fieldwork',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Identify required permits and agencies',
+      'Prepare permit applications',
+      'Gather supporting documentation',
+      'Submit applications before deadline',
+      'Follow up on permit status',
+    ],
+    icon: '🌿',
+  },
+  // Literature tasks - reading and writing review sections
+  {
+    text: 'Read and annotate paper: [title]',
+    category: 'reading',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Skim abstract, intro, and conclusions',
+      'Read methods and results in detail',
+      'Highlight key findings and methods',
+      'Write annotation notes',
+      'Add to reference manager',
+    ],
+    icon: '📚',
+  },
+  {
+    text: 'Write literature review section: [topic]',
+    category: 'writing',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Organize papers by theme',
+      'Write synthesis of key findings',
+      'Identify gaps and contradictions',
+      'Draft narrative with citations',
+      'Revise for flow and coherence',
+    ],
+    icon: '✍️',
+  },
+  // Manuscript-specific writing tasks
+  {
+    text: 'Write introduction: [manuscript]',
+    category: 'writing',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Review relevant literature',
+      'Establish context and significance',
+      'Identify the research gap',
+      'State objectives and hypotheses',
+      'Revise and add citations',
+    ],
+    icon: '✍️',
+  },
+  {
+    text: 'Draft methods section: [manuscript]',
+    category: 'writing',
+    defaultPriority: 'medium',
+    suggestedSubtasks: [
+      'Describe study design and site',
+      'Detail data collection procedures',
+      'Document analytical methods',
+      'Add equations and statistical tests',
+      'Review for reproducibility',
+    ],
+    icon: '✍️',
+  },
+  {
+    text: 'Revise based on reviewer comments: [manuscript]',
+    category: 'revision',
+    defaultPriority: 'high',
+    suggestedSubtasks: [
+      'Read all reviewer comments carefully',
+      'Categorize comments by section',
+      'Make revisions to manuscript',
+      'Write point-by-point response letter',
+      'Have co-authors review changes',
+      'Submit revised manuscript',
+    ],
+    icon: '🔄',
   },
 ];

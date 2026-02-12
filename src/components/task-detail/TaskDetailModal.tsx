@@ -1,10 +1,15 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Modal } from '@/components/ui/Modal';
 import { MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
+import type { TodoDependencyDisplay } from '@/types/todo';
 import ContentToSubtasksImporter from '@/components/ContentToSubtasksImporter';
 import AttachmentUpload from '@/components/AttachmentUpload';
+import DependencyPicker from './DependencyPicker';
+import { useTodoStore } from '@/store/todoStore';
+import { fetchWithCsrf } from '@/lib/csrf';
 
 const sectionStagger = {
   hidden: { opacity: 0, y: 4 },
@@ -56,6 +61,104 @@ export default function TaskDetailModal({
     onUpdateSubtasks,
     onSetDueDate,
   });
+
+  // Dependencies state
+  const allTodos = useTodoStore(s => s.todos);
+  const storeDeps = useTodoStore(s => s.dependencies[todo.id]);
+  const setDependencies = useTodoStore(s => s.setDependencies);
+  const [depsBlocks, setDepsBlocks] = useState<TodoDependencyDisplay[]>([]);
+  const [depsBlockedBy, setDepsBlockedBy] = useState<TodoDependencyDisplay[]>([]);
+
+  // Fetch dependencies when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Use cached store data if available
+    if (storeDeps) {
+      setDepsBlocks(storeDeps.blocks);
+      setDepsBlockedBy(storeDeps.blockedBy);
+    }
+
+    // Always fetch fresh data when modal opens
+    const fetchDeps = async () => {
+      try {
+        const res = await fetch(`/api/todos/dependencies?todoId=${todo.id}`, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success && json.data) {
+          setDepsBlocks(json.data.blocks || []);
+          setDepsBlockedBy(json.data.blockedBy || []);
+          setDependencies(todo.id, {
+            blocks: json.data.blocks || [],
+            blockedBy: json.data.blockedBy || [],
+          });
+        }
+      } catch {
+        // Silently fail - dependencies are supplementary
+      }
+    };
+    fetchDeps();
+  }, [isOpen, todo.id, setDependencies]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAddDependency = useCallback(async (blockerId: string, blockedId: string) => {
+    try {
+      const res = await fetchWithCsrf('/api/todos/dependencies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocker_id: blockerId, blocked_id: blockedId }),
+      });
+      if (!res.ok) return;
+
+      // Re-fetch dependencies after adding
+      const fetchRes = await fetch(`/api/todos/dependencies?todoId=${todo.id}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        if (json.success && json.data) {
+          setDepsBlocks(json.data.blocks || []);
+          setDepsBlockedBy(json.data.blockedBy || []);
+          setDependencies(todo.id, {
+            blocks: json.data.blocks || [],
+            blockedBy: json.data.blockedBy || [],
+          });
+        }
+      }
+    } catch {
+      // Silently fail
+    }
+  }, [todo.id, setDependencies]);
+
+  const handleRemoveDependency = useCallback(async (blockerId: string, blockedId: string) => {
+    try {
+      const res = await fetchWithCsrf('/api/todos/dependencies', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocker_id: blockerId, blocked_id: blockedId }),
+      });
+      if (!res.ok) return;
+
+      // Re-fetch dependencies after removing
+      const fetchRes = await fetch(`/api/todos/dependencies?todoId=${todo.id}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        if (json.success && json.data) {
+          setDepsBlocks(json.data.blocks || []);
+          setDepsBlockedBy(json.data.blockedBy || []);
+          setDependencies(todo.id, {
+            blocks: json.data.blocks || [],
+            blockedBy: json.data.blockedBy || [],
+          });
+        }
+      }
+    } catch {
+      // Silently fail
+    }
+  }, [todo.id, setDependencies]);
 
   return (
     <>
@@ -177,10 +280,29 @@ export default function TaskDetailModal({
               </motion.div>
             )}
 
+            {/* Dependencies - Visual card with staggered animation */}
+            <motion.div
+              custom={2}
+              initial="hidden"
+              animate="visible"
+              variants={sectionStagger}
+              className="bg-[var(--surface-2)]/30 rounded-xl p-4 border border-[var(--border)]/50"
+            >
+              <DependencyPicker
+                todoId={todo.id}
+                teamId={todo.team_id || ''}
+                blocks={depsBlocks}
+                blockedBy={depsBlockedBy}
+                onAddDependency={handleAddDependency}
+                onRemoveDependency={handleRemoveDependency}
+                allTodos={allTodos.map(t => ({ id: t.id, text: t.text, status: t.status }))}
+              />
+            </motion.div>
+
             {/* Attachments - Visual card with staggered animation */}
             {onUpdateAttachments && (
               <motion.div
-                custom={2}
+                custom={3}
                 initial="hidden"
                 animate="visible"
                 variants={sectionStagger}

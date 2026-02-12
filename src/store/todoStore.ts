@@ -12,6 +12,7 @@
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { Todo, TodoStatus, TodoPriority, QuickFilter, SortOption, ViewMode } from '@/types/todo';
+import type { TodoDependencyDisplay } from '@/types/todo';
 import type { Project } from '@/types/project';
 import type { Tag } from '@/types/tag';
 
@@ -103,6 +104,10 @@ export interface TodoState {
 
   // Custom ordering
   customOrder: string[];
+
+  // Dependencies
+  dependencies: Record<string, { blocks: TodoDependencyDisplay[]; blockedBy: TodoDependencyDisplay[] }>;
+  setDependencies: (todoId: string, deps: { blocks: TodoDependencyDisplay[]; blockedBy: TodoDependencyDisplay[] }) => void;
 
   // Actions - Core data
   setTodos: (todos: Todo[]) => void;
@@ -219,6 +224,19 @@ export const useTodoStore = create<TodoState>()(
       bulkActions: defaultBulkActions,
       ui: defaultUI,
       customOrder: [],
+      dependencies: {},
+
+      // Dependencies action
+      setDependencies: (todoId, deps) => set(
+        (state) => ({
+          dependencies: {
+            ...state.dependencies,
+            [todoId]: deps,
+          },
+        }),
+        false,
+        'setDependencies'
+      ),
 
       // Core data actions
       setTodos: (todos) => set({ todos }, false, 'setTodos'),

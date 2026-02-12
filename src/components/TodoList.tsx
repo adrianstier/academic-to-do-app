@@ -10,6 +10,7 @@ import SortableTodoItem from './SortableTodoItem';
 import AddTodo from './AddTodo';
 import AddTaskModal from './AddTaskModal';
 import KanbanBoard from './KanbanBoard';
+import ManuscriptPipelineView from './ManuscriptPipelineView';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
 import { useTodoData, useFilters, useBulkActions, useIsDesktopWide, useEscapeKey, useTodoModals, useFocusTrap } from '@/hooks';
@@ -905,6 +906,35 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
           details: { from: oldTodo.status, to: status },
         });
       }
+    }
+  };
+
+  // Update a task's custom status (for project custom workflows)
+  const updateCustomStatus = async (id: string, customStatusId: string) => {
+    const oldTodo = todos.find((t) => t.id === id);
+    const updated_at = new Date().toISOString();
+
+    // Optimistic update
+    updateTodoInStore(id, { custom_status: customStatusId, updated_at } as Partial<Todo>);
+
+    const { error: updateError } = await supabase
+      .from('todos')
+      .update({ custom_status: customStatusId, updated_at })
+      .eq('id', id);
+
+    if (updateError) {
+      logger.error('Error updating custom status', updateError, { component: 'TodoList' });
+      if (oldTodo) {
+        updateTodoInStore(id, oldTodo);
+      }
+    } else if (oldTodo) {
+      logActivity({
+        action: 'status_changed',
+        userName,
+        todoId: id,
+        todoText: oldTodo.text,
+        details: { from: oldTodo.custom_status || oldTodo.status, to: customStatusId, custom: true },
+      });
     }
   };
 
@@ -2000,9 +2030,40 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         </div>
         )}
 
-        {/* List or Kanban - with smooth view transition */}
+        {/* List, Kanban, or Pipeline - with smooth view transition */}
         <AnimatePresence mode="wait" initial={false}>
-          {viewMode === 'list' ? (
+          {viewMode === 'pipeline' ? (
+            <motion.div
+              key="pipeline-view"
+              initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion() ? undefined : { opacity: 0, y: -10 }}
+              transition={{ duration: DURATION.fast }}
+            >
+              <ManuscriptPipelineView
+                todos={filteredAndSortedTodos}
+                onTodoClick={(todoId) => {
+                  // Scroll to and highlight the task in the list
+                  const taskElement = document.getElementById(`todo-${todoId}`);
+                  if (taskElement) {
+                    taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    taskElement.classList.add('notification-highlight');
+                    setTimeout(() => taskElement.classList.remove('notification-highlight'), 3000);
+                  }
+                }}
+                onStatusChange={(todoId, newCategory) => {
+                  // Pipeline stage changes could update notes with stage tag
+                  const todo = filteredAndSortedTodos.find(t => t.id === todoId);
+                  if (todo && updateNotes) {
+                    const currentNotes = todo.notes || '';
+                    const cleanedNotes = currentNotes.replace(/\[stage:\w+\]/g, '').trim();
+                    const newNotes = cleanedNotes ? `${cleanedNotes} [stage:${newCategory}]` : `[stage:${newCategory}]`;
+                    updateNotes(todoId, newNotes);
+                  }
+                }}
+              />
+            </motion.div>
+          ) : viewMode === 'list' ? (
             <motion.div
               key="list-view"
               initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
@@ -2213,6 +2274,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 darkMode={darkMode}
                 currentUserName={userName}
                 onStatusChange={updateStatus}
+                onCustomStatusChange={updateCustomStatus}
                 onDelete={confirmDeleteTodo}
                 onAssign={assignTodo}
                 onSetDueDate={setDueDate}
@@ -2685,7 +2747,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       {showBulkActions && selectedTodos.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
           <div className="bg-[var(--surface)] border-t border-[var(--border)] shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
-            <div className={`mx-auto px-4 sm:px-6 py-3 ${viewMode === 'kanban' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
+            <div className={`mx-auto px-4 sm:px-6 py-3 ${viewMode === 'kanban' || viewMode === 'pipeline' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
               <div className="flex items-center justify-between gap-4">
                 {/* Left side - selection info with dismiss button */}
                 <div className="flex items-center gap-3">

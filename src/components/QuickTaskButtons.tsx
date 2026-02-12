@@ -18,6 +18,9 @@ import {
   GraduationCap,
   ClipboardList,
   RotateCcw,
+  DollarSign,
+  School,
+  TreePine,
 } from 'lucide-react';
 import { QuickTaskTemplate, TaskPattern, ACADEMIC_QUICK_TASKS, TaskCategory } from '@/types/todo';
 import { CATEGORY_COMPLETION_RATES } from '@/lib/academicPatterns';
@@ -45,6 +48,9 @@ const CATEGORY_ICONS: Record<TaskCategory, React.ElementType> = {
   reading: BookMarked,
   coursework: GraduationCap,
   admin: ClipboardList,
+  grant: DollarSign,
+  teaching: School,
+  fieldwork: TreePine,
   other: FileText,
 };
 
@@ -62,6 +68,9 @@ const CATEGORY_COLORS: Record<TaskCategory, { icon: string; bg: string }> = {
   reading: { icon: '#6366F1', bg: 'rgba(99, 102, 241, 0.12)' },        // Indigo - learning
   coursework: { icon: '#EC4899', bg: 'rgba(236, 72, 153, 0.12)' },     // Pink - academic
   admin: { icon: '#64748B', bg: 'rgba(100, 116, 139, 0.12)' },         // Slate - administrative
+  grant: { icon: '#16A34A', bg: 'rgba(22, 163, 74, 0.12)' },           // Green - funding
+  teaching: { icon: '#7E22CE', bg: 'rgba(126, 34, 206, 0.12)' },       // Purple - education
+  fieldwork: { icon: '#15803D', bg: 'rgba(21, 128, 61, 0.12)' },       // Dark green - outdoors
   other: { icon: 'var(--text-muted)', bg: 'var(--surface-2)' },
 };
 
@@ -79,6 +88,9 @@ const CATEGORY_LABELS: Record<TaskCategory, string> = {
   reading: 'Reading',
   coursework: 'Coursework',
   admin: 'Admin',
+  grant: 'Grant',
+  teaching: 'Teaching',
+  fieldwork: 'Fieldwork',
   other: 'Other',
 };
 

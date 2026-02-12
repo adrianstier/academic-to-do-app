@@ -2,7 +2,7 @@ import type { TeamRole } from '@/types/team';
 
 /**
  * Academic role display configuration.
- * Internal data model uses 'owner' | 'admin' | 'member'.
+ * Internal data model uses 'owner' | 'admin' | 'member' | 'collaborator'.
  * These mappings provide academic-friendly display labels.
  */
 
@@ -28,6 +28,11 @@ export const ACADEMIC_ROLE_MAP: Record<TeamRole, AcademicRoleConfig> = {
     description: 'Can create and manage assigned tasks',
     icon: '🎓',
   },
+  collaborator: {
+    label: 'Collaborator',
+    description: 'View-only access to lab tasks and projects',
+    icon: '👁️',
+  },
 };
 
 /** Short form for compact UI (badges, chips) */
@@ -35,6 +40,7 @@ export const ACADEMIC_ROLE_SHORT: Record<TeamRole, string> = {
   owner: 'PI',
   admin: 'Lab Mgr',
   member: 'Researcher',
+  collaborator: 'Collaborator',
 };
 
 /** Get the academic display label for a role */

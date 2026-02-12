@@ -31,15 +31,18 @@ import {
   Wand2,
   GitMerge,
   Loader2,
+  Link2,
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEscapeKey } from '@/hooks/useEscapeKey';
 import { Todo, TodoPriority, TodoStatus, Subtask, User as UserType, PRIORITY_CONFIG, STATUS_CONFIG } from '@/types/todo';
+import type { TodoDependencyDisplay } from '@/types/todo';
 import { useTodoStore } from '@/store/todoStore';
 import ProjectSelector from '@/components/ProjectSelector';
 import TagPicker from '@/components/TagPicker';
 import LinksSection from '@/components/LinksSection';
+import DependencyPicker from '@/components/task-detail/DependencyPicker';
 import type { TodoLink, TodoLinkType } from '@/types/tag';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { logger } from '@/lib/logger';
@@ -100,6 +103,99 @@ export default function TaskDetailPanel({
   const [aiSubtasksPreview, setAiSubtasksPreview] = useState<Subtask[] | null>(null);
   const [aiEnhancedText, setAiEnhancedText] = useState<string | null>(null);
   const [showAiActions, setShowAiActions] = useState(true);
+
+  // Dependencies state
+  const allTodos = useTodoStore(s => s.todos);
+  const storeDeps = useTodoStore(s => s.dependencies[task.id]);
+  const setDependenciesStore = useTodoStore(s => s.setDependencies);
+  const [depsBlocks, setDepsBlocks] = useState<TodoDependencyDisplay[]>([]);
+  const [depsBlockedBy, setDepsBlockedBy] = useState<TodoDependencyDisplay[]>([]);
+  const [showDependencies, setShowDependencies] = useState(true);
+
+  // Fetch dependencies on mount / task change
+  useEffect(() => {
+    if (storeDeps) {
+      setDepsBlocks(storeDeps.blocks);
+      setDepsBlockedBy(storeDeps.blockedBy);
+    }
+
+    const fetchDeps = async () => {
+      try {
+        const res = await fetch(`/api/todos/dependencies?todoId=${task.id}`, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success && json.data) {
+          setDepsBlocks(json.data.blocks || []);
+          setDepsBlockedBy(json.data.blockedBy || []);
+          setDependenciesStore(task.id, {
+            blocks: json.data.blocks || [],
+            blockedBy: json.data.blockedBy || [],
+          });
+        }
+      } catch {
+        // Silently fail
+      }
+    };
+    fetchDeps();
+  }, [task.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleAddDependency = useCallback(async (blockerId: string, blockedId: string) => {
+    try {
+      const res = await fetchWithCsrf('/api/todos/dependencies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocker_id: blockerId, blocked_id: blockedId }),
+      });
+      if (!res.ok) return;
+
+      const fetchRes = await fetch(`/api/todos/dependencies?todoId=${task.id}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        if (json.success && json.data) {
+          setDepsBlocks(json.data.blocks || []);
+          setDepsBlockedBy(json.data.blockedBy || []);
+          setDependenciesStore(task.id, {
+            blocks: json.data.blocks || [],
+            blockedBy: json.data.blockedBy || [],
+          });
+        }
+      }
+    } catch {
+      // Silently fail
+    }
+  }, [task.id, setDependenciesStore]);
+
+  const handleRemoveDependency = useCallback(async (blockerId: string, blockedId: string) => {
+    try {
+      const res = await fetchWithCsrf('/api/todos/dependencies', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocker_id: blockerId, blocked_id: blockedId }),
+      });
+      if (!res.ok) return;
+
+      const fetchRes = await fetch(`/api/todos/dependencies?todoId=${task.id}`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (fetchRes.ok) {
+        const json = await fetchRes.json();
+        if (json.success && json.data) {
+          setDepsBlocks(json.data.blocks || []);
+          setDepsBlockedBy(json.data.blockedBy || []);
+          setDependenciesStore(task.id, {
+            blocks: json.data.blocks || [],
+            blockedBy: json.data.blockedBy || [],
+          });
+        }
+      }
+    } catch {
+      // Silently fail
+    }
+  }, [task.id, setDependenciesStore]);
 
   // Close on Escape key press (only when not editing text/notes)
   useEscapeKey(onClose, { enabled: !isEditingText && !isEditingNotes });
@@ -703,6 +799,26 @@ export default function TaskDetailPanel({
                 )}
               </div>
             </div>
+          </CollapsibleSection>
+
+          {/* Dependencies Section */}
+          <CollapsibleSection
+            title="Dependencies"
+            icon={<Link2 className="w-4 h-4" />}
+            count={(depsBlocks.length + depsBlockedBy.length) > 0 ? String(depsBlocks.length + depsBlockedBy.length) : undefined}
+            isOpen={showDependencies}
+            onToggle={() => setShowDependencies(!showDependencies)}
+            darkMode={darkMode}
+          >
+            <DependencyPicker
+              todoId={task.id}
+              teamId={task.team_id || ''}
+              blocks={depsBlocks}
+              blockedBy={depsBlockedBy}
+              onAddDependency={handleAddDependency}
+              onRemoveDependency={handleRemoveDependency}
+              allTodos={allTodos.map(t => ({ id: t.id, text: t.text, status: t.status }))}
+            />
           </CollapsibleSection>
 
           {/* Notes Section */}

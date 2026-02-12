@@ -30,7 +30,7 @@ export interface Team {
 // Team Membership Types
 // ============================================
 
-export type TeamRole = 'owner' | 'admin' | 'member';
+export type TeamRole = 'owner' | 'admin' | 'member' | 'collaborator';
 
 export type MemberStatus = 'active' | 'invited' | 'suspended';
 
@@ -177,6 +177,17 @@ export const DEFAULT_PERMISSIONS: Record<TeamRole, TeamPermissions> = {
   },
   member: {
     can_create_tasks: true,
+    can_delete_tasks: false,
+    can_view_strategic_goals: false,
+    can_invite_users: false,
+    can_manage_templates: false,
+    can_manage_team_settings: false,
+    can_transfer_ownership: false,
+    can_delete_team: false,
+    can_manage_roles: false,
+  },
+  collaborator: {
+    can_create_tasks: false,
     can_delete_tasks: false,
     can_view_strategic_goals: false,
     can_invite_users: false,

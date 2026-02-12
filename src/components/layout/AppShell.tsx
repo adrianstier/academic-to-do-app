@@ -24,7 +24,9 @@ export type ActiveView =
   | 'goals'
   | 'archive'
   | 'ai_inbox'
-  | 'settings';
+  | 'settings'
+  | 'projects'
+  | 'pipeline';
 
 export type RightPanelContent =
   | { type: 'chat' }
@@ -440,6 +442,7 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
 
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: '📋' },
+    { id: 'pipeline', label: 'Pipeline', icon: '📖' },
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'chat', label: 'Messages', icon: '💬' },
   ];

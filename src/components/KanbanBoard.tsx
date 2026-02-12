@@ -44,8 +44,10 @@ import {
   Calendar,
   CalendarClock,
   CalendarX,
+  Link2,
 } from 'lucide-react';
 import { Todo, TodoStatus, TodoPriority, PRIORITY_CONFIG, Subtask, RecurrencePattern, Attachment } from '@/types/todo';
+import type { CustomStatus } from '@/types/project';
 import { useTodoStore } from '@/store/todoStore';
 import Celebration from './Celebration';
 import { TaskDetailModal } from './task-detail';
@@ -55,6 +57,7 @@ interface KanbanBoardProps {
   users: string[];
   darkMode?: boolean;
   onStatusChange: (id: string, status: TodoStatus) => void;
+  onCustomStatusChange?: (id: string, customStatusId: string) => void;
   onDelete: (id: string) => void;
   onAssign: (id: string, assignedTo: string | null) => void;
   onSetDueDate: (id: string, dueDate: string | null) => void;
@@ -77,11 +80,58 @@ interface KanbanBoardProps {
   useSectionedView?: boolean;
 }
 
-const columns: { id: TodoStatus; title: string; Icon: LucideIcon; color: string; bgColor: string }[] = [
+// Column type for both default and custom status workflows
+interface KanbanColumn {
+  id: string;
+  title: string;
+  Icon: LucideIcon;
+  color: string;
+  bgColor: string;
+}
+
+const DEFAULT_COLUMNS: KanbanColumn[] = [
   { id: 'todo', title: 'To Do', Icon: ClipboardList, color: 'var(--accent)', bgColor: 'var(--accent-light)' },
   { id: 'in_progress', title: 'In Progress', Icon: Zap, color: 'var(--warning)', bgColor: 'var(--warning-light)' },
   { id: 'done', title: 'Done', Icon: CheckCircle2, color: 'var(--success)', bgColor: 'var(--success-light)' },
 ];
+
+/**
+ * Build kanban columns from a project's custom statuses.
+ * Returns color-coded columns with appropriate icons.
+ */
+function buildColumnsFromCustomStatuses(statuses: CustomStatus[]): KanbanColumn[] {
+  const sorted = [...statuses].sort((a, b) => a.order - b.order);
+  return sorted.map((s, index) => ({
+    id: s.id,
+    title: s.name,
+    // Use contextual icons: first column = list, last = check, middle = zap
+    Icon: index === 0 ? ClipboardList : index === sorted.length - 1 ? CheckCircle2 : Zap,
+    color: s.color,
+    bgColor: `${s.color}15`, // 15 = ~8% opacity hex suffix
+  }));
+}
+
+/**
+ * Map a todo's effective status for custom workflow columns.
+ * If the todo has a custom_status set (and it matches a column), use it.
+ * Otherwise, fall back to the built-in status field, mapping to the closest column.
+ */
+function getEffectiveStatus(todo: Todo, columnIds: string[], isCustomWorkflow: boolean): string {
+  if (!isCustomWorkflow) {
+    return todo.status || 'todo';
+  }
+  // If the task has a custom_status that matches a column, use it
+  if (todo.custom_status && columnIds.includes(todo.custom_status)) {
+    return todo.custom_status;
+  }
+  // Fall back: check if the built-in status matches a column ID
+  const builtInStatus = todo.status || 'todo';
+  if (columnIds.includes(builtInStatus)) {
+    return builtInStatus;
+  }
+  // Default to the first column
+  return columnIds[0] || 'todo';
+}
 
 const formatDueDate = (date: string) => {
   const d = new Date(date);
@@ -142,7 +192,10 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
   const [showSnoozeMenu, setShowSnoozeMenu] = useState(false);
   const snoozeRef = useRef<HTMLDivElement>(null);
   const storeProjects = useTodoStore(state => state.projects);
+  const storeDeps = useTodoStore(state => state.dependencies[todo.id]);
   const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
+  const totalDeps = storeDeps ? storeDeps.blocks.length + storeDeps.blockedBy.length : 0;
+  const isBlocked = storeDeps && storeDeps.blockedBy.length > 0;
 
   // Close snooze menu on click outside
   useEffect(() => {
@@ -296,6 +349,20 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
                 <User className="w-2.5 h-2.5" />
                 {todo.assigned_to}
+              </span>
+            )}
+
+            {/* Dependency indicator */}
+            {totalDeps > 0 && (
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium ${
+                  isBlocked && !todo.completed
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                }`}
+              >
+                <Link2 className="w-2.5 h-2.5" />
+                {totalDeps}
               </span>
             )}
 
@@ -464,7 +531,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
 }
 
 interface DroppableColumnProps {
-  id: TodoStatus;
+  id: string;
   children: React.ReactNode;
   color: string;
   isActive: boolean;
@@ -539,6 +606,7 @@ export default function KanbanBoard({
   users,
   darkMode = true,
   onStatusChange,
+  onCustomStatusChange,
   onDelete,
   onAssign,
   onSetDueDate,
@@ -565,6 +633,16 @@ export default function KanbanBoard({
   const selectedTodo = selectedTodoId ? todos.find(t => t.id === selectedTodoId) || null : null;
   const [dragAnnouncement, setDragAnnouncement] = useState<string>('');
 
+  // Derive columns from project custom statuses when a project filter is active
+  const projectFilter = useTodoStore(state => state.filters.projectFilter);
+  const storeProjects = useTodoStore(state => state.projects);
+  const activeProject = projectFilter ? storeProjects.find(p => p.id === projectFilter) : null;
+  const isCustomWorkflow = !!(activeProject?.custom_statuses && activeProject.custom_statuses.length > 0);
+  const columns: KanbanColumn[] = isCustomWorkflow
+    ? buildColumnsFromCustomStatuses(activeProject!.custom_statuses!)
+    : DEFAULT_COLUMNS;
+  const columnIds = columns.map(c => c.id);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -584,11 +662,10 @@ export default function KanbanBoard({
 
     // Combine and prioritize column droppables
     const allCollisions = [...pointerCollisions, ...rectCollisions];
-    const columnIds = columns.map(c => c.id);
 
     // First try to find a column collision
     const columnCollision = allCollisions.find(
-      collision => columnIds.includes(collision.id as TodoStatus)
+      collision => columnIds.includes(collision.id as string)
     );
 
     if (columnCollision) {
@@ -613,9 +690,9 @@ export default function KanbanBoard({
     return (daysOverdue * 10) + priorityWeight;
   };
 
-  const getTodosByStatus = (status: TodoStatus) => {
+  const getTodosByStatus = (statusId: string) => {
     return todos
-      .filter((todo) => (todo.status || 'todo') === status)
+      .filter((todo) => getEffectiveStatus(todo, columnIds, isCustomWorkflow) === statusId)
       .sort((a, b) => {
         const scoreDiff = getUrgencyScore(b) - getUrgencyScore(a);
         if (scoreDiff !== 0) return scoreDiff;
@@ -667,13 +744,39 @@ export default function KanbanBoard({
     setActiveId(todoId);
     const draggedTodo = todos.find((t) => t.id === todoId);
     if (draggedTodo) {
-      const currentColumn = columns.find(c => c.id === draggedTodo.status);
+      const effectiveStatus = getEffectiveStatus(draggedTodo, columnIds, isCustomWorkflow);
+      const currentColumn = columns.find(c => c.id === effectiveStatus);
       setDragAnnouncement(`Picked up task: ${draggedTodo.text}. Currently in ${currentColumn?.title || 'To Do'} column.`);
     }
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     setOverId(event.over?.id as string | null);
+  };
+
+  /**
+   * Move a task to a new status column. Handles both default and custom workflows.
+   * For custom workflows, calls onCustomStatusChange if available, otherwise
+   * maps known statuses (todo/in_progress/done) to onStatusChange.
+   */
+  const moveToColumn = (todoId: string, newColumnId: string, columnTitle: string) => {
+    // Check if moving to the last column (celebration trigger)
+    const lastColumn = columns[columns.length - 1];
+    if (lastColumn && newColumnId === lastColumn.id) {
+      setCelebrating(true);
+    }
+
+    if (isCustomWorkflow && onCustomStatusChange) {
+      // Custom workflow: update custom_status field
+      onCustomStatusChange(todoId, newColumnId);
+    } else {
+      // Default workflow: use the built-in status field
+      const validStatuses: TodoStatus[] = ['todo', 'in_progress', 'done'];
+      if (validStatuses.includes(newColumnId as TodoStatus)) {
+        onStatusChange(todoId, newColumnId as TodoStatus);
+      }
+    }
+    setDragAnnouncement(`Moved task to ${columnTitle} column.`);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -693,25 +796,19 @@ export default function KanbanBoard({
     }
 
     const targetId = over.id as string;
-    const previousStatus = draggedTodo?.status || 'todo';
+    const previousEffectiveStatus = draggedTodo
+      ? getEffectiveStatus(draggedTodo, columnIds, isCustomWorkflow)
+      : columnIds[0] || 'todo';
 
-    logger.debug('Dragged todo', { component: 'KanbanBoard', todoId, targetId, previousStatus });
+    logger.debug('Dragged todo', { component: 'KanbanBoard', todoId, targetId, previousEffectiveStatus });
 
     // Check if dropped on a column
     const column = columns.find((c) => c.id === targetId);
     if (column) {
-      logger.debug('Dropped on column', { component: 'KanbanBoard', columnId: column.id, previousStatus });
-      // Only change if different column
-      if (previousStatus !== column.id) {
-        logger.debug('Calling onStatusChange', { component: 'KanbanBoard', todoId, newStatus: column.id });
-        // Celebrate if moving to done column
-        if (column.id === 'done') {
-          setCelebrating(true);
-        }
-        onStatusChange(todoId, column.id);
-        setDragAnnouncement(`Moved task to ${column.title} column.`);
+      logger.debug('Dropped on column', { component: 'KanbanBoard', columnId: column.id, previousEffectiveStatus });
+      if (previousEffectiveStatus !== column.id) {
+        moveToColumn(todoId, column.id, column.title);
       } else {
-        logger.debug('Same column, no change needed', { component: 'KanbanBoard' });
         setDragAnnouncement(`Task remains in ${column.title} column.`);
       }
       return;
@@ -720,18 +817,11 @@ export default function KanbanBoard({
     // Check if dropped on another card
     const overTodo = todos.find((t) => t.id === targetId);
     if (overTodo) {
-      const targetStatus = overTodo.status || 'todo';
+      const targetStatus = getEffectiveStatus(overTodo, columnIds, isCustomWorkflow);
       const targetColumn = columns.find(c => c.id === targetStatus);
       logger.debug('Dropped on card', { component: 'KanbanBoard', targetId, targetStatus });
-      // Only change if different column
-      if (previousStatus !== targetStatus) {
-        logger.debug('Calling onStatusChange', { component: 'KanbanBoard', todoId, newStatus: targetStatus });
-        // Celebrate if moving to done column
-        if (targetStatus === 'done') {
-          setCelebrating(true);
-        }
-        onStatusChange(todoId, targetStatus);
-        setDragAnnouncement(`Moved task to ${targetColumn?.title || targetStatus} column.`);
+      if (previousEffectiveStatus !== targetStatus) {
+        moveToColumn(todoId, targetStatus, targetColumn?.title || targetStatus);
       } else {
         setDragAnnouncement(`Task remains in ${targetColumn?.title || targetStatus} column.`);
       }
@@ -762,7 +852,15 @@ export default function KanbanBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <div
+          className={`grid grid-cols-1 gap-3 sm:gap-4 ${
+            columns.length <= 3
+              ? 'md:grid-cols-3'
+              : columns.length <= 5
+                ? 'md:grid-cols-5'
+                : 'md:grid-cols-4 lg:grid-cols-7'
+          } ${columns.length > 5 ? 'overflow-x-auto' : ''}`}
+        >
         {columns.map((column) => {
           const columnTodos = getTodosByStatus(column.id);
 
@@ -856,7 +954,7 @@ export default function KanbanBoard({
                                 <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
                               </div>
                               <p className="text-xs sm:text-sm font-medium">
-                                {column.id === 'done' ? 'Complete tasks to see them here' : 'Drop tasks here'}
+                                {column.id === columns[columns.length - 1]?.id ? 'Complete tasks to see them here' : 'Drop tasks here'}
                               </p>
                             </motion.div>
                           )}
@@ -897,7 +995,7 @@ export default function KanbanBoard({
                             <column.Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: column.color }} />
                           </div>
                           <p className="text-xs sm:text-sm font-medium">
-                            {column.id === 'done' ? 'Complete tasks to see them here' : 'Drop tasks here'}
+                            {column.id === columns[columns.length - 1]?.id ? 'Complete tasks to see them here' : 'Drop tasks here'}
                           </p>
                         </motion.div>
                       )}

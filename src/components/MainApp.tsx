@@ -50,8 +50,20 @@ const KeyboardShortcutsModal = dynamic(() => import('./KeyboardShortcutsModal'),
   loading: () => null,
 });
 
+// Lazy load ProjectDashboard for the projects view
+const ProjectDashboard = dynamic(() => import('./ProjectDashboard'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
+});
+
 // Lazy load ArchiveView for the archive browser
 const ArchiveView = dynamic(() => import('./ArchiveView'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
+});
+
+// Lazy load ManuscriptPipelineView for the dedicated pipeline view
+const ManuscriptPipelineView = dynamic(() => import('./ManuscriptPipelineView'), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
 });
@@ -311,6 +323,31 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   const handleArchiveClose = useCallback(() => setActiveView('tasks'), [setActiveView]);
   const handleChatBack = useCallback(() => setActiveView('tasks'), [setActiveView]);
 
+  // Pipeline stage change handler - updates the task notes with [stage:xxx] tag
+  const handlePipelineStageChange = useCallback(async (todoId: string, newStageId: string) => {
+    if (!isSupabaseConfigured()) return;
+
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo) return;
+
+    const currentNotes = todo.notes || '';
+    const cleanedNotes = currentNotes.replace(/\[stage:\w+\]/g, '').trim();
+    const newNotes = cleanedNotes ? `${cleanedNotes} [stage:${newStageId}]` : `[stage:${newStageId}]`;
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ notes: newNotes, updated_at: new Date().toISOString() })
+        .eq('id', todoId);
+
+      if (error) {
+        logger.error('Failed to update pipeline stage', error, { component: 'MainApp', todoId, newStageId });
+      }
+    } catch (error) {
+      logger.error('Failed to update pipeline stage', error, { component: 'MainApp', todoId, newStageId });
+    }
+  }, [todos]);
+
   // Memoized view rendering to prevent unnecessary re-renders
   // NOTE: Must be defined BEFORE any conditional returns to follow Rules of Hooks
   const activeViewContent = useMemo(() => {
@@ -396,6 +433,20 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
           />
         );
 
+      case 'pipeline':
+        return (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <ManuscriptPipelineView
+              todos={todos}
+              onTodoClick={handleTaskLinkClick}
+              onStatusChange={handlePipelineStageChange}
+            />
+          </div>
+        );
+
+      case 'projects':
+        return <ProjectDashboard />;
+
       case 'tasks':
       default:
         return (
@@ -434,6 +485,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     handleAIAccept,
     handleAIDismiss,
     handleAIRefresh,
+    handlePipelineStageChange,
     onUserChange,
   ]);
 
