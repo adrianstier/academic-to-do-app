@@ -139,6 +139,20 @@ export default function CommandPalette({
       category: 'navigation',
       action: () => { setActiveView('archive'); onClose(); },
     },
+    {
+      id: 'nav-calendar',
+      label: 'Switch to Calendar View',
+      description: 'View tasks on a calendar',
+      icon: Calendar,
+      category: 'navigation',
+      shortcut: 'C',
+      action: () => {
+        setActiveView('tasks');
+        onClose();
+        // Dispatch custom event for TodoList to pick up the view mode change
+        setTimeout(() => window.dispatchEvent(new CustomEvent('switch-view-mode', { detail: 'calendar' })), 50);
+      },
+    },
 
     // Actions
     {

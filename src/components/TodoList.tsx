@@ -99,6 +99,11 @@ const ActivityFeed = dynamic(() => import('./ActivityFeed'), {
   loading: () => <ActivityFeedSkeleton />,
 });
 
+const CalendarView = dynamic(
+  () => import('@/components/calendar/CalendarView').then(m => ({ default: m.default })),
+  { ssr: false, loading: () => <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">Loading calendar...</div> }
+);
+
 // Note: WeeklyProgressChart moved to MainApp.tsx
 
 interface TodoListProps {
@@ -453,6 +458,12 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       if (e.key === '3') { e.preventDefault(); setQuickFilter('due_today'); }
       if (e.key === '4') { e.preventDefault(); setQuickFilter('overdue'); }
 
+      // 'c' - switch to calendar view
+      if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        setViewMode(viewMode === 'calendar' ? 'list' : 'calendar');
+      }
+
       // '?' - show keyboard shortcuts help
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault();
@@ -462,7 +473,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visibleTodos, showBulkActions, selectedTodos, selectAll, clearSelection, setShowBulkActions, setSearchQuery, setFocusMode, toggleFocusMode, setQuickFilter, openShortcuts]);
+  }, [visibleTodos, showBulkActions, selectedTodos, selectAll, clearSelection, setShowBulkActions, setSearchQuery, setFocusMode, toggleFocusMode, setQuickFilter, openShortcuts, viewMode, setViewMode]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -475,6 +486,18 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   useEffect(() => {
     hydrateFocusMode();
   }, []);
+
+  // Listen for view mode switch events from CommandPalette
+  useEffect(() => {
+    const handleSwitchViewMode = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail === 'calendar' || customEvent.detail === 'list' || customEvent.detail === 'kanban' || customEvent.detail === 'pipeline') {
+        setViewMode(customEvent.detail as ViewMode);
+      }
+    };
+    window.addEventListener('switch-view-mode', handleSwitchViewMode);
+    return () => window.removeEventListener('switch-view-mode', handleSwitchViewMode);
+  }, [setViewMode]);
 
   // Note: WeeklyProgressChart and KeyboardShortcutsModal are now rendered in MainApp.tsx
   // using AppShell context state, so they're accessible from any view (not just tasks)
@@ -2260,6 +2283,41 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                 </SortableContext>
               </DndContext>
             </motion.div>
+          ) : viewMode === 'calendar' ? (
+            <motion.div
+              key="calendar-view"
+              initial={prefersReducedMotion() ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion() ? undefined : { opacity: 0, y: -10 }}
+              transition={{ duration: DURATION.fast }}
+            >
+              <CalendarView
+                todos={filteredAndSortedTodos}
+                onTaskClick={(todo) => {
+                  const taskElement = document.getElementById(`todo-${todo.id}`);
+                  if (taskElement) {
+                    taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    taskElement.classList.add('notification-highlight');
+                    setTimeout(() => taskElement.classList.remove('notification-highlight'), 3000);
+                  }
+                }}
+                onDateClick={() => {
+                  setShowAddTaskModal(true);
+                }}
+                onReschedule={(todoId, newDate) => {
+                  setDueDate(todoId, newDate);
+                }}
+                onQuickComplete={(todoId) => {
+                  const todo = filteredAndSortedTodos.find(t => t.id === todoId);
+                  if (todo) {
+                    toggleTodo(todoId, !todo.completed);
+                  }
+                }}
+                onQuickAdd={(dateKey, text) => {
+                  addTodo(text, 'medium', dateKey);
+                }}
+              />
+            </motion.div>
           ) : (
             <motion.div
               key="kanban-view"
@@ -2311,6 +2369,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               <kbd className={`px-1.5 py-0.5 rounded ${darkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>N</kbd> new
               <span className="mx-2">|</span>
               <kbd className={`px-1.5 py-0.5 rounded ${darkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>/</kbd> search
+              <span className="mx-2">|</span>
+              <kbd className={`px-1.5 py-0.5 rounded ${darkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>C</kbd> calendar
               <span className="mx-2">|</span>
               <kbd className={`px-1.5 py-0.5 rounded ${darkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>?</kbd> all shortcuts
             </span>
@@ -2747,7 +2807,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       {showBulkActions && selectedTodos.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 animate-in slide-in-from-bottom duration-300">
           <div className="bg-[var(--surface)] border-t border-[var(--border)] shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
-            <div className={`mx-auto px-4 sm:px-6 py-3 ${viewMode === 'kanban' || viewMode === 'pipeline' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
+            <div className={`mx-auto px-4 sm:px-6 py-3 ${viewMode === 'kanban' || viewMode === 'pipeline' || viewMode === 'calendar' ? 'max-w-6xl xl:max-w-7xl 2xl:max-w-[1600px]' : 'max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl'}`}>
               <div className="flex items-center justify-between gap-4">
                 {/* Left side - selection info with dismiss button */}
                 <div className="flex items-center gap-3">

@@ -91,6 +91,11 @@ export interface Todo {
   project_id?: string; // Which project this task belongs to
   custom_status?: string; // Custom workflow status ID (used when project has custom_statuses)
   start_date?: string; // When work on this task should begin
+  category?: TaskCategory; // Academic task category for filtering/display
+  waiting_for_response?: boolean; // Waiting on collaborator/reviewer
+  waiting_since?: string; // When the wait started
+  follow_up_after_hours?: number; // Auto-flag if waiting exceeds this threshold
+  tags?: string[]; // Tag IDs for cross-cutting labels
 }
 
 // ============================================
@@ -193,7 +198,7 @@ export const REMINDER_PRESETS: Record<ReminderPreset, ReminderPresetConfig> = {
 export type SortOption = 'created' | 'due_date' | 'priority' | 'alphabetical' | 'custom' | 'urgency';
 export type QuickFilter = 'all' | 'my_tasks' | 'due_today' | 'overdue';
 
-export type ViewMode = 'list' | 'kanban' | 'pipeline';
+export type ViewMode = 'list' | 'kanban' | 'pipeline' | 'calendar';
 
 // ============================================
 // Task Dependency Types

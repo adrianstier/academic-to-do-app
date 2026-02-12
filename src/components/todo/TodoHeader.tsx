@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useState, useEffect, useCallback, useRef } from 'react';
-import { LayoutList, LayoutGrid, GitMerge, Bell, Search, X, Filter, RotateCcw } from 'lucide-react';
+import { LayoutList, LayoutGrid, GitMerge, Calendar, Bell, Search, X, Filter, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AuthUser, ViewMode, ActivityLogEntry } from '@/types/todo';
 import UserSwitcher from '../UserSwitcher';
@@ -210,6 +210,21 @@ function TodoHeader({
                 >
                   <GitMerge className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Pipeline</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('calendar')}
+                  className={`flex items-center gap-1 px-2 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                    viewMode === 'calendar'
+                      ? 'bg-[var(--brand-sky)] text-[var(--brand-navy)] shadow-md'
+                      : darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-3)]'
+                  }`}
+                  aria-pressed={viewMode === 'calendar'}
+                  aria-label="Calendar view"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Calendar</span>
                 </button>
               </div>
             )}
