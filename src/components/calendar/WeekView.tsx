@@ -19,9 +19,10 @@ import {
   eachDayOfInterval,
 } from 'date-fns';
 import { Todo } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
 import { DraggableTaskItem } from './CalendarDayCell';
 import { CATEGORY_COLORS, isTaskOverdue, STATUS_BORDER, getSubtaskProgress, isFollowUpOverdue, getInitials, hasPendingReminders } from './constants';
-import { Clock, Bell } from 'lucide-react';
+import { Clock, Bell, Link2 } from 'lucide-react';
 import CalendarDragOverlay from './CalendarDragOverlay';
 
 /** Task count thresholds for badge color coding */
@@ -78,6 +79,9 @@ function DroppableDayColumn({
   onQuickComplete?: (todoId: string) => void;
   onToggleWaiting?: (todoId: string, waiting: boolean) => void;
 }) {
+  const storeProjects = useTodoStore(state => state.projects);
+  const storeDeps = useTodoStore(state => state.dependencies);
+  const storeTags = useTodoStore(state => state.tags);
   const isWeekend = day.getDay() === 0 || day.getDay() === 6;
   const dateKey = format(day, 'yyyy-MM-dd');
   const { setNodeRef, isOver } = useDroppable({
@@ -139,6 +143,16 @@ function DroppableDayColumn({
         {dayTodos.map((todo) => {
           const overdue = !todo.completed && isTaskOverdue(todo.due_date);
           const subtaskProgress = getSubtaskProgress(todo.subtasks);
+          const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
+          const todoDeps = storeDeps[todo.id];
+          const totalDeps = todoDeps ? todoDeps.blocks.length + todoDeps.blockedBy.length : 0;
+          const isBlocked = todoDeps && todoDeps.blockedBy.length > 0 && !todo.completed;
+          const todoTags = todo.tags && todo.tags.length > 0
+            ? todo.tags.map(tagId => storeTags.find(t => t.id === tagId)).filter(Boolean)
+            : [];
+          const customStatusName = todo.custom_status && todoProject?.custom_statuses
+            ? todoProject.custom_statuses.find(s => s.id === todo.custom_status)
+            : null;
           return (
             <div key={todo.id} className={`relative ${STATUS_BORDER[todo.status] || ''}`}>
               <DraggableTaskItem
@@ -157,31 +171,73 @@ function DroppableDayColumn({
                   Overdue
                 </span>
               )}
-              {/* Task indicators */}
-              {(todo.waiting_for_response || subtaskProgress || hasPendingReminders(todo.reminders, todo.reminder_at) || todo.assigned_to) && (
-                <div className="flex items-center gap-1 px-2 pb-1 text-[10px]">
-                  {todo.waiting_for_response && (
-                    <span className={`flex items-center gap-0.5 ${isFollowUpOverdue(todo.waiting_since, todo.follow_up_after_hours) ? 'text-red-500' : 'text-amber-500'}`} title="Waiting for response">
-                      <Clock className="w-3 h-3" />
-                    </span>
-                  )}
-                  {subtaskProgress && (
-                    <span className="text-[var(--text-muted)]" title="Subtask progress">
-                      {subtaskProgress}
-                    </span>
-                  )}
-                  {hasPendingReminders(todo.reminders, todo.reminder_at) && (
-                    <span className="flex items-center text-[var(--text-muted)]" title="Has reminders">
-                      <Bell className="w-3 h-3" />
-                    </span>
-                  )}
-                  {todo.assigned_to && (
-                    <span className="text-[var(--text-muted)] bg-[var(--surface)] px-1 rounded font-medium" title={`Assigned to ${todo.assigned_to}`}>
-                      {getInitials(todo.assigned_to)}
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Project, dependency, tag indicators */}
+              <div className="flex items-center gap-1 px-2 pb-1 text-[10px] flex-wrap">
+                {todoProject && (
+                  <span
+                    className="inline-flex items-center gap-0.5 px-1 rounded font-medium leading-tight"
+                    style={{ backgroundColor: todoProject.color + '18', color: todoProject.color }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: todoProject.color }}
+                    />
+                    {todoProject.name}
+                  </span>
+                )}
+                {customStatusName && (
+                  <span
+                    className="px-1 rounded font-medium leading-tight"
+                    style={{ backgroundColor: customStatusName.color + '18', color: customStatusName.color }}
+                  >
+                    {customStatusName.name}
+                  </span>
+                )}
+                {isBlocked && (
+                  <span className="inline-flex items-center gap-0.5 font-semibold text-red-500 bg-red-500/10 px-1 rounded leading-tight">
+                    <Link2 className="w-2.5 h-2.5" />
+                    Blocked
+                  </span>
+                )}
+                {totalDeps > 0 && !isBlocked && (
+                  <span className="inline-flex items-center gap-0.5 text-[var(--text-muted)] bg-[var(--surface)] px-1 rounded leading-tight">
+                    <Link2 className="w-2.5 h-2.5" />
+                    {totalDeps}
+                  </span>
+                )}
+                {todoTags.slice(0, 2).map((tag) => (
+                  <span
+                    key={tag!.id}
+                    className="px-1 rounded font-medium leading-tight"
+                    style={{ backgroundColor: tag!.color + '18', color: tag!.color }}
+                  >
+                    {tag!.name}
+                  </span>
+                ))}
+                {todoTags.length > 2 && (
+                  <span className="text-[var(--text-muted)]">+{todoTags.length - 2}</span>
+                )}
+                {todo.waiting_for_response && (
+                  <span className={`flex items-center gap-0.5 ${isFollowUpOverdue(todo.waiting_since, todo.follow_up_after_hours) ? 'text-red-500' : 'text-amber-500'}`} title="Waiting for response">
+                    <Clock className="w-3 h-3" />
+                  </span>
+                )}
+                {subtaskProgress && (
+                  <span className="text-[var(--text-muted)]" title="Subtask progress">
+                    {subtaskProgress}
+                  </span>
+                )}
+                {hasPendingReminders(todo.reminders, todo.reminder_at) && (
+                  <span className="flex items-center text-[var(--text-muted)]" title="Has reminders">
+                    <Bell className="w-3 h-3" />
+                  </span>
+                )}
+                {todo.assigned_to && (
+                  <span className="text-[var(--text-muted)] bg-[var(--surface)] px-1 rounded font-medium" title={`Assigned to ${todo.assigned_to}`}>
+                    {getInitials(todo.assigned_to)}
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}

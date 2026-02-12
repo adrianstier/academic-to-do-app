@@ -3,8 +3,9 @@
 import { useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday } from 'date-fns';
-import { ChevronRight, CheckCircle2, Clock, Bell } from 'lucide-react';
+import { ChevronRight, CheckCircle2, Clock, Bell, Link2 } from 'lucide-react';
 import { Todo, TodoPriority } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
 import {
   CATEGORY_COLORS,
   CATEGORY_LABELS,
@@ -59,6 +60,10 @@ export default function DayView({
   onToggleWaiting,
   onQuickAdd,
 }: DayViewProps) {
+  const storeProjects = useTodoStore(state => state.projects);
+  const storeDeps = useTodoStore(state => state.dependencies);
+  const storeTags = useTodoStore(state => state.tags);
+
   const dateKey = format(currentDate, 'yyyy-MM-dd');
   const dayTodos = useMemo(() => todosByDate.get(dateKey) || [], [todosByDate, dateKey]);
   const today = isToday(currentDate);
@@ -111,6 +116,18 @@ export default function DayView({
                 const subtaskProgress = getSubtaskProgress(todo.subtasks);
                 const isWaitingOverdue = isFollowUpOverdue(todo.waiting_since, todo.follow_up_after_hours);
 
+                // Project, dependency, tag data from store
+                const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
+                const todoDeps = storeDeps[todo.id];
+                const totalDeps = todoDeps ? todoDeps.blocks.length + todoDeps.blockedBy.length : 0;
+                const isBlocked = todoDeps && todoDeps.blockedBy.length > 0 && !todo.completed;
+                const todoTags = todo.tags && todo.tags.length > 0
+                  ? todo.tags.map(tagId => storeTags.find(t => t.id === tagId)).filter(Boolean)
+                  : [];
+                const customStatusName = todo.custom_status && todoProject?.custom_statuses
+                  ? todoProject.custom_statuses.find(s => s.id === todo.custom_status)
+                  : null;
+
                 // Status border: overdue > in_progress > default
                 const statusClass = isOverdue
                   ? 'border-l-2 border-l-red-500'
@@ -128,7 +145,7 @@ export default function DayView({
 
                         <div className="flex-1 min-w-0">
                           {/* Title Row */}
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <h3 className="text-sm font-semibold text-[var(--foreground)] truncate">
                               {todo.text}
                             </h3>
@@ -143,15 +160,42 @@ export default function DayView({
                                 Overdue
                               </span>
                             )}
-                            {todo.status === 'in_progress' && (
+                            {/* Custom status badge replaces generic "In Progress" when available */}
+                            {customStatusName ? (
+                              <span
+                                className="px-1.5 py-0.5 text-[10px] font-semibold rounded"
+                                style={{ backgroundColor: customStatusName.color + '18', color: customStatusName.color }}
+                              >
+                                {customStatusName.name}
+                              </span>
+                            ) : todo.status === 'in_progress' && (
                               <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-500/10 text-blue-500">
                                 In Progress
                               </span>
                             )}
+                            {/* Blocked badge */}
+                            {isBlocked && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                                <Link2 className="w-2.5 h-2.5" />
+                                Blocked
+                              </span>
+                            )}
                           </div>
 
-                          {/* Details Row */}
-                          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
+                          {/* Project + Details Row */}
+                          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] flex-wrap">
+                            {todoProject && (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+                                style={{ backgroundColor: todoProject.color + '18', color: todoProject.color }}
+                              >
+                                <span
+                                  className="w-2 h-2 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: todoProject.color }}
+                                />
+                                {todoProject.name}
+                              </span>
+                            )}
                             <span className="flex items-center gap-1">
                               <div className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[category]}`} />
                               {CATEGORY_LABELS[category]}
@@ -167,7 +211,33 @@ export default function DayView({
                             {subtaskProgress && (
                               <span>{subtaskProgress}</span>
                             )}
+                            {totalDeps > 0 && !isBlocked && (
+                              <span className="inline-flex items-center gap-1 text-[var(--text-muted)]">
+                                <Link2 className="w-3 h-3" />
+                                {totalDeps} dep{totalDeps !== 1 ? 's' : ''}
+                              </span>
+                            )}
                           </div>
+
+                          {/* Tag badges row */}
+                          {todoTags.length > 0 && (
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              {todoTags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag!.id}
+                                  className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+                                  style={{ backgroundColor: tag!.color + '18', color: tag!.color }}
+                                >
+                                  {tag!.name}
+                                </span>
+                              ))}
+                              {todoTags.length > 3 && (
+                                <span className="text-[10px] text-[var(--text-muted)]">
+                                  +{todoTags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
 
                           {/* Indicators Row */}
                           {(todo.waiting_for_response || hasPendingReminders(todo.reminders, todo.reminder_at)) && (

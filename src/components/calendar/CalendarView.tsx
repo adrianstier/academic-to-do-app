@@ -11,6 +11,7 @@ import {
   Clock,
   Bell,
   Printer,
+  FolderOpen,
 } from 'lucide-react';
 import {
   format,
@@ -44,6 +45,7 @@ interface CalendarViewProps {
   onQuickComplete?: (todoId: string) => void;
   onToggleWaiting?: (todoId: string, waiting: boolean) => void;
   onQuickAdd?: (dateKey: string, text: string) => void;
+  activeProjectName?: string;
 }
 
 const headerVariants = {
@@ -98,6 +100,7 @@ export default function CalendarView({
   onQuickComplete,
   onToggleWaiting,
   onQuickAdd,
+  activeProjectName,
 }: CalendarViewProps) {
   const toast = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -430,6 +433,14 @@ export default function CalendarView({
             <CalendarIcon className="w-4 h-4" />
             <span className="hidden sm:inline">Today</span>
           </button>
+
+          {/* Active Project Filter Badge */}
+          {activeProjectName && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-medium print:hidden">
+              <FolderOpen className="w-3.5 h-3.5" />
+              {activeProjectName}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

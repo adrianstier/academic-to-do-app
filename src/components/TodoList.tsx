@@ -11,6 +11,7 @@ import AddTodo from './AddTodo';
 import AddTaskModal from './AddTaskModal';
 import KanbanBoard from './KanbanBoard';
 import ManuscriptPipelineView from './ManuscriptPipelineView';
+import { TaskDetailModal } from './task-detail';
 import { logger } from '@/lib/logger';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
 import { useTodoData, useFilters, useBulkActions, useIsDesktopWide, useEscapeKey, useTodoModals, useFocusTrap } from '@/hooks';
@@ -169,6 +170,12 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
+  // Calendar view: selected task for detail modal (mirrors KanbanBoard pattern)
+  const [calendarDetailTodoId, setCalendarDetailTodoId] = useState<string | null>(null);
+  const calendarDetailTodo = calendarDetailTodoId
+    ? todos.find(t => t.id === calendarDetailTodoId) || null
+    : null;
+
   // Sectioned view toggle (Overdue/Today/Upcoming/No Date grouping)
   const [useSectionedView, setUseSectionedView] = useState(true);
 
@@ -220,6 +227,14 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const { showAdvancedFilters, focusMode } = useTodoStore((state) => state.ui);
   const toggleFocusMode = useTodoStore((state) => state.toggleFocusMode);
   const setFocusMode = useTodoStore((state) => state.setFocusMode);
+
+  // Get active project name for calendar header badge
+  const storeProjects = useTodoStore((state) => state.projects);
+  const activeProjectName = useMemo(() => {
+    if (!filters.projectFilter) return undefined;
+    const project = storeProjects.find((p) => p.id === filters.projectFilter);
+    return project?.name;
+  }, [filters.projectFilter, storeProjects]);
 
   // Apply initial filter from props
   useEffect(() => {
@@ -523,23 +538,23 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   }, [fetchActivityLog]);
 
   // Check for duplicates and either show modal or create task directly
-  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null) => {
+  const addTodo = (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null, projectId?: string) => {
     // Check if we should look for duplicates
     const combinedText = `${text} ${transcription || ''}`;
     if (shouldCheckForDuplicates(combinedText)) {
       const duplicates = findPotentialDuplicates(combinedText, todos);
       if (duplicates.length > 0) {
         // Store pending task and show modal
-        openDuplicateModal({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence }, duplicates);
+        openDuplicateModal({ text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence, projectId }, duplicates);
         return;
       }
     }
     // No duplicates found, create directly
-    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence);
+    createTodoDirectly(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, reminderAt, notes, recurrence, projectId);
   };
 
   // Actually create the todo (called after duplicate check or when user confirms)
-  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null) => {
+  const createTodoDirectly = async (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null, projectId?: string) => {
     const newTodo: Todo = {
       id: uuidv4(),
       text,
@@ -556,6 +571,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       reminder_sent: false,
       notes: notes,
       recurrence: recurrence || undefined,
+      project_id: projectId || undefined,
     };
 
     // Optimistic update using store action
@@ -577,6 +593,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (newTodo.transcription) insertData.transcription = newTodo.transcription;
     if (newTodo.notes) insertData.notes = newTodo.notes;
     if (newTodo.recurrence) insertData.recurrence = newTodo.recurrence;
+    if (newTodo.project_id) insertData.project_id = newTodo.project_id;
     if (newTodo.reminder_at) {
       insertData.reminder_at = newTodo.reminder_at;
       insertData.reminder_sent = false;
@@ -675,7 +692,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         pendingTask.sourceFile,
         pendingTask.reminderAt,
         pendingTask.notes,
-        pendingTask.recurrence
+        pendingTask.recurrence,
+        pendingTask.projectId
       );
     }
     clearDuplicateState();
@@ -2294,12 +2312,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               <CalendarView
                 todos={filteredAndSortedTodos}
                 onTaskClick={(todo) => {
-                  const taskElement = document.getElementById(`todo-${todo.id}`);
-                  if (taskElement) {
-                    taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    taskElement.classList.add('notification-highlight');
-                    setTimeout(() => taskElement.classList.remove('notification-highlight'), 3000);
-                  }
+                  setCalendarDetailTodoId(todo.id);
                 }}
                 onDateClick={() => {
                   setShowAddTaskModal(true);
@@ -2314,9 +2327,34 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                   }
                 }}
                 onQuickAdd={(dateKey, text) => {
-                  addTodo(text, 'medium', dateKey);
+                  addTodo(text, 'medium', dateKey, undefined, undefined, undefined, undefined, undefined, undefined, undefined, filters.projectFilter || undefined);
                 }}
+                activeProjectName={activeProjectName}
               />
+              {/* Task Detail Modal for calendar view — mirrors KanbanBoard pattern */}
+              {calendarDetailTodo && (
+                <TaskDetailModal
+                  todo={calendarDetailTodo}
+                  isOpen={!!calendarDetailTodo}
+                  onClose={() => setCalendarDetailTodoId(null)}
+                  users={users}
+                  currentUserName={userName}
+                  onToggle={toggleTodo}
+                  onDelete={confirmDeleteTodo}
+                  onAssign={assignTodo}
+                  onSetDueDate={setDueDate}
+                  onSetPriority={setPriority}
+                  onStatusChange={updateStatus}
+                  onUpdateText={updateText}
+                  onUpdateNotes={updateNotes}
+                  onSetRecurrence={setRecurrence}
+                  onUpdateSubtasks={updateSubtasks}
+                  onUpdateAttachments={updateAttachments}
+                  onSetReminder={setReminder}
+                  onDuplicate={duplicateTodo}
+                  onSaveAsTemplate={(t) => openTemplateModal(t)}
+                />
+              )}
             </motion.div>
           ) : (
             <motion.div

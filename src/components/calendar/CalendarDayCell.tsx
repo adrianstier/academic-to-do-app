@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { GripVertical, Clock, Bell, CheckCircle2 } from 'lucide-react';
+import { GripVertical, Clock, Bell, CheckCircle2, Link2 } from 'lucide-react';
 import { Todo } from '@/types/todo';
+import { useTodoStore } from '@/store/todoStore';
 import {
   CATEGORY_COLORS,
   CATEGORY_LABELS,
@@ -63,6 +64,24 @@ function DraggableTaskItem({
     disabled: !enableDrag,
   });
 
+  // Read project, dependency, and tag data from the store
+  const storeProjects = useTodoStore(state => state.projects);
+  const storeDeps = useTodoStore(state => state.dependencies[todo.id]);
+  const storeTags = useTodoStore(state => state.tags);
+  const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
+  const totalDeps = storeDeps ? storeDeps.blocks.length + storeDeps.blockedBy.length : 0;
+  const isBlocked = storeDeps && storeDeps.blockedBy.length > 0;
+
+  // Resolve tag objects from todo.tags (array of tag IDs)
+  const todoTags = todo.tags && todo.tags.length > 0
+    ? todo.tags.map(tagId => storeTags.find(t => t.id === tagId)).filter(Boolean)
+    : [];
+
+  // Look up custom status name from project's custom_statuses
+  const customStatusName = todo.custom_status && todoProject?.custom_statuses
+    ? todoProject.custom_statuses.find(s => s.id === todo.custom_status)
+    : null;
+
   const category = todo.category || 'other';
   const isOverdue = isTaskOverdue(todo.due_date);
 
@@ -109,12 +128,50 @@ function DraggableTaskItem({
           >
             {todo.text}
           </p>
-          <p className="text-xs text-[var(--text-muted)]">
-            {CATEGORY_LABELS[category]}
-          </p>
-          {/* Wave 1: Visual indicators row */}
+          {/* Project badge + category label row */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {todoProject && (
+              <span
+                className="inline-flex items-center gap-1 px-1 py-0 rounded text-[10px] font-medium leading-tight"
+                style={{ backgroundColor: todoProject.color + '18', color: todoProject.color }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: todoProject.color }}
+                  aria-hidden="true"
+                />
+                {todoProject.name}
+              </span>
+            )}
+            <p className="text-xs text-[var(--text-muted)]">
+              {CATEGORY_LABELS[category]}
+            </p>
+          </div>
+          {/* Visual indicators row */}
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {todo.status === 'in_progress' && !isOverdue && (
+            {/* Custom status badge */}
+            {customStatusName && (
+              <span
+                className="text-[10px] font-medium px-1 rounded leading-tight"
+                style={{ backgroundColor: customStatusName.color + '18', color: customStatusName.color }}
+              >
+                {customStatusName.name}
+              </span>
+            )}
+            {/* Blocked / dependency indicator */}
+            {isBlocked && !todo.completed && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-red-500 bg-red-500/10 px-1 rounded leading-tight">
+                <Link2 className="w-2.5 h-2.5" />
+                Blocked
+              </span>
+            )}
+            {totalDeps > 0 && !isBlocked && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] text-[var(--text-muted)] bg-[var(--surface)] px-1 rounded leading-tight">
+                <Link2 className="w-2.5 h-2.5" />
+                {totalDeps}
+              </span>
+            )}
+            {todo.status === 'in_progress' && !isOverdue && !customStatusName && (
               <span className="text-[10px] text-amber-500 font-medium">In Progress</span>
             )}
             {subtaskProgress && (
@@ -126,7 +183,7 @@ function DraggableTaskItem({
                 aria-label={followUpOverdue ? 'Follow-up overdue' : 'Waiting for response'}
               />
             )}
-{hasPendingReminders(todo.reminders, todo.reminder_at) && (
+            {hasPendingReminders(todo.reminders, todo.reminder_at) && (
               <Bell className="w-3 h-3 text-[var(--text-muted)]" aria-label="Has reminders" />
             )}
             {todo.assigned_to && (
@@ -135,6 +192,25 @@ function DraggableTaskItem({
               </span>
             )}
           </div>
+          {/* Tag badges — show up to 2 with overflow */}
+          {todoTags.length > 0 && (
+            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+              {todoTags.slice(0, 2).map((tag) => (
+                <span
+                  key={tag!.id}
+                  className="text-[10px] font-medium px-1 rounded leading-tight"
+                  style={{ backgroundColor: tag!.color + '18', color: tag!.color }}
+                >
+                  {tag!.name}
+                </span>
+              ))}
+              {todoTags.length > 2 && (
+                <span className="text-[10px] text-[var(--text-muted)]">
+                  +{todoTags.length - 2}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </button>
       {/* Quick action buttons — visible on hover */}
@@ -171,6 +247,88 @@ function DraggableTaskItem({
             </button>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Compact task previews for the month cell (space constrained).
+ * Shows a project color dot (if available) alongside the category dot,
+ * a blocked indicator, and truncated task text.
+ */
+function CompactTaskPreviews({ todos }: { todos: Todo[] }) {
+  const storeProjects = useTodoStore(state => state.projects);
+  const storeDeps = useTodoStore(state => state.dependencies);
+
+  return (
+    <div className="w-full flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
+      {todos.slice(0, 3).map((todo) => {
+        const cat = todo.category || 'other';
+        const isOverdue = isTaskOverdue(todo.due_date);
+        const isWaiting = todo.waiting_for_response;
+        const waitingOverdue = isWaiting
+          ? isFollowUpOverdue(todo.waiting_since, todo.follow_up_after_hours)
+          : false;
+        const hasIncompleteSubtasks = todo.subtasks?.some((s) => !s.completed);
+
+        // Project color dot
+        const todoProject = todo.project_id ? storeProjects.find(p => p.id === todo.project_id) : null;
+
+        // Dependency - blocked indicator
+        const todoDeps = storeDeps[todo.id];
+        const isBlocked = todoDeps && todoDeps.blockedBy.length > 0 && !todo.completed;
+
+        return (
+          <div
+            key={todo.id}
+            className="flex items-center gap-1 px-1 py-0.5 rounded text-[10px] sm:text-xs truncate bg-[var(--surface)]/60"
+          >
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {/* Project color dot — shown before category dot when project is set */}
+              {todoProject && (
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: todoProject.color }}
+                  title={todoProject.name}
+                />
+              )}
+              <div
+                className={`w-2.5 h-2.5 rounded-full ${CATEGORY_COLORS[cat]}`}
+                title={CATEGORY_LABELS[cat]}
+              />
+            </div>
+            {isBlocked && (
+              <Link2 className="w-2.5 h-2.5 flex-shrink-0 text-red-500" aria-label="Blocked" />
+            )}
+            {isWaiting && (
+              <Clock
+                className={`w-2.5 h-2.5 flex-shrink-0 ${waitingOverdue ? 'text-red-500' : 'text-amber-500'}`}
+              />
+            )}
+            <span
+              className={`truncate ${
+                isOverdue
+                  ? 'text-red-500'
+                  : 'text-[var(--text-light)]'
+              }`}
+              title={todo.text}
+            >
+              {todo.text}
+            </span>
+            {hasIncompleteSubtasks && (
+              <span className="text-[8px] text-[var(--text-muted)] flex-shrink-0" title="Has incomplete subtasks">●</span>
+            )}
+            {hasPendingReminders(todo.reminders, todo.reminder_at) && (
+              <Bell className="w-2.5 h-2.5 text-[var(--text-muted)] flex-shrink-0" />
+            )}
+          </div>
+        );
+      })}
+      {todos.length > 3 && (
+        <span className="text-[10px] text-[var(--text-muted)] px-1">
+          +{todos.length - 3} more
+        </span>
       )}
     </div>
   );
@@ -368,56 +526,7 @@ export default function CalendarDayCell({
 
         {/* Task Previews */}
         {todos.length > 0 && (
-          <div className="w-full flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
-            {todos.slice(0, 3).map((todo) => {
-              const cat = todo.category || 'other';
-              const isOverdue = isTaskOverdue(todo.due_date);
-              const isWaiting = todo.waiting_for_response;
-              const waitingOverdue = isWaiting
-                ? isFollowUpOverdue(todo.waiting_since, todo.follow_up_after_hours)
-                : false;
-              const hasIncompleteSubtasks = todo.subtasks?.some((s) => !s.completed);
-              return (
-                <div
-                  key={todo.id}
-                  className="flex items-center gap-1 px-1 py-0.5 rounded text-[10px] sm:text-xs truncate bg-[var(--surface)]/60"
-                >
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full ${CATEGORY_COLORS[cat]}`}
-                      title={CATEGORY_LABELS[cat]}
-                    />
-                  </div>
-                  {isWaiting && (
-                    <Clock
-                      className={`w-2.5 h-2.5 flex-shrink-0 ${waitingOverdue ? 'text-red-500' : 'text-amber-500'}`}
-                    />
-                  )}
-                  <span
-                    className={`truncate ${
-                      isOverdue
-                        ? 'text-red-500'
-                        : 'text-[var(--text-light)]'
-                    }`}
-                    title={todo.text}
-                  >
-                    {todo.text}
-                  </span>
-                  {hasIncompleteSubtasks && (
-                    <span className="text-[8px] text-[var(--text-muted)] flex-shrink-0" title="Has incomplete subtasks">●</span>
-                  )}
-                  {hasPendingReminders(todo.reminders, todo.reminder_at) && (
-                    <Bell className="w-2.5 h-2.5 text-[var(--text-muted)] flex-shrink-0" />
-                  )}
-                </div>
-              );
-            })}
-            {todos.length > 3 && (
-              <span className="text-[10px] text-[var(--text-muted)] px-1">
-                +{todos.length - 3} more
-              </span>
-            )}
-          </div>
+          <CompactTaskPreviews todos={todos} />
         )}
       </motion.button>
 

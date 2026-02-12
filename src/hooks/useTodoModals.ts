@@ -34,6 +34,7 @@ export interface PendingTaskData {
   reminderAt?: string;
   notes?: string;
   recurrence?: 'daily' | 'weekly' | 'monthly' | null;
+  projectId?: string;
 }
 
 export interface ConfirmDialogState {
