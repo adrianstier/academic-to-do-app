@@ -211,46 +211,46 @@
 
 ### P2 — Nice-to-Have (Future Roadmap)
 
-#### P2.1: Zotero/Mendeley Integration
+#### P2.1: Zotero/Mendeley Integration -- COMPLETE
 - **Description**: Import references via Zotero Web API. Link reading tasks to papers. Track read/annotated/cited status.
 - **User story**: "As a PhD student, I want to import my Zotero library and create reading tasks linked to each paper."
 - **Complexity**: High (new `references` table, OAuth flow, bidirectional sync)
 - **Consensus**: Domain Expert + Integration Engineer strongly advocate. [Domain Expert] [Integration Engineer]
 
-#### P2.2: Gantt/Timeline View
+#### P2.2: Gantt/Timeline View -- COMPLETE
 - **Description**: Horizontal timeline showing tasks as bars from start_date to due_date, grouped by project. Requires task dependencies (P1.1) and start_date field.
 - **User story**: "As a PI, I want to see my research projects on a timeline to plan field seasons and grant cycles."
 - **Complexity**: High (new view component, start_date field, dependency rendering)
 - **Consensus**: UX Specialist proposes, Architect notes dependency on P1.1. [UX Specialist] [Architect]
 
-#### P2.3: Experiment Log Templates
+#### P2.3: Experiment Log Templates -- COMPLETE
 - **Description**: Structured forms for logging experiments: date, protocol, equipment, conditions, results, photos. Builds on existing template and attachment systems.
 - **User story**: "As a field researcher, I want to fill out a structured experiment log when completing a fieldwork task."
 - **Complexity**: Medium (form builder UI, template schema extension)
 - **Consensus**: Domain Expert proposes for lab-team use. [Domain Expert]
 
-#### P2.4: AI Retuned for Academia
+#### P2.4: AI Retuned for Academia -- COMPLETE
 - **Description**: Re-prompt AI smart-parse and AI Inbox for academic contexts: extracting action items from advisor emails, parsing CFPs into deadline tasks, breaking grant RFPs into proposal sections.
 - **User story**: "As a researcher, I want the AI to parse a conference Call for Papers and create deadline tasks automatically."
 - **Complexity**: Low (prompt engineering, no architecture changes)
 - **Consensus**: All agents agree this is high-value/low-effort. [Domain Expert] [Integration Engineer]
 
-#### P2.5: ORCID Integration
+#### P2.5: ORCID Integration -- FUTURE/BACKLOG
 - **Description**: Import publication lists from ORCID. Auto-generate tasks for new publications (review proof, update CV).
 - **Complexity**: Medium (OAuth, one-way sync)
 - **Consensus**: Integration Engineer proposes. [Integration Engineer]
 
-#### P2.6: Lab Equipment Calendar
+#### P2.6: Lab Equipment Calendar -- FUTURE/BACKLOG
 - **Description**: Resource-booking calendar for shared equipment (microscopes, boats, dive gear). Separate from task calendar.
 - **Complexity**: High (new data model, conflict detection, approval workflow)
 - **Consensus**: Domain Expert proposes for lab manager persona. [Domain Expert]
 
-#### P2.7: Grant Budget Tracking
+#### P2.7: Grant Budget Tracking -- COMPLETE
 - **Description**: Replace insurance financial fields with grant budget tracking: total award, spend by category, burn rate, remaining balance.
 - **Complexity**: Medium (new data model, dashboard panel)
 - **Consensus**: Domain Expert proposes for PI persona. [Domain Expert]
 
-#### P2.8: Institutional SSO (SAML)
+#### P2.8: Institutional SSO (SAML) -- FUTURE/BACKLOG
 - **Description**: Clerk already supports SAML 2.0 and OIDC. UCSB uses Shibboleth. Configuration-only, no code changes needed.
 - **Complexity**: Low (Clerk dashboard configuration)
 - **Consensus**: Integration Engineer confirms zero code changes. [Integration Engineer]
@@ -710,7 +710,7 @@ The `NavItem` interface in `NavigationSidebar.tsx` (line 43-50) makes this a con
 
 ## 8. Implementation Plan
 
-### Sprint 0 — Foundation (1 week)
+### Sprint 0 — Foundation (1 week) -- COMPLETE
 
 **Goal**: Clean slate for academic development.
 
@@ -726,7 +726,7 @@ The `NavItem` interface in `NavigationSidebar.tsx` (line 43-50) makes this a con
 | Replace academic task categories | `src/types/todo.ts` | [Domain Expert] |
 | Run `npx tsc --noEmit` and `npm run build` to verify | CI | [All] |
 
-### Sprint 1 — Projects & Tags (1 week)
+### Sprint 1 — Projects & Tags (1 week) -- COMPLETE
 
 **Goal**: P0.1 (Projects) + P0.2 (Tags) + P0.4 (Reference Links) + P0.5 (Data Export)
 
@@ -747,7 +747,7 @@ The `NavItem` interface in `NavigationSidebar.tsx` (line 43-50) makes this a con
 | Update kanban, calendar, list views to show project/tag badges | Medium |
 | Sidebar: add "Projects" nav item with project list | Medium |
 
-### Sprint 2 — Dependencies & Roles (1 week)
+### Sprint 2 — Dependencies & Roles (1 week) -- COMPLETE
 
 **Goal**: P1.1 (Task Dependencies) + P1.4 (Academic Roles) + P1.5 (Markdown Notes)
 
@@ -761,7 +761,7 @@ The `NavItem` interface in `NavigationSidebar.tsx` (line 43-50) makes this a con
 | Replace NotesSection textarea with markdown editor | Medium |
 | Add markdown preview toggle | Low |
 
-### Sprint 3 — Views & Dashboard (1 week)
+### Sprint 3 — Views & Dashboard (1 week) -- COMPLETE
 
 **Goal**: P1.3 (Manuscript Pipeline) + P1.7 (Project Dashboard) + P1.2 (Custom Status Workflows)
 
@@ -774,7 +774,7 @@ The `NavItem` interface in `NavigationSidebar.tsx` (line 43-50) makes this a con
 | Re-prompt AI features for academic context (P2.4) | Low |
 | Update academic quick task templates | Low |
 
-### Sprint 4 — Integrations (1-2 weeks)
+### Sprint 4 — Integrations (1-2 weeks) -- COMPLETE
 
 **Goal**: P1.6 (Google Calendar) + P2.8 (Institutional SSO) + P2.1 (Zotero)
 
@@ -787,7 +787,7 @@ The `NavItem` interface in `NavigationSidebar.tsx` (line 43-50) makes this a con
 | Build Zotero OAuth + sync | High |
 | Build reference linking UI in task detail | Low |
 
-### Sprint 5 — Polish & Testing (1 week)
+### Sprint 5 — Polish & Testing (1 week) -- COMPLETE
 
 **Goal**: End-to-end testing, accessibility audit, performance optimization.
 

@@ -218,8 +218,6 @@ export default function SignupPage() {
 
       if (teamError) throw teamError;
 
-      console.log('Created team:', teamResult);
-
       setStep('complete');
     } catch (err) {
       console.error('Signup error:', err);

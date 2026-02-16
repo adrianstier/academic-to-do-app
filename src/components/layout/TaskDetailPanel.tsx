@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -32,6 +33,8 @@ import {
   GitMerge,
   Loader2,
   Link2,
+  FlaskConical,
+  BookOpen,
 } from 'lucide-react';
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -44,9 +47,16 @@ import TagPicker from '@/components/TagPicker';
 import LinksSection from '@/components/LinksSection';
 import DependencyPicker from '@/components/task-detail/DependencyPicker';
 import type { TodoLink, TodoLinkType } from '@/types/tag';
+import type { ExperimentLog } from '@/types/experiment';
+import type { TaskReference, ZoteroReference } from '@/types/reference';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { logger } from '@/lib/logger';
 import { sanitizeTranscription } from '@/lib/sanitize';
+
+// Dynamic imports for experiment log and reference components (code-split)
+const ExperimentLogForm = dynamic(() => import('@/components/ExperimentLogForm'), { ssr: false });
+const ExperimentLogView = dynamic(() => import('@/components/ExperimentLogView'), { ssr: false });
+const ReferencePicker = dynamic(() => import('@/components/task-detail/ReferencePicker'), { ssr: false });
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TASK DETAIL PANEL
@@ -112,6 +122,84 @@ export default function TaskDetailPanel({
   const [depsBlocks, setDepsBlocks] = useState<TodoDependencyDisplay[]>([]);
   const [depsBlockedBy, setDepsBlockedBy] = useState<TodoDependencyDisplay[]>([]);
   const [showDependencies, setShowDependencies] = useState(true);
+
+  // Experiment Log state (localStorage-backed)
+  const [experimentLog, setExperimentLog] = useState<ExperimentLog | null>(null);
+  const [isEditingExperimentLog, setIsEditingExperimentLog] = useState(false);
+  const [showExperimentLog, setShowExperimentLog] = useState(false);
+
+  // References state (localStorage-backed)
+  const [linkedReferences, setLinkedReferences] = useState<TaskReference[]>([]);
+  const [showReferences, setShowReferences] = useState(false);
+
+  // Load experiment log from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`experimentLog:${task.id}`);
+      if (stored) {
+        setExperimentLog(JSON.parse(stored));
+      } else {
+        setExperimentLog(null);
+      }
+    } catch {
+      setExperimentLog(null);
+    }
+  }, [task.id]);
+
+  // Load references from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`references:${task.id}`);
+      if (stored) {
+        setLinkedReferences(JSON.parse(stored));
+      } else {
+        setLinkedReferences([]);
+      }
+    } catch {
+      setLinkedReferences([]);
+    }
+  }, [task.id]);
+
+  const handleSaveExperimentLog = useCallback((log: ExperimentLog) => {
+    setExperimentLog(log);
+    setIsEditingExperimentLog(false);
+    try {
+      localStorage.setItem(`experimentLog:${task.id}`, JSON.stringify(log));
+    } catch {
+      // localStorage may be full or unavailable
+    }
+  }, [task.id]);
+
+  const handleLinkReference = useCallback((ref: ZoteroReference, note?: string) => {
+    const newTaskRef: TaskReference = {
+      todo_id: task.id,
+      zotero_key: ref.key,
+      reference: ref,
+      linked_at: new Date().toISOString(),
+      note,
+    };
+    setLinkedReferences(prev => {
+      const updated = [...prev, newTaskRef];
+      try {
+        localStorage.setItem(`references:${task.id}`, JSON.stringify(updated));
+      } catch {
+        // localStorage may be full or unavailable
+      }
+      return updated;
+    });
+  }, [task.id]);
+
+  const handleUnlinkReference = useCallback((zoteroKey: string) => {
+    setLinkedReferences(prev => {
+      const updated = prev.filter(r => r.zotero_key !== zoteroKey);
+      try {
+        localStorage.setItem(`references:${task.id}`, JSON.stringify(updated));
+      } catch {
+        // localStorage may be full or unavailable
+      }
+      return updated;
+    });
+  }, [task.id]);
 
   // Fetch dependencies on mount / task change
   useEffect(() => {
@@ -894,6 +982,76 @@ export default function TaskDetailPanel({
                 {task.notes || 'Click to add notes...'}
               </button>
             )}
+          </CollapsibleSection>
+
+          {/* Experiment Log Section */}
+          <CollapsibleSection
+            title="Experiment Log"
+            icon={<FlaskConical className="w-4 h-4" />}
+            isOpen={showExperimentLog}
+            onToggle={() => setShowExperimentLog(!showExperimentLog)}
+            darkMode={darkMode}
+          >
+            {isEditingExperimentLog ? (
+              <ExperimentLogForm
+                todoId={task.id}
+                existingLog={experimentLog || undefined}
+                onSave={handleSaveExperimentLog}
+                onCancel={() => setIsEditingExperimentLog(false)}
+              />
+            ) : experimentLog ? (
+              <div>
+                <ExperimentLogView log={experimentLog} />
+                <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
+                  <button
+                    onClick={() => setIsEditingExperimentLog(true)}
+                    className={`
+                      flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
+                      transition-colors
+                      ${darkMode
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                      }
+                    `}
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    Edit Experiment Log
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsEditingExperimentLog(true)}
+                className={`
+                  w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg
+                  border border-dashed text-sm font-medium transition-colors
+                  ${darkMode
+                    ? 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/70 hover:bg-white/5'
+                    : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]/40 hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                  }
+                `}
+              >
+                <Plus className="w-4 h-4" />
+                Add Experiment Log
+              </button>
+            )}
+          </CollapsibleSection>
+
+          {/* References Section */}
+          <CollapsibleSection
+            title="References"
+            icon={<BookOpen className="w-4 h-4" />}
+            count={linkedReferences.length > 0 ? linkedReferences.length.toString() : undefined}
+            isOpen={showReferences}
+            onToggle={() => setShowReferences(!showReferences)}
+            darkMode={darkMode}
+          >
+            <ReferencePicker
+              todoId={task.id}
+              linkedReferences={linkedReferences}
+              onLinkReference={handleLinkReference}
+              onUnlinkReference={handleUnlinkReference}
+            />
           </CollapsibleSection>
 
           {/* Transcription Section (if available) */}

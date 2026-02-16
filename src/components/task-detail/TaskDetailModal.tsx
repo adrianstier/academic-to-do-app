@@ -1,15 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
+import { FlaskConical, BookOpen, Edit3, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { Modal } from '@/components/ui/Modal';
 import { MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
 import type { TodoDependencyDisplay } from '@/types/todo';
+import type { ExperimentLog } from '@/types/experiment';
+import type { TaskReference, ZoteroReference } from '@/types/reference';
 import ContentToSubtasksImporter from '@/components/ContentToSubtasksImporter';
 import AttachmentUpload from '@/components/AttachmentUpload';
 import DependencyPicker from './DependencyPicker';
 import { useTodoStore } from '@/store/todoStore';
 import { fetchWithCsrf } from '@/lib/csrf';
+
+// Dynamic imports for experiment log and reference components (code-split)
+const ExperimentLogForm = dynamic(() => import('@/components/ExperimentLogForm'), { ssr: false });
+const ExperimentLogView = dynamic(() => import('@/components/ExperimentLogView'), { ssr: false });
+const ReferencePicker = dynamic(() => import('./ReferencePicker'), { ssr: false });
 
 const sectionStagger = {
   hidden: { opacity: 0, y: 4 },
@@ -68,6 +78,86 @@ export default function TaskDetailModal({
   const setDependencies = useTodoStore(s => s.setDependencies);
   const [depsBlocks, setDepsBlocks] = useState<TodoDependencyDisplay[]>([]);
   const [depsBlockedBy, setDepsBlockedBy] = useState<TodoDependencyDisplay[]>([]);
+
+  // Experiment Log state (localStorage-backed)
+  const [experimentLog, setExperimentLog] = useState<ExperimentLog | null>(null);
+  const [isEditingExperimentLog, setIsEditingExperimentLog] = useState(false);
+  const [showExperimentLog, setShowExperimentLog] = useState(false);
+
+  // References state (localStorage-backed)
+  const [linkedReferences, setLinkedReferences] = useState<TaskReference[]>([]);
+  const [showReferences, setShowReferences] = useState(false);
+
+  // Load experiment log from localStorage
+  useEffect(() => {
+    if (!isOpen) return;
+    try {
+      const stored = localStorage.getItem(`experimentLog:${todo.id}`);
+      if (stored) {
+        setExperimentLog(JSON.parse(stored));
+      } else {
+        setExperimentLog(null);
+      }
+    } catch {
+      setExperimentLog(null);
+    }
+  }, [todo.id, isOpen]);
+
+  // Load references from localStorage
+  useEffect(() => {
+    if (!isOpen) return;
+    try {
+      const stored = localStorage.getItem(`references:${todo.id}`);
+      if (stored) {
+        setLinkedReferences(JSON.parse(stored));
+      } else {
+        setLinkedReferences([]);
+      }
+    } catch {
+      setLinkedReferences([]);
+    }
+  }, [todo.id, isOpen]);
+
+  const handleSaveExperimentLog = useCallback((log: ExperimentLog) => {
+    setExperimentLog(log);
+    setIsEditingExperimentLog(false);
+    try {
+      localStorage.setItem(`experimentLog:${todo.id}`, JSON.stringify(log));
+    } catch {
+      // localStorage may be full or unavailable
+    }
+  }, [todo.id]);
+
+  const handleLinkReference = useCallback((ref: ZoteroReference, note?: string) => {
+    const newTaskRef: TaskReference = {
+      todo_id: todo.id,
+      zotero_key: ref.key,
+      reference: ref,
+      linked_at: new Date().toISOString(),
+      note,
+    };
+    setLinkedReferences(prev => {
+      const updated = [...prev, newTaskRef];
+      try {
+        localStorage.setItem(`references:${todo.id}`, JSON.stringify(updated));
+      } catch {
+        // localStorage may be full or unavailable
+      }
+      return updated;
+    });
+  }, [todo.id]);
+
+  const handleUnlinkReference = useCallback((zoteroKey: string) => {
+    setLinkedReferences(prev => {
+      const updated = prev.filter(r => r.zotero_key !== zoteroKey);
+      try {
+        localStorage.setItem(`references:${todo.id}`, JSON.stringify(updated));
+      } catch {
+        // localStorage may be full or unavailable
+      }
+      return updated;
+    });
+  }, [todo.id]);
 
   // Fetch dependencies when modal opens
   useEffect(() => {
@@ -256,10 +346,124 @@ export default function TaskDetailModal({
               </motion.div>
             )}
 
+            {/* Experiment Log - Visual card with staggered animation */}
+            <motion.div
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              variants={sectionStagger}
+              className="bg-[var(--surface-2)]/30 rounded-xl p-4 border border-[var(--border)]/50"
+            >
+              <button
+                onClick={() => setShowExperimentLog(!showExperimentLog)}
+                className="w-full flex items-center gap-2 text-sm font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+              >
+                <FlaskConical className="w-4 h-4 text-[var(--text-muted)]" />
+                <span className="flex-1 text-left">Experiment Log</span>
+                {showExperimentLog ? (
+                  <ChevronUp className="w-4 h-4 text-[var(--text-muted)]" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showExperimentLog && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-3">
+                      {isEditingExperimentLog ? (
+                        <ExperimentLogForm
+                          todoId={todo.id}
+                          existingLog={experimentLog || undefined}
+                          onSave={handleSaveExperimentLog}
+                          onCancel={() => setIsEditingExperimentLog(false)}
+                        />
+                      ) : experimentLog ? (
+                        <div>
+                          <ExperimentLogView log={experimentLog} />
+                          <div className="mt-3 pt-3 border-t border-[var(--border)]/30">
+                            <button
+                              onClick={() => setIsEditingExperimentLog(true)}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              Edit Experiment Log
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setIsEditingExperimentLog(true)}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--accent)]/40 hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Experiment Log
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* References - Visual card with staggered animation */}
+            <motion.div
+              custom={2}
+              initial="hidden"
+              animate="visible"
+              variants={sectionStagger}
+              className="bg-[var(--surface-2)]/30 rounded-xl p-4 border border-[var(--border)]/50"
+            >
+              <button
+                onClick={() => setShowReferences(!showReferences)}
+                className="w-full flex items-center gap-2 text-sm font-medium text-[var(--foreground)] hover:text-[var(--accent)] transition-colors"
+              >
+                <BookOpen className="w-4 h-4 text-[var(--text-muted)]" />
+                <span className="flex-1 text-left">References</span>
+                {linkedReferences.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-[var(--surface-2)] text-[var(--text-muted)]">
+                    {linkedReferences.length}
+                  </span>
+                )}
+                {showReferences ? (
+                  <ChevronUp className="w-4 h-4 text-[var(--text-muted)]" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showReferences && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-3">
+                      <ReferencePicker
+                        todoId={todo.id}
+                        linkedReferences={linkedReferences}
+                        onLinkReference={handleLinkReference}
+                        onUnlinkReference={handleUnlinkReference}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
             {/* Subtasks - Visual card with staggered animation */}
             {onUpdateSubtasks && (
               <motion.div
-                custom={1}
+                custom={3}
                 initial="hidden"
                 animate="visible"
                 variants={sectionStagger}
@@ -282,7 +486,7 @@ export default function TaskDetailModal({
 
             {/* Dependencies - Visual card with staggered animation */}
             <motion.div
-              custom={2}
+              custom={4}
               initial="hidden"
               animate="visible"
               variants={sectionStagger}
@@ -302,7 +506,7 @@ export default function TaskDetailModal({
             {/* Attachments - Visual card with staggered animation */}
             {onUpdateAttachments && (
               <motion.div
-                custom={3}
+                custom={5}
                 initial="hidden"
                 animate="visible"
                 variants={sectionStagger}

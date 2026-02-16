@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -14,16 +15,23 @@ import {
   X,
   Activity,
   Circle,
+  DollarSign,
+  Pencil,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTodoStore } from '@/store/todoStore';
 import { fetchWithCsrf } from '@/lib/csrf';
 import { logger } from '@/lib/logger';
 import type { Project, ProjectStatus, CustomStatus } from '@/types/project';
+import type { ProjectBudget, BudgetExpense } from '@/types/budget';
 import ProjectStats from './dashboard/ProjectStats';
 import type { ProjectStatsData } from './dashboard/ProjectStats';
 import MilestoneTracker from './dashboard/MilestoneTracker';
 import StatusWorkflowEditor from './task-detail/StatusWorkflowEditor';
+
+// Dynamic imports for budget components
+const BudgetTracker = dynamic(() => import('./BudgetTracker'), { ssr: false });
+const BudgetSetupForm = dynamic(() => import('./BudgetSetupForm'), { ssr: false });
 
 // ===================================================================
 // PROJECT DASHBOARD
@@ -42,6 +50,30 @@ const PRIORITY_DOT_COLORS: Record<string, string> = {
   medium: 'bg-[var(--brand-blue)]',
   low: 'bg-[var(--text-muted)]',
 };
+
+type DetailTab = 'overview' | 'budget';
+
+// ===================================================================
+// Budget localStorage helpers
+// ===================================================================
+
+function loadBudgetFromStorage(projectId: string): ProjectBudget | null {
+  try {
+    const raw = localStorage.getItem(`projectBudget:${projectId}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as ProjectBudget;
+  } catch {
+    return null;
+  }
+}
+
+function saveBudgetToStorage(projectId: string, budget: ProjectBudget): void {
+  try {
+    localStorage.setItem(`projectBudget:${projectId}`, JSON.stringify(budget));
+  } catch (err) {
+    logger.error('Failed to save budget to localStorage', err, { component: 'ProjectDashboard' });
+  }
+}
 
 interface ProjectWithTaskCount extends Project {
   task_count?: number;
@@ -80,6 +112,9 @@ export default function ProjectDashboard() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [projectStats, setProjectStats] = useState<ProjectStatsData | null>(null);
+  const [detailTab, setDetailTab] = useState<DetailTab>('overview');
+  const [projectBudget, setProjectBudget] = useState<ProjectBudget | null>(null);
+  const [budgetEditMode, setBudgetEditMode] = useState(false);
 
   // Fetch projects
   const fetchProjects = useCallback(async () => {
@@ -170,6 +205,20 @@ export default function ProjectDashboard() {
     return counts;
   }, [todos]);
 
+  // Budget summaries for project cards (loaded from localStorage)
+  const projectBudgetSummaries = useMemo(() => {
+    const summaries: Record<string, { spent: number; total: number; pct: number }> = {};
+    for (const project of projects) {
+      const saved = loadBudgetFromStorage(project.id);
+      if (saved && saved.total_budget > 0) {
+        const totalSpent = saved.categories.reduce((s, c) => s + c.spent, 0);
+        const pct = Math.round((totalSpent / saved.total_budget) * 100);
+        summaries[project.id] = { spent: totalSpent, total: saved.total_budget, pct };
+      }
+    }
+    return summaries;
+  }, [projects]);
+
   // Create project handler
   const handleCreateProject = useCallback(async () => {
     if (!createForm.name.trim()) return;
@@ -207,16 +256,90 @@ export default function ProjectDashboard() {
   const handleSelectProject = useCallback((project: Project) => {
     setSelectedProject(project);
     setProjectStats(null); // Reset stats when switching projects
+    setDetailTab('overview');
+    setBudgetEditMode(false);
+    // Load budget from localStorage
+    const saved = loadBudgetFromStorage(project.id);
+    setProjectBudget(saved);
   }, []);
 
   const handleBack = useCallback(() => {
     setSelectedProject(null);
     setProjectStats(null);
+    setDetailTab('overview');
+    setProjectBudget(null);
+    setBudgetEditMode(false);
   }, []);
 
   const handleStatsLoaded = useCallback((stats: ProjectStatsData) => {
     setProjectStats(stats);
   }, []);
+
+  // --- Budget handlers ---
+
+  const handleSaveBudget = useCallback((budget: ProjectBudget) => {
+    if (!selectedProject) return;
+    saveBudgetToStorage(selectedProject.id, budget);
+    setProjectBudget(budget);
+    setBudgetEditMode(false);
+  }, [selectedProject]);
+
+  const handleUpdateBudget = useCallback((budget: ProjectBudget) => {
+    if (!selectedProject) return;
+    saveBudgetToStorage(selectedProject.id, budget);
+    setProjectBudget(budget);
+  }, [selectedProject]);
+
+  const handleAddExpense = useCallback((expense: Omit<BudgetExpense, 'id' | 'created_at'>) => {
+    if (!selectedProject || !projectBudget) return;
+
+    const newExpense: BudgetExpense = {
+      ...expense,
+      id: `exp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      created_at: new Date().toISOString(),
+    };
+
+    // Update category spent amount
+    const updatedCategories = projectBudget.categories.map(cat => {
+      if (cat.id === newExpense.category_id) {
+        return { ...cat, spent: cat.spent + newExpense.amount };
+      }
+      return cat;
+    });
+
+    const updatedBudget: ProjectBudget = {
+      ...projectBudget,
+      categories: updatedCategories,
+      expenses: [...projectBudget.expenses, newExpense],
+    };
+
+    saveBudgetToStorage(selectedProject.id, updatedBudget);
+    setProjectBudget(updatedBudget);
+  }, [selectedProject, projectBudget]);
+
+  const handleDeleteExpense = useCallback((expenseId: string) => {
+    if (!selectedProject || !projectBudget) return;
+
+    const expenseToDelete = projectBudget.expenses.find(e => e.id === expenseId);
+    if (!expenseToDelete) return;
+
+    // Update category spent amount
+    const updatedCategories = projectBudget.categories.map(cat => {
+      if (cat.id === expenseToDelete.category_id) {
+        return { ...cat, spent: Math.max(0, cat.spent - expenseToDelete.amount) };
+      }
+      return cat;
+    });
+
+    const updatedBudget: ProjectBudget = {
+      ...projectBudget,
+      categories: updatedCategories,
+      expenses: projectBudget.expenses.filter(e => e.id !== expenseId),
+    };
+
+    saveBudgetToStorage(selectedProject.id, updatedBudget);
+    setProjectBudget(updatedBudget);
+  }, [selectedProject, projectBudget]);
 
   // Save custom workflow statuses for a project
   const handleSaveCustomStatuses = useCallback(async (projectId: string, customStatuses: CustomStatus[]) => {
@@ -370,134 +493,236 @@ export default function ProjectDashboard() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-5 sm:px-6 py-6 space-y-6">
-          {/* Stats with category/priority/assignee breakdowns */}
-          <ProjectStats projectId={selectedProject.id} onStatsLoaded={handleStatsLoaded} />
-
-          {/* Custom Status Workflow */}
-          <div className={`rounded-xl border overflow-hidden shadow-sm ${
-            darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-white border-[var(--border)]'
-          }`}>
-            <div className="p-5">
-              <StatusWorkflowEditor
-                statuses={selectedProject.custom_statuses || []}
-                onChange={(statuses) => handleSaveCustomStatuses(selectedProject.id, statuses)}
-                darkMode={darkMode}
-              />
+        {/* Tab Bar */}
+        <div className={`border-b ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}`}>
+          <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-5 sm:px-6">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => { setDetailTab('overview'); setBudgetEditMode(false); }}
+                className={`
+                  flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                  ${detailTab === 'overview'
+                    ? `border-[var(--brand-blue)] ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`
+                    : `border-transparent ${darkMode ? 'text-white/50 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--foreground)]'}`
+                  }
+                `}
+              >
+                <Activity className="w-4 h-4" />
+                Overview
+              </button>
+              <button
+                onClick={() => setDetailTab('budget')}
+                className={`
+                  flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                  ${detailTab === 'budget'
+                    ? `border-[var(--brand-blue)] ${darkMode ? 'text-white' : 'text-[var(--foreground)]'}`
+                    : `border-transparent ${darkMode ? 'text-white/50 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--foreground)]'}`
+                  }
+                `}
+              >
+                <DollarSign className="w-4 h-4" />
+                Budget
+                {projectBudget && (() => {
+                  const totalSpent = projectBudget.categories.reduce((s, c) => s + c.spent, 0);
+                  const pct = projectBudget.total_budget > 0
+                    ? Math.round((totalSpent / projectBudget.total_budget) * 100)
+                    : 0;
+                  return (
+                    <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+                      pct > 80 ? 'bg-[var(--danger)]/10 text-[var(--danger)]'
+                        : pct > 60 ? 'bg-[var(--warning)]/10 text-[var(--warning)]'
+                        : 'bg-[var(--success)]/10 text-[var(--success)]'
+                    }`}>
+                      {pct}%
+                    </span>
+                  );
+                })()}
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Two-column layout: Milestones + Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Milestones */}
-            <MilestoneTracker projectId={selectedProject.id} />
+        {/* Content */}
+        <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-5 sm:px-6 py-6 space-y-6">
+          {detailTab === 'overview' && (
+            <>
+              {/* Stats with category/priority/assignee breakdowns */}
+              <ProjectStats projectId={selectedProject.id} onStatsLoaded={handleStatsLoaded} />
 
-            {/* Recent Activity Feed */}
-            <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
-              <div className="px-5 pt-5 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">
-                    <Activity className="w-4 h-4 text-[var(--brand-blue)] dark:text-[var(--brand-sky)]" />
+              {/* Custom Status Workflow */}
+              <div className={`rounded-xl border overflow-hidden shadow-sm ${
+                darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-white border-[var(--border)]'
+              }`}>
+                <div className="p-5">
+                  <StatusWorkflowEditor
+                    statuses={selectedProject.custom_statuses || []}
+                    onChange={(statuses) => handleSaveCustomStatuses(selectedProject.id, statuses)}
+                    darkMode={darkMode}
+                  />
+                </div>
+              </div>
+
+              {/* Two-column layout: Milestones + Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Milestones */}
+                <MilestoneTracker projectId={selectedProject.id} />
+
+                {/* Recent Activity Feed */}
+                <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+                  <div className="px-5 pt-5 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">
+                        <Activity className="w-4 h-4 text-[var(--brand-blue)] dark:text-[var(--brand-sky)]" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[var(--foreground)] dark:text-white text-sm">
+                          Recent Activity
+                        </h3>
+                        {recentActivity.length > 0 && (
+                          <p className="text-xs text-[var(--text-muted)] dark:text-white/50">
+                            Latest updates in this project
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-[var(--foreground)] dark:text-white text-sm">
-                      Recent Activity
-                    </h3>
-                    {recentActivity.length > 0 && (
-                      <p className="text-xs text-[var(--text-muted)] dark:text-white/50">
-                        Latest updates in this project
-                      </p>
+                  <div className="px-5 pb-5">
+                    {recentActivity.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Clock className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)] dark:text-white/30" />
+                        <p className="text-sm text-[var(--text-muted)] dark:text-white/50">
+                          No tasks in this project yet
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] dark:text-white/30 mt-1">
+                          Tasks will appear here as they are added
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {recentActivity.map((item) => {
+                          // Compare in local timezone: treat due_date as end-of-day local time
+                          const isOverdue = !item.completed && item.due_date && new Date(item.due_date + 'T23:59:59') < new Date();
+                          return (
+                            <div
+                              key={item.id}
+                              className={`
+                                flex items-start gap-3 px-3 py-2.5 rounded-lg
+                                transition-colors
+                                hover:bg-[var(--surface)] dark:hover:bg-white/5
+                              `}
+                            >
+                              {/* Status icon */}
+                              <div className="flex-shrink-0 mt-0.5">
+                                {item.completed ? (
+                                  <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
+                                ) : item.status === 'in_progress' ? (
+                                  <Clock className="w-4 h-4 text-[var(--warning)]" />
+                                ) : (
+                                  <Circle className="w-4 h-4 text-[var(--text-muted)] dark:text-white/30" />
+                                )}
+                              </div>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-sm truncate ${
+                                    item.completed
+                                      ? 'line-through text-[var(--text-muted)] dark:text-white/40'
+                                      : 'text-[var(--foreground)] dark:text-white'
+                                  }`}>
+                                    {item.text}
+                                  </span>
+                                  {/* Priority dot */}
+                                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                    PRIORITY_DOT_COLORS[item.priority] || PRIORITY_DOT_COLORS.medium
+                                  }`} />
+                                </div>
+
+                                {/* Metadata row */}
+                                <div className="flex items-center gap-3 mt-1">
+                                  {item.assigned_to && (
+                                    <span className="text-xs text-[var(--text-muted)] dark:text-white/40">
+                                      {item.assigned_to}
+                                    </span>
+                                  )}
+                                  {item.due_date && (
+                                    <span className={`text-xs ${
+                                      isOverdue
+                                        ? 'text-[var(--danger)] font-medium'
+                                        : 'text-[var(--text-muted)] dark:text-white/40'
+                                    }`}>
+                                      {isOverdue ? 'Overdue: ' : 'Due '}
+                                      {new Date(item.due_date).toLocaleDateString('en-US', {
+                                        month: 'short', day: 'numeric',
+                                      })}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Timestamp */}
+                              <span className="text-xs text-[var(--text-muted)] dark:text-white/30 flex-shrink-0 mt-0.5">
+                                {formatRelativeTime(item.updated_at)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 </div>
               </div>
-              <div className="px-5 pb-5">
-                {recentActivity.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Clock className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)] dark:text-white/30" />
-                    <p className="text-sm text-[var(--text-muted)] dark:text-white/50">
-                      No tasks in this project yet
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)] dark:text-white/30 mt-1">
-                      Tasks will appear here as they are added
-                    </p>
+            </>
+          )}
+
+          {detailTab === 'budget' && (
+            <>
+              {/* Budget Tab Content */}
+              {!projectBudget || budgetEditMode ? (
+                /* Show setup form when no budget exists or in edit mode */
+                <div className={`rounded-xl border overflow-hidden shadow-sm ${
+                  darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-white border-[var(--border)]'
+                }`}>
+                  <div className="p-5">
+                    <BudgetSetupForm
+                      projectId={selectedProject.id}
+                      existingBudget={projectBudget}
+                      onSave={handleSaveBudget}
+                      onCancel={projectBudget ? () => setBudgetEditMode(false) : undefined}
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-0.5">
-                    {recentActivity.map((item) => {
-                      // Compare in local timezone: treat due_date as end-of-day local time
-                      const isOverdue = !item.completed && item.due_date && new Date(item.due_date + 'T23:59:59') < new Date();
-                      return (
-                        <div
-                          key={item.id}
-                          className={`
-                            flex items-start gap-3 px-3 py-2.5 rounded-lg
-                            transition-colors
-                            hover:bg-[var(--surface)] dark:hover:bg-white/5
-                          `}
-                        >
-                          {/* Status icon */}
-                          <div className="flex-shrink-0 mt-0.5">
-                            {item.completed ? (
-                              <CheckCircle2 className="w-4 h-4 text-[var(--success)]" />
-                            ) : item.status === 'in_progress' ? (
-                              <Clock className="w-4 h-4 text-[var(--warning)]" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-[var(--text-muted)] dark:text-white/30" />
-                            )}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={`text-sm truncate ${
-                                item.completed
-                                  ? 'line-through text-[var(--text-muted)] dark:text-white/40'
-                                  : 'text-[var(--foreground)] dark:text-white'
-                              }`}>
-                                {item.text}
-                              </span>
-                              {/* Priority dot */}
-                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                                PRIORITY_DOT_COLORS[item.priority] || PRIORITY_DOT_COLORS.medium
-                              }`} />
-                            </div>
-
-                            {/* Metadata row */}
-                            <div className="flex items-center gap-3 mt-1">
-                              {item.assigned_to && (
-                                <span className="text-xs text-[var(--text-muted)] dark:text-white/40">
-                                  {item.assigned_to}
-                                </span>
-                              )}
-                              {item.due_date && (
-                                <span className={`text-xs ${
-                                  isOverdue
-                                    ? 'text-[var(--danger)] font-medium'
-                                    : 'text-[var(--text-muted)] dark:text-white/40'
-                                }`}>
-                                  {isOverdue ? 'Overdue: ' : 'Due '}
-                                  {new Date(item.due_date).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric',
-                                  })}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Timestamp */}
-                          <span className="text-xs text-[var(--text-muted)] dark:text-white/30 flex-shrink-0 mt-0.5">
-                            {formatRelativeTime(item.updated_at)}
-                          </span>
-                        </div>
-                      );
-                    })}
+                </div>
+              ) : (
+                /* Show budget tracker when budget exists */
+                <>
+                  {/* Edit Budget button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setBudgetEditMode(true)}
+                      className={`
+                        flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg
+                        transition-colors
+                        ${darkMode
+                          ? 'text-white/60 hover:text-white hover:bg-white/10 border border-white/10'
+                          : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] border border-[var(--border)]'
+                        }
+                      `}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Edit Budget
+                    </button>
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
+                  <BudgetTracker
+                    projectId={selectedProject.id}
+                    budget={projectBudget}
+                    onUpdateBudget={handleUpdateBudget}
+                    onAddExpense={handleAddExpense}
+                    onDeleteExpense={handleDeleteExpense}
+                  />
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     );
@@ -725,6 +950,37 @@ export default function ProjectDashboard() {
                         darkMode ? 'text-white/20' : 'text-[var(--border)]'
                       }`} />
                     </div>
+
+                    {/* Budget indicator */}
+                    {projectBudgetSummaries[project.id] && (() => {
+                      const bs = projectBudgetSummaries[project.id];
+                      const budgetColor = bs.pct > 80
+                        ? 'var(--danger)'
+                        : bs.pct > 60
+                          ? 'var(--warning)'
+                          : 'var(--success)';
+                      return (
+                        <div className="flex items-center gap-2 mt-2.5">
+                          <DollarSign className="w-3 h-3 flex-shrink-0" style={{ color: budgetColor }} />
+                          <div className="flex-1">
+                            <div className={`h-1 rounded-full overflow-hidden ${
+                              darkMode ? 'bg-white/10' : 'bg-[var(--surface-3)]'
+                            }`}>
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(bs.pct, 100)}%`,
+                                  backgroundColor: budgetColor,
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <span className="text-xs font-medium flex-shrink-0" style={{ color: budgetColor }}>
+                            {bs.pct}% spent
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </motion.button>
               );
