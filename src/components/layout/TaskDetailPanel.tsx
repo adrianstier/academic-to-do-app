@@ -90,6 +90,7 @@ export default function TaskDetailPanel({
   const [showAttachments, setShowAttachments] = useState(true);
   const [showNotes, setShowNotes] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Projects and Tags from store
   const storeProjects = useTodoStore(state => state.projects);
@@ -1187,24 +1188,55 @@ export default function TaskDetailPanel({
           ${darkMode ? 'border-white/10' : 'border-[var(--border)]'}
         `}
       >
-        <button
-          onClick={() => {
-            if (window.confirm('Are you sure you want to delete this task?')) {
-              onDelete(task.id);
-            }
-          }}
-          className={`
-            flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-            transition-colors
-            ${darkMode
-              ? 'text-red-400 hover:bg-red-500/10'
-              : 'text-[var(--danger)] hover:bg-[var(--danger-light)]'
-            }
-          `}
-        >
-          <Trash2 className="w-4 h-4" />
-          Delete
-        </button>
+        {showDeleteConfirm ? (
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${darkMode ? 'text-red-400' : 'text-[var(--danger)]'}`}>
+              Delete this task?
+            </span>
+            <button
+              onClick={() => {
+                onDelete(task.id);
+                setShowDeleteConfirm(false);
+              }}
+              className={`
+                px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                ${darkMode
+                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                  : 'bg-[var(--danger-light)] text-[var(--danger)] hover:bg-[var(--danger)]/20'
+                }
+              `}
+            >
+              Yes, delete
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className={`
+                px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                ${darkMode
+                  ? 'text-white/60 hover:text-white hover:bg-white/10'
+                  : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
+                }
+              `}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className={`
+              flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
+              transition-colors
+              ${darkMode
+                ? 'text-red-400 hover:bg-red-500/10'
+                : 'text-[var(--danger)] hover:bg-[var(--danger-light)]'
+              }
+            `}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </button>
+        )}
 
         <div className="flex items-center gap-2">
           <button

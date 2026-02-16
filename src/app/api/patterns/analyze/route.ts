@@ -131,7 +131,7 @@ Group similar tasks together and extract common subtask patterns. Only include p
         throw new Error('No JSON found in response');
       }
     } catch {
-      console.error('Failed to parse AI response:', responseText);
+      console.error('Failed to parse AI response:', responseText.substring(0, 200));
       return NextResponse.json(
         { error: 'Failed to parse AI analysis' },
         { status: 500 }

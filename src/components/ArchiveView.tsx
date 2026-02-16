@@ -104,6 +104,7 @@ export default function ArchiveView({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isRestoring, setIsRestoring] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: 'delete' | 'restore' | 'bulk_restore' | 'bulk_delete'; id?: string; count?: number } | null>(null);
   const [showStats, setShowStats] = useState(true);
 
   // Get completion timestamp for a todo
@@ -282,7 +283,10 @@ export default function ArchiveView({
   }, [onRestore]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm('Permanently delete this task? This cannot be undone.')) return;
+    setConfirmAction({ type: 'delete', id });
+  }, []);
+
+  const executeDelete = useCallback(async (id: string) => {
     setIsDeleting(id);
     try {
       await onDelete(id);
@@ -298,8 +302,10 @@ export default function ArchiveView({
 
   const handleBulkRestore = useCallback(async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Restore ${selectedIds.size} task(s) to active list?`)) return;
+    setConfirmAction({ type: 'bulk_restore', count: selectedIds.size });
+  }, [selectedIds.size]);
 
+  const executeBulkRestore = useCallback(async () => {
     for (const id of selectedIds) {
       try {
         await handleRestore(id);
@@ -311,8 +317,10 @@ export default function ArchiveView({
 
   const handleBulkDelete = useCallback(async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`Permanently delete ${selectedIds.size} task(s)? This cannot be undone.`)) return;
+    setConfirmAction({ type: 'bulk_delete', count: selectedIds.size });
+  }, [selectedIds.size]);
 
+  const executeBulkDelete = useCallback(async () => {
     for (const id of selectedIds) {
       setIsDeleting(id);
       try {
@@ -844,6 +852,55 @@ export default function ArchiveView({
           todo={selectedTodo}
           onClose={() => setSelectedTodo(null)}
         />
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmAction(null)} />
+          <div className="relative rounded-xl shadow-xl p-6 bg-[var(--surface)] border border-[var(--border)] max-w-sm w-full">
+            <h3 id="confirm-title" className="text-base font-semibold text-[var(--foreground)] mb-2">
+              {confirmAction.type === 'delete' && 'Delete task permanently?'}
+              {confirmAction.type === 'bulk_delete' && `Delete ${confirmAction.count} task(s) permanently?`}
+              {confirmAction.type === 'bulk_restore' && `Restore ${confirmAction.count} task(s)?`}
+            </h3>
+            <p className="text-sm text-[var(--text-muted)] mb-5">
+              {confirmAction.type === 'delete' && 'This cannot be undone.'}
+              {confirmAction.type === 'bulk_delete' && 'This cannot be undone.'}
+              {confirmAction.type === 'bulk_restore' && 'These tasks will be moved back to the active list.'}
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const action = confirmAction;
+                  setConfirmAction(null);
+                  if (action.type === 'delete' && action.id) {
+                    await executeDelete(action.id);
+                  } else if (action.type === 'bulk_delete') {
+                    await executeBulkDelete();
+                  } else if (action.type === 'bulk_restore') {
+                    await executeBulkRestore();
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                  confirmAction.type === 'bulk_restore'
+                    ? 'bg-[var(--accent)] hover:bg-[var(--accent)]/90'
+                    : 'bg-red-500 hover:bg-red-600'
+                }`}
+              >
+                {confirmAction.type === 'delete' && 'Delete'}
+                {confirmAction.type === 'bulk_delete' && 'Delete all'}
+                {confirmAction.type === 'bulk_restore' && 'Restore all'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

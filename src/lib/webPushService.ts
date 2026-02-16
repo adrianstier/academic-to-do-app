@@ -55,7 +55,6 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!isPushSupported()) {
-    console.log('Push notifications not supported in this browser');
     return null;
   }
 
@@ -67,7 +66,6 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     // Wait for the service worker to be ready
     await navigator.serviceWorker.ready;
 
-    console.log('Service worker registered successfully');
     return registration;
   } catch (error) {
     console.error('Service worker registration failed:', error);
@@ -106,7 +104,6 @@ export async function subscribeToPush(
     // Check for existing subscription
     const existingSubscription = await registration.pushManager.getSubscription();
     if (existingSubscription) {
-      console.log('Returning existing push subscription');
       return existingSubscription;
     }
 
@@ -116,7 +113,6 @@ export async function subscribeToPush(
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
     });
 
-    console.log('Push subscription created successfully');
     return subscription;
   } catch (error) {
     console.error('Push subscription failed:', error);
@@ -134,7 +130,6 @@ export async function unsubscribeFromPush(
     const subscription = await registration.pushManager.getSubscription();
     if (subscription) {
       await subscription.unsubscribe();
-      console.log('Unsubscribed from push notifications');
       return true;
     }
     return false;

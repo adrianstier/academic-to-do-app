@@ -48,13 +48,6 @@ export async function sendTaskAssignmentNotification(
 ): Promise<{ success: boolean; error?: string }> {
   const { taskId, taskText, assignedTo, assignedBy, dueDate, priority, subtasks, notes } = options;
 
-  console.log('[TaskNotification] sendTaskAssignmentNotification called:', {
-    taskId,
-    taskText: taskText?.substring(0, 50),
-    assignedTo,
-    assignedBy,
-  });
-
   // Input validation
   if (!taskId || !taskId.trim()) {
     return { success: false, error: 'taskId is required' };
@@ -87,11 +80,8 @@ export async function sendTaskAssignmentNotification(
 
   // Don't notify if self-assigned
   if (assignedTo === assignedBy) {
-    console.log('[TaskNotification] Skipping - self-assigned (assignedTo === assignedBy)');
     return { success: true };
   }
-
-  console.log('[TaskNotification] Proceeding to send notification');
 
   // Build the rich task card notification message
   const message = buildTaskCardMessage({
@@ -105,13 +95,6 @@ export async function sendTaskAssignmentNotification(
   });
 
   try {
-    console.log('[TaskNotification] Inserting message into database:', {
-      created_by: SYSTEM_SENDER,
-      related_todo_id: taskId,
-      recipient: assignedTo,
-      messageLength: message.length,
-    });
-
     const { data, error } = await supabase.from('messages').insert({
       id: uuidv4(),
       text: message,
@@ -127,7 +110,6 @@ export async function sendTaskAssignmentNotification(
       return { success: false, error: error.message };
     }
 
-    console.log('[TaskNotification] Message inserted successfully:', data);
     return { success: true };
   } catch (err) {
     console.error('[TaskNotification] Exception occurred:', err);

@@ -319,3 +319,70 @@ export function DashboardModalSkeleton({ darkMode = true }: SkeletonProps) {
     </div>
   );
 }
+
+/**
+ * Loading skeleton for CalendarView
+ * Displays a calendar-like grid with animated placeholder blocks
+ */
+export function CalendarSkeleton() {
+  const pulseClass = 'bg-[var(--surface-2)]';
+  const borderClass = 'border-[var(--border)]';
+
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <div className={`flex flex-col h-full bg-[var(--surface-2)] rounded-xl border ${borderClass} overflow-hidden`}>
+      {/* Header skeleton */}
+      <div className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b ${borderClass} bg-[var(--surface)]`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-lg ${pulseClass} animate-pulse`} />
+          <div className={`h-6 w-40 ${pulseClass} rounded animate-pulse`} />
+          <div className={`w-8 h-8 rounded-lg ${pulseClass} animate-pulse`} />
+          <div className={`h-7 w-16 rounded-lg ${pulseClass} animate-pulse`} />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`h-8 w-20 rounded-lg ${pulseClass} animate-pulse`} />
+          <div className={`h-8 w-24 rounded-lg ${pulseClass} animate-pulse`} />
+        </div>
+      </div>
+
+      {/* Calendar grid */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Weekday headers */}
+        <div className={`grid grid-cols-7 border-b ${borderClass} bg-[var(--surface)]`}>
+          {weekdays.map((day) => (
+            <div key={day} className="px-2 py-2 text-center text-xs font-medium text-[var(--text-muted)]">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar rows (5 weeks) */}
+        <div className="flex-1 grid grid-rows-5">
+          {[0, 1, 2, 3, 4].map((row) => (
+            <div key={row} className={`grid grid-cols-7 border-b ${borderClass}`}>
+              {[0, 1, 2, 3, 4, 5, 6].map((col) => {
+                const hasTask = (row + col) % 3 === 0 || (row + col) % 5 === 0;
+                const hasTwoTasks = (row * 7 + col) % 7 === 2;
+                return (
+                  <div
+                    key={col}
+                    className={`p-1.5 border-r ${borderClass} min-h-[60px] flex flex-col gap-1`}
+                  >
+                    <div className={`h-4 w-5 rounded ${pulseClass} animate-pulse self-end`} />
+                    {hasTask && (
+                      <div className={`h-4 w-full rounded ${pulseClass} animate-pulse mt-0.5`} />
+                    )}
+                    {hasTwoTasks && (
+                      <div className={`h-4 w-3/4 rounded ${pulseClass} animate-pulse`} />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

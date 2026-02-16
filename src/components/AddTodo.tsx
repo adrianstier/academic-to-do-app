@@ -280,7 +280,9 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
 
   const toggleRecording = () => {
     if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in your browser. Try Chrome or Edge.');
+      toast.warning('Speech recognition is not supported in your browser', {
+        description: 'Try using Chrome or Edge for voice input.',
+      });
       return;
     }
 

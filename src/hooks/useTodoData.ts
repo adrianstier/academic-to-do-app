@@ -30,6 +30,8 @@ export function useTodoData(currentUser: AuthUser) {
     setConnected,
     setError,
     setShowWelcomeBack,
+    setProjects,
+    setTags,
     todos,
   } = useTodoStore();
 
@@ -71,6 +73,34 @@ export function useTodoData(currentUser: AuthUser) {
     setLoading(false);
   }, [setTodos, setUsers, setUsersWithColors, setLoading, setError]);
 
+  // Fetch projects into store
+  const fetchProjects = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setProjects(data);
+    } else if (error) {
+      logger.error('Error fetching projects', error, { component: 'useTodoData' });
+    }
+  }, [setProjects]);
+
+  // Fetch tags into store
+  const fetchTags = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('tags')
+      .select('*')
+      .order('name');
+
+    if (!error && data) {
+      setTags(data);
+    } else if (error) {
+      logger.error('Error fetching tags', error, { component: 'useTodoData' });
+    }
+  }, [setTags]);
+
   // Setup real-time subscription
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -82,7 +112,7 @@ export function useTodoData(currentUser: AuthUser) {
     let isMounted = true;
 
     const init = async () => {
-      await fetchTodos();
+      await Promise.all([fetchTodos(), fetchProjects(), fetchTags()]);
       if (isMounted) {
         if (shouldShowWelcomeNotification(currentUser)) {
           setShowWelcomeBack(true);
@@ -92,7 +122,8 @@ export function useTodoData(currentUser: AuthUser) {
 
     init();
 
-    const channel = supabase
+    // Real-time channel for todos
+    const todosChannel = supabase
       .channel('todos-channel')
       .on(
         'postgres_changes',
@@ -131,11 +162,53 @@ export function useTodoData(currentUser: AuthUser) {
         if (isMounted) setConnected(status === 'SUBSCRIBED');
       });
 
+    // Real-time channel for projects — refetch on any change
+    const projectsChannel = supabase
+      .channel('projects-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        () => {
+          if (!isMounted) return;
+          fetchProjects();
+        }
+      )
+      .subscribe();
+
+    // Real-time channel for tags — refetch on any change
+    const tagsChannel = supabase
+      .channel('tags-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tags' },
+        () => {
+          if (!isMounted) return;
+          fetchTags();
+        }
+      )
+      .subscribe();
+
+    // Real-time channel for todo_tags junction — refetch todos when tag assignments change
+    const todoTagsChannel = supabase
+      .channel('todo-tags-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'todo_tags' },
+        () => {
+          if (!isMounted) return;
+          fetchTodos();
+        }
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
-      supabase.removeChannel(channel);
+      supabase.removeChannel(todosChannel);
+      supabase.removeChannel(projectsChannel);
+      supabase.removeChannel(tagsChannel);
+      supabase.removeChannel(todoTagsChannel);
     };
-  }, [fetchTodos, currentUser, setShowWelcomeBack, setConnected, setError, setLoading, addTodoToStore, updateTodoInStore, deleteTodoFromStore]);
+  }, [fetchTodos, fetchProjects, fetchTags, currentUser, setShowWelcomeBack, setConnected, setError, setLoading, addTodoToStore, updateTodoInStore, deleteTodoFromStore]);
 
   // Create a new todo
   const createTodo = useCallback(async (

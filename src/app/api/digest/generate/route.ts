@@ -485,7 +485,6 @@ export async function POST(request: NextRequest) {
             });
 
           if (insertError) {
-            console.error('Digest storage error details:', JSON.stringify(insertError, null, 2));
             logger.error('Failed to store digest', insertError, {
               component: 'DigestGenerate',
               errorCode: insertError.code,

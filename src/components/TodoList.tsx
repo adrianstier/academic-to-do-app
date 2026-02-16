@@ -13,6 +13,7 @@ import KanbanBoard from './KanbanBoard';
 import ManuscriptPipelineView from './ManuscriptPipelineView';
 import { TaskDetailModal } from './task-detail';
 import { logger } from '@/lib/logger';
+import { useToast } from './ui/Toast';
 import { useTodoStore, isDueToday, isOverdue, priorityOrder as _priorityOrder, hydrateFocusMode } from '@/store/todoStore';
 import { useTodoData, useFilters, useBulkActions, useIsDesktopWide, useEscapeKey, useTodoModals, useFocusTrap } from '@/hooks';
 import {
@@ -68,22 +69,9 @@ import {
   ChatPanelSkeleton,
   StrategicDashboardSkeleton,
   ActivityFeedSkeleton,
+  CalendarSkeleton,
   // Note: WeeklyProgressChartSkeleton moved to MainApp.tsx
 } from './LoadingSkeletons';
-
-// Lazy load secondary features for better initial load performance
-// These components are not needed immediately on page load
-// NOTE: FloatingChat removed - Chat is now accessible via navigation sidebar
-// const FloatingChat = dynamic(() => import('./FloatingChat'), {
-//   ssr: false,
-//   loading: () => null,
-// });
-
-// NOTE: UtilitySidebar removed - navigation now in AppShell sidebar
-// const UtilitySidebar = dynamic(() => import('./UtilitySidebar'), {
-//   ssr: false,
-//   loading: () => <div className="w-[280px] bg-[var(--surface)] animate-pulse" />,
-// });
 
 const ChatPanel = dynamic(() => import('./ChatPanel'), {
   ssr: false,
@@ -102,7 +90,7 @@ const ActivityFeed = dynamic(() => import('./ActivityFeed'), {
 
 const CalendarView = dynamic(
   () => import('@/components/calendar/CalendarView').then(m => ({ default: m.default })),
-  { ssr: false, loading: () => <div className="flex items-center justify-center py-20 text-[var(--text-muted)]">Loading calendar...</div> }
+  { ssr: false, loading: () => <CalendarSkeleton /> }
 );
 
 // Note: WeeklyProgressChart moved to MainApp.tsx
@@ -138,13 +126,11 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
   const userName = currentUser.name;
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
+  const toast = useToast();
   const canViewArchive = currentUser.role === 'admin' || ['derrick', 'adrian'].includes(userName.toLowerCase());
 
   // Get navigation state from AppShell context
   const { activeView, setActiveView } = useAppShell();
-
-  // NOTE: isWideDesktop removed - no longer using UtilitySidebar or conditional chat layouts
-  // const isWideDesktop = useIsDesktopWide(1280);
 
   // Core data from Zustand store (managed by useTodoData hook)
   const {
@@ -1532,7 +1518,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
       if (updateError) {
         logger.error('Error updating merged todo', updateError, { component: 'TodoList' });
-        alert('Failed to merge tasks. Please try again.');
+        toast.error('Failed to merge tasks', { description: 'Please try again.' });
         setMergingState(false);
         return;
       }
@@ -1545,7 +1531,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
 
       if (deleteError) {
         logger.error('Error deleting merged todos', deleteError, { component: 'TodoList' });
-        alert('Merge partially failed. Refreshing...');
+        toast.error('Merge partially failed', { description: 'Refreshing task list...' });
         refreshTodos();
         setMergingState(false);
         return;
@@ -1581,7 +1567,7 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
       closeMergeModal();
     } catch (error) {
       logger.error('Error during merge', error, { component: 'TodoList' });
-      alert('An unexpected error occurred. Please try again.');
+      toast.error('An unexpected error occurred', { description: 'Please try again.' });
       refreshTodos();
     } finally {
       setMergingState(false);
@@ -1714,9 +1700,6 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
         flex transition-all duration-300 ease-out min-h-[calc(100vh-72px)]
         ${focusMode ? '' : ''}
       `}>
-        {/* NOTE: UtilitySidebar removed - navigation now via AppShell sidebar
-            The left sidebar in NavigationSidebar handles quick filters and navigation */}
-
       {/* Main */}
       <main id="main-content" className="flex-1 min-w-0 mx-auto px-4 sm:px-6 py-6 w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl">
         {/* Context label when filtered - hidden in focus mode */}

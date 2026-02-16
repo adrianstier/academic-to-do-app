@@ -7,6 +7,7 @@ import { shouldShowDailyDashboard, markDailyDashboardShown } from '@/lib/dashboa
 import { DashboardModalSkeleton, ChatPanelSkeleton, AIInboxSkeleton, WeeklyProgressChartSkeleton } from './LoadingSkeletons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, Todo, QuickFilter, ActivityLogEntry } from '@/types/todo';
+import { AIInboxItem } from './views/AIInbox';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { AppShell, useAppShell, ActiveView } from './layout';
@@ -102,6 +103,10 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
   // Track which task to auto-expand when navigating from dashboard/notifications
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
+  // AI Inbox state
+  const [aiInboxItems, setAiInboxItems] = useState<AIInboxItem[]>([]);
+  const [aiInboxLoading, setAiInboxLoading] = useState(false);
+
   // Fetch todos
   useEffect(() => {
     const fetchData = async () => {
@@ -155,6 +160,68 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     return () => {
       supabase.removeChannel(channel);
     };
+  }, []);
+
+  // Fetch AI inbox suggestions from the patterns API
+  const fetchAISuggestions = useCallback(async () => {
+    setAiInboxLoading(true);
+    try {
+      const res = await fetch('/api/patterns/suggestions');
+      if (!res.ok) {
+        logger.error('Failed to fetch AI suggestions', new Error(`HTTP ${res.status}`), { component: 'MainApp' });
+        return;
+      }
+      const data = await res.json();
+      const patterns = data.patterns || {};
+      const items: AIInboxItem[] = [];
+
+      for (const [category, patternList] of Object.entries(patterns)) {
+        if (!Array.isArray(patternList)) continue;
+        for (const pattern of patternList) {
+          items.push({
+            id: pattern.id || `suggestion-${items.length}`,
+            type: 'document' as const,
+            source: {
+              label: `Pattern: ${category}`,
+              preview: pattern.pattern_text || pattern.text || '',
+              receivedAt: pattern.created_at || new Date().toISOString(),
+            },
+            proposedTask: {
+              text: pattern.pattern_text || pattern.text || 'Suggested task',
+              priority: pattern.priority || 'medium',
+              dueDate: pattern.due_date || undefined,
+              assignedTo: pattern.assigned_to || undefined,
+            },
+            confidence: Math.min((pattern.occurrence_count || 1) / 10, 1),
+            status: 'pending',
+            createdAt: pattern.created_at || new Date().toISOString(),
+          });
+        }
+      }
+
+      setAiInboxItems(items);
+    } catch (error) {
+      logger.error('Failed to fetch AI suggestions', error, { component: 'MainApp' });
+    } finally {
+      setAiInboxLoading(false);
+    }
+  }, []);
+
+  // Fetch AI suggestions on mount
+  useEffect(() => {
+    fetchAISuggestions();
+  }, [fetchAISuggestions]);
+
+  // Listen for 'apply-quick-filter' custom events dispatched by CommandPalette
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<QuickFilter>;
+      if (customEvent.detail) {
+        useTodoStore.getState().setQuickFilter(customEvent.detail);
+      }
+    };
+    window.addEventListener('apply-quick-filter', handler);
+    return () => window.removeEventListener('apply-quick-filter', handler);
   }, []);
 
   // Check if we should show daily dashboard on first login of the day
@@ -308,17 +375,43 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
 
   // AI Inbox handlers - extracted to useCallback for memoization
   // NOTE: These must be defined BEFORE any conditional returns to follow Rules of Hooks
-  const handleAIAccept = useCallback(async (_item: unknown, _editedTask: unknown) => {
-    // TODO: Implement accept logic - create task from AI suggestion
+  const handleAIAccept = useCallback(async (item: AIInboxItem, editedTask?: Partial<AIInboxItem['proposedTask']>) => {
+    const task = editedTask || item.proposedTask;
+    try {
+      const res = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: task.text || item.proposedTask.text,
+          priority: task.priority || item.proposedTask.priority || 'medium',
+          assignedTo: task.assignedTo || item.proposedTask.assignedTo,
+          dueDate: task.dueDate || item.proposedTask.dueDate,
+          notes: task.notes || item.proposedTask.notes,
+          subtasks: task.subtasks || item.proposedTask.subtasks || [],
+        }),
+      });
+
+      if (!res.ok) {
+        logger.error('Failed to create task from AI suggestion', new Error(`HTTP ${res.status}`), { component: 'MainApp' });
+        return;
+      }
+
+      // Remove accepted item from inbox
+      setAiInboxItems(prev => prev.filter(i => i.id !== item.id));
+      logger.info('AI suggestion accepted and task created', { component: 'MainApp', itemId: item.id });
+    } catch (error) {
+      logger.error('Failed to accept AI suggestion', error, { component: 'MainApp', itemId: item.id });
+    }
   }, []);
 
-  const handleAIDismiss = useCallback(async (_itemId: string) => {
-    // TODO: Implement dismiss logic
+  const handleAIDismiss = useCallback(async (itemId: string) => {
+    setAiInboxItems(prev => prev.filter(i => i.id !== itemId));
+    logger.info('AI suggestion dismissed', { component: 'MainApp', itemId });
   }, []);
 
   const handleAIRefresh = useCallback(async () => {
-    // TODO: Implement refresh logic - fetch new AI items
-  }, []);
+    await fetchAISuggestions();
+  }, [fetchAISuggestions]);
 
   const handleArchiveClose = useCallback(() => setActiveView('tasks'), [setActiveView]);
   const handleChatBack = useCallback(() => setActiveView('tasks'), [setActiveView]);
@@ -425,11 +518,12 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
         // AI Inbox view for reviewing AI-derived tasks
         return (
           <AIInbox
-            items={[]} // TODO: Connect to actual AI inbox state from store
+            items={aiInboxItems}
             users={usersWithColors.map(u => u.name)}
             onAccept={handleAIAccept}
             onDismiss={handleAIDismiss}
             onRefresh={handleAIRefresh}
+            isLoading={aiInboxLoading}
           />
         );
 
@@ -485,6 +579,8 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     handleAIAccept,
     handleAIDismiss,
     handleAIRefresh,
+    aiInboxItems,
+    aiInboxLoading,
     handlePipelineStageChange,
     onUserChange,
   ]);

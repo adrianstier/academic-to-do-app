@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckSquare,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppShell, ActiveView } from './AppShell';
+import { useTodoStore, isOverdue } from '@/store/todoStore';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ENHANCED BOTTOM NAVIGATION
@@ -46,20 +47,21 @@ export default function EnhancedBottomNav() {
     triggerNewTask,
   } = useAppShell();
 
-  // TODO: Badge stats are hardcoded to zero. Wire these up to a shared context
-  // or chat subscription so unread message counts and overdue task counts are
-  // reflected in the bottom nav badges. Until then, badges will never appear.
-  const [stats, setStats] = useState({
-    unreadMessages: 0,
-    overdueTasks: 0,
+  // Compute badge stats from the todo store
+  const todos = useTodoStore((state) => state.todos);
+  const stats = useMemo(() => ({
+    unreadMessages: 0, // No chat store available yet
+    overdueTasks: todos.filter((t) => isOverdue(t.due_date, t.completed)).length,
     dueTodayTasks: 0,
-  });
+  }), [todos]);
 
   const tabs: NavTab[] = [
     {
       id: 'tasks',
       label: 'Tasks',
       icon: CheckSquare,
+      badge: stats.overdueTasks,
+      badgeColor: 'var(--danger)',
     },
     {
       id: 'dashboard',

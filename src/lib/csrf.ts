@@ -225,7 +225,7 @@ export async function fetchWithCsrf(
   } else {
     // Log warning in development only to help debug CSRF issues
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.warn('[CSRF] No token found in cookies. Available cookies:', document.cookie);
+      console.warn('[CSRF] No token found in cookies');
     }
   }
 

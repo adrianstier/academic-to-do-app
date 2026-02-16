@@ -620,8 +620,7 @@ export const selectFilteredTodos = (
   // Note: This requires todo objects to have a `tag_ids` property populated from todo_tags
   if (filters.tagFilter.length > 0) {
     filtered = filtered.filter((t) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const todoTagIds: string[] = (t as any).tag_ids || [];
+      const todoTagIds: string[] = t.tag_ids || [];
       return filters.tagFilter.every((tagId) => todoTagIds.includes(tagId));
     });
   }

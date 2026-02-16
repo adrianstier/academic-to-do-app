@@ -22,10 +22,13 @@ import {
   Command,
   CornerDownLeft,
   BookOpen,
+  FolderKanban,
+  Inbox,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
 import { useAppShell } from './AppShell';
+import { useTodoStore } from '@/store/todoStore';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // COMMAND PALETTE
@@ -59,6 +62,7 @@ export default function CommandPalette({
   const { theme, toggleTheme } = useTheme();
   const darkMode = theme === 'dark';
   const { setActiveView, openShortcuts, triggerNewTask } = useAppShell();
+  const setQuickFilter = useTodoStore((state) => state.setQuickFilter);
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -140,6 +144,24 @@ export default function CommandPalette({
       action: () => { setActiveView('archive'); onClose(); },
     },
     {
+      id: 'nav-projects',
+      label: 'Go to Projects',
+      description: 'View and manage projects',
+      icon: FolderKanban,
+      category: 'navigation',
+      shortcut: 'G P',
+      action: () => { setActiveView('projects'); onClose(); },
+    },
+    {
+      id: 'nav-ai-inbox',
+      label: 'Go to AI Inbox',
+      description: 'View AI-generated task suggestions',
+      icon: Inbox,
+      category: 'navigation',
+      shortcut: 'G I',
+      action: () => { setActiveView('ai_inbox'); onClose(); },
+    },
+    {
       id: 'nav-calendar',
       label: 'Switch to Calendar View',
       description: 'View tasks on a calendar',
@@ -170,7 +192,7 @@ export default function CommandPalette({
       description: 'Show tasks due today',
       icon: Calendar,
       category: 'actions',
-      action: () => { setActiveView('tasks'); onClose(); /* TODO: apply filter */ },
+      action: () => { setQuickFilter('due_today'); setActiveView('tasks'); onClose(); },
     },
     {
       id: 'action-filter-my-tasks',
@@ -178,7 +200,7 @@ export default function CommandPalette({
       description: 'Show tasks assigned to you',
       icon: User,
       category: 'actions',
-      action: () => { setActiveView('tasks'); onClose(); /* TODO: apply filter */ },
+      action: () => { setQuickFilter('my_tasks'); setActiveView('tasks'); onClose(); },
     },
     {
       id: 'action-filter-overdue',
@@ -186,7 +208,7 @@ export default function CommandPalette({
       description: 'Show overdue tasks',
       icon: Filter,
       category: 'actions',
-      action: () => { setActiveView('tasks'); onClose(); /* TODO: apply filter */ },
+      action: () => { setQuickFilter('overdue'); setActiveView('tasks'); onClose(); },
     },
 
     // Settings
@@ -207,7 +229,7 @@ export default function CommandPalette({
       shortcut: '?',
       action: () => { onClose(); openShortcuts(); },
     },
-  ], [darkMode, toggleTheme, setActiveView, onClose, openShortcuts, triggerNewTask]);
+  ], [darkMode, toggleTheme, setActiveView, onClose, openShortcuts, triggerNewTask, setQuickFilter]);
 
   // Filter commands based on query and user permissions
   const filteredCommands = useMemo(() => {

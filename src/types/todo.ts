@@ -96,6 +96,7 @@ export interface Todo {
   waiting_since?: string; // When the wait started
   follow_up_after_hours?: number; // Auto-flag if waiting exceeds this threshold
   tags?: string[]; // Tag IDs for cross-cutting labels
+  tag_ids?: string[]; // Populated from todo_tags junction table
 }
 
 // ============================================

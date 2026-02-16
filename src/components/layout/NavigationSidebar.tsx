@@ -253,23 +253,11 @@ export default function NavigationSidebar({
 
         {/* Projects nav item */}
         <button
-          onClick={() => setActiveView('tasks')}
-          className={`
-            group relative flex items-center gap-3 px-3 py-2.5 rounded-xl
-            font-medium text-sm transition-all duration-150 cursor-pointer w-full
-            ${darkMode
-              ? 'text-white/60 hover:text-white hover:bg-white/5'
-              : 'text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]'
-            }
-          `}
+          onClick={() => setActiveView('projects')}
+          className={navItemClass(activeView === 'projects')}
+          aria-current={activeView === 'projects' ? 'page' : undefined}
         >
-          <FolderKanban className={`
-            w-5 h-5 flex-shrink-0 transition-colors
-            ${darkMode
-              ? 'text-white/40 group-hover:text-white/70'
-              : 'text-[var(--text-muted)] group-hover:text-[var(--foreground)]'
-            }
-          `} />
+          <FolderKanban className={iconClass(activeView === 'projects')} />
           {isExpanded && (
             <span className="flex-1 text-left truncate">{projectsNavItem.label}</span>
           )}

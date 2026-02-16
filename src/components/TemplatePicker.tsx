@@ -57,6 +57,7 @@ export default function TemplatePicker({
   const [newAssignedTo, setNewAssignedTo] = useState('');
   const [newIsShared, setNewIsShared] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmDeleteTemplate, setConfirmDeleteTemplate] = useState<TaskTemplate | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     if (!currentUserName) return;
@@ -149,8 +150,10 @@ export default function TemplatePicker({
 
   const handleDeleteTemplate = async (template: TaskTemplate, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Delete template "${template.name}"?`)) return;
+    setConfirmDeleteTemplate(template);
+  };
 
+  const executeDeleteTemplate = async (template: TaskTemplate) => {
     try {
       await fetchWithCsrf(`/api/templates?id=${template.id}&userName=${encodeURIComponent(currentUserName)}`, {
         method: 'DELETE',
@@ -409,6 +412,39 @@ export default function TemplatePicker({
             </div>
           </div>
         </>
+      )}
+
+      {/* Delete Template Confirmation Modal */}
+      {confirmDeleteTemplate && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-template-title">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteTemplate(null)} />
+          <div className={`relative rounded-xl shadow-xl p-6 max-w-sm w-full ${darkMode ? 'bg-slate-800 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+            <h3 id="confirm-delete-template-title" className={`text-base font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              Delete template &ldquo;{confirmDeleteTemplate.name}&rdquo;?
+            </h3>
+            <p className={`text-sm mb-5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              This template will be permanently removed.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteTemplate(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-700' : 'text-slate-600 hover:bg-slate-200'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const template = confirmDeleteTemplate;
+                  setConfirmDeleteTemplate(null);
+                  await executeDeleteTemplate(template);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

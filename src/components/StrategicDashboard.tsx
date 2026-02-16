@@ -111,6 +111,7 @@ export default function StrategicDashboard({
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<StrategicGoal | null>(null);
   const [hoveredGoal, setHoveredGoal] = useState<string | null>(null);
+  const [confirmDeleteGoalId, setConfirmDeleteGoalId] = useState<string | null>(null);
   const [newGoal, setNewGoal] = useState({
     title: '',
     description: '',
@@ -248,8 +249,10 @@ export default function StrategicDashboard({
   };
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (!confirm('Are you sure you want to delete this goal?')) return;
+    setConfirmDeleteGoalId(goalId);
+  };
 
+  const executeDeleteGoal = async (goalId: string) => {
     try {
       const res = await fetchWithCsrf(`/api/goals?id=${goalId}&userName=${encodeURIComponent(userName)}`, {
         method: 'DELETE',
@@ -703,6 +706,39 @@ export default function StrategicDashboard({
           />
         )}
       </AnimatePresence>
+
+      {/* Delete Goal Confirmation Modal */}
+      {confirmDeleteGoalId && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-delete-goal-title">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteGoalId(null)} />
+          <div className={`relative rounded-xl shadow-xl p-6 max-w-sm w-full ${darkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+            <h3 id="confirm-delete-goal-title" className={`text-base font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+              Delete this goal?
+            </h3>
+            <p className={`text-sm mb-5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              This action cannot be undone. All milestones associated with this goal will also be removed.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDeleteGoalId(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-200'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const id = confirmDeleteGoalId;
+                  setConfirmDeleteGoalId(null);
+                  await executeDeleteGoal(id);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

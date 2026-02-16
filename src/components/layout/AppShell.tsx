@@ -24,7 +24,6 @@ export type ActiveView =
   | 'goals'
   | 'archive'
   | 'ai_inbox'
-  | 'settings'
   | 'projects'
   | 'pipeline';
 
@@ -446,6 +445,8 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
     { id: 'ai_inbox', label: 'AI Inbox', icon: '📥' },
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'chat', label: 'Messages', icon: '💬' },
+    { id: 'projects', label: 'Projects', icon: '📁' },
+    { id: 'archive', label: 'Archive', icon: '🗄️' },
   ];
 
   const handleItemClick = (viewId: string) => {
