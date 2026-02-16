@@ -719,6 +719,9 @@ export function TeamMembersList({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirm suspend member"
               className="
                 w-full max-w-sm p-6 rounded-xl
                 bg-white dark:bg-gray-800
@@ -780,6 +783,9 @@ export function TeamMembersList({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={e => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirm transfer PI role"
               className="
                 w-full max-w-sm p-6 rounded-xl
                 bg-white dark:bg-gray-800

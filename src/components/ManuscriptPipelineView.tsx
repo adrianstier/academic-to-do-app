@@ -849,8 +849,10 @@ export default function ManuscriptPipelineView({
     }
 
     // Check if dropped on another card -- move to that card's stage
+    // Use allStagedTodos (not filteredStagedTodos) so card lookup works
+    // even when filters are active
     for (const s of PIPELINE_STAGES) {
-      const stageTodos = filteredStagedTodos[s.id] || [];
+      const stageTodos = allStagedTodos[s.id] || [];
       if (stageTodos.some(t => t.id === targetId)) {
         handleMoveToStage(todoId, s.id);
         setDragAnnouncement(`Moved to ${s.label}.`);
@@ -859,7 +861,7 @@ export default function ManuscriptPipelineView({
     }
 
     setDragAnnouncement('Manuscript dropped. No change.');
-  }, [filteredStagedTodos, handleMoveToStage]);
+  }, [allStagedTodos, handleMoveToStage]);
 
   const activeTodo = activeId ? allPipelineTodos.find(t => t.id === activeId) : null;
 
@@ -868,13 +870,13 @@ export default function ManuscriptPipelineView({
     if (!overId) return null;
     // Direct column match
     if (PIPELINE_STAGES.some(s => s.id === overId)) return overId;
-    // Card in a column
+    // Card in a column — use allStagedTodos so lookup works with active filters
     for (const s of PIPELINE_STAGES) {
-      const stageTodos = filteredStagedTodos[s.id] || [];
+      const stageTodos = allStagedTodos[s.id] || [];
       if (stageTodos.some(t => t.id === overId)) return s.id;
     }
     return null;
-  }, [overId, filteredStagedTodos]);
+  }, [overId, allStagedTodos]);
 
   // ---- Render ----
   return (

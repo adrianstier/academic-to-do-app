@@ -71,6 +71,9 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
   reading: { label: 'Reading', color: '#10b981' },
   coursework: { label: 'Coursework', color: '#6366f1' },
   admin: { label: 'Admin', color: '#6b7280' },
+  grant: { label: 'Grant', color: '#eab308' },
+  teaching: { label: 'Teaching', color: '#14b8a6' },
+  fieldwork: { label: 'Fieldwork', color: '#84cc16' },
   other: { label: 'Other', color: '#9ca3af' },
   uncategorized: { label: 'Uncategorized', color: '#d1d5db' },
 };

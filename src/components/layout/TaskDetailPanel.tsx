@@ -473,6 +473,7 @@ export default function TaskDetailPanel({
                     }
                   }}
                   autoFocus
+                  aria-label="Edit task title"
                   className={`
                     w-full px-3 py-2 rounded-lg border text-lg font-medium
                     resize-none
@@ -781,6 +782,7 @@ export default function TaskDetailPanel({
                     }
                   }}
                   placeholder="Add a subtask..."
+                  aria-label="Add a new subtask"
                   className={`
                     flex-1 px-2 py-1.5 text-sm bg-transparent border-none outline-none
                     ${darkMode
@@ -836,6 +838,7 @@ export default function TaskDetailPanel({
                   onChange={(e) => setEditedNotes(e.target.value)}
                   placeholder="Add notes..."
                   autoFocus
+                  aria-label="Edit task notes"
                   className={`
                     w-full px-3 py-2 rounded-lg border text-sm
                     resize-none min-h-[100px]

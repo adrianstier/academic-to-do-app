@@ -443,6 +443,7 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
   const menuItems = [
     { id: 'tasks', label: 'Tasks', icon: '📋' },
     { id: 'pipeline', label: 'Pipeline', icon: '📖' },
+    { id: 'ai_inbox', label: 'AI Inbox', icon: '📥' },
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'chat', label: 'Messages', icon: '💬' },
   ];

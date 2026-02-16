@@ -18,6 +18,14 @@ export const POST = withTeamAuth(async (request, context) => {
       );
     }
 
+    // Limit input length to prevent abuse of the AI API
+    if (text.length > 1000) {
+      return NextResponse.json(
+        { success: false, error: 'Task text is too long (max 1000 characters)' },
+        { status: 400 }
+      );
+    }
+
     const userList = Array.isArray(users) && users.length > 0
       ? users.join(', ')
       : 'no team members registered';
@@ -25,9 +33,13 @@ export const POST = withTeamAuth(async (request, context) => {
     const today = new Date().toISOString().split('T')[0];
     const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
+    // Sanitize user input to reduce prompt injection risk:
+    // Replace characters that could be used to escape the quoted context
+    const sanitizedText = text.replace(/[\x00-\x1f]/g, ' ').trim();
+
     const prompt = `You are a task enhancement assistant for an academic research team. Take the user's task input and improve it.
 
-User's task input: "${text}"
+User's task input: "${sanitizedText}"
 
 Today's date: ${today} (${dayOfWeek})
 Team members: ${userList}

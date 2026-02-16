@@ -21,7 +21,12 @@ const supabase = createClient(
  */
 function escapeCsvValue(value: string | null | undefined): string {
   if (value === null || value === undefined) return '';
-  const str = String(value);
+  let str = String(value);
+  // Prevent CSV injection: strip leading characters that trigger formula execution
+  // in spreadsheet software (=, +, -, @, \t, \r)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
   // If value contains comma, quote, or newline, wrap in quotes
   if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;
@@ -108,11 +113,22 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     }
 
     if (format === 'json') {
-      // JSON export: full todo objects with nested project and tags
+      // JSON export: safe subset of fields (exclude internal IDs like team_id, created_by)
       const enrichedTodos = todos.map(todo => ({
-        ...todo,
+        id: todo.id,
+        text: todo.text,
+        completed: todo.completed,
+        status: todo.status,
+        priority: todo.priority,
+        category: todo.category || null,
+        due_date: todo.due_date || null,
+        start_date: todo.start_date || null,
+        assigned_to: todo.assigned_to || null,
+        notes: todo.notes || null,
         project_name: todo.project_id ? projectMap.get(todo.project_id) || null : null,
         tags: todoTagMap.get(todo.id) || [],
+        created_at: todo.created_at,
+        updated_at: todo.updated_at || null,
       }));
 
       return NextResponse.json({

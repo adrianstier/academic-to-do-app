@@ -78,21 +78,26 @@ export default function ProjectDashboard() {
     end_date: '',
   });
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [projectStats, setProjectStats] = useState<ProjectStatsData | null>(null);
 
   // Fetch projects
   const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetchWithCsrf('/api/projects');
       if (res.ok) {
         const data = await res.json();
         const projectList = data.data || [];
         setLocalProjects(projectList);
         setProjects(projectList);
+      } else {
+        setError('Failed to load projects. Please try again.');
       }
-    } catch (error) {
-      logger.error('Failed to fetch projects', error, { component: 'ProjectDashboard' });
+    } catch (err) {
+      logger.error('Failed to fetch projects', err, { component: 'ProjectDashboard' });
+      setError('Failed to load projects. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -188,9 +193,12 @@ export default function ProjectDashboard() {
         setCreateForm({ name: '', description: '', color: '#3b82f6', start_date: '', end_date: '' });
         setShowCreateForm(false);
         await fetchProjects();
+      } else {
+        setError('Failed to create project. Please try again.');
       }
-    } catch (error) {
-      logger.error('Failed to create project', error, { component: 'ProjectDashboard' });
+    } catch (err) {
+      logger.error('Failed to create project', err, { component: 'ProjectDashboard' });
+      setError('Failed to create project. Please try again.');
     } finally {
       setCreating(false);
     }
@@ -219,8 +227,6 @@ export default function ProjectDashboard() {
         body: JSON.stringify({ custom_statuses: customStatuses }),
       });
       if (res.ok) {
-        const data = await res.json();
-        const updated = data.data;
         // Update local state
         setSelectedProject(prev => prev ? { ...prev, custom_statuses: customStatuses } : prev);
         setLocalProjects(prev => prev.map(p => p.id === projectId ? { ...p, custom_statuses: customStatuses } : p));
@@ -228,9 +234,12 @@ export default function ProjectDashboard() {
         const updatedProjects = storeProjects.map(p => p.id === projectId ? { ...p, custom_statuses: customStatuses } : p);
         setProjects(updatedProjects);
         logger.info('Custom statuses saved', { component: 'ProjectDashboard', projectId, count: customStatuses.length });
+      } else {
+        setError('Failed to save custom statuses. Please try again.');
       }
-    } catch (error) {
-      logger.error('Failed to save custom statuses', error, { component: 'ProjectDashboard' });
+    } catch (err) {
+      logger.error('Failed to save custom statuses', err, { component: 'ProjectDashboard' });
+      setError('Failed to save custom statuses. Please try again.');
     }
   }, [storeProjects, setProjects]);
 
@@ -239,6 +248,10 @@ export default function ProjectDashboard() {
     const date = new Date(dateStr);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
+
+    // Handle future dates or invalid dates gracefully
+    if (diffMs < 0 || isNaN(diffMs)) return 'just now';
+
     const diffMin = Math.floor(diffMs / 60000);
     const diffHrs = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -413,7 +426,8 @@ export default function ProjectDashboard() {
                 ) : (
                   <div className="space-y-0.5">
                     {recentActivity.map((item) => {
-                      const isOverdue = !item.completed && item.due_date && new Date(item.due_date) < new Date();
+                      // Compare in local timezone: treat due_date as end-of-day local time
+                      const isOverdue = !item.completed && item.due_date && new Date(item.due_date + 'T23:59:59') < new Date();
                       return (
                         <div
                           key={item.id}
@@ -492,6 +506,17 @@ export default function ProjectDashboard() {
   // =================== Project List View ===================
   return (
     <div className="min-h-screen bg-[var(--background)]">
+      {/* Error banner */}
+      {error && (
+        <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-5 sm:px-6 pt-4">
+          <div className="p-3 rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/20 text-[var(--danger)] text-sm flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="ml-2 hover:opacity-70">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="relative overflow-hidden">
         <div
@@ -719,11 +744,22 @@ export default function ProjectDashboard() {
               onClick={() => setShowCreateForm(false)}
               className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
             />
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  setShowCreateForm(false);
+                }
+              }}
+            >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Create new project"
                 className={`
                   w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden pointer-events-auto
                   ${darkMode ? 'bg-[var(--surface)]' : 'bg-white'}
@@ -744,6 +780,7 @@ export default function ProjectDashboard() {
                   </div>
                   <button
                     onClick={() => setShowCreateForm(false)}
+                    aria-label="Close create project dialog"
                     className={`p-2 rounded-lg transition-colors ${
                       darkMode ? 'hover:bg-white/10 text-white/50' : 'hover:bg-[var(--surface)] text-[var(--text-muted)]'
                     }`}
@@ -809,6 +846,8 @@ export default function ProjectDashboard() {
                         <button
                           key={color}
                           onClick={() => setCreateForm(prev => ({ ...prev, color }))}
+                          aria-label={`Select color ${color}`}
+                          aria-pressed={createForm.color === color}
                           className={`
                             w-8 h-8 rounded-lg transition-all
                             ${createForm.color === color

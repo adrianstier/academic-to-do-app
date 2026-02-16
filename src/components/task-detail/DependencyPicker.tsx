@@ -57,7 +57,7 @@ function DependencyChip({
           e.stopPropagation();
           onRemove();
         }}
-        className="p-0.5 rounded hover:bg-black/10 transition-colors flex-shrink-0"
+        className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/20 transition-colors flex-shrink-0"
         aria-label={`Remove dependency: ${dep.task_text}`}
       >
         <X className="w-3 h-3" />
@@ -193,6 +193,7 @@ export default function DependencyPicker({
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
                 border border-dashed border-[var(--border)] text-[var(--text-muted)]
                 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              aria-label="Add a task that blocks this one"
             >
               <Lock className="w-3 h-3" />
               Add blocker
@@ -202,6 +203,7 @@ export default function DependencyPicker({
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
                 border border-dashed border-[var(--border)] text-[var(--text-muted)]
                 hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              aria-label="Add a task that this one blocks"
             >
               <ArrowRight className="w-3 h-3" />
               Add blocked task
@@ -217,10 +219,22 @@ export default function DependencyPicker({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setAddMode(null);
+                    setSearchQuery('');
+                  }
+                }}
                 placeholder={
                   addMode === 'blockedBy'
                     ? 'Search for a task that blocks this one...'
                     : 'Search for a task this one blocks...'
+                }
+                aria-label={
+                  addMode === 'blockedBy'
+                    ? 'Search for a blocking task'
+                    : 'Search for a task to block'
                 }
                 className="flex-1 text-sm bg-transparent border-none outline-none text-[var(--foreground)] placeholder-[var(--text-muted)]"
               />
@@ -230,13 +244,14 @@ export default function DependencyPicker({
                   setSearchQuery('');
                 }}
                 className="p-1 rounded hover:bg-[var(--surface-2)] text-[var(--text-muted)]"
+                aria-label="Close dependency search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {/* Results */}
-            <div className="max-h-48 overflow-y-auto">
+            <div className="max-h-48 overflow-y-auto" role="listbox" aria-label="Available tasks">
               {filteredTodos.length === 0 ? (
                 <div className="px-3 py-4 text-center text-xs text-[var(--text-muted)]">
                   {searchQuery ? 'No matching tasks found' : 'No available tasks'}
@@ -246,6 +261,7 @@ export default function DependencyPicker({
                   <button
                     key={t.id}
                     onClick={() => handleSelect(t.id)}
+                    role="option"
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm
                       hover:bg-[var(--surface-2)] transition-colors"
                   >

@@ -158,10 +158,23 @@ function applyInline(text: string): string {
   // Italic
   result = result.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-  // Links [text](url)
+  // Links [text](url) — only allow safe protocols (http, https, mailto)
   result = result.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;text-underline-offset:2px">$1</a>'
+    (_, linkText, url) => {
+      // Strip leading/trailing whitespace from URL
+      const trimmedUrl = url.trim();
+      // Only allow http:, https:, and mailto: protocols — block javascript:, data:, vbscript:, etc.
+      const isAllowedProtocol = /^https?:\/\//i.test(trimmedUrl) ||
+        /^mailto:/i.test(trimmedUrl) ||
+        // Allow relative URLs (no protocol prefix)
+        !/^[a-zA-Z][a-zA-Z0-9+\-.]*:/i.test(trimmedUrl);
+      if (!isAllowedProtocol) {
+        // Render as plain text if protocol is disallowed
+        return `${linkText}`;
+      }
+      return `<a href="${trimmedUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;text-underline-offset:2px">${linkText}</a>`;
+    }
   );
 
   return result;

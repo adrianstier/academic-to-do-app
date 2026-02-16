@@ -966,7 +966,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
     if (updateError) {
       logger.error('Error updating custom status', updateError, { component: 'TodoList' });
       if (oldTodo) {
-        updateTodoInStore(id, oldTodo);
+        // Rollback only the custom_status field to avoid overwriting concurrent mutations
+        updateTodoInStore(id, { custom_status: oldTodo.custom_status, updated_at: oldTodo.updated_at });
       }
     } else if (oldTodo) {
       logActivity({
@@ -2084,13 +2085,8 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
               <ManuscriptPipelineView
                 todos={filteredAndSortedTodos}
                 onTodoClick={(todoId) => {
-                  // Scroll to and highlight the task in the list
-                  const taskElement = document.getElementById(`todo-${todoId}`);
-                  if (taskElement) {
-                    taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    taskElement.classList.add('notification-highlight');
-                    setTimeout(() => taskElement.classList.remove('notification-highlight'), 3000);
-                  }
+                  // Open task detail modal (same pattern as calendar view)
+                  setCalendarDetailTodoId(todoId);
                 }}
                 onStatusChange={(todoId, newCategory) => {
                   // Pipeline stage changes could update notes with stage tag
@@ -2103,6 +2099,30 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                   }
                 }}
               />
+              {/* Task Detail Modal for pipeline view — mirrors calendar view pattern */}
+              {calendarDetailTodo && (
+                <TaskDetailModal
+                  todo={calendarDetailTodo}
+                  isOpen={!!calendarDetailTodo}
+                  onClose={() => setCalendarDetailTodoId(null)}
+                  users={users}
+                  currentUserName={userName}
+                  onToggle={toggleTodo}
+                  onDelete={confirmDeleteTodo}
+                  onAssign={assignTodo}
+                  onSetDueDate={setDueDate}
+                  onSetPriority={setPriority}
+                  onStatusChange={updateStatus}
+                  onUpdateText={updateText}
+                  onUpdateNotes={updateNotes}
+                  onSetRecurrence={setRecurrence}
+                  onUpdateSubtasks={updateSubtasks}
+                  onUpdateAttachments={updateAttachments}
+                  onSetReminder={setReminder}
+                  onDuplicate={duplicateTodo}
+                  onSaveAsTemplate={(t) => openTemplateModal(t)}
+                />
+              )}
             </motion.div>
           ) : viewMode === 'list' ? (
             <motion.div
@@ -2325,6 +2345,14 @@ export default function TodoList({ currentUser, onUserChange, onOpenDashboard, i
                   if (todo) {
                     toggleTodo(todoId, !todo.completed);
                   }
+                }}
+                onToggleWaiting={(todoId, waiting) => {
+                  const now = new Date().toISOString();
+                  updateTodoInStore(todoId, {
+                    waiting_for_response: waiting,
+                    waiting_since: waiting ? now : undefined,
+                    updated_at: now,
+                  } as Partial<Todo>);
                 }}
                 onQuickAdd={(dateKey, text) => {
                   addTodo(text, 'medium', dateKey, undefined, undefined, undefined, undefined, undefined, undefined, undefined, filters.projectFilter || undefined);

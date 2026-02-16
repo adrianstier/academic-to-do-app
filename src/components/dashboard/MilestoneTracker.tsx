@@ -264,7 +264,11 @@ export default function MilestoneTracker({ projectId, initialMilestones = [] }: 
 
                   {milestone.target_date && (
                     <span className={`text-xs flex-shrink-0 px-2 py-0.5 rounded ${
-                      !milestone.completed && new Date(milestone.target_date) < new Date()
+                      !milestone.completed && (() => {
+                        // Compare dates in local timezone to avoid UTC offset issues
+                        const target = new Date(milestone.target_date + 'T23:59:59');
+                        return target < new Date();
+                      })()
                         ? 'bg-[var(--danger-light)] text-[var(--danger)]'
                         : 'text-[var(--text-muted)] dark:text-white/40'
                     }`}>

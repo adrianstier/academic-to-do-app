@@ -132,6 +132,60 @@ export const PUT = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       );
     }
 
+    // Validate custom_statuses if provided
+    if (updateData.custom_statuses !== undefined) {
+      const cs = updateData.custom_statuses;
+      // Must be an array (or null to clear)
+      if (cs !== null && !Array.isArray(cs)) {
+        return NextResponse.json(
+          { error: 'custom_statuses must be an array or null' },
+          { status: 400 }
+        );
+      }
+      if (Array.isArray(cs)) {
+        // Validate each status has required fields
+        for (const status of cs) {
+          if (!status || typeof status !== 'object') {
+            return NextResponse.json(
+              { error: 'Each custom status must be an object' },
+              { status: 400 }
+            );
+          }
+          if (typeof status.id !== 'string' || !status.id.trim()) {
+            return NextResponse.json(
+              { error: 'Each custom status must have a non-empty string id' },
+              { status: 400 }
+            );
+          }
+          if (typeof status.name !== 'string' || !status.name.trim()) {
+            return NextResponse.json(
+              { error: 'Each custom status must have a non-empty string name' },
+              { status: 400 }
+            );
+          }
+          if (typeof status.color !== 'string' || !status.color.trim()) {
+            return NextResponse.json(
+              { error: 'Each custom status must have a non-empty string color' },
+              { status: 400 }
+            );
+          }
+          if (typeof status.order !== 'number' || status.order < 0) {
+            return NextResponse.json(
+              { error: 'Each custom status must have a non-negative number order' },
+              { status: 400 }
+            );
+          }
+        }
+        // Must have at least 2 statuses if not empty
+        if (cs.length > 0 && cs.length < 2) {
+          return NextResponse.json(
+            { error: 'Custom statuses must have at least 2 entries' },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     let query = supabase
       .from('projects')
       .update(updateData)

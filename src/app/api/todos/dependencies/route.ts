@@ -179,20 +179,38 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
       }
     }
 
-    // Check for circular dependency (A blocks B, B blocks A)
-    const { data: reverseCheck, error: reverseError } = await supabase
-      .from('todo_dependencies')
-      .select('blocker_id')
-      .eq('blocker_id', blocked_id)
-      .eq('blocked_id', blocker_id);
+    // Check for circular dependency: walk the dependency chain from blocked_id
+    // to see if blocker_id is reachable (meaning adding this edge would create a cycle).
+    // This detects both direct (A->B, B->A) and transitive (A->B, B->C, C->A) cycles.
+    const visited = new Set<string>();
+    const queue: string[] = [blocked_id];
 
-    if (reverseError) throw reverseError;
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      if (currentId === blocker_id) {
+        return NextResponse.json(
+          { error: 'Circular dependency detected: adding this dependency would create a cycle' },
+          { status: 409 }
+        );
+      }
+      if (visited.has(currentId)) continue;
+      visited.add(currentId);
 
-    if (reverseCheck && reverseCheck.length > 0) {
-      return NextResponse.json(
-        { error: 'Circular dependency detected: the blocked task already blocks the blocker task' },
-        { status: 409 }
-      );
+      // Get all tasks that currentId blocks (i.e., where currentId is the blocker)
+      const { data: downstream, error: downstreamError } = await supabase
+        .from('todo_dependencies')
+        .select('blocked_id')
+        .eq('blocker_id', currentId);
+
+      if (downstreamError) throw downstreamError;
+
+      if (downstream) {
+        for (const dep of downstream) {
+          if (!visited.has(dep.blocked_id)) {
+            queue.push(dep.blocked_id);
+          }
+        }
+      }
     }
 
     // Check for existing dependency
@@ -259,25 +277,31 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
       );
     }
 
-    // Verify the blocker todo belongs to this team before deleting
-    const { data: blockerTodo, error: todoError } = await supabase
+    // Verify both todos belong to this team before deleting
+    const { data: relatedTodos, error: todoError } = await supabase
       .from('todos')
       .select('id, team_id')
-      .eq('id', blocker_id)
-      .single();
+      .in('id', [blocker_id, blocked_id]);
 
-    if (todoError || !blockerTodo) {
+    if (todoError) throw todoError;
+
+    const blockerTodo = relatedTodos?.find(t => t.id === blocker_id);
+    const blockedTodo = relatedTodos?.find(t => t.id === blocked_id);
+
+    if (!blockerTodo || !blockedTodo) {
       return NextResponse.json(
-        { error: 'Blocker todo not found' },
+        { error: 'One or both todos not found' },
         { status: 404 }
       );
     }
 
-    if (context.teamId && context.teamId.trim() !== '' && blockerTodo.team_id !== context.teamId) {
-      return NextResponse.json(
-        { error: 'Todo does not belong to your team' },
-        { status: 403 }
-      );
+    if (context.teamId && context.teamId.trim() !== '') {
+      if (blockerTodo.team_id !== context.teamId || blockedTodo.team_id !== context.teamId) {
+        return NextResponse.json(
+          { error: 'Both todos must belong to your team' },
+          { status: 403 }
+        );
+      }
     }
 
     const { error } = await supabase

@@ -69,18 +69,20 @@ export default function MiniCalendar({
               onClick={() => onDateClick(day)}
               className={`
                 relative w-full aspect-square flex items-center justify-center text-[11px] transition-colors
-                ${isSelected
-                  ? 'bg-[var(--accent)] text-white font-bold rounded-full'
-                  : today
+                ${isSelected && today
+                  ? 'bg-[var(--accent)] text-white font-bold rounded-full ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--surface)]'
+                  : isSelected
                     ? 'bg-[var(--accent)] text-white font-bold rounded-full'
-                    : isCurrentMonth
-                      ? 'text-[var(--foreground)] rounded hover:bg-[var(--surface-hover)]'
-                      : 'text-[var(--text-muted)]/50 rounded hover:bg-[var(--surface-hover)]'
+                    : today
+                      ? 'text-[var(--accent)] font-bold rounded-full ring-1 ring-[var(--accent)]'
+                      : isCurrentMonth
+                        ? 'text-[var(--foreground)] rounded hover:bg-[var(--surface-hover)]'
+                        : 'text-[var(--text-muted)]/50 rounded hover:bg-[var(--surface-hover)]'
                 }
               `}
             >
               {day.getDate()}
-              {hasTasks && !isSelected && !today && (
+              {hasTasks && !isSelected && (
                 <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--accent)]" />
               )}
             </button>

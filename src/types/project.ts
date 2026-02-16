@@ -163,6 +163,10 @@ export const WORKFLOW_PRESETS: WorkflowPreset[] = [
 export function generateStatusId(name: string): string {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
   const suffix = Math.random().toString(36).substring(2, 6);
+  // Guard against empty slug (from empty or all-special-char input)
+  if (!slug) {
+    return `status_${suffix}`;
+  }
   return `${slug}_${suffix}`;
 }
 

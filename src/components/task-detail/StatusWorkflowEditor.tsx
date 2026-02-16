@@ -254,12 +254,20 @@ export default function StatusWorkflowEditor({
                   onClick={() =>
                     setEditingColorId(editingColorId === status.id ? null : status.id)
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape' && editingColorId === status.id) {
+                      e.stopPropagation();
+                      setEditingColorId(null);
+                    }
+                  }}
                   className="w-5 h-5 rounded-full flex-shrink-0 ring-2 ring-offset-1 transition-all hover:scale-110"
                   style={{
                     backgroundColor: status.color,
                     '--tw-ring-color': status.color,
                   } as React.CSSProperties}
                   title="Change color"
+                  aria-label={`Change color for ${status.name}`}
+                  aria-expanded={editingColorId === status.id}
                 />
 
                 <AnimatePresence>
@@ -303,6 +311,7 @@ export default function StatusWorkflowEditor({
                 type="text"
                 value={status.name}
                 onChange={(e) => handleRename(status.id, e.target.value)}
+                aria-label={`Rename status: ${status.name}`}
                 className={`
                   flex-1 min-w-0 px-2 py-1 rounded-md text-sm font-medium
                   border-transparent focus:outline-none focus:ring-1 focus:ring-[var(--brand-blue)]/30
@@ -335,6 +344,7 @@ export default function StatusWorkflowEditor({
                   }
                 `}
                 title={statuses.length <= 2 ? 'Minimum 2 statuses required' : 'Remove status'}
+                aria-label={`Remove status: ${status.name}`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
