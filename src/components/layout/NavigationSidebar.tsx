@@ -18,6 +18,8 @@ import {
   Keyboard,
   FolderKanban,
   BookOpen,
+  GanttChart,
+  Plug,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -58,8 +60,10 @@ const primaryNavItems: NavItem[] = [
 const projectsNavItem = { label: 'Projects', icon: FolderKanban };
 
 const secondaryNavItems: NavItem[] = [
+  { id: 'gantt', label: 'Timeline', icon: GanttChart },
   { id: 'goals', label: 'Strategic Goals', icon: Target, ownerOnly: true },
   { id: 'archive', label: 'Archive', icon: Archive },
+  { id: 'integrations', label: 'Integrations', icon: Plug },
 ];
 
 export default function NavigationSidebar({

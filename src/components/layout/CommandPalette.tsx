@@ -162,6 +162,22 @@ export default function CommandPalette({
       action: () => { setActiveView('ai_inbox'); onClose(); },
     },
     {
+      id: 'nav-gantt',
+      label: 'Go to Timeline',
+      description: 'Gantt chart view of tasks',
+      icon: Activity,
+      category: 'navigation',
+      action: () => { setActiveView('gantt'); onClose(); },
+    },
+    {
+      id: 'nav-integrations',
+      label: 'Go to Integrations',
+      description: 'Google Calendar, Zotero settings',
+      icon: Settings,
+      category: 'navigation',
+      action: () => { setActiveView('integrations'); onClose(); },
+    },
+    {
       id: 'nav-calendar',
       label: 'Switch to Calendar View',
       description: 'View tasks on a calendar',

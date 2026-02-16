@@ -69,6 +69,18 @@ const ManuscriptPipelineView = dynamic(() => import('./ManuscriptPipelineView'),
   loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
 });
 
+// Lazy load GanttView for timeline visualization
+const GanttView = dynamic(() => import('./GanttView'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
+});
+
+// Lazy load IntegrationsPage for settings (Google Calendar, Zotero)
+const IntegrationsPage = dynamic(() => import('./IntegrationsPage'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
+});
+
 interface MainAppProps {
   currentUser: AuthUser;
   onUserChange: (user: AuthUser | null) => void;
@@ -540,6 +552,16 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
 
       case 'projects':
         return <ProjectDashboard />;
+
+      case 'gantt':
+        return (
+          <div className="h-full">
+            <GanttView onTaskClick={(todo) => handleTaskLinkClick(todo.id)} />
+          </div>
+        );
+
+      case 'integrations':
+        return <IntegrationsPage />;
 
       case 'tasks':
       default:

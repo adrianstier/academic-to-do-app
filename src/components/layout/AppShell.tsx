@@ -25,7 +25,9 @@ export type ActiveView =
   | 'archive'
   | 'ai_inbox'
   | 'projects'
-  | 'pipeline';
+  | 'pipeline'
+  | 'gantt'
+  | 'integrations';
 
 export type RightPanelContent =
   | { type: 'chat' }
@@ -446,7 +448,9 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'chat', label: 'Messages', icon: '💬' },
     { id: 'projects', label: 'Projects', icon: '📁' },
+    { id: 'gantt', label: 'Timeline', icon: '📅' },
     { id: 'archive', label: 'Archive', icon: '🗄️' },
+    { id: 'integrations', label: 'Integrations', icon: '🔗' },
   ];
 
   const handleItemClick = (viewId: string) => {
