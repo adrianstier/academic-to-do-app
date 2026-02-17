@@ -459,7 +459,7 @@ function DragOverlayCard({ todo }: { todo: Todo }) {
 
   return (
     <div
-      className="w-[220px] rounded-lg bg-[var(--surface)] border-2 border-[var(--accent)] shadow-2xl ring-4 ring-[var(--accent)]/20 overflow-hidden"
+      className="w-[185px] rounded-lg bg-[var(--surface)] border-2 border-[var(--accent)] shadow-2xl ring-4 ring-[var(--accent)]/20 overflow-hidden"
       style={{ borderLeftWidth: '3px', borderLeftColor: getPriorityBorderColor(priority) }}
     >
       <div className="p-2.5">
@@ -508,7 +508,7 @@ function PipelineColumn({ stage, todos, onTodoClick, onMoveToStage, isActiveDrag
   return (
     <div
       ref={setNodeRef}
-      className={`flex-shrink-0 w-[240px] min-w-[240px] flex flex-col rounded-xl border overflow-hidden transition-all duration-200 ${
+      className={`flex-shrink-0 w-[195px] min-w-[195px] flex flex-col rounded-xl border overflow-hidden transition-all duration-200 ${
         showDropHighlight
           ? 'border-[var(--accent)] ring-2 ring-[var(--accent)]/30 shadow-lg'
           : isActiveDrag
