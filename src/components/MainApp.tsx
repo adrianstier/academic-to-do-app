@@ -75,7 +75,13 @@ const GanttView = dynamic(() => import('./GanttView'), {
   loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
 });
 
-// Lazy load IntegrationsPage for settings (Google Calendar, Zotero)
+// Lazy load EquipmentCalendar for lab equipment booking
+const EquipmentCalendar = dynamic(() => import('./EquipmentCalendar'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
+});
+
+// Lazy load IntegrationsPage for settings (Google Calendar, Zotero, ORCID, SSO)
 const IntegrationsPage = dynamic(() => import('./IntegrationsPage'), {
   ssr: false,
   loading: () => <div className="flex items-center justify-center h-full"><div className="animate-spin w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full" /></div>,
@@ -557,6 +563,13 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
         return (
           <div className="h-full">
             <GanttView onTaskClick={(todo) => handleTaskLinkClick(todo.id)} />
+          </div>
+        );
+
+      case 'equipment':
+        return (
+          <div className="h-full">
+            <EquipmentCalendar currentUser={currentUser.name} />
           </div>
         );
 

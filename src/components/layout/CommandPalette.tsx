@@ -170,9 +170,17 @@ export default function CommandPalette({
       action: () => { setActiveView('gantt'); onClose(); },
     },
     {
+      id: 'nav-equipment',
+      label: 'Go to Equipment',
+      description: 'Lab equipment booking calendar',
+      icon: Calendar,
+      category: 'navigation',
+      action: () => { setActiveView('equipment'); onClose(); },
+    },
+    {
       id: 'nav-integrations',
       label: 'Go to Integrations',
-      description: 'Google Calendar, Zotero settings',
+      description: 'Google Calendar, Zotero, ORCID, SSO settings',
       icon: Settings,
       category: 'navigation',
       action: () => { setActiveView('integrations'); onClose(); },

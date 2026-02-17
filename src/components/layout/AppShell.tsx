@@ -27,6 +27,7 @@ export type ActiveView =
   | 'projects'
   | 'pipeline'
   | 'gantt'
+  | 'equipment'
   | 'integrations';
 
 export type RightPanelContent =
@@ -449,6 +450,7 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
     { id: 'chat', label: 'Messages', icon: '💬' },
     { id: 'projects', label: 'Projects', icon: '📁' },
     { id: 'gantt', label: 'Timeline', icon: '📅' },
+    { id: 'equipment', label: 'Equipment', icon: '🔬' },
     { id: 'archive', label: 'Archive', icon: '🗄️' },
     { id: 'integrations', label: 'Integrations', icon: '🔗' },
   ];

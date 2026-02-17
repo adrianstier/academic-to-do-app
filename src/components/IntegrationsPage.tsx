@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, BookOpen, ChevronRight } from 'lucide-react';
+import { Calendar, BookOpen, ChevronRight, Fingerprint, Shield } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const CalendarSyncSettings = dynamic(() => import('./settings/CalendarSyncSettings'), {
@@ -14,52 +14,75 @@ const ZoteroSettings = dynamic(() => import('./settings/ZoteroSettings'), {
   loading: () => <div className="animate-pulse h-64 bg-[var(--surface-2)] rounded-xl" />,
 });
 
-type IntegrationPanel = 'list' | 'google-calendar' | 'zotero';
+const OrcidSettings = dynamic(() => import('./settings/OrcidSettings'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-64 bg-[var(--surface-2)] rounded-xl" />,
+});
 
-const integrations = [
+const SSOSettings = dynamic(() => import('./settings/SSOSettings'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-64 bg-[var(--surface-2)] rounded-xl" />,
+});
+
+type IntegrationPanel = 'list' | 'google-calendar' | 'zotero' | 'orcid' | 'sso';
+
+const integrations: { id: Exclude<IntegrationPanel, 'list'>; name: string; description: string; icon: typeof Calendar; color: string }[] = [
   {
-    id: 'google-calendar' as const,
+    id: 'google-calendar',
     name: 'Google Calendar',
     description: 'Sync tasks with due dates to Google Calendar events',
     icon: Calendar,
     color: '#4285F4',
   },
   {
-    id: 'zotero' as const,
+    id: 'zotero',
     name: 'Zotero',
     description: 'Link references from your Zotero library to tasks',
     icon: BookOpen,
     color: '#CC2936',
   },
+  {
+    id: 'orcid',
+    name: 'ORCID',
+    description: 'Link your ORCID researcher profile to your account',
+    icon: Fingerprint,
+    color: '#A6CE39',
+  },
+  {
+    id: 'sso',
+    name: 'Institutional SSO',
+    description: 'Configure SAML-based single sign-on for your university',
+    icon: Shield,
+    color: '#1E3A5F',
+  },
 ];
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] mb-4 transition-colors"
+    >
+      &larr; Back to Integrations
+    </button>
+  );
+}
 
 export default function IntegrationsPage() {
   const [activePanel, setActivePanel] = useState<IntegrationPanel>('list');
 
-  if (activePanel === 'google-calendar') {
-    return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-        <button
-          onClick={() => setActivePanel('list')}
-          className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] mb-4 transition-colors"
-        >
-          &larr; Back to Integrations
-        </button>
-        <CalendarSyncSettings onClose={() => setActivePanel('list')} />
-      </div>
-    );
-  }
+  if (activePanel !== 'list') {
+    const panelContent: Record<Exclude<IntegrationPanel, 'list'>, React.ReactNode> = {
+      'google-calendar': <CalendarSyncSettings onClose={() => setActivePanel('list')} />,
+      'zotero': <ZoteroSettings />,
+      'orcid': <OrcidSettings />,
+      'sso': <SSOSettings />,
+    };
 
-  if (activePanel === 'zotero') {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-        <button
-          onClick={() => setActivePanel('list')}
-          className="flex items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--foreground)] mb-4 transition-colors"
-        >
-          &larr; Back to Integrations
-        </button>
-        <ZoteroSettings />
+        <BackButton onClick={() => setActivePanel('list')} />
+        {panelContent[activePanel]}
       </div>
     );
   }

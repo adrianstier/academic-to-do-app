@@ -20,6 +20,7 @@ import {
   BookOpen,
   GanttChart,
   Plug,
+  Microscope,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -61,6 +62,7 @@ const projectsNavItem = { label: 'Projects', icon: FolderKanban };
 
 const secondaryNavItems: NavItem[] = [
   { id: 'gantt', label: 'Timeline', icon: GanttChart },
+  { id: 'equipment', label: 'Equipment', icon: Microscope },
   { id: 'goals', label: 'Strategic Goals', icon: Target, ownerOnly: true },
   { id: 'archive', label: 'Archive', icon: Archive },
   { id: 'integrations', label: 'Integrations', icon: Plug },
