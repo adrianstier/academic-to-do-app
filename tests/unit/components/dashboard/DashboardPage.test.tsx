@@ -42,6 +42,9 @@ const createMockUser = (name: string): AuthUser => ({
   id: `user-${name.toLowerCase().replace(' ', '-')}`,
   name,
   email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
+  color: '#3B82F6',
+  role: 'admin',
+  created_at: new Date().toISOString(),
 });
 
 // Helper to create mock todos
