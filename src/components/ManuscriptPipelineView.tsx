@@ -137,24 +137,25 @@ function classifyTodo(todo: Todo): string | null {
 // ---- Date/time helpers ----
 
 function formatDueDate(date: string): string {
-  const d = new Date(date);
+  // Extract date-only portion to avoid timezone shift when parsing date-only strings
+  const dateOnly = date.split('T')[0];
+  const d = new Date(dateOnly + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const dueDay = new Date(d);
-  dueDay.setHours(0, 0, 0, 0);
 
-  if (dueDay.getTime() === today.getTime()) return 'Today';
-  if (dueDay.getTime() === tomorrow.getTime()) return 'Tomorrow';
+  if (d.getTime() === today.getTime()) return 'Today';
+  if (d.getTime() === tomorrow.getTime()) return 'Tomorrow';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function isOverdue(date: string): boolean {
-  const d = new Date(date);
+  // Extract date-only portion to avoid timezone shift when parsing date-only strings
+  const dateOnly = date.split('T')[0];
+  const d = new Date(dateOnly + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  d.setHours(0, 0, 0, 0);
   return d < today;
 }
 
@@ -840,9 +841,22 @@ export default function ManuscriptPipelineView({
     const todoId = active.id as string;
     const targetId = over.id as string;
 
+    // Find the current stage of the dragged todo
+    let currentStageId: string | null = null;
+    for (const s of PIPELINE_STAGES) {
+      if ((allStagedTodos[s.id] || []).some(t => t.id === todoId)) {
+        currentStageId = s.id;
+        break;
+      }
+    }
+
     // Check if dropped on a stage column
     const stage = PIPELINE_STAGES.find(s => s.id === targetId);
     if (stage) {
+      if (stage.id === currentStageId) {
+        setDragAnnouncement('Manuscript dropped. No change.');
+        return;
+      }
       handleMoveToStage(todoId, stage.id);
       setDragAnnouncement(`Moved to ${stage.label}.`);
       return;
@@ -854,6 +868,10 @@ export default function ManuscriptPipelineView({
     for (const s of PIPELINE_STAGES) {
       const stageTodos = allStagedTodos[s.id] || [];
       if (stageTodos.some(t => t.id === targetId)) {
+        if (s.id === currentStageId) {
+          setDragAnnouncement('Manuscript dropped. No change.');
+          return;
+        }
         handleMoveToStage(todoId, s.id);
         setDragAnnouncement(`Moved to ${s.label}.`);
         return;

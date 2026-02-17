@@ -71,8 +71,14 @@ export default function NotesSection({ notes, onNotesChange, onSaveNotes }: Note
   );
 
   const handleTogglePreview = useCallback(() => {
-    setIsPreview((prev) => !prev);
-  }, []);
+    setIsPreview((prev) => {
+      // Save notes when switching to preview mode to prevent data loss
+      if (!prev) {
+        onSaveNotes();
+      }
+      return !prev;
+    });
+  }, [onSaveNotes]);
 
   return (
     <CollapsibleSection

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { ChevronDown, ChevronRight, ZoomIn, ZoomOut, Calendar } from 'lucide-react';
 import { useTodoStore } from '@/store/todoStore';
 import type { Todo } from '@/types/todo';
@@ -16,6 +16,8 @@ const DAY_W: Record<ZoomLevel, number> = { week: 40, month: 16, quarter: 5 };
 function sod(d: Date) { const r = new Date(d); r.setHours(0, 0, 0, 0); return r; }
 function addD(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 function diffD(a: Date, b: Date) { return Math.round((a.getTime() - b.getTime()) / 86400000); }
+/** Parse date string safely to avoid timezone shift for date-only strings (e.g. "2024-03-15") */
+function safeParse(d: string) { const dateOnly = d.split('T')[0]; return sod(new Date(dateOnly + 'T00:00:00')); }
 
 function fmtHdr(d: Date, z: ZoomLevel): string {
   if (z === 'week') return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -40,7 +42,9 @@ function hdrTicks(start: Date, end: Date, z: ZoomLevel): Date[] {
 
 function overdue(due?: string, done?: boolean) {
   if (!due || done) return false;
-  return sod(new Date(due)) < sod(new Date());
+  // Extract date-only portion to avoid timezone shift when parsing date-only strings
+  const dateOnly = due.split('T')[0];
+  return sod(new Date(dateOnly + 'T00:00:00')) < sod(new Date());
 }
 
 type Row = { type: 'header'; group: ProjectGroup; key: string } | { type: 'task'; todo: Todo; color: string };
@@ -84,13 +88,13 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
     const now = sod(new Date());
     let earliest = addD(now, -14), latest = addD(now, 30);
     todos.forEach((t) => {
-      if (t.created_at) { const d = sod(new Date(t.created_at)); if (d < earliest) earliest = d; }
-      if (t.due_date) { const d = sod(new Date(t.due_date)); if (d > latest) latest = d; }
-      if (t.start_date) { const d = sod(new Date(t.start_date)); if (d < earliest) earliest = d; }
+      if (t.created_at) { const d = safeParse(t.created_at); if (d < earliest) earliest = d; }
+      if (t.due_date) { const d = safeParse(t.due_date); if (d > latest) latest = d; }
+      if (t.start_date) { const d = safeParse(t.start_date); if (d < earliest) earliest = d; }
     });
     projects.forEach((p) => {
-      if (p.start_date) { const d = sod(new Date(p.start_date)); if (d < earliest) earliest = d; }
-      if (p.end_date) { const d = sod(new Date(p.end_date)); if (d > latest) latest = d; }
+      if (p.start_date) { const d = safeParse(p.start_date); if (d < earliest) earliest = d; }
+      if (p.end_date) { const d = safeParse(p.end_date); if (d > latest) latest = d; }
     });
     return { tlStart: addD(earliest, -7), tlEnd: addD(latest, 14), dw: DAY_W[zoom] };
   }, [todos, projects, zoom]);
@@ -136,8 +140,8 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
         if (bi === undefined) return;
         const bt = todos.find((t) => t.id === b.blocker_id);
         if (!bt) return;
-        const x1 = bt.due_date ? diffD(sod(new Date(bt.due_date)), tlStart) * dw : diffD(sod(new Date(bt.created_at)), tlStart) * dw + 8;
-        const x2 = ft.start_date ? diffD(sod(new Date(ft.start_date)), tlStart) * dw : diffD(sod(new Date(ft.created_at)), tlStart) * dw;
+        const x1 = bt.due_date ? diffD(safeParse(bt.due_date), tlStart) * dw : diffD(safeParse(bt.created_at), tlStart) * dw + 8;
+        const x2 = ft.start_date ? diffD(safeParse(ft.start_date), tlStart) * dw : diffD(safeParse(ft.created_at), tlStart) * dw;
         lines.push({ x1, y1: bi * ROW_H + ROW_H / 2 + HDR_H, x2, y2: fi * ROW_H + ROW_H / 2 + HDR_H });
       });
     });
@@ -148,9 +152,9 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
 
   // Bar geometry helper
   const barGeo = (t: Todo) => {
-    const s = t.start_date ? sod(new Date(t.start_date)) : sod(new Date(t.created_at));
+    const s = t.start_date ? safeParse(t.start_date) : safeParse(t.created_at);
     const hasDue = !!t.due_date;
-    const e = hasDue ? sod(new Date(t.due_date!)) : s;
+    const e = hasDue ? safeParse(t.due_date!) : s;
     const left = diffD(s, tlStart) * dw;
     const w = hasDue ? Math.max((diffD(e, s) + 1) * dw, 8) : 0;
     return { left, w, hasDue };
@@ -165,13 +169,15 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
         {(['week', 'month', 'quarter'] as ZoomLevel[]).map((lvl) => (
           <button key={lvl} onClick={() => setZoom(lvl)}
             className="px-3 py-1 text-xs font-medium rounded-md transition-colors capitalize"
-            style={{ background: zoom === lvl ? 'var(--accent)' : 'transparent', color: zoom === lvl ? '#fff' : 'var(--text-muted)', border: `1px solid ${zoom === lvl ? 'var(--accent)' : 'var(--border)'}` }}>
+            style={{ background: zoom === lvl ? 'var(--accent)' : 'transparent', color: zoom === lvl ? '#fff' : 'var(--text-muted)', border: `1px solid ${zoom === lvl ? 'var(--accent)' : 'var(--border)'}` }}
+            aria-label={`Zoom level: ${lvl}`}
+            aria-pressed={zoom === lvl}>
             {lvl}
           </button>
         ))}
         <div className="flex items-center gap-1 ml-auto">
-          <button onClick={() => setZoom((z) => (z === 'quarter' ? 'month' : 'week'))} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-muted)' }} title="Zoom in"><ZoomIn className="w-4 h-4" /></button>
-          <button onClick={() => setZoom((z) => (z === 'week' ? 'month' : 'quarter'))} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-muted)' }} title="Zoom out"><ZoomOut className="w-4 h-4" /></button>
+          <button onClick={() => setZoom((z) => (z === 'quarter' ? 'month' : 'week'))} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-muted)' }} title="Zoom in" aria-label="Zoom in"><ZoomIn className="w-4 h-4" /></button>
+          <button onClick={() => setZoom((z) => (z === 'week' ? 'month' : 'quarter'))} className="p-1 rounded hover:opacity-80" style={{ color: 'var(--text-muted)' }} title="Zoom out" aria-label="Zoom out"><ZoomOut className="w-4 h-4" /></button>
         </div>
       </div>
 
@@ -183,7 +189,7 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
             if (row.type === 'header') {
               const g = row.group, k = row.key, nm = g.project?.name || 'No Project', c = g.project?.color || NO_COLOR;
               return (
-                <div key={`lh-${k}`} className="flex items-center gap-2 px-3 cursor-pointer select-none font-medium text-sm hover:opacity-80" style={{ height: ROW_H, background: 'var(--surface-2)' }} onClick={() => toggle(k)}>
+                <div key={`lh-${k}`} className="flex items-center gap-2 px-3 cursor-pointer select-none font-medium text-sm hover:opacity-80" style={{ height: ROW_H, background: 'var(--surface-2)' }} onClick={() => toggle(k)} role="button" aria-expanded={!g.collapsed} aria-label={`${g.collapsed ? 'Expand' : 'Collapse'} ${nm}`}>
                   {g.collapsed ? <ChevronRight className="w-3.5 h-3.5 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 shrink-0" />}
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: c }} />
                   <span className="truncate">{nm}</span>
@@ -195,7 +201,8 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
             return (
               <div key={`lt-${t.id}`} className="flex items-center px-3 pl-8 text-sm cursor-pointer truncate hover:opacity-80"
                 style={{ height: ROW_H, opacity: t.completed ? 0.5 : 1, textDecoration: t.completed ? 'line-through' : 'none', borderBottom: '1px solid var(--border)' }}
-                onClick={() => onTaskClick(t)} title={t.text}>
+                onClick={() => onTaskClick(t)} title={t.text} role="button" tabIndex={0} aria-label={`View task: ${t.text}`}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTaskClick(t); } }}>
                 <span className="truncate">{t.text}</span>
               </div>
             );
@@ -266,12 +273,16 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
       {/* Tooltip */}
       {tip && (
         <div className="fixed z-50 px-3 py-2 rounded-lg shadow-lg text-xs max-w-[260px] pointer-events-none"
-          style={{ left: tip.x + 12, top: tip.y + 12, background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)' }}>
+          style={{
+            left: Math.min(tip.x + 12, (typeof window !== 'undefined' ? window.innerWidth : 1000) - 280),
+            top: Math.min(tip.y + 12, (typeof window !== 'undefined' ? window.innerHeight : 800) - 120),
+            background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)',
+          }}>
           <div className="font-semibold mb-1 truncate">{tip.todo.text}</div>
           <div style={{ color: 'var(--text-muted)' }}>
-            {tip.todo.start_date && <div>Start: {new Date(tip.todo.start_date).toLocaleDateString()}</div>}
-            {tip.todo.due_date ? <div>Due: {new Date(tip.todo.due_date).toLocaleDateString()}</div> : <div>No due date</div>}
-            <div>Status: {tip.todo.status.replace('_', ' ')}</div>
+            {tip.todo.start_date && <div>Start: {new Date(tip.todo.start_date + (tip.todo.start_date.includes('T') ? '' : 'T00:00:00')).toLocaleDateString()}</div>}
+            {tip.todo.due_date ? <div>Due: {new Date(tip.todo.due_date + (tip.todo.due_date.includes('T') ? '' : 'T00:00:00')).toLocaleDateString()}</div> : <div>No due date</div>}
+            <div>Status: {(tip.todo.status || 'todo').replace('_', ' ')}</div>
             {tip.todo.priority && <div>Priority: {tip.todo.priority}</div>}
             {tip.todo.assigned_to && <div>Assigned: {tip.todo.assigned_to}</div>}
           </div>

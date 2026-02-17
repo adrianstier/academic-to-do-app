@@ -260,15 +260,28 @@ export default function SSOSettings() {
         body: JSON.stringify({ provider, autoProvision, defaultRole }),
       });
 
-      // Even if the API doesn't support POST yet, update local state
-      setConfig({
-        enabled: true,
-        provider,
-        autoProvision,
-        defaultRole,
-      });
-
-      setSuccessMessage('SSO configuration saved successfully!');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        // Still update local config for UI, but warn the user
+        setConfig({
+          enabled: true,
+          provider,
+          autoProvision,
+          defaultRole,
+        });
+        setSuccessMessage(
+          errData.message ||
+          'SSO configuration saved locally. API persistence will be available when the SSO database table is created.'
+        );
+      } else {
+        setConfig({
+          enabled: true,
+          provider,
+          autoProvision,
+          defaultRole,
+        });
+        setSuccessMessage('SSO configuration saved successfully!');
+      }
     } catch {
       // Still update local state for UI preview
       setConfig({
@@ -307,11 +320,15 @@ export default function SSOSettings() {
     setSuccessMessage('SSO has been disabled.');
   };
 
-  const handleCopyMetadataUrl = () => {
+  const handleCopyMetadataUrl = async () => {
     const url = `${window.location.origin}/api/auth/sso/metadata`;
-    navigator.clipboard.writeText(url);
-    setCopiedMetadata(true);
-    setTimeout(() => setCopiedMetadata(false), 2000);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedMetadata(true);
+      setTimeout(() => setCopiedMetadata(false), 2000);
+    } catch {
+      // Clipboard API not available -- silent fail
+    }
   };
 
   const spMetadataXml = typeof window !== 'undefined'

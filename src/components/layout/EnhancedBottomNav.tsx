@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   CheckSquare,
   LayoutDashboard,
@@ -109,15 +109,13 @@ export default function EnhancedBottomNav() {
         }
       `}
       style={darkMode ? { backgroundColor: 'color-mix(in srgb, var(--surface) 95%, transparent)' } : undefined}
-      role="navigation"
-      aria-label="Main navigation"
+      aria-label="Mobile navigation"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto px-2">
-        {tabs.map((tab, index) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = tab.id !== 'add' && activeView === tab.id;
+          const isActive = tab.id !== 'add' && tab.id !== 'more' && activeView === tab.id;
           const isAddButton = tab.id === 'add';
-          const isMoreButton = tab.id === 'more';
 
           // Floating add button in center
           if (isAddButton) {
@@ -155,8 +153,7 @@ export default function EnhancedBottomNav() {
                   : 'opacity-60 active:opacity-100 active:scale-95'
                 }
               `}
-              role="tab"
-              aria-selected={isActive}
+              aria-current={isActive ? 'page' : undefined}
               aria-label={tab.label}
             >
               {/* Active indicator pill */}

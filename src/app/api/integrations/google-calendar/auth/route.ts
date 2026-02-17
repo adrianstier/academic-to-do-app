@@ -50,10 +50,10 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     });
 
     // Return the auth URL for the client to redirect to
+    // Note: state is already embedded in the authUrl, no need to expose it separately
     return NextResponse.json({
       success: true,
       authUrl,
-      state,
     });
   } catch (error) {
     logger.error('Error initiating Google Calendar OAuth', error as Error, {

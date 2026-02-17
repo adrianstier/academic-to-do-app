@@ -189,9 +189,9 @@ export default function CalendarSyncSettings({ onClose }: CalendarSyncSettingsPr
         const dataParam = hash.split('gcal_data=')[1];
         if (dataParam) {
           try {
-            const decoded = JSON.parse(
-              Buffer.from(dataParam, 'base64url').toString('utf-8')
-            );
+            // Use browser-safe base64 decoding (no Buffer in client components)
+            const base64 = dataParam.replace(/-/g, '+').replace(/_/g, '/');
+            const decoded = JSON.parse(atob(base64));
             setStoredConnection(decoded);
             setConnection(decoded);
             toast.success('Google Calendar connected successfully');
@@ -236,13 +236,16 @@ export default function CalendarSyncSettings({ onClose }: CalendarSyncSettingsPr
     if (!connection) return;
 
     try {
-      const params = new URLSearchParams({
-        accessToken: connection.access_token,
-        refreshToken: connection.refresh_token,
-      });
-
       const response = await fetch(
-        `/api/integrations/google-calendar/status?${params.toString()}`
+        `/api/integrations/google-calendar/status`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: connection.access_token,
+            refreshToken: connection.refresh_token,
+          }),
+        }
       );
       const data = await response.json();
 
@@ -266,12 +269,19 @@ export default function CalendarSyncSettings({ onClose }: CalendarSyncSettingsPr
         }
       } else if (data.tokenExpired) {
         toast.warning('Google Calendar connection expired. Please reconnect.');
-        handleDisconnect();
+        setStoredConnection(null);
+        setConnection(null);
+        setCalendars([]);
+        localStorage.removeItem(LS_KEY_SYNC_HISTORY);
+        localStorage.removeItem(LS_KEY_LAST_SYNC);
+        setSyncHistory([]);
+        setLastSyncState(null);
       }
     } catch {
       // Silent fail - status check is not critical
     }
-  }, [connection]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connection, toast]);
 
   useEffect(() => {
     fetchStatus();

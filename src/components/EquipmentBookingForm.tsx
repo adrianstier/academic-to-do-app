@@ -94,7 +94,8 @@ export default function EquipmentBookingForm({
       return `${t.getHours().toString().padStart(2, '0')}:${t.getMinutes().toString().padStart(2, '0')}`;
     }
     if (preselectedHour !== undefined) {
-      return `${(preselectedHour + 1).toString().padStart(2, '0')}:00`;
+      const endHour = Math.min(preselectedHour + 1, 23);
+      return `${endHour.toString().padStart(2, '0')}:${preselectedHour >= 23 ? '30' : '00'}`;
     }
     return '10:00';
   });

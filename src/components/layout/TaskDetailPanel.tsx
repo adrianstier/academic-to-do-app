@@ -11,20 +11,16 @@ import {
   Flag,
   Clock,
   Paperclip,
-  MessageSquare,
   ChevronDown,
   ChevronUp,
   Plus,
   Trash2,
   Edit3,
-  Save,
-  ArrowRight,
   ListChecks,
   FileText,
   Mic,
   AlertTriangle,
   CheckCircle2,
-  Circle,
   Archive,
   Copy,
   Share2,
@@ -46,7 +42,7 @@ import ProjectSelector from '@/components/ProjectSelector';
 import TagPicker from '@/components/TagPicker';
 import LinksSection from '@/components/LinksSection';
 import DependencyPicker from '@/components/task-detail/DependencyPicker';
-import type { TodoLink, TodoLinkType } from '@/types/tag';
+import type { TodoLink } from '@/types/tag';
 import type { ExperimentLog } from '@/types/experiment';
 import type { TaskReference, ZoteroReference } from '@/types/reference';
 import { fetchWithCsrf } from '@/lib/csrf';
@@ -54,9 +50,18 @@ import { logger } from '@/lib/logger';
 import { sanitizeTranscription } from '@/lib/sanitize';
 
 // Dynamic imports for experiment log and reference components (code-split)
-const ExperimentLogForm = dynamic(() => import('@/components/ExperimentLogForm'), { ssr: false });
-const ExperimentLogView = dynamic(() => import('@/components/ExperimentLogView'), { ssr: false });
-const ReferencePicker = dynamic(() => import('@/components/task-detail/ReferencePicker'), { ssr: false });
+const ExperimentLogForm = dynamic(() => import('@/components/ExperimentLogForm'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-24 rounded-lg bg-[var(--surface-2)]" />,
+});
+const ExperimentLogView = dynamic(() => import('@/components/ExperimentLogView'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-16 rounded-lg bg-[var(--surface-2)]" />,
+});
+const ReferencePicker = dynamic(() => import('@/components/task-detail/ReferencePicker'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-16 rounded-lg bg-[var(--surface-2)]" />,
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TASK DETAIL PANEL
@@ -302,8 +307,13 @@ export default function TaskDetailPanel({
   const handleSaveText = useCallback(async () => {
     if (editedText.trim() && editedText !== task.text) {
       setSaving(true);
-      await onUpdate(task.id, { text: editedText.trim() });
-      setSaving(false);
+      try {
+        await onUpdate(task.id, { text: editedText.trim() });
+      } catch (error) {
+        logger.error('Failed to save task text', error, { component: 'TaskDetailPanel' });
+      } finally {
+        setSaving(false);
+      }
     }
     setIsEditingText(false);
   }, [task.id, task.text, editedText, onUpdate]);
@@ -311,8 +321,13 @@ export default function TaskDetailPanel({
   const handleSaveNotes = useCallback(async () => {
     if (editedNotes !== (task.notes || '')) {
       setSaving(true);
-      await onUpdate(task.id, { notes: editedNotes });
-      setSaving(false);
+      try {
+        await onUpdate(task.id, { notes: editedNotes });
+      } catch (error) {
+        logger.error('Failed to save task notes', error, { component: 'TaskDetailPanel' });
+      } finally {
+        setSaving(false);
+      }
     }
     setIsEditingNotes(false);
   }, [task.id, task.notes, editedNotes, onUpdate]);
@@ -407,7 +422,7 @@ export default function TaskDetailPanel({
     if (!aiSubtasksPreview) return;
 
     // Generate proper IDs for the subtasks
-    const newSubtasks: Subtask[] = aiSubtasksPreview.map((st, index) => ({
+    const newSubtasks: Subtask[] = aiSubtasksPreview.map((st) => ({
       ...st,
       id: crypto.randomUUID(),
     }));
@@ -468,8 +483,6 @@ export default function TaskDetailPanel({
   })() : null;
 
   const priorityConfig = PRIORITY_CONFIG[task.priority || 'medium'];
-  const statusConfig = STATUS_CONFIG[task.status];
-  const assignedUser = users.find(u => u.name === task.assigned_to);
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
 

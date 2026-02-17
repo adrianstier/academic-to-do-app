@@ -178,6 +178,9 @@ export default function CalendarView({
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if ((e.target as HTMLElement).isContentEditable) return;
 
+      // Skip when modifier keys are held (except for Escape and arrows)
+      if ((e.ctrlKey || e.metaKey || e.altKey) && e.key !== 'Escape' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
       switch (e.key) {
         case 'Escape':
           if (showFilterMenu) {

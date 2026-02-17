@@ -22,7 +22,7 @@ import { SimpleAccordion } from './ui/Accordion';
 import { AIFeaturesMenu } from './ui/AIFeaturesMenu';
 
 interface AddTodoProps {
-  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null) => void;
+  onAdd: (text: string, priority: TodoPriority, dueDate?: string, assignedTo?: string, subtasks?: Subtask[], transcription?: string, sourceFile?: File, reminderAt?: string, notes?: string, recurrence?: 'daily' | 'weekly' | 'monthly' | null, projectId?: string) => void;
   users: string[];
   darkMode?: boolean;
   currentUserId?: string;
@@ -315,7 +315,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
       }));
     }
 
-    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks, undefined, undefined, reminderAt || undefined, notes || undefined, recurrence || null);
+    onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, subtasks, undefined, undefined, reminderAt || undefined, notes || undefined, recurrence || null, selectedProjectId);
     // Save preferences for next time
     if (currentUserId) {
       updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);
@@ -368,7 +368,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
     taskAssignedTo?: string,
     subtasks?: Subtask[]
   ) => {
-    onAdd(taskText, taskPriority, taskDueDate, taskAssignedTo, subtasks, undefined, undefined, undefined, notes || undefined, recurrence || null);
+    onAdd(taskText, taskPriority, taskDueDate, taskAssignedTo, subtasks, undefined, undefined, undefined, notes || undefined, recurrence || null, selectedProjectId);
     // Save preferences for next time
     if (currentUserId) {
       updateLastTaskDefaults(currentUserId, taskPriority, taskAssignedTo);
@@ -425,7 +425,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
             priority: 'medium' as TodoPriority,
           }));
         }
-        onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, entrySubtasks, undefined, undefined, reminderAt || undefined, notes || undefined, recurrence || null);
+        onAdd(text.trim(), priority, dueDate || undefined, assignedTo || undefined, entrySubtasks, undefined, undefined, reminderAt || undefined, notes || undefined, recurrence || null, selectedProjectId);
         // Save preferences for next time
         if (currentUserId) {
           updateLastTaskDefaults(currentUserId, priority, assignedTo || undefined);
@@ -936,7 +936,7 @@ export default function AddTodo({ onAdd, users, darkMode = true, currentUserId, 
             setDraggedFile(null);
           }}
           onCreateTask={(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile) => {
-            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, undefined, notes || undefined, recurrence || null);
+            onAdd(text, priority, dueDate, assignedTo, subtasks, transcription, sourceFile, undefined, notes || undefined, recurrence || null, selectedProjectId);
             setShowFileImporter(false);
             setDraggedFile(null);
           }}

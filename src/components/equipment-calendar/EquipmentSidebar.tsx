@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import {
   Search,
   Filter,
-  Check,
 } from 'lucide-react';
 import {
   LabEquipment,

@@ -32,7 +32,6 @@ export function useTodoData(currentUser: AuthUser) {
     setShowWelcomeBack,
     setProjects,
     setTags,
-    todos,
   } = useTodoStore();
 
   const userName = currentUser.name;
@@ -341,8 +340,8 @@ export function useTodoData(currentUser: AuthUser) {
 
   // Update an existing todo
   const updateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
-    // Get current todo for rollback
-    const currentTodo = todos.find((t) => t.id === id);
+    // Get current todo for rollback — use getState() to avoid stale closure
+    const currentTodo = useTodoStore.getState().todos.find((t) => t.id === id);
     if (!currentTodo) return false;
 
     // Optimistic update
@@ -402,12 +401,12 @@ export function useTodoData(currentUser: AuthUser) {
     }
 
     return true;
-  }, [todos, userName, updateTodoInStore]);
+  }, [userName, updateTodoInStore]);
 
   // Delete a todo
   const deleteTodo = useCallback(async (id: string) => {
-    // Get current todo for rollback
-    const currentTodo = todos.find((t) => t.id === id);
+    // Get current todo for rollback — use getState() to avoid stale closure
+    const currentTodo = useTodoStore.getState().todos.find((t) => t.id === id);
     if (!currentTodo) return false;
 
     // Optimistic delete
@@ -431,11 +430,12 @@ export function useTodoData(currentUser: AuthUser) {
     });
 
     return true;
-  }, [todos, userName, deleteTodoFromStore, addTodoToStore]);
+  }, [userName, deleteTodoFromStore, addTodoToStore]);
 
   // Toggle todo completion
   const toggleComplete = useCallback(async (id: string) => {
-    const todo = todos.find((t) => t.id === id);
+    // Use getState() to avoid stale closure
+    const todo = useTodoStore.getState().todos.find((t) => t.id === id);
     if (!todo) return false;
 
     const newCompleted = !todo.completed;
@@ -456,7 +456,7 @@ export function useTodoData(currentUser: AuthUser) {
     }
 
     return success;
-  }, [todos, userName, updateTodo]);
+  }, [userName, updateTodo]);
 
   // Refresh data
   const refresh = useCallback(async () => {

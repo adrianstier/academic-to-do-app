@@ -176,15 +176,14 @@ export function getClientCsrfToken(): string | null {
 /**
  * Client-side helper to add CSRF token to fetch headers
  */
-export function addCsrfHeader(headers: HeadersInit = {}): HeadersInit {
+export function addCsrfHeader(headers: HeadersInit = {}): Headers {
   const token = getClientCsrfToken();
+  // Convert any HeadersInit type (Headers, string[][], Record) to a Headers object
+  const result = new Headers(headers);
   if (token) {
-    return {
-      ...headers,
-      [CSRF_HEADER_NAME]: token,
-    };
+    result.set(CSRF_HEADER_NAME, token);
   }
-  return headers;
+  return result;
 }
 
 /**

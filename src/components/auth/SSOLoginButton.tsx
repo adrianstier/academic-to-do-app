@@ -41,13 +41,16 @@ export default function SSOLoginButton({ provider, onLogin }: SSOLoginButtonProp
     setIsLoading(true);
 
     try {
-      if (provider) {
-        // Redirect to the SSO initiation endpoint
-        window.location.href = `/api/auth/sso?provider=${encodeURIComponent(provider.id)}`;
+      if (!provider) {
+        setIsLoading(false);
+        return;
       }
 
-      // Call the onLogin callback
+      // Call the onLogin callback before redirecting
       onLogin();
+
+      // Redirect to the SSO initiation endpoint
+      window.location.href = `/api/auth/sso?provider=${encodeURIComponent(provider.id)}`;
     } catch {
       setIsLoading(false);
     }

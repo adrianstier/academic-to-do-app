@@ -246,7 +246,7 @@ export async function getItems(
     limit: String(limit),
     sort,
     direction,
-    itemType: '-attachment || note', // Exclude attachments and notes
+    itemType: '-attachment || -note', // Exclude attachments and notes
   });
 
   const url = `${ZOTERO_API_BASE}${basePath}?${searchParams.toString()}`;
@@ -284,7 +284,7 @@ export async function searchItems(
     qmode: 'everything',
     limit: String(DEFAULT_LIMIT),
     sort: 'relevance',
-    itemType: '-attachment || note',
+    itemType: '-attachment || -note',
   });
 
   const url = `${ZOTERO_API_BASE}${basePath}?${searchParams.toString()}`;

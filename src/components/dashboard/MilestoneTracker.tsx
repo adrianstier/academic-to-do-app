@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
@@ -17,17 +17,50 @@ interface MilestoneTrackerProps {
 }
 
 /**
+ * Load milestones from localStorage for a given project.
+ */
+function loadMilestonesFromStorage(projectId: string): Milestone[] | null {
+  try {
+    const raw = localStorage.getItem(`projectMilestones:${projectId}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as Milestone[];
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save milestones to localStorage for a given project.
+ */
+function saveMilestonesToStorage(projectId: string, milestones: Milestone[]): void {
+  try {
+    localStorage.setItem(`projectMilestones:${projectId}`, JSON.stringify(milestones));
+  } catch {
+    // Silently fail if localStorage is full or unavailable
+  }
+}
+
+/**
  * MilestoneTracker - Vertical list of milestones for a project
  *
- * Uses local state for milestone management. A backend milestones API
- * can be connected later; the component interface is designed to be
- * easily swapped to server-backed state.
+ * Persists milestones to localStorage so they survive page navigation.
+ * A backend milestones API can be connected later; the component
+ * interface is designed to be easily swapped to server-backed state.
  */
 export default function MilestoneTracker({ projectId, initialMilestones = [] }: MilestoneTrackerProps) {
-  const [milestones, setMilestones] = useState<Milestone[]>(initialMilestones);
+  const [milestones, setMilestones] = useState<Milestone[]>(() => {
+    // On mount, load from localStorage or fall back to initialMilestones
+    const stored = loadMilestonesFromStorage(projectId);
+    return stored ?? initialMilestones;
+  });
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState('');
   const [showForm, setShowForm] = useState(false);
+
+  // Persist milestones to localStorage whenever they change
+  useEffect(() => {
+    saveMilestonesToStorage(projectId, milestones);
+  }, [projectId, milestones]);
 
   const completedCount = milestones.filter(m => m.completed).length;
   const totalCount = milestones.length;
@@ -45,7 +78,7 @@ export default function MilestoneTracker({ projectId, initialMilestones = [] }: 
     if (!newTitle.trim()) return;
 
     const milestone: Milestone = {
-      id: `ms-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `ms-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       project_id: projectId,
       title: newTitle.trim(),
       target_date: newDate || undefined,
@@ -262,22 +295,23 @@ export default function MilestoneTracker({ projectId, initialMilestones = [] }: 
                     </span>
                   </div>
 
-                  {milestone.target_date && (
-                    <span className={`text-xs flex-shrink-0 px-2 py-0.5 rounded ${
-                      !milestone.completed && (() => {
-                        // Compare dates in local timezone to avoid UTC offset issues
-                        const target = new Date(milestone.target_date + 'T23:59:59');
-                        return target < new Date();
-                      })()
-                        ? 'bg-[var(--danger-light)] text-[var(--danger)]'
-                        : 'text-[var(--text-muted)] dark:text-white/40'
-                    }`}>
-                      {new Date(milestone.target_date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  )}
+                  {milestone.target_date && (() => {
+                    const isOverdue = !milestone.completed &&
+                      new Date(milestone.target_date + 'T23:59:59') < new Date();
+                    return (
+                      <span className={`text-xs flex-shrink-0 px-2 py-0.5 rounded ${
+                        isOverdue
+                          ? 'bg-[var(--danger-light)] text-[var(--danger)]'
+                          : 'text-[var(--text-muted)] dark:text-white/40'
+                      }`}>
+                        {isOverdue && 'Overdue: '}
+                        {new Date(milestone.target_date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    );
+                  })()}
                 </motion.div>
               ))}
             </AnimatePresence>

@@ -142,6 +142,18 @@ export default function ProjectDashboard() {
     fetchProjects();
   }, [fetchProjects]);
 
+  // Close create project modal on Escape key
+  useEffect(() => {
+    if (!showCreateForm) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCreateForm(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateForm]);
+
   // Get recent tasks from the store
   const todos = useTodoStore((state) => state.todos);
 
@@ -1002,12 +1014,6 @@ export default function ProjectDashboard() {
             />
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.stopPropagation();
-                  setShowCreateForm(false);
-                }
-              }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1160,6 +1166,11 @@ export default function ProjectDashboard() {
                       />
                     </div>
                   </div>
+                  {createForm.start_date && createForm.end_date && createForm.end_date < createForm.start_date && (
+                    <p className="text-xs text-[var(--danger)]">
+                      End date cannot be before start date
+                    </p>
+                  )}
                 </div>
 
                 <div className={`px-6 py-4 border-t flex items-center justify-end gap-3 ${
@@ -1175,7 +1186,11 @@ export default function ProjectDashboard() {
                   </button>
                   <button
                     onClick={handleCreateProject}
-                    disabled={!createForm.name.trim() || creating}
+                    disabled={
+                      !createForm.name.trim() ||
+                      creating ||
+                      (!!createForm.start_date && !!createForm.end_date && createForm.end_date < createForm.start_date)
+                    }
                     className="px-4 py-2 bg-[var(--brand-blue)] text-white text-sm font-medium rounded-lg
                       hover:bg-[var(--brand-navy)] disabled:opacity-50 disabled:cursor-not-allowed
                       transition-all shadow-lg shadow-[var(--brand-blue)]/20"

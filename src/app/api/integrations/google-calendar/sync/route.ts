@@ -27,10 +27,8 @@ import {
   getValidAccessToken,
   listEvents,
   createEvent,
-  updateEvent,
   buildEventFromTodo,
   type GoogleTokens,
-  type GoogleCalendarEvent,
   type SyncResult,
   type SyncDirection,
 } from '@/lib/googleCalendar';

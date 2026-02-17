@@ -93,12 +93,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the redirect URL with session info
-    // The app's login page will pick up the SSO session from the URL params
+    // Use URL fragment (hash) instead of query params to avoid leaking
+    // user credentials in server logs, referrer headers, and browser history.
+    // Fragments are NOT sent to the server, providing a layer of security.
     const origin = new URL(request.url).origin;
-    const redirectUrl = new URL('/', origin);
-    redirectUrl.searchParams.set('sso_user_id', user.id);
-    redirectUrl.searchParams.set('sso_user_name', user.name);
-    redirectUrl.searchParams.set('sso_provider', matchedProviderId);
+    const ssoData = Buffer.from(JSON.stringify({
+      sso_user_id: user.id,
+      sso_user_name: user.name,
+      sso_provider: matchedProviderId,
+    })).toString('base64url');
+    const redirectUrl = new URL(`/?sso_login=true#sso_data=${ssoData}`, origin);
 
     logger.info('SSO login complete', {
       userId: user.id,

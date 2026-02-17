@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FlaskConical, BookOpen, Edit3, Plus, ChevronDown, ChevronUp } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
 import { Modal } from '@/components/ui/Modal';
 import { MAX_ATTACHMENTS_PER_TODO } from '@/types/todo';
 import type { TodoDependencyDisplay } from '@/types/todo';
@@ -17,9 +16,18 @@ import { useTodoStore } from '@/store/todoStore';
 import { fetchWithCsrf } from '@/lib/csrf';
 
 // Dynamic imports for experiment log and reference components (code-split)
-const ExperimentLogForm = dynamic(() => import('@/components/ExperimentLogForm'), { ssr: false });
-const ExperimentLogView = dynamic(() => import('@/components/ExperimentLogView'), { ssr: false });
-const ReferencePicker = dynamic(() => import('./ReferencePicker'), { ssr: false });
+const ExperimentLogForm = dynamic(() => import('@/components/ExperimentLogForm'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-24 rounded-lg bg-[var(--surface-2)]" />,
+});
+const ExperimentLogView = dynamic(() => import('@/components/ExperimentLogView'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-16 rounded-lg bg-[var(--surface-2)]" />,
+});
+const ReferencePicker = dynamic(() => import('./ReferencePicker'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-16 rounded-lg bg-[var(--surface-2)]" />,
+});
 
 const sectionStagger = {
   hidden: { opacity: 0, y: 4 },

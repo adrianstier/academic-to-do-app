@@ -106,12 +106,35 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
   };
   const removeEquipmentTag = (tag: string) => setEquipment((e) => e.filter((t) => t !== tag));
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
+
+    // Validate required fields
+    if (!hypothesis.trim() && !methods.trim()) {
+      setValidationError('Please provide at least a hypothesis or methods description.');
+      return;
+    }
+
+    // Validate date range: end date must not be before start date
+    if (endDate && startDate && endDate < startDate) {
+      setValidationError('End date cannot be before start date.');
+      return;
+    }
+
+    // Validate variables: named variables must have a type
+    const invalidVars = variables.filter(v => v.name.trim() && !v.type);
+    if (invalidVars.length > 0) {
+      setValidationError('All named variables must have a type selected.');
+      return;
+    }
+
     const now = new Date().toISOString();
     onSave({
       id: existingLog?.id ?? crypto.randomUUID(), todo_id: todoId, template_type: template,
-      hypothesis, methods, variables, observations, results, conclusion, equipment,
+      hypothesis, methods, variables: variables.filter(v => v.name.trim()), observations, results, conclusion, equipment,
       start_date: startDate, end_date: endDate || undefined, status,
       created_at: existingLog?.created_at ?? now, updated_at: now,
     });
@@ -244,6 +267,13 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
           </button>
         </div>
       </div>
+
+      {/* Validation Error */}
+      {validationError && (
+        <div className="text-sm px-3 py-2 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+          {validationError}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-2 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>

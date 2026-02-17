@@ -66,11 +66,12 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       throw projectError;
     }
 
-    // Fetch all todos for this project
+    // Fetch all todos for this project (exclude soft-deleted)
     let todosQuery = supabase
       .from('todos')
       .select('id, text, completed, status, priority, category, due_date, assigned_to, created_by, updated_at, created_at')
-      .eq('project_id', projectId);
+      .eq('project_id', projectId)
+      .eq('is_deleted', false);
 
     if (context.teamId && context.teamId.trim() !== '') {
       todosQuery = todosQuery.eq('team_id', context.teamId);
@@ -119,12 +120,12 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       tasksByCategory[category] = (tasksByCategory[category] || 0) + 1;
     }
 
-    // Tasks by status
-    const tasksByStatus: Record<string, number> = {
-      todo: todoTasks,
-      in_progress: inProgressTasks,
-      done: completedTasks,
-    };
+    // Tasks by status (include all statuses, not just built-in)
+    const tasksByStatus: Record<string, number> = {};
+    for (const todo of allTodos) {
+      const status = todo.completed ? 'done' : (todo.status || 'todo');
+      tasksByStatus[status] = (tasksByStatus[status] || 0) + 1;
+    }
 
     // Tasks by assignee
     const tasksByAssignee: Record<string, { total: number; completed: number }> = {};
@@ -158,8 +159,8 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
         id: t.id,
         text: t.text,
         completed: t.completed,
-        status: t.status,
-        priority: t.priority,
+        status: t.status || 'todo',
+        priority: t.priority || 'medium',
         assigned_to: t.assigned_to,
         due_date: t.due_date,
         updated_at: t.updated_at || t.created_at,

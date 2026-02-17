@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, createContext, useContext, ReactNode, useRef } from 'react';
+import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -159,8 +159,8 @@ export default function AppShell({
         return;
       }
 
-      // Command palette: Cmd/Ctrl + K
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && !isInputField) {
+      // Command palette: Cmd/Ctrl + K (works globally, even in input fields)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setCommandPaletteOpen(prev => !prev);
       }
@@ -391,6 +391,14 @@ export default function AppShell({
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                role="dialog"
+                aria-modal="true"
+                aria-label={
+                  mobileSheetContent === 'menu' ? 'Navigation menu' :
+                  mobileSheetContent === 'filters' ? 'Filters' :
+                  mobileSheetContent === 'chat' ? 'Chat' :
+                  'Sheet'
+                }
                 className={`
                   fixed inset-x-0 bottom-0 z-50 lg:hidden
                   max-h-[85vh] rounded-t-3xl overflow-hidden
@@ -447,6 +455,7 @@ function MobileMenuContent({ onClose }: { onClose: () => void }) {
     { id: 'pipeline', label: 'Pipeline', icon: '📖' },
     { id: 'ai_inbox', label: 'AI Inbox', icon: '📥' },
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'activity', label: 'Activity', icon: '📈' },
     { id: 'chat', label: 'Messages', icon: '💬' },
     { id: 'projects', label: 'Projects', icon: '📁' },
     { id: 'gantt', label: 'Timeline', icon: '📅' },

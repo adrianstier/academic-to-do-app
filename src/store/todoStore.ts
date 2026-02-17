@@ -596,7 +596,11 @@ export const selectFilteredTodos = (
   }
 
   if (filters.assignedToFilter !== 'all') {
-    filtered = filtered.filter((t) => t.assigned_to === filters.assignedToFilter);
+    if (filters.assignedToFilter === 'unassigned') {
+      filtered = filtered.filter((t) => !t.assigned_to);
+    } else {
+      filtered = filtered.filter((t) => t.assigned_to === filters.assignedToFilter);
+    }
   }
 
   if (filters.highPriorityOnly) {
@@ -609,6 +613,27 @@ export const selectFilteredTodos = (
         ? (t.attachments?.length || 0) > 0
         : (t.attachments?.length || 0) === 0
     );
+  }
+
+  // Apply date range filter
+  if (filters.dateRangeFilter.start) {
+    const startDate = new Date(filters.dateRangeFilter.start);
+    startDate.setHours(0, 0, 0, 0);
+    filtered = filtered.filter((t) => {
+      if (!t.due_date) return false;
+      const d = new Date(t.due_date);
+      d.setHours(0, 0, 0, 0);
+      return d >= startDate;
+    });
+  }
+  if (filters.dateRangeFilter.end) {
+    const endDate = new Date(filters.dateRangeFilter.end);
+    endDate.setHours(23, 59, 59, 999);
+    filtered = filtered.filter((t) => {
+      if (!t.due_date) return false;
+      const d = new Date(t.due_date);
+      return d <= endDate;
+    });
   }
 
   // Apply project filter

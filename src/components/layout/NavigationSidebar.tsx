@@ -21,6 +21,7 @@ import {
   GanttChart,
   Plug,
   Microscope,
+  Activity,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -55,6 +56,7 @@ const primaryNavItems: NavItem[] = [
   { id: 'pipeline', label: 'Pipeline', icon: BookOpen },
   { id: 'ai_inbox', label: 'AI Inbox', icon: Inbox },
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'activity', label: 'Activity', icon: Activity },
 ];
 
 // Projects is rendered separately as it shares the 'tasks' view with project filter context

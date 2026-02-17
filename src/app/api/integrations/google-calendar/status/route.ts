@@ -1,15 +1,17 @@
 /**
  * Google Calendar Connection Status Endpoint
  *
- * GET /api/integrations/google-calendar/status
+ * POST /api/integrations/google-calendar/status
  *
  * Returns the current connection status with Google Calendar.
- * Uses the access token from the client to verify connectivity
+ * Uses the access token from the request body to verify connectivity
  * and list available calendars.
  *
- * Query params:
- *   accessToken - The stored Google access token
- *   refreshToken - The stored Google refresh token
+ * Request body:
+ * {
+ *   accessToken: string,   // The stored Google access token
+ *   refreshToken: string,  // The stored Google refresh token
+ * }
  *
  * Response:
  * {
@@ -32,7 +34,7 @@ import {
   type CalendarConnectionStatus,
 } from '@/lib/googleCalendar';
 
-export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
+export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     // Check if Google Calendar is configured at all
     if (!isGoogleCalendarConfigured()) {
@@ -48,9 +50,17 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       });
     }
 
-    const { searchParams } = new URL(request.url);
-    const accessToken = searchParams.get('accessToken');
-    const refreshToken = searchParams.get('refreshToken');
+    // Read tokens from request body instead of query params to avoid leaking
+    // sensitive tokens in server logs, browser history, and referrer headers
+    let accessToken: string | null = null;
+    let refreshToken: string | null = null;
+    try {
+      const body = await request.json();
+      accessToken = body.accessToken || null;
+      refreshToken = body.refreshToken || null;
+    } catch {
+      // No body or invalid JSON — treat as no tokens provided
+    }
 
     // If no tokens provided, user is not connected
     if (!accessToken || !refreshToken) {

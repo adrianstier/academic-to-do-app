@@ -598,6 +598,7 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     todos,
     users,
     usersWithColors,
+    activityLog,
     initialFilter,
     showAddTask,
     selectedTaskId,

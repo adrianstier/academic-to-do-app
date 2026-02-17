@@ -33,6 +33,15 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       );
     }
 
+    // Validate UUID format to prevent injection
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(todoId)) {
+      return NextResponse.json(
+        { error: 'todoId must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
     // Verify the todo belongs to this team
     const { data: todo, error: todoError } = await supabase
       .from('todos')
@@ -133,6 +142,16 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
     if (!blocker_id || !blocked_id) {
       return NextResponse.json(
         { error: 'blocker_id and blocked_id are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUID format to prevent injection
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof blocker_id !== 'string' || typeof blocked_id !== 'string' ||
+        !UUID_REGEX.test(blocker_id) || !UUID_REGEX.test(blocked_id)) {
+      return NextResponse.json(
+        { error: 'blocker_id and blocked_id must be valid UUIDs' },
         { status: 400 }
       );
     }
@@ -273,6 +292,16 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
     if (!blocker_id || !blocked_id) {
       return NextResponse.json(
         { error: 'blocker_id and blocked_id are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUID format to prevent injection
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof blocker_id !== 'string' || typeof blocked_id !== 'string' ||
+        !UUID_REGEX.test(blocker_id) || !UUID_REGEX.test(blocked_id)) {
+      return NextResponse.json(
+        { error: 'blocker_id and blocked_id must be valid UUIDs' },
         { status: 400 }
       );
     }

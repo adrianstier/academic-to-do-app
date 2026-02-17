@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Link2, X, Lock, ArrowRight, ChevronDown, Search } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Link2, X, Lock, ArrowRight, Search } from 'lucide-react';
 import type { TodoStatus, TodoDependencyDisplay } from '@/types/todo';
 import { STATUS_CONFIG } from '@/types/todo';
 
@@ -68,7 +68,8 @@ function DependencyChip({
 
 export default function DependencyPicker({
   todoId,
-  teamId,
+  // teamId is accepted for future use (e.g., scoped dependency queries)
+  teamId: _teamId,
   blocks,
   blockedBy,
   onAddDependency,
@@ -100,18 +101,23 @@ export default function DependencyPicker({
     }
   }, [addMode]);
 
-  // Get existing dependency IDs to exclude from search
-  const existingDepIds = new Set<string>();
-  existingDepIds.add(todoId); // Exclude self
-  blocks.forEach(d => existingDepIds.add(d.blocked_id));
-  blockedBy.forEach(d => existingDepIds.add(d.blocker_id));
+  // Get existing dependency IDs to exclude from search (memoized)
+  const existingDepIds = useMemo(() => {
+    const ids = new Set<string>();
+    ids.add(todoId); // Exclude self
+    blocks.forEach(d => ids.add(d.blocked_id));
+    blockedBy.forEach(d => ids.add(d.blocker_id));
+    return ids;
+  }, [todoId, blocks, blockedBy]);
 
   // Filter available todos
-  const filteredTodos = allTodos.filter(t => {
-    if (existingDepIds.has(t.id)) return false;
-    if (!searchQuery) return true;
-    return t.text.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const filteredTodos = useMemo(() => {
+    return allTodos.filter(t => {
+      if (existingDepIds.has(t.id)) return false;
+      if (!searchQuery) return true;
+      return t.text.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [allTodos, existingDepIds, searchQuery]);
 
   const handleSelect = (selectedTodoId: string) => {
     if (addMode === 'blockedBy') {
@@ -224,6 +230,13 @@ export default function DependencyPicker({
                     e.preventDefault();
                     setAddMode(null);
                     setSearchQuery('');
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    // Select the first matching result on Enter
+                    const visibleTodos = filteredTodos.slice(0, 20);
+                    if (visibleTodos.length > 0) {
+                      handleSelect(visibleTodos[0].id);
+                    }
                   }
                 }}
                 placeholder={
@@ -262,6 +275,7 @@ export default function DependencyPicker({
                     key={t.id}
                     onClick={() => handleSelect(t.id)}
                     role="option"
+                    aria-selected={false}
                     className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm
                       hover:bg-[var(--surface-2)] transition-colors"
                   >

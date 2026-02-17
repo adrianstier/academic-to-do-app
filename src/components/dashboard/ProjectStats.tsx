@@ -489,5 +489,3 @@ export default function ProjectStats({ projectId, onStatsLoaded }: ProjectStatsP
     </div>
   );
 }
-
-export type { ProjectStatsData as ProjectStatsDataExport };

@@ -107,6 +107,39 @@ export function parseSAMLResponse(
     // Decode base64 response
     const xml = Buffer.from(samlResponse, 'base64').toString('utf-8');
 
+    // Basic status check: ensure the response indicates success
+    const statusCode = extractXmlAttribute(xml, 'StatusCode', 'Value');
+    if (statusCode && !statusCode.endsWith(':Success')) {
+      return null;
+    }
+
+    // Check assertion time conditions to prevent replay attacks
+    const notBefore = extractXmlAttribute(xml, 'Conditions', 'NotBefore');
+    const notOnOrAfter = extractXmlAttribute(xml, 'Conditions', 'NotOnOrAfter');
+    const now = new Date();
+    // Allow 5-minute clock skew
+    const clockSkewMs = 5 * 60 * 1000;
+
+    if (notBefore) {
+      const notBeforeDate = new Date(notBefore);
+      if (now.getTime() < notBeforeDate.getTime() - clockSkewMs) {
+        return null; // Assertion not yet valid
+      }
+    }
+
+    if (notOnOrAfter) {
+      const notOnOrAfterDate = new Date(notOnOrAfter);
+      if (now.getTime() >= notOnOrAfterDate.getTime() + clockSkewMs) {
+        return null; // Assertion has expired
+      }
+    }
+
+    // Verify the Issuer matches the expected IdP entityId
+    const responseIssuer = extractXmlValue(xml, 'Issuer');
+    if (responseIssuer && responseIssuer !== provider.entityId) {
+      return null; // Issuer mismatch - possible spoofing attempt
+    }
+
     // Extract NameID
     const nameId = extractXmlValue(xml, 'NameID') || '';
 
@@ -313,9 +346,16 @@ export function buildServiceProviderMetadata(appUrl: string): string {
 // ============================================
 
 /**
- * Generate a random identifier suitable for SAML request IDs.
+ * Generate a cryptographically secure random identifier for SAML request IDs.
+ * Uses the Web Crypto API (available in both Node.js and browser environments).
  */
 function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  // Fallback (should not occur in modern environments)
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < 32; i++) {

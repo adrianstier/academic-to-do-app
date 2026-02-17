@@ -431,12 +431,14 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
                   value={todo.due_date ? todo.due_date.split('T')[0] : ''}
                   onChange={(e) => onSetDueDate(todo.id, e.target.value || null)}
                   onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="Set due date"
                   className="flex-1 min-w-0 text-sm sm:text-xs px-2 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] touch-manipulation"
                 />
                 <select
                   value={todo.assigned_to || ''}
                   onChange={(e) => onAssign(todo.id, e.target.value || null)}
                   onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="Assign task to user"
                   className="flex-1 min-w-0 text-sm sm:text-xs px-2 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] touch-manipulation"
                 >
                   <option value="">Unassigned</option>
@@ -451,6 +453,7 @@ function SortableCard({ todo, users, onDelete, onAssign, onSetDueDate, onSetPrio
                   value={priority}
                   onChange={(e) => onSetPriority(todo.id, e.target.value as TodoPriority)}
                   onPointerDown={(e) => e.stopPropagation()}
+                  aria-label="Set task priority"
                   className="flex-1 min-w-0 text-sm sm:text-xs px-2 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] touch-manipulation"
                 >
                   <option value="low">Low</option>

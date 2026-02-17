@@ -144,7 +144,7 @@ function DonutChart({ segments, size = 180 }: { segments: DonutSegment[]; size?:
         className="fill-[var(--foreground)] dark:fill-white text-lg font-bold"
         style={{ fontSize: '18px', fontWeight: 700 }}
       >
-        {segments.length}
+        {arcs.length}
       </text>
       <text
         x={centerX}
@@ -153,7 +153,7 @@ function DonutChart({ segments, size = 180 }: { segments: DonutSegment[]; size?:
         className="fill-[var(--text-muted)] dark:fill-white/50"
         style={{ fontSize: '11px' }}
       >
-        categories
+        {arcs.length === 1 ? 'category' : 'categories'}
       </text>
     </svg>
   );
@@ -254,9 +254,13 @@ export default function BudgetTracker({
   const burnRate = useMemo(() => {
     if (budget.expenses.length === 0) return null;
 
-    const dates = budget.expenses.map(e => new Date(e.date).getTime());
-    const earliest = Math.min(...dates);
-    const latest = Math.max(...dates);
+    const validDates = budget.expenses
+      .map(e => new Date(e.date).getTime())
+      .filter(t => !isNaN(t));
+    if (validDates.length === 0) return null;
+
+    const earliest = Math.min(...validDates);
+    const latest = Math.max(...validDates);
     const monthsElapsed = Math.max(
       1,
       (latest - earliest) / (1000 * 60 * 60 * 24 * 30)
@@ -264,17 +268,17 @@ export default function BudgetTracker({
     const monthlyRate = totalSpent / monthsElapsed;
 
     // Estimate remaining months from fiscal year
-    const fyEnd = new Date(`${budget.fiscal_year}-12-31`);
+    const fyYear = parseInt(budget.fiscal_year, 10);
+    const fyEnd = !isNaN(fyYear) ? new Date(fyYear, 11, 31) : null;
     const now = new Date();
-    const remainingMonths = Math.max(
-      0,
-      (fyEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30)
-    );
+    const remainingMonths = fyEnd
+      ? Math.max(0, (fyEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30))
+      : 0;
 
     return {
       monthlyRate,
       remainingMonths: Math.round(remainingMonths),
-      projectedOverspend: monthlyRate * remainingMonths > remaining,
+      projectedOverspend: remainingMonths > 0 && monthlyRate * remainingMonths > remaining,
     };
   }, [budget.expenses, budget.fiscal_year, totalSpent, remaining]);
 
@@ -356,12 +360,12 @@ export default function BudgetTracker({
 
   // --- Handlers ---
   const handleSort = useCallback((field: SortField) => {
-    setSortField(prev => {
-      if (prev === field) {
+    setSortField(prevField => {
+      if (prevField === field) {
         setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
-        return field;
+      } else {
+        setSortDirection('desc');
       }
-      setSortDirection('desc');
       return field;
     });
   }, []);
@@ -458,7 +462,9 @@ export default function BudgetTracker({
               </p>
             </div>
             <div>
-              <p className="text-xs text-[var(--text-muted)] dark:text-white/50 mb-0.5">Remaining</p>
+              <p className="text-xs text-[var(--text-muted)] dark:text-white/50 mb-0.5">
+                {isOverBudget ? 'Over Budget' : 'Remaining'}
+              </p>
               <p className={`text-xl font-bold tracking-tight ${
                 isOverBudget
                   ? 'text-[var(--danger)]'
@@ -466,7 +472,10 @@ export default function BudgetTracker({
                     ? 'text-[var(--warning)]'
                     : 'text-[var(--success)]'
               }`}>
-                {formatCurrency(remaining, budget.currency)}
+                {isOverBudget
+                  ? formatCurrency(Math.abs(remaining), budget.currency)
+                  : formatCurrency(remaining, budget.currency)
+                }
               </p>
             </div>
           </div>
@@ -645,12 +654,15 @@ export default function BudgetTracker({
                       )}
                       <div className="flex justify-between px-2 pt-1.5 mt-1 border-t border-[var(--border)] dark:border-white/10">
                         <span className="text-xs text-[var(--text-muted)] dark:text-white/40">
-                          Remaining
+                          {catOverBudget ? 'Over budget' : 'Remaining'}
                         </span>
                         <span className={`text-xs font-medium ${
                           catOverBudget ? 'text-[var(--danger)]' : 'text-[var(--success)]'
                         }`}>
-                          {formatCurrency(catRemaining, budget.currency)}
+                          {catOverBudget
+                            ? formatCurrency(Math.abs(catRemaining), budget.currency)
+                            : formatCurrency(catRemaining, budget.currency)
+                          }
                         </span>
                       </div>
                     </div>
@@ -816,6 +828,7 @@ export default function BudgetTracker({
                     disabled={
                       !newExpense.description.trim() ||
                       !newExpense.amount ||
+                      isNaN(parseFloat(newExpense.amount)) ||
                       parseFloat(newExpense.amount) <= 0 ||
                       !newExpense.category_id ||
                       !newExpense.created_by.trim()
@@ -848,6 +861,10 @@ export default function BudgetTracker({
                     <th
                       key={col.field}
                       onClick={() => handleSort(col.field)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(col.field); } }}
+                      tabIndex={0}
+                      role="columnheader"
+                      aria-sort={sortField === col.field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                       className="text-left text-xs font-medium text-[var(--text-muted)] dark:text-white/50 px-3 py-2 cursor-pointer hover:text-[var(--foreground)] dark:hover:text-white transition-colors select-none"
                     >
                       <span className="flex items-center gap-1">

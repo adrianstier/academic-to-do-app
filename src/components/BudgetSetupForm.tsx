@@ -161,12 +161,12 @@ export default function BudgetSetupForm({
   const handleDistributeEvenly = useCallback(() => {
     if (categories.length === 0 || totalBudgetNum <= 0) return;
     const perCategory = Math.floor(totalBudgetNum / categories.length);
-    const remainder = totalBudgetNum - perCategory * categories.length;
+    const remainder = Math.round(totalBudgetNum - perCategory * categories.length);
 
     setCategories(prev =>
       prev.map((c, i) => ({
         ...c,
-        allocated: perCategory + (i === 0 ? remainder : 0),
+        allocated: perCategory + (i < remainder ? 1 : 0),
       }))
     );
   }, [categories.length, totalBudgetNum]);
@@ -174,13 +174,26 @@ export default function BudgetSetupForm({
   const handleSave = useCallback(() => {
     if (!isValid) return;
 
+    const existingExpenses = existingBudget?.expenses || [];
+
+    // Recalculate spent amounts from existing expenses to keep data consistent
+    const spentByCategory: Record<string, number> = {};
+    for (const expense of existingExpenses) {
+      spentByCategory[expense.category_id] = (spentByCategory[expense.category_id] || 0) + expense.amount;
+    }
+
+    const categoriesWithSpent = categories.map(cat => ({
+      ...cat,
+      spent: spentByCategory[cat.id] || cat.spent || 0,
+    }));
+
     const budget: ProjectBudget = {
       project_id: projectId,
       total_budget: totalBudgetNum,
       currency,
       fiscal_year: fiscalYear,
-      categories,
-      expenses: existingBudget?.expenses || [],
+      categories: categoriesWithSpent,
+      expenses: existingExpenses,
       notes: notes.trim() || undefined,
     };
 
@@ -354,9 +367,11 @@ export default function BudgetSetupForm({
 
               {showTemplateMenu && (
                 <>
+                  {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
                   <div
                     className="fixed inset-0 z-10"
                     onClick={() => setShowTemplateMenu(false)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setShowTemplateMenu(false); }}
                   />
                   <div className="absolute right-0 top-full mt-1 z-20 w-64 rounded-lg shadow-lg
                     bg-white dark:bg-[var(--surface-3)]
@@ -423,7 +438,9 @@ export default function BudgetSetupForm({
               {categories
                 .filter(c => c.allocated > 0)
                 .map((cat) => {
-                  const pct = (cat.allocated / totalBudgetNum) * 100;
+                  // Use max of totalAllocated and totalBudgetNum so bar doesn't overflow when over-allocated
+                  const base = Math.max(totalAllocated, totalBudgetNum);
+                  const pct = (cat.allocated / base) * 100;
                   return (
                     <div
                       key={cat.id}
@@ -568,13 +585,13 @@ export default function BudgetSetupForm({
               Category allocations exceed total budget by {formatCurrency(Math.abs(allocationRemaining), currency)}
             </div>
           )}
-          {!isOverAllocated && allocationRemaining > 0 && totalBudgetNum > 0 && (
+          {!isOverAllocated && allocationRemaining > 0.01 && totalBudgetNum > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-[var(--warning)]">
               <AlertTriangle className="w-3.5 h-3.5" />
               {formatCurrency(allocationRemaining, currency)} unallocated
             </div>
           )}
-          {!isOverAllocated && allocationRemaining === 0 && totalBudgetNum > 0 && (
+          {!isOverAllocated && Math.abs(allocationRemaining) < 0.01 && totalBudgetNum > 0 && (
             <div className="flex items-center gap-1.5 text-xs text-[var(--success)]">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Budget fully allocated

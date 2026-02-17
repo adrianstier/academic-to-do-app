@@ -111,6 +111,7 @@ function SubtaskItem({ subtask, onToggle, onDelete, onUpdate }: SubtaskItemProps
       {/* Delete button */}
       <button
         onClick={() => onDelete(subtask.id)}
+        aria-label={`Delete subtask: ${subtask.text}`}
         className="p-1.5 -m-1 text-[var(--text-light)] hover:text-[var(--danger)] active:text-[var(--danger)] rounded transition-colors touch-manipulation"
       >
         <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
@@ -240,8 +241,6 @@ export default function TodoItem({
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const priority = todo.priority || 'medium';
-  const status = todo.status || 'todo';
-  void status; // Used for status-based logic elsewhere
 
   // Calculate dropdown position when menu opens
   useEffect(() => {
@@ -410,8 +409,9 @@ export default function TodoItem({
         {onSelect && (
           <input
             type="checkbox"
-            checked={selected}
+            checked={!!selected}
             onChange={(e) => onSelect(todo.id, e.target.checked)}
+            aria-label={`Select task: ${todo.text}`}
             className="w-4 h-4 rounded-[var(--radius-sm)] border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)] cursor-pointer"
           />
         )}

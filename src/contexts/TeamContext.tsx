@@ -127,59 +127,9 @@ export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps
     }
   }, [userIdProp]);
 
-  // Load teams on mount or when userId changes
-  useEffect(() => {
-    if (!isMultiTenancyEnabled) {
-      setIsLoading(false);
-      return;
-    }
-
-    if (!resolvedUserId) {
-      setIsLoading(false);
-      setTeams([]);
-      setCurrentTeam(null);
-      setCurrentMembership(null);
-      return;
-    }
-
-    retryCountRef.current = 0;
-    loadUserTeams(resolvedUserId);
-  }, [resolvedUserId, isMultiTenancyEnabled]);
-
-  // Load saved team selection from localStorage
-  useEffect(() => {
-    if (!mounted || !isMultiTenancyEnabled || teams.length === 0) return;
-
-    const savedTeamId = localStorage.getItem(CURRENT_TEAM_KEY);
-
-    if (savedTeamId) {
-      // Verify user still has access to this team
-      const membership = teams.find(t => t.team_id === savedTeamId);
-      if (membership) {
-        loadTeamDetails(savedTeamId, membership);
-        return;
-      }
-    }
-
-    // Default to the user's default team or first team
-    const defaultTeam = teams.find(t => t.is_default) || teams[0];
-    if (defaultTeam) {
-      loadTeamDetails(defaultTeam.team_id, defaultTeam);
-    }
-  }, [mounted, teams, isMultiTenancyEnabled]);
-
-  // Sync currentMembership from teams array when it updates (fix stale permissions)
-  useEffect(() => {
-    if (!currentTeam || teams.length === 0) return;
-
-    const updatedMembership = teams.find(t => t.team_id === currentTeam.id);
-    if (updatedMembership && updatedMembership !== currentMembership) {
-      setCurrentMembership(updatedMembership);
-    }
-  }, [teams, currentTeam]);
-
   /**
    * Load all teams the user belongs to (with retry + exponential backoff)
+   * Declared before the useEffect that calls it to avoid block-scope ordering issues.
    */
   const loadUserTeams = useCallback(async (uid: string) => {
     try {
@@ -341,6 +291,57 @@ export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps
       setError('Failed to load lab details');
     }
   }, []);
+
+  // Load teams on mount or when userId changes
+  useEffect(() => {
+    if (!isMultiTenancyEnabled) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (!resolvedUserId) {
+      setIsLoading(false);
+      setTeams([]);
+      setCurrentTeam(null);
+      setCurrentMembership(null);
+      return;
+    }
+
+    retryCountRef.current = 0;
+    loadUserTeams(resolvedUserId);
+  }, [resolvedUserId, isMultiTenancyEnabled, loadUserTeams]);
+
+  // Load saved team selection from localStorage
+  useEffect(() => {
+    if (!mounted || !isMultiTenancyEnabled || teams.length === 0) return;
+
+    const savedTeamId = localStorage.getItem(CURRENT_TEAM_KEY);
+
+    if (savedTeamId) {
+      // Verify user still has access to this team
+      const membership = teams.find(t => t.team_id === savedTeamId);
+      if (membership) {
+        loadTeamDetails(savedTeamId, membership);
+        return;
+      }
+    }
+
+    // Default to the user's default team or first team
+    const defaultTeam = teams.find(t => t.is_default) || teams[0];
+    if (defaultTeam) {
+      loadTeamDetails(defaultTeam.team_id, defaultTeam);
+    }
+  }, [mounted, teams, isMultiTenancyEnabled, loadTeamDetails]);
+
+  // Sync currentMembership from teams array when it updates (fix stale permissions)
+  useEffect(() => {
+    if (!currentTeam || teams.length === 0) return;
+
+    const updatedMembership = teams.find(t => t.team_id === currentTeam.id);
+    if (updatedMembership && updatedMembership !== currentMembership) {
+      setCurrentMembership(updatedMembership);
+    }
+  }, [teams, currentTeam, currentMembership]);
 
   /**
    * Switch to a different team
