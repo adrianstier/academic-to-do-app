@@ -111,6 +111,17 @@ export default function EquipmentBookingForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
 
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   // Selected equipment data
   const selectedEquipment = useMemo(
     () => equipment.find((e) => e.id === equipmentId),
@@ -127,6 +138,14 @@ export default function EquipmentBookingForm({
   const validation = useMemo(() => {
     if (!equipmentId || !date || !startTime || !endTime) {
       return { valid: false, error: undefined };
+    }
+    // Catch same start/end time (zero-duration booking)
+    if (startTime === endTime) {
+      return { valid: false, error: 'Start and end times cannot be the same.' };
+    }
+    // Catch end time before start time
+    if (endTime < startTime) {
+      return { valid: false, error: 'End time must be after start time.' };
     }
     const startISO = `${date}T${startTime}:00`;
     const endISO = `${date}T${endTime}:00`;
@@ -160,6 +179,21 @@ export default function EquipmentBookingForm({
 
       if (!equipmentId || !title.trim() || !date || !startTime || !endTime) {
         setSubmitError('Please fill in all required fields');
+        return;
+      }
+
+      if (startTime === endTime) {
+        setSubmitError('Start and end times cannot be the same.');
+        return;
+      }
+
+      if (endTime < startTime) {
+        setSubmitError('End time must be after start time.');
+        return;
+      }
+
+      if (isRecurring && !recurringUntil) {
+        setSubmitError('Please set an end date for the recurring booking.');
         return;
       }
 
@@ -235,6 +269,9 @@ export default function EquipmentBookingForm({
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.2 }}
         className="relative w-full max-w-lg bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-xl overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label={editingBooking ? 'Edit booking' : 'Book equipment'}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
@@ -244,6 +281,7 @@ export default function EquipmentBookingForm({
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
+            aria-label="Close booking form"
           >
             <X className="w-5 h-5 text-[var(--text-muted)]" />
           </button>
@@ -382,6 +420,7 @@ export default function EquipmentBookingForm({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              min={editingBooking ? undefined : new Date().toISOString().split('T')[0]}
               className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
             />
           </div>
@@ -502,30 +541,29 @@ export default function EquipmentBookingForm({
               </p>
             </div>
           )}
-        </form>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)] bg-[var(--surface-2)]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={submitting || !validation.valid || !title.trim()}
-            className="px-5 py-2 text-sm font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-          >
-            {submitting
-              ? 'Booking...'
-              : editingBooking
-                ? 'Update Booking'
-                : 'Book Equipment'}
-          </button>
-        </div>
+          {/* Footer - inside form so Enter key triggers submit */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 -mx-6 -mb-6 mt-4 border-t border-[var(--border)] bg-[var(--surface-2)]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !validation.valid || !title.trim()}
+              className="px-5 py-2 text-sm font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+            >
+              {submitting
+                ? 'Booking...'
+                : editingBooking
+                  ? 'Update Booking'
+                  : 'Book Equipment'}
+            </button>
+          </div>
+        </form>
       </motion.div>
     </div>
   );

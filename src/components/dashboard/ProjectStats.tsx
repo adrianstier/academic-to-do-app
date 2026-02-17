@@ -278,7 +278,7 @@ export default function ProjectStats({ projectId, onStatsLoaded }: ProjectStatsP
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="p-4 rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 animate-pulse"
+              className="p-4 rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 animate-pulse"
             >
               <div className="h-4 w-20 bg-[var(--surface-3)] dark:bg-white/10 rounded mb-3" />
               <div className="h-8 w-16 bg-[var(--surface-3)] dark:bg-white/10 rounded" />
@@ -287,11 +287,11 @@ export default function ProjectStats({ projectId, onStatsLoaded }: ProjectStatsP
         </div>
         {/* Charts skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 p-5 animate-pulse">
+          <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 p-5 animate-pulse">
             <div className="h-4 w-32 bg-[var(--surface-3)] dark:bg-white/10 rounded mb-4" />
             <div className="flex justify-center"><div className="w-28 h-28 rounded-full bg-[var(--surface-3)] dark:bg-white/10" /></div>
           </div>
-          <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 p-5 animate-pulse lg:col-span-2">
+          <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 p-5 animate-pulse lg:col-span-2">
             <div className="h-4 w-40 bg-[var(--surface-3)] dark:bg-white/10 rounded mb-4" />
             <div className="h-3 w-full bg-[var(--surface-3)] dark:bg-white/10 rounded mb-3" />
             <div className="h-3 w-3/4 bg-[var(--surface-3)] dark:bg-white/10 rounded" />
@@ -352,7 +352,7 @@ export default function ProjectStats({ projectId, onStatsLoaded }: ProjectStatsP
           initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5"
+          className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5"
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="p-1.5 rounded-lg bg-[var(--success-light)] dark:bg-[var(--success)]/20">
@@ -417,7 +417,7 @@ export default function ProjectStats({ projectId, onStatsLoaded }: ProjectStatsP
           initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.25 }}
-          className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5 lg:col-span-2"
+          className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5 lg:col-span-2"
         >
           {/* Category Section */}
           <div className="mb-6">
@@ -473,7 +473,7 @@ export default function ProjectStats({ projectId, onStatsLoaded }: ProjectStatsP
           initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5"
+          className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5"
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="p-1.5 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">

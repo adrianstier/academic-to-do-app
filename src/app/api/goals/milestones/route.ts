@@ -44,8 +44,26 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
     const body = await request.json();
     const { goal_id, title, target_date } = body;
 
-    if (!goal_id || !title) {
+    if (!goal_id || !title || (typeof title === 'string' && !title.trim())) {
       return NextResponse.json({ error: 'goal_id and title are required' }, { status: 400 });
+    }
+
+    // Verify the goal exists and belongs to this team
+    let goalVerifyQuery = supabase
+      .from('strategic_goals')
+      .select('id')
+      .eq('id', goal_id);
+
+    if (context.teamId) {
+      goalVerifyQuery = goalVerifyQuery.eq('team_id', context.teamId);
+    }
+
+    const { data: goalExists, error: goalError } = await goalVerifyQuery.single();
+    if (goalError || !goalExists) {
+      return NextResponse.json(
+        { error: 'Goal not found or does not belong to your team' },
+        { status: 404 }
+      );
     }
 
     // Get max display_order for this goal
@@ -61,7 +79,7 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
 
     const insertData: Record<string, unknown> = {
       goal_id,
-      title,
+      title: typeof title === 'string' ? title.trim() : title,
       target_date: target_date || null,
       display_order: nextOrder,
     };
@@ -98,8 +116,16 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
+    // Validate title if provided
+    if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
+      return NextResponse.json(
+        { error: 'title cannot be empty' },
+        { status: 400 }
+      );
+    }
+
     const updateData: Record<string, unknown> = {};
-    if (title !== undefined) updateData.title = title;
+    if (title !== undefined) updateData.title = typeof title === 'string' ? title.trim() : title;
     if (completed !== undefined) updateData.completed = completed;
     if (target_date !== undefined) updateData.target_date = target_date;
     if (display_order !== undefined) updateData.display_order = display_order;
@@ -118,7 +144,15 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Milestone not found' },
+          { status: 404 }
+        );
+      }
+      throw error;
+    }
 
     // Update goal progress if completion changed
     if (completed !== undefined && data) {
@@ -140,6 +174,15 @@ export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: Te
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'id must be a valid UUID' },
+        { status: 400 }
+      );
     }
 
     // Get goal_id before deleting (scoped to team)

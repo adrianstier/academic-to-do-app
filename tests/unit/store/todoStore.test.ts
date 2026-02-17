@@ -459,6 +459,8 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
       expect(filtered).toHaveLength(2);
@@ -477,6 +479,8 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
       expect(filtered).toHaveLength(3);
@@ -494,6 +498,8 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
       expect(filtered).toHaveLength(1);
@@ -512,10 +518,13 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
+      // my_tasks matches assigned_to OR created_by
       expect(filtered).toHaveLength(2);
-      expect(filtered.every(t => t.assigned_to === 'User1')).toBe(true);
+      expect(filtered.every(t => t.assigned_to === 'User1' || t.created_by === 'User1')).toBe(true);
     });
 
     it('should filter by high priority only', () => {
@@ -530,6 +539,8 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
       expect(filtered).toHaveLength(2);
@@ -548,6 +559,8 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
       expect(filtered[0].priority).toBe('urgent');
@@ -567,6 +580,8 @@ describe('Selectors', () => {
         customerFilter: 'all',
         hasAttachmentsFilter: null,
         dateRangeFilter: { start: '', end: '' },
+        projectFilter: null,
+        tagFilter: [],
       }, 'User1', []);
 
       expect(filtered).toHaveLength(1);
@@ -671,6 +686,8 @@ describe('Selectors', () => {
       customerFilter: 'all',
       hasAttachmentsFilter: null,
       dateRangeFilter: { start: '', end: '' },
+      projectFilter: null,
+      tagFilter: [] as string[],
     };
 
     it('should sort by due_date', () => {
@@ -776,6 +793,8 @@ describe('Selectors', () => {
       customerFilter: 'all',
       hasAttachmentsFilter: null,
       dateRangeFilter: { start: '', end: '' },
+      projectFilter: null,
+      tagFilter: [] as string[],
     };
 
     it('should filter by due_today', () => {
@@ -833,6 +852,8 @@ describe('Selectors', () => {
       customerFilter: 'all',
       hasAttachmentsFilter: null,
       dateRangeFilter: { start: '', end: '' },
+      projectFilter: null,
+      tagFilter: [] as string[],
     };
 
     it('should filter by status', () => {

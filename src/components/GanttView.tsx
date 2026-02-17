@@ -10,7 +10,7 @@ interface GanttViewProps { onTaskClick: (todo: Todo) => void; }
 type ZoomLevel = 'week' | 'month' | 'quarter';
 interface ProjectGroup { project: Project | null; todos: Todo[]; collapsed: boolean; }
 
-const ROW_H = 36, HDR_H = 48, LEFT_W = 250, NO_COLOR = '#6b7280';
+const ROW_H = 36, HDR_H = 48, LEFT_W = 250, NO_COLOR = 'var(--text-muted)';
 const DAY_W: Record<ZoomLevel, number> = { week: 40, month: 16, quarter: 5 };
 
 function sod(d: Date) { const r = new Date(d); r.setHours(0, 0, 0, 0); return r; }
@@ -169,7 +169,7 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
         {(['week', 'month', 'quarter'] as ZoomLevel[]).map((lvl) => (
           <button key={lvl} onClick={() => setZoom(lvl)}
             className="px-3 py-1 text-xs font-medium rounded-md transition-colors capitalize"
-            style={{ background: zoom === lvl ? 'var(--accent)' : 'transparent', color: zoom === lvl ? '#fff' : 'var(--text-muted)', border: `1px solid ${zoom === lvl ? 'var(--accent)' : 'var(--border)'}` }}
+            style={{ background: zoom === lvl ? 'var(--accent)' : 'transparent', color: zoom === lvl ? 'var(--accent-contrast, #fff)' : 'var(--text-muted)', border: `1px solid ${zoom === lvl ? 'var(--accent)' : 'var(--border)'}` }}
             aria-label={`Zoom level: ${lvl}`}
             aria-pressed={zoom === lvl}>
             {lvl}
@@ -223,8 +223,8 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
             {/* Grid lines */}
             {ticks.map((tk, i) => <div key={`gl-${i}`} className="absolute top-0 bottom-0 border-l" style={{ left: diffD(tk, tlStart) * dw, borderColor: 'var(--border)', opacity: 0.4 }} />)}
             {/* Today marker */}
-            <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: todayX, width: 2, background: '#ef4444' }} />
-            <div className="absolute z-20 text-[10px] font-bold px-1 rounded pointer-events-none" style={{ left: todayX - 16, top: HDR_H + 2, background: '#ef4444', color: '#fff' }}>Today</div>
+            <div className="absolute top-0 bottom-0 z-20 pointer-events-none" style={{ left: todayX, width: 2, background: 'var(--danger)' }} />
+            <div className="absolute z-20 text-[10px] font-bold px-1 rounded pointer-events-none" style={{ left: todayX - 16, top: HDR_H + 2, background: 'var(--danger)', color: '#fff' }}>Today</div>
 
             {/* Row backgrounds */}
             {rows.map((row, i) => {
@@ -250,10 +250,10 @@ export default function GanttView({ onTaskClick }: GanttViewProps) {
               }
               return (
                 <div key={`bar-${t.id}`} className="absolute cursor-pointer z-10 rounded-md flex items-center overflow-hidden"
-                  style={{ left, top: top + (ROW_H - 24) / 2, width: w, height: 24, background: c, opacity: t.completed ? 0.4 : 0.85, boxShadow: od ? '0 0 0 2px #ef4444, 0 0 8px rgba(239,68,68,0.4)' : 'none', transition: 'opacity 0.15s' }}
+                  style={{ left, top: top + (ROW_H - 24) / 2, width: w, height: 24, background: c, opacity: t.completed ? 0.4 : 0.85, boxShadow: od ? '0 0 0 2px var(--danger), 0 0 8px color-mix(in srgb, var(--danger) 40%, transparent)' : 'none', transition: 'opacity 0.15s' }}
                   onClick={() => onTaskClick(t)} onMouseEnter={(e) => setTip({ todo: t, x: e.clientX, y: e.clientY })} onMouseLeave={() => setTip(null)}>
-                  <span className="md:hidden text-[10px] px-1.5 truncate font-medium" style={{ color: '#fff' }}>{t.text}</span>
-                  {w > 60 && <span className="hidden md:block text-[10px] px-1.5 truncate font-medium" style={{ color: '#fff' }}>{t.text}</span>}
+                  <span className="md:hidden text-[10px] px-1.5 truncate font-medium text-white">{t.text}</span>
+                  {w > 60 && <span className="hidden md:block text-[10px] px-1.5 truncate font-medium text-white">{t.text}</span>}
                 </div>
               );
             })}

@@ -175,11 +175,11 @@ function getDaysInStage(todo: Todo): number {
 
 function getPriorityBorderColor(priority: string): string {
   switch (priority) {
-    case 'urgent': return '#ef4444';
-    case 'high': return '#f59e0b';
-    case 'medium': return '#3b82f6';
-    case 'low': return '#6b7280';
-    default: return '#6b7280';
+    case 'urgent': return 'var(--danger)';
+    case 'high': return 'var(--warning)';
+    case 'medium': return 'var(--brand-blue)';
+    case 'low': return 'var(--text-muted)';
+    default: return 'var(--text-muted)';
   }
 }
 
@@ -309,9 +309,9 @@ function SortablePipelineCard({ todo, currentStageId, onClick, onMoveToStage }: 
             <span
               className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium ${
                 daysInStage > 14
-                  ? 'bg-red-500/10 text-red-500'
+                  ? 'bg-[var(--danger-light)] text-[var(--danger)]'
                   : daysInStage > 7
-                    ? 'bg-amber-500/10 text-amber-600'
+                    ? 'bg-[var(--warning-light)] text-[var(--warning)]'
                     : 'bg-[var(--surface-2)] text-[var(--text-muted)]'
               }`}
             >
@@ -336,7 +336,7 @@ function SortablePipelineCard({ todo, currentStageId, onClick, onMoveToStage }: 
                 todo.completed
                   ? 'text-[var(--text-light)]'
                   : overdue
-                    ? 'bg-red-500 text-white'
+                    ? 'bg-[var(--danger)] text-white'
                     : 'text-[var(--text-muted)]'
               }`}
             >

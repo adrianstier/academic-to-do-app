@@ -84,10 +84,16 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
   const [startDate, setStartDate] = useState(existingLog?.start_date ?? new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate] = useState(existingLog?.end_date ?? '');
 
+  const [templateSwitchWarning, setTemplateSwitchWarning] = useState<string | null>(null);
+
   const applyTemplate = useCallback((t: ExperimentTemplate) => {
     setTemplate(t);
     const p = EXPERIMENT_PRESETS[t];
-    if (!existingLog) {
+    if (existingLog) {
+      // Warn user that template switch won't overwrite existing data
+      setTemplateSwitchWarning('Template changed but existing data was preserved. Clear fields manually if you want to start fresh.');
+      setTimeout(() => setTemplateSwitchWarning(null), 5000);
+    } else {
       setMethods(p.defaultMethods);
       setVariables(p.defaultVariables);
       setObservations(p.defaultObservations);
@@ -95,7 +101,11 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
     }
   }, [existingLog]);
 
-  const addVariable = () => setVariables((v) => [...v, { name: '', type: 'independent', value: '', units: '' }]);
+  const MAX_VARIABLES = 20;
+  const addVariable = () => {
+    if (variables.length >= MAX_VARIABLES) return;
+    setVariables((v) => [...v, { name: '', type: 'independent', value: '', units: '' }]);
+  };
   const updateVariable = (i: number, f: keyof ExperimentVariable, val: string) =>
     setVariables((vs) => vs.map((v, j) => (j === i ? { ...v, [f]: val } : v)));
   const removeVariable = (i: number) => setVariables((v) => v.filter((_, j) => j !== i));
@@ -158,6 +168,11 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
           })}
         </div>
         <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{EXPERIMENT_PRESETS[template].description}</p>
+        {templateSwitchWarning && (
+          <div className="text-xs mt-2 px-3 py-2 rounded-lg" style={{ background: 'rgba(234, 179, 8, 0.1)', color: '#ca8a04', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+            {templateSwitchWarning}
+          </div>
+        )}
       </div>
 
       {/* Status + Dates */}
@@ -198,9 +213,11 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
         <div className="flex items-center justify-between mb-1">
           <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Variables</label>
           <button type="button" onClick={addVariable}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors"
-            style={{ color: 'var(--accent)', background: 'var(--accent-light)' }}>
-            <Plus className="w-3 h-3" /> Add
+            disabled={variables.length >= MAX_VARIABLES}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ color: 'var(--accent)', background: 'var(--accent-light)' }}
+            title={variables.length >= MAX_VARIABLES ? `Maximum ${MAX_VARIABLES} variables reached` : 'Add variable'}>
+            <Plus className="w-3 h-3" /> Add{variables.length >= MAX_VARIABLES ? ` (max ${MAX_VARIABLES})` : ''}
           </button>
         </div>
         <AnimatePresence initial={false}>
@@ -224,7 +241,7 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
               <button type="button" onClick={() => removeVariable(idx)}
                 className="flex items-center justify-center w-7 h-7 rounded-md transition-colors"
                 style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'var(--danger-light)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
                 aria-label="Remove variable">
                 <Trash2 className="w-3.5 h-3.5" />
@@ -261,7 +278,8 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEquipmentTag(); } }}
             placeholder="Add equipment..." className="flex-1 text-sm px-3 py-1.5 rounded-lg outline-none" style={inputStyle} />
           <button type="button" onClick={addEquipmentTag}
-            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors"
+            disabled={!equipmentInput.trim()}
+            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ color: 'var(--accent)', background: 'var(--accent-light)' }}>
             <Plus className="w-3 h-3" /> Add
           </button>
@@ -270,7 +288,7 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
 
       {/* Validation Error */}
       {validationError && (
-        <div className="text-sm px-3 py-2 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+        <div className="text-sm px-3 py-2 rounded-lg" style={{ background: 'var(--danger-light)', color: 'var(--danger)', border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)' }}>
           {validationError}
         </div>
       )}
@@ -278,9 +296,12 @@ export default function ExperimentLogForm({ todoId, existingLog, onSave, onCance
       {/* Actions */}
       <div className="flex items-center justify-end gap-2 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
         <button type="button" onClick={onCancel} className="px-4 py-2 text-sm rounded-lg transition-colors"
-          style={{ color: 'var(--text-muted)', background: 'var(--surface-2)' }}>Cancel</button>
-        <button type="submit" className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-          style={{ background: 'var(--accent)', color: '#fff' }}>
+          style={{ color: 'var(--text-muted)', background: 'var(--surface-2)' }}
+          aria-label="Cancel experiment log">Cancel</button>
+        <button type="submit" className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={!hypothesis.trim() && !methods.trim()}
+          style={{ background: 'var(--accent)', color: '#fff' }}
+          aria-label={existingLog ? 'Update experiment log' : 'Save experiment log'}>
           <Save className="w-4 h-4" />{existingLog ? 'Update Log' : 'Save Log'}
         </button>
       </div>

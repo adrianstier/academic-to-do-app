@@ -258,15 +258,28 @@ export const useTodoStore = create<TodoState>()(
       ),
 
       deleteTodo: (id) => set(
-        (state) => ({
-          todos: state.todos.filter((t) => t.id !== id),
-          bulkActions: {
-            ...state.bulkActions,
-            selectedTodos: new Set(
-              [...state.bulkActions.selectedTodos].filter((tid) => tid !== id)
-            ),
-          },
-        }),
+        (state) => {
+          // Clean up dependencies referencing the deleted todo
+          const newDependencies: Record<string, { blocks: TodoDependencyDisplay[]; blockedBy: TodoDependencyDisplay[] }> = {};
+          for (const [todoId, deps] of Object.entries(state.dependencies)) {
+            if (todoId === id) continue; // Remove the entry for the deleted todo
+            newDependencies[todoId] = {
+              blocks: deps.blocks.filter((d) => d.blocked_id !== id && d.blocker_id !== id),
+              blockedBy: deps.blockedBy.filter((d) => d.blocked_id !== id && d.blocker_id !== id),
+            };
+          }
+
+          return {
+            todos: state.todos.filter((t) => t.id !== id),
+            bulkActions: {
+              ...state.bulkActions,
+              selectedTodos: new Set(
+                [...state.bulkActions.selectedTodos].filter((tid) => tid !== id)
+              ),
+            },
+            dependencies: newDependencies,
+          };
+        },
         false,
         'deleteTodo'
       ),
@@ -361,7 +374,7 @@ export const useTodoStore = create<TodoState>()(
       ),
 
       resetFilters: () => set(
-        { filters: defaultFilters },
+        { filters: { ...defaultFilters, dateRangeFilter: { ...defaultFilters.dateRangeFilter }, tagFilter: [...defaultFilters.tagFilter] } },
         false,
         'resetFilters'
       ),
@@ -568,7 +581,7 @@ export const selectFilteredTodos = (
   // Apply quick filter
   switch (filters.quickFilter) {
     case 'my_tasks':
-      filtered = filtered.filter((t) => t.assigned_to === userName);
+      filtered = filtered.filter((t) => t.assigned_to === userName || t.created_by === userName);
       break;
     case 'due_today':
       filtered = filtered.filter((t) => isDueToday(t.due_date));
@@ -586,7 +599,8 @@ export const selectFilteredTodos = (
         t.text.toLowerCase().includes(query) ||
         t.notes?.toLowerCase().includes(query) ||
         t.assigned_to?.toLowerCase().includes(query) ||
-        t.created_by?.toLowerCase().includes(query)
+        t.created_by?.toLowerCase().includes(query) ||
+        t.transcription?.toLowerCase().includes(query)
     );
   }
 
@@ -605,6 +619,15 @@ export const selectFilteredTodos = (
 
   if (filters.highPriorityOnly) {
     filtered = filtered.filter((t) => t.priority === 'urgent' || t.priority === 'high');
+  }
+
+  // Apply customer filter
+  if (filters.customerFilter && filters.customerFilter !== 'all') {
+    const customerLower = filters.customerFilter.toLowerCase();
+    filtered = filtered.filter((t) => {
+      const combinedText = `${t.text} ${t.notes || ''}`.toLowerCase();
+      return combinedText.includes(customerLower);
+    });
   }
 
   if (filters.hasAttachmentsFilter !== null) {

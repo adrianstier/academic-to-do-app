@@ -37,7 +37,7 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
     const body = await request.json();
     const { name, color, icon } = body;
 
-    if (!name) {
+    if (!name || (typeof name === 'string' && !name.trim())) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
@@ -57,7 +57,7 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
     const nextOrder = (maxOrderData?.display_order || 0) + 1;
 
     const insertData: Record<string, unknown> = {
-      name,
+      name: typeof name === 'string' ? name.trim() : name,
       color: color || '#6366f1',
       icon: icon || 'target',
       display_order: nextOrder,
@@ -92,8 +92,16 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
+    // Validate name if provided
+    if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
+      return NextResponse.json(
+        { error: 'name cannot be empty' },
+        { status: 400 }
+      );
+    }
+
     const updateData: Record<string, unknown> = {};
-    if (name !== undefined) updateData.name = name;
+    if (name !== undefined) updateData.name = typeof name === 'string' ? name.trim() : name;
     if (color !== undefined) updateData.color = color;
     if (icon !== undefined) updateData.icon = icon;
     if (display_order !== undefined) updateData.display_order = display_order;
@@ -112,7 +120,15 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Category not found' },
+          { status: 404 }
+        );
+      }
+      throw error;
+    }
 
     return NextResponse.json(data);
   } catch (error) {
@@ -129,6 +145,15 @@ export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: Te
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'id must be a valid UUID' },
+        { status: 400 }
+      );
     }
 
     let deleteQuery = supabase

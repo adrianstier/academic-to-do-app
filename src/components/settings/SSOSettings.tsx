@@ -155,6 +155,17 @@ export default function SSOSettings() {
       return;
     }
 
+    try {
+      const parsedUrl = new URL(metadataUrl.trim());
+      if (parsedUrl.protocol !== 'https:') {
+        setError('Metadata URL must use HTTPS.');
+        return;
+      }
+    } catch {
+      setError('Metadata URL is not a valid URL.');
+      return;
+    }
+
     setIsFetchingMetadata(true);
     setError(null);
 
@@ -184,6 +195,16 @@ export default function SSOSettings() {
     }
     if (!ssoUrl.trim()) {
       setError('SSO URL is required for testing.');
+      return;
+    }
+    try {
+      const parsedUrl = new URL(ssoUrl.trim());
+      if (parsedUrl.protocol !== 'https:') {
+        setError('SSO URL must use HTTPS for security.');
+        return;
+      }
+    } catch {
+      setError('SSO URL is not a valid URL.');
       return;
     }
 
@@ -219,6 +240,28 @@ export default function SSOSettings() {
     if (!ssoUrl.trim()) {
       setError('SSO URL is required.');
       return;
+    }
+    try {
+      const parsedUrl = new URL(ssoUrl.trim());
+      if (parsedUrl.protocol !== 'https:') {
+        setError('SSO URL must use HTTPS for security.');
+        return;
+      }
+    } catch {
+      setError('SSO URL is not a valid URL. It should start with https://');
+      return;
+    }
+    if (metadataUrl.trim()) {
+      try {
+        const parsedMetaUrl = new URL(metadataUrl.trim());
+        if (parsedMetaUrl.protocol !== 'https:') {
+          setError('Metadata URL must use HTTPS for security.');
+          return;
+        }
+      } catch {
+        setError('Metadata URL is not a valid URL.');
+        return;
+      }
     }
     if (certificate.trim()) {
       const certResult = validateCertificate(certificate);

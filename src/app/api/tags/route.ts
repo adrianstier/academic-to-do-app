@@ -68,6 +68,15 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
       );
     }
 
+    // Validate color format (must be a hex color)
+    const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
+    if (!HEX_COLOR_REGEX.test(color)) {
+      return NextResponse.json(
+        { error: 'Color must be a valid hex color (e.g., #6366f1)' },
+        { status: 400 }
+      );
+    }
+
     const insertData: Record<string, unknown> = {
       name: name.trim(),
       color,

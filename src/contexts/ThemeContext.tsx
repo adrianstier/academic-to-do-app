@@ -15,16 +15,23 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_KEY = 'academic-pm-theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Initialize theme from localStorage synchronously to prevent flash
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
+  // Always start with 'dark' to match server render and avoid hydration mismatch.
+  // Hydrate from localStorage in useEffect below.
+  const [theme, setThemeState] = useState<Theme>('dark');
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate theme from localStorage on mount (client-only)
+  useEffect(() => {
+    try {
       const savedTheme = localStorage.getItem(THEME_KEY) as Theme | null;
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-        return savedTheme;
+        setThemeState(savedTheme);
       }
+    } catch {
+      // Ignore localStorage errors
     }
-    return 'dark'; // Default to dark if no saved preference
-  });
+    setHydrated(true);
+  }, []);
 
   // Apply theme class to document and save to localStorage
   useEffect(() => {
@@ -36,8 +43,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.classList.remove('dark');
       root.classList.add('light');
     }
-    localStorage.setItem(THEME_KEY, theme);
-  }, [theme]);
+    // Only persist after hydration to avoid writing the default back over the stored value
+    if (hydrated) {
+      try {
+        localStorage.setItem(THEME_KEY, theme);
+      } catch {
+        // Ignore localStorage errors (e.g., quota exceeded)
+      }
+    }
+  }, [theme, hydrated]);
 
   const toggleTheme = () => {
     setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));

@@ -96,6 +96,15 @@ export default function TaskDetailModal({
   const [linkedReferences, setLinkedReferences] = useState<TaskReference[]>([]);
   const [showReferences, setShowReferences] = useState(false);
 
+  // Reset transient editing states when task changes to prevent stale state leaking
+  useEffect(() => {
+    setIsEditingExperimentLog(false);
+    setShowExperimentLog(false);
+    setShowReferences(false);
+    setDepsBlocks([]);
+    setDepsBlockedBy([]);
+  }, [todo.id]);
+
   // Load experiment log from localStorage
   useEffect(() => {
     if (!isOpen) return;

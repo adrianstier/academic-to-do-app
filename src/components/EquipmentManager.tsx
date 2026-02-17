@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -319,6 +319,26 @@ export default function EquipmentManager({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // If a delete confirmation is open, close that first
+        if (confirmDeleteId) {
+          setConfirmDeleteId(null);
+        } else if (editingId) {
+          setEditingId(null);
+        } else if (showAddForm) {
+          setShowAddForm(false);
+        } else {
+          onClose();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose, confirmDeleteId, editingId, showAddForm]);
+
   // Filtered equipment
   const filteredEquipment = useMemo(() => {
     let list = equipment;
@@ -410,6 +430,9 @@ export default function EquipmentManager({
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.2 }}
         className="relative w-full max-w-2xl max-h-[85vh] bg-[var(--surface)] rounded-xl border border-[var(--border)] shadow-xl flex flex-col overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Manage equipment"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] flex-shrink-0">
@@ -419,6 +442,7 @@ export default function EquipmentManager({
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
+            aria-label="Close equipment manager"
           >
             <X className="w-5 h-5 text-[var(--text-muted)]" />
           </button>
@@ -661,7 +685,7 @@ export default function EquipmentManager({
                           <div className="flex items-center gap-3 px-4 py-3 border-t border-red-500/20 bg-red-500/5">
                             <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
                             <p className="text-sm text-red-600 dark:text-red-400 flex-1">
-                              Delete &quot;{eq.name}&quot; and all its bookings?
+                              Delete &quot;{eq.name}&quot;{bookingCount > 0 ? ` and its ${bookingCount} active booking${bookingCount !== 1 ? 's' : ''}` : ''}?
                             </p>
                             <button
                               onClick={() => setConfirmDeleteId(null)}

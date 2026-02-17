@@ -11,8 +11,20 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50') || 50, 200);
+    const parsedLimit = parseInt(searchParams.get('limit') || '50');
+    const limit = Math.min(Math.max(isNaN(parsedLimit) ? 50 : parsedLimit, 1), 200);
     const todoId = searchParams.get('todoId');
+
+    // Validate todoId UUID format if provided
+    if (todoId) {
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!UUID_REGEX.test(todoId)) {
+        return NextResponse.json(
+          { error: 'todoId must be a valid UUID' },
+          { status: 400 }
+        );
+      }
+    }
 
     let query = supabase
       .from('activity_log')
@@ -51,6 +63,22 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
       return NextResponse.json({ error: 'action and user_name are required' }, { status: 400 });
     }
 
+    // Validate action is a non-empty string
+    if (typeof action !== 'string' || !action.trim()) {
+      return NextResponse.json({ error: 'action must be a non-empty string' }, { status: 400 });
+    }
+
+    // Validate todo_id UUID format if provided
+    if (todo_id) {
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (typeof todo_id !== 'string' || !UUID_REGEX.test(todo_id)) {
+        return NextResponse.json({ error: 'todo_id must be a valid UUID' }, { status: 400 });
+      }
+    }
+
+    // Truncate todo_text to prevent oversized entries
+    const safeTodoText = todo_text ? String(todo_text).substring(0, 200) : null;
+
     // Verify that the authenticated user matches the user_name in the body
     // This prevents users from logging activities as other users
     if (context.userName !== user_name) {
@@ -61,9 +89,9 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
     }
 
     const insertData: Record<string, unknown> = {
-      action,
+      action: action.trim(),
       todo_id: todo_id || null,
-      todo_text: todo_text || null,
+      todo_text: safeTodoText,
       user_name,
       details: details || {},
     };

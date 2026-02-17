@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useCallback, useEffect, useMemo, createContext, useContext, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AuthUser, isOwner } from '@/types/todo';
@@ -108,7 +108,7 @@ export default function AppShell({
   const users = useTodoStore((state) => state.usersWithColors);
 
   // Navigation state
-  const [activeView, setActiveView] = useState<ActiveView>('tasks');
+  const [activeView, setActiveViewRaw] = useState<ActiveView>('tasks');
 
   // Sidebar state - collapsed by default on tablet, expanded on desktop
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -122,6 +122,14 @@ export default function AppShell({
   // Mobile sheet state
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [mobileSheetContent, setMobileSheetContent] = useState<'menu' | 'filters' | 'chat' | null>(null);
+
+  // Wrap setActiveView to also close mobile sheet when navigating
+  const setActiveView = useCallback((view: ActiveView) => {
+    setActiveViewRaw(view);
+    // Close mobile sheet on navigation to prevent stale sheet state
+    setMobileSheetOpen(false);
+    setMobileSheetContent(null);
+  }, []);
 
   // New task trigger callback - allows child components to register handlers
   const [newTaskCallback, setNewTaskCallback] = useState<(() => void) | null>(null);
@@ -175,6 +183,8 @@ export default function AppShell({
       if (e.key === 'Escape') {
         if (showShortcuts) {
           setShowShortcuts(false);
+        } else if (showWeeklyChart) {
+          setShowWeeklyChart(false);
         } else if (commandPaletteOpen) {
           setCommandPaletteOpen(false);
         } else if (rightPanel) {
@@ -188,7 +198,7 @@ export default function AppShell({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [commandPaletteOpen, rightPanel, mobileSheetOpen, showShortcuts]);
+  }, [commandPaletteOpen, rightPanel, mobileSheetOpen, showShortcuts, showWeeklyChart]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => !prev);
@@ -263,7 +273,7 @@ export default function AppShell({
   const openShortcuts = useCallback(() => setShowShortcuts(true), []);
   const closeShortcuts = useCallback(() => setShowShortcuts(false), []);
 
-  const contextValue: AppShellContextType = {
+  const contextValue: AppShellContextType = useMemo(() => ({
     activeView,
     setActiveView,
     sidebarCollapsed,
@@ -288,7 +298,32 @@ export default function AppShell({
     openShortcuts,
     closeShortcuts,
     currentUser,
-  };
+  }), [
+    activeView,
+    setActiveView,
+    sidebarCollapsed,
+    toggleSidebar,
+    setSidebarCollapsed,
+    rightPanel,
+    openRightPanel,
+    closeRightPanel,
+    commandPaletteOpen,
+    openCommandPalette,
+    closeCommandPalette,
+    mobileSheetOpen,
+    mobileSheetContent,
+    openMobileSheet,
+    closeMobileSheet,
+    triggerNewTask,
+    onNewTaskTrigger,
+    showWeeklyChart,
+    openWeeklyChart,
+    closeWeeklyChart,
+    showShortcuts,
+    openShortcuts,
+    closeShortcuts,
+    currentUser,
+  ]);
 
   return (
     <AppShellContext.Provider value={contextValue}>

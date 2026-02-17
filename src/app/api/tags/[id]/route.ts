@@ -44,6 +44,15 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
       );
     }
 
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(tagId)) {
+      return NextResponse.json(
+        { error: 'Tag ID must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
     // Verify the tag belongs to this team before deleting
     let verifyQuery = supabase
       .from('tags')

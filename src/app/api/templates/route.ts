@@ -43,14 +43,24 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
     const body = await request.json();
     const { name, description, default_priority, default_assigned_to, subtasks, is_shared } = body;
 
-    if (!name) {
+    if (!name || (typeof name === 'string' && !name.trim())) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
     }
 
+    // Validate default_priority if provided
+    const validPriorities = ['low', 'medium', 'high', 'urgent'];
+    const resolvedPriority = default_priority || 'medium';
+    if (!validPriorities.includes(resolvedPriority)) {
+      return NextResponse.json(
+        { error: `Invalid default_priority. Must be one of: ${validPriorities.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     const insertData: Record<string, unknown> = {
-      name,
+      name: typeof name === 'string' ? name.trim() : name,
       description: description || null,
-      default_priority: default_priority || 'medium',
+      default_priority: resolvedPriority,
       default_assigned_to: default_assigned_to || null,
       subtasks: subtasks || [],
       created_by: context.userName,
@@ -97,6 +107,15 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'id must be a valid UUID' },
+        { status: 400 }
+      );
     }
 
     // Only allow deletion by the creator, scoped to team

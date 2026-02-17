@@ -392,10 +392,10 @@ export default function TimeGrid({
                   const pct = ((nowMinutes - gridStart) / (gridEnd - gridStart)) * 100;
                   return (
                     <div
-                      className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
-                      style={{ left: `${pct}%` }}
+                      className="absolute top-0 bottom-0 w-0.5 z-20 pointer-events-none"
+                      style={{ left: `${pct}%`, backgroundColor: 'var(--danger)' }}
                     >
-                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full bg-red-500" />
+                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--danger)' }} />
                     </div>
                   );
                 })()}

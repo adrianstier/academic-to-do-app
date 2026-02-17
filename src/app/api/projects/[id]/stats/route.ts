@@ -16,6 +16,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * Extract project ID from the URL path
  */
@@ -40,6 +42,13 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     if (!projectId) {
       return NextResponse.json(
         { error: 'Project ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!UUID_REGEX.test(projectId)) {
+      return NextResponse.json(
+        { error: 'Project ID must be a valid UUID' },
         { status: 400 }
       );
     }

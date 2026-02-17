@@ -240,12 +240,12 @@ export function useTodoData(currentUser: AuthUser) {
       id: newTodo.id,
       text: newTodo.text,
       completed: newTodo.completed,
+      status: newTodo.status,
+      priority: newTodo.priority,
       created_at: newTodo.created_at,
       created_by: newTodo.created_by,
     };
 
-    if (newTodo.status && newTodo.status !== 'todo') insertData.status = newTodo.status;
-    if (newTodo.priority && newTodo.priority !== 'medium') insertData.priority = newTodo.priority;
     if (newTodo.due_date) insertData.due_date = newTodo.due_date;
     if (newTodo.assigned_to) insertData.assigned_to = newTodo.assigned_to;
     if (newTodo.subtasks && newTodo.subtasks.length > 0) insertData.subtasks = newTodo.subtasks;

@@ -39,9 +39,9 @@ const BudgetSetupForm = dynamic(() => import('./BudgetSetupForm'), { ssr: false 
 // ===================================================================
 
 const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bgColor: string }> = {
-  active: { label: 'Active', color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
-  completed: { label: 'Completed', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
-  archived: { label: 'Archived', color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.1)' },
+  active: { label: 'Active', color: 'var(--brand-blue)', bgColor: 'var(--accent-light)' },
+  completed: { label: 'Completed', color: 'var(--success)', bgColor: 'var(--success-light)' },
+  archived: { label: 'Archived', color: 'var(--text-muted)', bgColor: 'var(--surface-2)' },
 };
 
 const PRIORITY_DOT_COLORS: Record<string, string> = {
@@ -143,15 +143,17 @@ export default function ProjectDashboard() {
   }, [fetchProjects]);
 
   // Close create project modal on Escape key
+  // Uses capture phase and stops propagation so AppShell's Escape handler doesn't also fire
   useEffect(() => {
     if (!showCreateForm) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.stopPropagation();
         setShowCreateForm(false);
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
   }, [showCreateForm]);
 
   // Get recent tasks from the store
@@ -218,6 +220,7 @@ export default function ProjectDashboard() {
   }, [todos]);
 
   // Budget summaries for project cards (loaded from localStorage)
+  // Include projectBudget in deps so summaries recalculate after budget edits
   const projectBudgetSummaries = useMemo(() => {
     const summaries: Record<string, { spent: number; total: number; pct: number }> = {};
     for (const project of projects) {
@@ -229,7 +232,8 @@ export default function ProjectDashboard() {
       }
     }
     return summaries;
-  }, [projects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, projectBudget]);
 
   // Create project handler
   const handleCreateProject = useCallback(async () => {
@@ -366,7 +370,9 @@ export default function ProjectDashboard() {
         setSelectedProject(prev => prev ? { ...prev, custom_statuses: customStatuses } : prev);
         setLocalProjects(prev => prev.map(p => p.id === projectId ? { ...p, custom_statuses: customStatuses } : p));
         // Update global store so KanbanBoard picks up the change
-        const updatedProjects = storeProjects.map(p => p.id === projectId ? { ...p, custom_statuses: customStatuses } : p);
+        // Read current projects from store imperatively to avoid stale closure
+        const currentStoreProjects = useTodoStore.getState().projects;
+        const updatedProjects = currentStoreProjects.map(p => p.id === projectId ? { ...p, custom_statuses: customStatuses } : p);
         setProjects(updatedProjects);
         logger.info('Custom statuses saved', { component: 'ProjectDashboard', projectId, count: customStatuses.length });
       } else {
@@ -376,7 +382,7 @@ export default function ProjectDashboard() {
       logger.error('Failed to save custom statuses', err, { component: 'ProjectDashboard' });
       setError('Failed to save custom statuses. Please try again.');
     }
-  }, [storeProjects, setProjects]);
+  }, [setProjects]);
 
   // Relative time formatting
   const formatRelativeTime = useCallback((dateStr: string) => {
@@ -563,7 +569,7 @@ export default function ProjectDashboard() {
 
               {/* Custom Status Workflow */}
               <div className={`rounded-xl border overflow-hidden shadow-sm ${
-                darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-white border-[var(--border)]'
+                darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-[var(--surface)] border-[var(--border)]'
               }`}>
                 <div className="p-5">
                   <StatusWorkflowEditor
@@ -580,7 +586,7 @@ export default function ProjectDashboard() {
                 <MilestoneTracker projectId={selectedProject.id} />
 
                 {/* Recent Activity Feed */}
-                <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+                <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
                   <div className="px-5 pt-5 pb-3">
                     <div className="flex items-center gap-2.5">
                       <div className="p-2 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">
@@ -693,7 +699,7 @@ export default function ProjectDashboard() {
               {!projectBudget || budgetEditMode ? (
                 /* Show setup form when no budget exists or in edit mode */
                 <div className={`rounded-xl border overflow-hidden shadow-sm ${
-                  darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-white border-[var(--border)]'
+                  darkMode ? 'bg-[var(--surface-2)] border-white/5' : 'bg-[var(--surface)] border-[var(--border)]'
                 }`}>
                   <div className="p-5">
                     <BudgetSetupForm
@@ -760,7 +766,7 @@ export default function ProjectDashboard() {
           className="absolute inset-0"
           style={{
             background: darkMode
-              ? 'linear-gradient(135deg, var(--brand-navy) 0%, #2c5282 50%, #3b6ea8 100%)'
+              ? 'linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-blue) 50%, var(--brand-blue-light) 100%)'
               : 'linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-blue) 50%, var(--brand-blue-light) 100%)',
           }}
         />
@@ -797,7 +803,7 @@ export default function ProjectDashboard() {
                 border focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]/30
                 ${darkMode
                   ? 'bg-[var(--surface-2)] border-white/10 text-white placeholder-white/40'
-                  : 'bg-white border-[var(--border)] text-[var(--foreground)] placeholder-[var(--text-muted)]'
+                  : 'bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] placeholder-[var(--text-muted)]'
                 }
               `}
             />
@@ -885,7 +891,7 @@ export default function ProjectDashboard() {
                     transition-all group
                     ${darkMode
                       ? 'bg-[var(--surface-2)] border-white/5 hover:border-white/15 hover:shadow-lg'
-                      : 'bg-white border-[var(--border)] hover:border-[var(--brand-blue)]/30 hover:shadow-lg'
+                      : 'bg-[var(--surface)] border-[var(--border)] hover:border-[var(--brand-blue)]/30 hover:shadow-lg'
                     }
                   `}
                 >
@@ -1024,7 +1030,7 @@ export default function ProjectDashboard() {
                 aria-label="Create new project"
                 className={`
                   w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden pointer-events-auto
-                  ${darkMode ? 'bg-[var(--surface)]' : 'bg-white'}
+                  bg-[var(--surface)]
                 `}
               >
                 <div className={`px-6 py-4 border-b flex items-center justify-between ${

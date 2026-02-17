@@ -219,7 +219,7 @@ export default function OrcidProfileCard({ profile }: OrcidProfileCardProps) {
                 title="Copy ORCID iD"
               >
                 {copiedId ? (
-                  <Check className="w-3.5 h-3.5 text-green-500" />
+                  <Check className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
                 ) : (
                   <Copy className="w-3.5 h-3.5" />
                 )}

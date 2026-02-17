@@ -137,6 +137,20 @@ export default function TaskDetailPanel({
   const [linkedReferences, setLinkedReferences] = useState<TaskReference[]>([]);
   const [showReferences, setShowReferences] = useState(false);
 
+  // Reset transient editing states when task changes to prevent stale state leaking
+  useEffect(() => {
+    setIsEditingText(false);
+    setIsEditingNotes(false);
+    setNewSubtask('');
+    setSaving(false);
+    setShowDeleteConfirm(false);
+    setLinks([]);
+    setAiActionLoading(null);
+    setAiSubtasksPreview(null);
+    setAiEnhancedText(null);
+    setIsEditingExperimentLog(false);
+  }, [task.id]);
+
   // Load experiment log from localStorage
   useEffect(() => {
     try {
@@ -345,7 +359,10 @@ export default function TaskDetailPanel({
   }, [task.id, onUpdate]);
 
   const handleAssigneeChange = useCallback(async (assignedTo: string | null) => {
-    await onUpdate(task.id, { assigned_to: assignedTo || undefined });
+    // Pass null through (cast via any) to ensure Supabase clears the field,
+    // rather than undefined which would be ignored in the update
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await onUpdate(task.id, { assigned_to: assignedTo || (null as any) });
   }, [task.id, onUpdate]);
 
   const handleAddSubtask = useCallback(async () => {
@@ -729,9 +746,16 @@ export default function TaskDetailPanel({
                   id={`task-duedate-${task.id}`}
                   type="date"
                   value={task.due_date ? format(new Date(task.due_date), 'yyyy-MM-dd') : ''}
-                  onChange={(e) => onUpdate(task.id, {
-                    due_date: e.target.value ? `${e.target.value}T12:00:00.000Z` : undefined
-                  })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Pass null to clear the due date (cast through any since
+                    // Partial<Todo> types due_date as string|undefined, but
+                    // Supabase needs null to actually clear the column)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    onUpdate(task.id, {
+                      due_date: val ? `${val}T12:00:00.000Z` : (null as any)
+                    });
+                  }}
                   className={`
                     w-full px-3 py-2 rounded-lg border text-sm font-medium
                     cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2

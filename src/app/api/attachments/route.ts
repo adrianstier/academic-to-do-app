@@ -87,6 +87,15 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
       );
     }
 
+    // Validate UUID format for todoId
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(todoId)) {
+      return NextResponse.json(
+        { success: false, error: 'todoId must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
     // Verify user has access to this todo before allowing upload
     const { error: accessError } = await verifyTodoAccess(todoId, userName);
     if (accessError) {
@@ -283,6 +292,15 @@ export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAut
       );
     }
 
+    // Validate UUID format for both IDs
+    const UUID_REGEX_DEL = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX_DEL.test(todoId) || !UUID_REGEX_DEL.test(attachmentId)) {
+      return NextResponse.json(
+        { success: false, error: 'todoId and attachmentId must be valid UUIDs' },
+        { status: 400 }
+      );
+    }
+
     const userName = context.userName;
 
     // Verify user has access to this todo before allowing deletion
@@ -356,6 +374,15 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     if (!todoId) {
       return NextResponse.json(
         { success: false, error: 'Invalid storage path format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate extracted todoId is a valid UUID
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(todoId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid storage path: todoId must be a valid UUID' },
         { status: 400 }
       );
     }

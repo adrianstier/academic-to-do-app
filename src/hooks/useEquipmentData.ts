@@ -58,7 +58,7 @@ export interface UseEquipmentDataReturn {
   // Bookings
   bookings: EquipmentBooking[];
   addBooking: (booking: Omit<EquipmentBooking, 'id' | 'created_at'>) => EquipmentBooking | null;
-  updateBooking: (id: string, updates: Partial<EquipmentBooking>) => void;
+  updateBooking: (id: string, updates: Partial<EquipmentBooking>) => { success: boolean; error?: string };
   cancelBooking: (id: string) => void;
   deleteBooking: (id: string) => void;
 
@@ -93,6 +93,15 @@ export function useEquipmentData(teamId: string): UseEquipmentDataReturn {
   const [bookings, setBookings] = useState<EquipmentBooking[]>(() =>
     loadFromStorage<EquipmentBooking[]>(bookingsKey, [])
   );
+
+  // Reload data from localStorage when teamId (and thus keys) change
+  useEffect(() => {
+    setEquipment(loadFromStorage<LabEquipment[]>(equipmentKey, []));
+  }, [equipmentKey]);
+
+  useEffect(() => {
+    setBookings(loadFromStorage<EquipmentBooking[]>(bookingsKey, []));
+  }, [bookingsKey]);
 
   // Persist equipment changes
   useEffect(() => {
@@ -293,12 +302,38 @@ export function useEquipmentData(teamId: string): UseEquipmentDataReturn {
   );
 
   const updateBooking = useCallback(
-    (id: string, updates: Partial<EquipmentBooking>) => {
+    (id: string, updates: Partial<EquipmentBooking>): { success: boolean; error?: string } => {
+      // If time or equipment is changing, validate for conflicts
+      const existing = bookings.find((b) => b.id === id);
+      if (!existing) return { success: false, error: 'Booking not found' };
+
+      const newEquipmentId = updates.equipment_id ?? existing.equipment_id;
+      const newStartTime = updates.start_time ?? existing.start_time;
+      const newEndTime = updates.end_time ?? existing.end_time;
+
+      // Only validate if time or equipment changed
+      if (
+        updates.start_time !== undefined ||
+        updates.end_time !== undefined ||
+        updates.equipment_id !== undefined
+      ) {
+        const validation = validateBooking(
+          newEquipmentId,
+          newStartTime,
+          newEndTime,
+          id // exclude this booking from conflict check
+        );
+        if (!validation.valid) {
+          return { success: false, error: validation.error };
+        }
+      }
+
       setBookings((prev) =>
         prev.map((b) => (b.id === id ? { ...b, ...updates } : b))
       );
+      return { success: true };
     },
-    []
+    [bookings, validateBooking]
   );
 
   const cancelBooking = useCallback((id: string) => {

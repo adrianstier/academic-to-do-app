@@ -325,6 +325,8 @@ export default function CalendarSyncSettings({ onClose }: CalendarSyncSettingsPr
     setCalendars([]);
     localStorage.removeItem(LS_KEY_SYNC_HISTORY);
     localStorage.removeItem(LS_KEY_LAST_SYNC);
+    localStorage.removeItem(LS_KEY_SYNC_CONFIG);
+    setConfig(DEFAULT_SYNC_CONFIG);
     setSyncHistory([]);
     setLastSyncState(null);
     toast.info('Google Calendar disconnected');

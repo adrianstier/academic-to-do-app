@@ -194,18 +194,20 @@ export default function FloatingChatButton({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-40"
+              className="fixed inset-0 z-[45]"
               onClick={() => setIsOpen(false)}
             />
 
             {/* Chat Popup Window - positioned above the FAB */}
+            {/* Uses z-[46] to layer above its own backdrop (z-[45]) but below
+                mobile sheet overlays (z-50) and modals (z-50+) */}
             <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ type: 'spring', damping: 25, stiffness: 400 }}
               className={`
-                fixed bottom-24 right-6 z-50
+                fixed bottom-24 right-6 z-[46]
                 w-[360px] sm:w-[400px] h-[500px] max-h-[70vh]
                 flex flex-col
                 rounded-xl overflow-hidden

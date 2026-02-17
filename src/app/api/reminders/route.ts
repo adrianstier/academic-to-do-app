@@ -35,56 +35,84 @@ function getSupabaseClient() {
  * - status: Filter by status ('pending', 'sent', 'failed', 'cancelled')
  */
 export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
-  const { searchParams } = new URL(request.url);
-  const todoId = searchParams.get('todoId');
-  const userId = searchParams.get('userId');
-  const status = searchParams.get('status');
+  try {
+    const { searchParams } = new URL(request.url);
+    const todoId = searchParams.get('todoId');
+    const userId = searchParams.get('userId');
+    const status = searchParams.get('status');
 
-  const supabase = getSupabaseClient();
-  let query = supabase
-    .from('task_reminders')
-    .select(`
-      *,
-      todos:todo_id!inner (
-        id,
-        text,
-        priority,
-        due_date,
-        assigned_to,
-        completed,
-        team_id
-      )
-    `)
-    .order('reminder_time', { ascending: true });
+    // Validate UUID format for todoId if provided
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (todoId && !UUID_REGEX.test(todoId)) {
+      return NextResponse.json(
+        { success: false, error: 'todoId must be a valid UUID' },
+        { status: 400 }
+      );
+    }
 
-  // Scope to team via the joined todos table
-  if (context.teamId) {
-    query = query.eq('todos.team_id', context.teamId);
-  }
+    // Validate status enum if provided
+    if (status) {
+      const validStatuses = ['pending', 'sent', 'failed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json(
+          { success: false, error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+          { status: 400 }
+        );
+      }
+    }
 
-  if (todoId) {
-    query = query.eq('todo_id', todoId);
-  }
+    const supabase = getSupabaseClient();
+    let query = supabase
+      .from('task_reminders')
+      .select(`
+        *,
+        todos:todo_id!inner (
+          id,
+          text,
+          priority,
+          due_date,
+          assigned_to,
+          completed,
+          team_id
+        )
+      `)
+      .order('reminder_time', { ascending: true });
 
-  if (userId) {
-    query = query.eq('user_id', userId);
-  }
+    // Scope to team via the joined todos table
+    if (context.teamId) {
+      query = query.eq('todos.team_id', context.teamId);
+    }
 
-  if (status) {
-    query = query.eq('status', status);
-  }
+    if (todoId) {
+      query = query.eq('todo_id', todoId);
+    }
 
-  const { data, error } = await query;
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
 
-  if (error) {
-    console.error('Error fetching reminders:', error);
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching reminders:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch reminders' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true, reminders: data || [] });
+  } catch (error) {
+    console.error('Error in GET /api/reminders:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch reminders' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({ success: true, reminders: data || [] });
 });
 
 /**
@@ -116,6 +144,15 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
     if (!todoId) {
       return NextResponse.json(
         { success: false, error: 'todoId is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUID format for todoId
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof todoId !== 'string' || !UUID_REGEX.test(todoId)) {
+      return NextResponse.json(
+        { success: false, error: 'todoId must be a valid UUID' },
         { status: 400 }
       );
     }
@@ -224,62 +261,79 @@ export const POST = withTeamAuth(async (request: NextRequest, context: TeamAuthC
  * - id: UUID of the reminder to delete
  */
 export const DELETE = withTeamAuth(async (request: NextRequest, context: TeamAuthContext) => {
-  const userName = context.userName;
-  const supabase = getSupabaseClient();
-  const { searchParams } = new URL(request.url);
-  const reminderId = searchParams.get('id');
+  try {
+    const userName = context.userName;
+    const supabase = getSupabaseClient();
+    const { searchParams } = new URL(request.url);
+    const reminderId = searchParams.get('id');
 
-  if (!reminderId) {
+    if (!reminderId) {
+      return NextResponse.json(
+        { success: false, error: 'Reminder id is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(reminderId)) {
+      return NextResponse.json(
+        { success: false, error: 'Reminder id must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
+    // First, fetch the reminder to verify access
+    const { data: reminder, error: fetchError } = await supabase
+      .from('task_reminders')
+      .select('*, todos:todo_id (id, created_by, assigned_to, updated_by)')
+      .eq('id', reminderId)
+      .single();
+
+    if (fetchError || !reminder) {
+      return NextResponse.json(
+        { success: false, error: 'Reminder not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify user has access to the associated todo
+    const todo = reminder.todos as { id: string; created_by: string; assigned_to: string; updated_by: string };
+    const hasAccess =
+      reminder.created_by === userName ||
+      todo.created_by === userName ||
+      todo.assigned_to === userName ||
+      todo.updated_by === userName;
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { success: false, error: 'Access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Delete the reminder
+    const { error: deleteError } = await supabase
+      .from('task_reminders')
+      .delete()
+      .eq('id', reminderId);
+
+    if (deleteError) {
+      console.error('Error deleting reminder:', deleteError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to delete reminder' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error in DELETE /api/reminders:', error);
     return NextResponse.json(
-      { success: false, error: 'Reminder id is required' },
-      { status: 400 }
-    );
-  }
-
-  // First, fetch the reminder to verify access
-  const { data: reminder, error: fetchError } = await supabase
-    .from('task_reminders')
-    .select('*, todos:todo_id (id, created_by, assigned_to, updated_by)')
-    .eq('id', reminderId)
-    .single();
-
-  if (fetchError || !reminder) {
-    return NextResponse.json(
-      { success: false, error: 'Reminder not found' },
-      { status: 404 }
-    );
-  }
-
-  // Verify user has access to the associated todo
-  const todo = reminder.todos as { id: string; created_by: string; assigned_to: string; updated_by: string };
-  const hasAccess =
-    reminder.created_by === userName ||
-    todo.created_by === userName ||
-    todo.assigned_to === userName ||
-    todo.updated_by === userName;
-
-  if (!hasAccess) {
-    return NextResponse.json(
-      { success: false, error: 'Access denied' },
-      { status: 403 }
-    );
-  }
-
-  // Delete the reminder
-  const { error: deleteError } = await supabase
-    .from('task_reminders')
-    .delete()
-    .eq('id', reminderId);
-
-  if (deleteError) {
-    console.error('Error deleting reminder:', deleteError);
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete reminder' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({ success: true });
 });
 
 /**
@@ -303,6 +357,15 @@ export const PATCH = withTeamAuth(async (request: NextRequest, context: TeamAuth
     if (!id) {
       return NextResponse.json(
         { success: false, error: 'Reminder id is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Reminder id must be a valid UUID' },
         { status: 400 }
       );
     }

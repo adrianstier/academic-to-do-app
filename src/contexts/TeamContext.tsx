@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { isFeatureEnabled } from '@/lib/featureFlags';
+import { useTodoStore } from '@/store/todoStore';
 import type {
   Team,
   TeamMembership,
@@ -352,6 +353,16 @@ export function TeamProvider({ children, userId: userIdProp }: TeamProviderProps
       setError('You are not a member of this lab');
       return;
     }
+
+    // Clear stale application state from the previous team
+    const store = useTodoStore.getState();
+    store.setTodos([]);
+    store.setProjects([]);
+    store.setTags([]);
+    store.clearSelection();
+    store.resetFilters();
+    store.setLoading(true);
+    store.setError(null);
 
     await loadTeamDetails(teamId, membership);
   }, [teams, loadTeamDetails]);

@@ -57,8 +57,28 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
       notes,
     } = body;
 
-    if (!title) {
+    if (!title || (typeof title === 'string' && !title.trim())) {
       return NextResponse.json({ error: 'title is required' }, { status: 400 });
+    }
+
+    // Validate status enum if provided
+    const validStatuses = ['not_started', 'in_progress', 'on_hold', 'completed', 'cancelled'];
+    const goalStatus = status || 'not_started';
+    if (!validStatuses.includes(goalStatus)) {
+      return NextResponse.json(
+        { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate priority enum if provided
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+    const goalPriority = priority || 'medium';
+    if (!validPriorities.includes(goalPriority)) {
+      return NextResponse.json(
+        { error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` },
+        { status: 400 }
+      );
     }
 
     // Get max display_order for new goal
@@ -77,11 +97,11 @@ export const POST = withTeamAdminAuth(async (request: NextRequest, context: Team
     const nextOrder = (maxOrderData?.display_order || 0) + 1;
 
     const insertData: Record<string, unknown> = {
-      title,
+      title: typeof title === 'string' ? title.trim() : title,
       description: description || null,
       category_id: category_id || null,
-      status: status || 'not_started',
-      priority: priority || 'medium',
+      status: goalStatus,
+      priority: goalPriority,
       target_date: target_date || null,
       target_value: target_value || null,
       notes: notes || null,
@@ -135,11 +155,50 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof id !== 'string' || !UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'id must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
+    // Validate status enum if provided
+    if (status !== undefined) {
+      const validStatuses = ['not_started', 'in_progress', 'on_hold', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json(
+          { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate priority enum if provided
+    if (priority !== undefined) {
+      const validPriorities = ['low', 'medium', 'high', 'critical'];
+      if (!validPriorities.includes(priority)) {
+        return NextResponse.json(
+          { error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate title if provided
+    if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
+      return NextResponse.json(
+        { error: 'title cannot be empty' },
+        { status: 400 }
+      );
+    }
+
     const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
 
-    if (title !== undefined) updateData.title = title;
+    if (title !== undefined) updateData.title = typeof title === 'string' ? title.trim() : title;
     if (description !== undefined) updateData.description = description;
     if (category_id !== undefined) updateData.category_id = category_id;
     if (status !== undefined) updateData.status = status;
@@ -169,7 +228,15 @@ export const PUT = withTeamAdminAuth(async (request: NextRequest, context: TeamA
       `)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Goal not found' },
+          { status: 404 }
+        );
+      }
+      throw error;
+    }
 
     return NextResponse.json(data);
   } catch (error) {
@@ -186,6 +253,33 @@ export const DELETE = withTeamAdminAuth(async (request: NextRequest, context: Te
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'id must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
+    // Verify goal exists before deleting
+    let verifyQuery = supabase
+      .from('strategic_goals')
+      .select('id')
+      .eq('id', id);
+
+    if (context.teamId) {
+      verifyQuery = verifyQuery.eq('team_id', context.teamId);
+    }
+
+    const { data: existing, error: verifyError } = await verifyQuery.single();
+    if (verifyError || !existing) {
+      return NextResponse.json(
+        { error: 'Goal not found' },
+        { status: 404 }
+      );
     }
 
     let deleteQuery = supabase

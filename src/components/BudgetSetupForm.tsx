@@ -171,6 +171,15 @@ export default function BudgetSetupForm({
     );
   }, [categories.length, totalBudgetNum]);
 
+  // Reason the form can't be saved, if any
+  const invalidReason = useMemo(() => {
+    if (totalBudgetNum <= 0) return 'Enter a total budget amount greater than zero.';
+    if (categories.length === 0) return 'Add at least one budget category.';
+    if (isOverAllocated) return 'Category allocations exceed the total budget.';
+    if (categories.some(c => !c.name.trim())) return 'All categories must have a name.';
+    return null;
+  }, [totalBudgetNum, categories, isOverAllocated]);
+
   const handleSave = useCallback(() => {
     if (!isValid) return;
 
@@ -244,7 +253,13 @@ export default function BudgetSetupForm({
               <input
                 type="number"
                 value={totalBudget}
-                onChange={(e) => setTotalBudget(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Prevent negative values
+                  if (val === '' || parseFloat(val) >= 0) {
+                    setTotalBudget(val);
+                  }
+                }}
                 placeholder="0"
                 min="0"
                 step="1000"
@@ -595,6 +610,12 @@ export default function BudgetSetupForm({
             <div className="flex items-center gap-1.5 text-xs text-[var(--success)]">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Budget fully allocated
+            </div>
+          )}
+          {!isValid && invalidReason && !isOverAllocated && (
+            <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {invalidReason}
             </div>
           )}
         </div>

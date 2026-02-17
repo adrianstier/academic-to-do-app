@@ -77,10 +77,10 @@ export default function SSOLoginButton({ provider, onLogin }: SSOLoginButtonProp
           px-4 py-3 rounded-lg
           font-medium text-sm
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e3a5f]
+          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--brand-navy)]
           ${isDisabled
-            ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-            : 'bg-[#1e3a5f] hover:bg-[#2a4d75] active:bg-[#162d47] text-white shadow-sm hover:shadow'
+            ? 'bg-[var(--surface-3)] text-[var(--text-muted)] cursor-not-allowed'
+            : 'bg-[var(--brand-navy)] hover:bg-[var(--brand-blue)] active:bg-[var(--accent-dark)] text-white shadow-sm hover:shadow'
           }
         `}
         aria-label={buttonLabel}
@@ -99,7 +99,7 @@ export default function SSOLoginButton({ provider, onLogin }: SSOLoginButtonProp
       </button>
 
       {/* Subtitle */}
-      <p className="mt-1.5 text-center text-xs text-gray-500 dark:text-gray-400">
+      <p className="mt-1.5 text-center text-xs text-[var(--text-muted)]">
         {provider
           ? 'Institutional single sign-on'
           : 'SSO is not configured for this team'

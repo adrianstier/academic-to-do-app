@@ -128,7 +128,7 @@ function ReferenceItem({
               e.stopPropagation();
               onUnlink();
             }}
-            className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="p-1.5 rounded-lg text-[var(--danger)] hover:bg-[var(--danger-light)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
             aria-label={`Unlink reference: ${reference.title}`}
             title="Unlink reference"
           >
@@ -197,7 +197,7 @@ function LinkedReferenceItem({
           e.stopPropagation();
           onUnlink();
         }}
-        className="flex-shrink-0 mt-1 p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+        className="flex-shrink-0 mt-1 p-1.5 rounded-lg text-[var(--danger)] hover:bg-[var(--danger-light)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
         aria-label={`Unlink reference: ${taskRef.reference.title}`}
         title="Unlink reference"
       >
@@ -615,7 +615,7 @@ export default function ReferencePicker({
 
       {/* Error display */}
       {error && (
-        <div className="px-3 py-2 rounded-lg bg-red-500/10 text-red-500 text-xs">
+        <div className="px-3 py-2 rounded-lg bg-[var(--danger-light)] text-[var(--danger)] text-xs">
           {error}
           <button
             onClick={() => setError(null)}

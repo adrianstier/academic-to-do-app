@@ -108,6 +108,11 @@ export default function ZoteroSettings() {
       return;
     }
 
+    if (libraryType === 'group' && !libraryId.trim()) {
+      setError('Group Library ID is required when using a group library.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       const res = await fetch('/api/integrations/zotero', {
@@ -150,6 +155,11 @@ export default function ZoteroSettings() {
 
     if (!userId.trim() || !apiKey.trim()) {
       setError('Please enter both User ID and API Key to test the connection.');
+      return;
+    }
+
+    if (libraryType === 'group' && !libraryId.trim()) {
+      setError('Group Library ID is required when using a group library.');
       return;
     }
 

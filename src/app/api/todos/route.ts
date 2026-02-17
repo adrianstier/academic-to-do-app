@@ -32,6 +32,15 @@ export const GET = withTeamAuth(async (request, context) => {
     const id = searchParams.get('id');
     const includeCompleted = searchParams.get('includeCompleted') === 'true';
 
+    // Validate UUID format if id is provided
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (id && !UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'Invalid todo ID format' },
+        { status: 400 }
+      );
+    }
+
     let query = supabase.from('todos').select('*');
 
     // Team-scope the query when multi-tenancy is active
@@ -44,6 +53,8 @@ export const GET = withTeamAuth(async (request, context) => {
       // Fetch single todo
       query = query.eq('id', id);
     } else {
+      // Exclude soft-deleted todos
+      query = query.eq('is_deleted', false);
       // Fetch all todos (optionally filter completed)
       if (!includeCompleted) {
         query = query.eq('completed', false);
@@ -99,6 +110,24 @@ export const POST = withTeamAuth(async (request, context) => {
     if (!text || !text.trim()) {
       return NextResponse.json(
         { error: 'Task text is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate priority enum
+    const validPriorities = ['low', 'medium', 'high', 'urgent'];
+    if (!validPriorities.includes(priority)) {
+      return NextResponse.json(
+        { error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate status enum
+    const validStatuses = ['todo', 'in_progress', 'done'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
         { status: 400 }
       );
     }
@@ -213,6 +242,37 @@ export const PUT = withTeamAuth(async (request, context) => {
         { error: 'Todo ID is required' },
         { status: 400 }
       );
+    }
+
+    // Validate UUID format to prevent malformed IDs
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof id !== 'string' || !UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'Todo ID must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
+    // Validate priority if provided
+    if (updates.priority !== undefined) {
+      const validPriorities = ['low', 'medium', 'high', 'urgent'];
+      if (!validPriorities.includes(updates.priority)) {
+        return NextResponse.json(
+          { error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate status if provided
+    if (updates.status !== undefined) {
+      const validStatuses = ['todo', 'in_progress', 'done'];
+      if (!validStatuses.includes(updates.status)) {
+        return NextResponse.json(
+          { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Build update object
@@ -334,6 +394,15 @@ export const DELETE = withTeamAuth(async (request, context) => {
     if (!id) {
       return NextResponse.json(
         { error: 'Todo ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate UUID format
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json(
+        { error: 'Todo ID must be a valid UUID' },
         { status: 400 }
       );
     }

@@ -354,7 +354,7 @@ export default function BudgetTracker({
   );
 
   const getCategoryColor = useCallback(
-    (categoryId: string) => budget.categories.find(c => c.id === categoryId)?.color || '#64748B',
+    (categoryId: string) => budget.categories.find(c => c.id === categoryId)?.color || '#6b7280',
     [budget.categories]
   );
 
@@ -408,7 +408,7 @@ export default function BudgetTracker({
   return (
     <div className="space-y-6">
       {/* =================== Budget Overview Card =================== */}
-      <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+      <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
         <div className="p-5">
           <div className="flex items-center gap-2.5 mb-4">
             <div className={`p-2 rounded-lg ${
@@ -527,7 +527,7 @@ export default function BudgetTracker({
       </div>
 
       {/* =================== Category Breakdown =================== */}
-      <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+      <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
         <div className="p-5">
           <div className="flex items-center gap-2.5 mb-4">
             <div className="p-2 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">
@@ -675,7 +675,7 @@ export default function BudgetTracker({
       </div>
 
       {/* =================== Expense Table =================== */}
-      <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+      <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
@@ -744,7 +744,7 @@ export default function BudgetTracker({
                     onChange={(e) => setNewExpense(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Expense description..."
                     className="w-full px-3 py-2 rounded-lg text-sm
-                      bg-white dark:bg-[var(--surface-2)]
+                      bg-[var(--surface)] dark:bg-[var(--surface-2)]
                       border border-[var(--border)] dark:border-white/10
                       text-[var(--foreground)] dark:text-white
                       placeholder-[var(--text-muted)] dark:placeholder-white/40
@@ -763,7 +763,7 @@ export default function BudgetTracker({
                     min="0"
                     step="0.01"
                     className="w-full px-3 py-2 rounded-lg text-sm
-                      bg-white dark:bg-[var(--surface-2)]
+                      bg-[var(--surface)] dark:bg-[var(--surface-2)]
                       border border-[var(--border)] dark:border-white/10
                       text-[var(--foreground)] dark:text-white
                       placeholder-[var(--text-muted)] dark:placeholder-white/40
@@ -778,7 +778,7 @@ export default function BudgetTracker({
                     value={newExpense.category_id}
                     onChange={(e) => setNewExpense(prev => ({ ...prev, category_id: e.target.value }))}
                     className="w-full px-3 py-2 rounded-lg text-sm
-                      bg-white dark:bg-[var(--surface-2)]
+                      bg-[var(--surface)] dark:bg-[var(--surface-2)]
                       border border-[var(--border)] dark:border-white/10
                       text-[var(--foreground)] dark:text-white
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]/30
@@ -799,7 +799,7 @@ export default function BudgetTracker({
                     value={newExpense.date}
                     onChange={(e) => setNewExpense(prev => ({ ...prev, date: e.target.value }))}
                     className="w-full px-3 py-2 rounded-lg text-sm
-                      bg-white dark:bg-[var(--surface-2)]
+                      bg-[var(--surface)] dark:bg-[var(--surface-2)]
                       border border-[var(--border)] dark:border-white/10
                       text-[var(--foreground)] dark:text-white
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]/30"
@@ -815,7 +815,7 @@ export default function BudgetTracker({
                     onChange={(e) => setNewExpense(prev => ({ ...prev, created_by: e.target.value }))}
                     placeholder="Your name..."
                     className="w-full px-3 py-2 rounded-lg text-sm
-                      bg-white dark:bg-[var(--surface-2)]
+                      bg-[var(--surface)] dark:bg-[var(--surface-2)]
                       border border-[var(--border)] dark:border-white/10
                       text-[var(--foreground)] dark:text-white
                       placeholder-[var(--text-muted)] dark:placeholder-white/40
@@ -968,7 +968,7 @@ export default function BudgetTracker({
       {/* =================== Budget Summary (Donut + Monthly Trend) =================== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Donut Chart */}
-        <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+        <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
           <div className="p-5">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="p-2 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">
@@ -1006,7 +1006,7 @@ export default function BudgetTracker({
         </div>
 
         {/* Monthly Spending Trend */}
-        <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+        <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
           <div className="p-5">
             <div className="flex items-center gap-2.5 mb-4">
               <div className="p-2 rounded-lg bg-[var(--brand-blue)]/10 dark:bg-[var(--brand-sky)]/20">
@@ -1038,7 +1038,7 @@ export default function BudgetTracker({
 
       {/* Budget notes */}
       {budget.notes && (
-        <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5">
+        <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm p-5">
           <h4 className="text-xs font-medium text-[var(--text-muted)] dark:text-white/50 mb-2 uppercase tracking-wider">
             Budget Notes
           </h4>

@@ -37,6 +37,23 @@ export const POST = withTeamAuth(async (request, context: TeamAuthContext) => {
       );
     }
 
+    // Validate UUID format for todoId
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof todoId !== 'string' || !UUID_REGEX.test(todoId)) {
+      return NextResponse.json(
+        { error: 'todoId must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
+    // Validate targetTodoId UUID format if provided
+    if (targetTodoId !== undefined && (typeof targetTodoId !== 'string' || !UUID_REGEX.test(targetTodoId))) {
+      return NextResponse.json(
+        { error: 'targetTodoId must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+
     // Get the current task (team-scoped)
     let fetchQuery = supabase
       .from('todos')
@@ -130,10 +147,11 @@ async function moveToPosition(
   newOrder: number,
   teamId?: string
 ): Promise<any[]> {
-  // Get all tasks ordered by display_order (team-scoped)
+  // Get all non-deleted tasks ordered by display_order (team-scoped)
   let query = supabase
     .from('todos')
     .select('*')
+    .eq('is_deleted', false)
     .order('display_order', { ascending: true, nullsFirst: false });
 
   if (teamId) {

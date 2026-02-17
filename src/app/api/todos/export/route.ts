@@ -49,10 +49,11 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       );
     }
 
-    // Fetch todos
+    // Fetch todos (exclude soft-deleted)
     let todosQuery = supabase
       .from('todos')
       .select('*')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (context.teamId && context.teamId.trim() !== '') {
@@ -65,7 +66,7 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
     if (!todos || todos.length === 0) {
       if (format === 'csv') {
         return new NextResponse(
-          'id,text,status,priority,category,due_date,start_date,project_name,tags,assigned_to,notes,created_at\n',
+          'id,text,completed,status,priority,category,due_date,start_date,project_name,tags,assigned_to,notes,created_at,updated_at\n',
           {
             headers: {
               'Content-Type': 'text/csv; charset=utf-8',
@@ -137,8 +138,8 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       });
     }
 
-    // CSV export
-    const csvHeader = 'id,text,status,priority,category,due_date,start_date,project_name,tags,assigned_to,notes,created_at';
+    // CSV export (columns match JSON export fields for consistency)
+    const csvHeader = 'id,text,completed,status,priority,category,due_date,start_date,project_name,tags,assigned_to,notes,created_at,updated_at';
     const csvRows = todos.map(todo => {
       const projectName = todo.project_id ? projectMap.get(todo.project_id) || '' : '';
       const tagNames = (todoTagMap.get(todo.id) || []).join('; ');
@@ -146,6 +147,7 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
       return [
         escapeCsvValue(todo.id),
         escapeCsvValue(todo.text),
+        escapeCsvValue(String(todo.completed)),
         escapeCsvValue(todo.status),
         escapeCsvValue(todo.priority),
         escapeCsvValue(todo.category),
@@ -156,6 +158,7 @@ export const GET = withTeamAuth(async (request: NextRequest, context: TeamAuthCo
         escapeCsvValue(todo.assigned_to),
         escapeCsvValue(todo.notes),
         escapeCsvValue(todo.created_at),
+        escapeCsvValue(todo.updated_at),
       ].join(',');
     });
 

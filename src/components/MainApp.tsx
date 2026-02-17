@@ -258,12 +258,16 @@ function MainAppContent({ currentUser, onUserChange }: MainAppProps) {
     if (filter) {
       setInitialFilter(filter);
     }
+    // Clear any stale selected task to prevent auto-expanding an unrelated task
+    setSelectedTaskId(null);
     setShowDashboard(false);
     setActiveView('tasks');
   }, [setActiveView]);
 
   const handleAddTask = useCallback(() => {
     setShowAddTask(true);
+    // Clear any stale selected task
+    setSelectedTaskId(null);
     setShowDashboard(false);
     setActiveView('tasks');
   }, [setActiveView]);

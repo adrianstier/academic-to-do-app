@@ -115,7 +115,7 @@ export default function MilestoneTracker({ projectId, initialMilestones = [] }: 
   });
 
   return (
-    <div className="rounded-xl bg-white dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
+    <div className="rounded-xl bg-[var(--surface)] dark:bg-[var(--surface-2)] border border-[var(--border)] dark:border-white/5 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-center justify-between mb-4">

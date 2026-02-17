@@ -153,6 +153,20 @@ export default function OrcidSettings() {
       return;
     }
 
+    // ORCID checksum validation (ISO 7064 Mod 11,2)
+    const digits = trimmed.replace(/-/g, '');
+    let total = 0;
+    for (let i = 0; i < digits.length - 1; i++) {
+      total = (total + parseInt(digits[i], 10)) * 2;
+    }
+    const remainder = total % 11;
+    const checkDigit = (12 - remainder) % 11;
+    const expectedCheck = checkDigit === 10 ? 'X' : checkDigit.toString();
+    if (digits[digits.length - 1] !== expectedCheck) {
+      setError('Invalid ORCID iD checksum. Please double-check your ORCID.');
+      return;
+    }
+
     setIsLookingUp(true);
     try {
       const res = await fetch(
